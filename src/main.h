@@ -420,6 +420,7 @@ struct AIPlans {
 #include "tech.h"
 #include "test.h"
 #include "debug.h"
+#include "screen_reader.h"
 
 extern FILE* debug_log;
 extern Config conf;
@@ -429,6 +430,7 @@ extern map_str_t musiclabels;
 
 DLL_EXPORT DWORD ThinkerModule();
 bool FileExists(const char* path);
+void diag_log(const char* msg);
 void exit_fail(int32_t addr);
 void exit_fail();
 int opt_handle_error(const char* section, const char* name);

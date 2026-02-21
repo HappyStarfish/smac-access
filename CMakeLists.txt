@@ -13,9 +13,10 @@ project(thinker C CXX)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-set(CMAKE_CXX_COMPILER i686-w64-mingw32-g++)
-set(CMAKE_C_COMPILER i686-w64-mingw32-gcc)
-set(CMAKE_RC_COMPILER i686-w64-mingw32-windres)
+# Compilers set via -D flags or PATH (commented out to avoid CMake reconfigure loop)
+# set(CMAKE_CXX_COMPILER i686-w64-mingw32-g++)
+# set(CMAKE_C_COMPILER i686-w64-mingw32-gcc)
+# set(CMAKE_RC_COMPILER i686-w64-mingw32-windres)
 enable_language(RC)
 
 # Use GNU windres style for RC compile rule

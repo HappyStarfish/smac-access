@@ -1,5 +1,7 @@
 
 #include "gui.h"
+#include "base_handler.h"
+#include "localization.h"
 
 const int32_t MainWinHandle = (int32_t)(&MapWin->oMainWin.oWinBase.field_4); // 0x939444
 
@@ -569,14 +571,921 @@ int __cdecl mod_blink_timer() {
     return 0;
 }
 
+// Announce tile info at given coordinates via screen reader.
+// Reusable for both MAP-MOVE tracking and virtual exploration cursor.
+static void sr_announce_tile(int x, int y) {
+    if (!sr_is_available()) return;
+    if (*MapAreaX <= 0 || *MapAreaY <= 0) return;
+    if (x < 0 || x >= *MapAreaX || y < 0 || y >= *MapAreaY) {
+        sr_output(loc(SR_MAP_EDGE), true);
+        return;
+    }
+    MAP* sq = mapsq(x, y);
+    if (!sq) return;
+
+    int faction = *CurrentPlayerFaction;
+    char buf[512];
+    int pos = 0;
+
+    // Coordinates
+    pos += snprintf(buf + pos, sizeof(buf) - pos, "(%d, %d) ", x, y);
+
+    // Unexplored check
+    if (!sq->is_visible(faction)) {
+        pos += snprintf(buf + pos, sizeof(buf) - pos, "%s", loc(SR_TILE_UNEXPLORED));
+        sr_debug_log("TILE-ANNOUNCE (%d,%d): %s", x, y, buf);
+        sr_output(buf, true);
+        return;
+    }
+
+    // Terrain type
+    int alt = sq->alt_level();
+    bool is_land = (alt >= ALT_SHORE_LINE);
+    if (alt == ALT_OCEAN_TRENCH) {
+        pos += snprintf(buf + pos, sizeof(buf) - pos, "%s", loc(SR_TERRAIN_TRENCH));
+    } else if (alt <= ALT_OCEAN) {
+        pos += snprintf(buf + pos, sizeof(buf) - pos, "%s", loc(SR_TERRAIN_OCEAN));
+    } else if (alt == ALT_OCEAN_SHELF) {
+        pos += snprintf(buf + pos, sizeof(buf) - pos, "%s", loc(SR_TERRAIN_SHELF));
+    } else {
+        if (sq->is_rocky())
+            pos += snprintf(buf + pos, sizeof(buf) - pos, "%s", loc(SR_TERRAIN_ROCKY));
+        else if (sq->is_rolling())
+            pos += snprintf(buf + pos, sizeof(buf) - pos, "%s", loc(SR_TERRAIN_ROLLING));
+        else
+            pos += snprintf(buf + pos, sizeof(buf) - pos, "%s", loc(SR_TERRAIN_FLAT));
+    }
+
+    // Moisture (land only)
+    if (is_land) {
+        if (sq->is_rainy())
+            pos += snprintf(buf + pos, sizeof(buf) - pos, ", %s", loc(SR_TERRAIN_RAINY));
+        else if (sq->is_moist())
+            pos += snprintf(buf + pos, sizeof(buf) - pos, ", %s", loc(SR_TERRAIN_MOIST));
+        else if (sq->is_arid())
+            pos += snprintf(buf + pos, sizeof(buf) - pos, ", %s", loc(SR_TERRAIN_ARID));
+    }
+
+    // Altitude (land only, elevated = 2+ above sea level)
+    if (is_land && alt >= ALT_TWO_ABOVE_SEA) {
+        pos += snprintf(buf + pos, sizeof(buf) - pos, ", %s", loc(SR_TERRAIN_HIGH));
+    }
+
+    // Features
+    if (sq->is_fungus())
+        pos += snprintf(buf + pos, sizeof(buf) - pos, ", %s", loc(SR_FEATURE_FUNGUS));
+    if (sq->items & BIT_FOREST)
+        pos += snprintf(buf + pos, sizeof(buf) - pos, ", %s", loc(SR_FEATURE_FOREST));
+    if (sq->items & BIT_RIVER)
+        pos += snprintf(buf + pos, sizeof(buf) - pos, ", %s", loc(SR_FEATURE_RIVER));
+    if (sq->items & BIT_FARM)
+        pos += snprintf(buf + pos, sizeof(buf) - pos, ", %s", loc(SR_FEATURE_FARM));
+    if (sq->items & BIT_SOIL_ENRICHER)
+        pos += snprintf(buf + pos, sizeof(buf) - pos, ", %s", loc(SR_FEATURE_SOIL_ENRICHER));
+    if (sq->items & BIT_MINE)
+        pos += snprintf(buf + pos, sizeof(buf) - pos, ", %s", loc(SR_FEATURE_MINE));
+    if (sq->items & BIT_SOLAR)
+        pos += snprintf(buf + pos, sizeof(buf) - pos, ", %s", loc(SR_FEATURE_SOLAR));
+    if (sq->items & BIT_CONDENSER)
+        pos += snprintf(buf + pos, sizeof(buf) - pos, ", %s", loc(SR_FEATURE_CONDENSER));
+    if (sq->items & BIT_ECH_MIRROR)
+        pos += snprintf(buf + pos, sizeof(buf) - pos, ", %s", loc(SR_FEATURE_ECH_MIRROR));
+    if (sq->items & BIT_THERMAL_BORE)
+        pos += snprintf(buf + pos, sizeof(buf) - pos, ", %s", loc(SR_FEATURE_BOREHOLE));
+    if (sq->items & BIT_ROAD)
+        pos += snprintf(buf + pos, sizeof(buf) - pos, ", %s", loc(SR_FEATURE_ROAD));
+    if (sq->items & BIT_MAGTUBE)
+        pos += snprintf(buf + pos, sizeof(buf) - pos, ", %s", loc(SR_FEATURE_MAGTUBE));
+    if (sq->items & BIT_BUNKER)
+        pos += snprintf(buf + pos, sizeof(buf) - pos, ", %s", loc(SR_FEATURE_BUNKER));
+    if (sq->items & BIT_AIRBASE)
+        pos += snprintf(buf + pos, sizeof(buf) - pos, ", %s", loc(SR_FEATURE_AIRBASE));
+    if (sq->items & BIT_SENSOR)
+        pos += snprintf(buf + pos, sizeof(buf) - pos, ", %s", loc(SR_FEATURE_SENSOR));
+    if (sq->items & BIT_SUPPLY_POD)
+        pos += snprintf(buf + pos, sizeof(buf) - pos, ", %s", loc(SR_FEATURE_SUPPLY_POD));
+    if (sq->items & BIT_MONOLITH)
+        pos += snprintf(buf + pos, sizeof(buf) - pos, ", %s", loc(SR_FEATURE_MONOLITH));
+
+    // Resource yields
+    int food = mod_crop_yield(faction, -1, x, y, 0);
+    int mins = mod_mine_yield(faction, -1, x, y, 0);
+    int energy = mod_energy_yield(faction, -1, x, y, 0);
+    pos += snprintf(buf + pos, sizeof(buf) - pos, ". ");
+    pos += snprintf(buf + pos, sizeof(buf) - pos, loc(SR_TILE_YIELDS), food, mins, energy);
+
+    // Ownership
+    if (sq->owner >= 0 && sq->owner < MaxPlayerNum) {
+        pos += snprintf(buf + pos, sizeof(buf) - pos, ". ");
+        pos += snprintf(buf + pos, sizeof(buf) - pos, loc(SR_TILE_OWNER),
+            MFactions[sq->owner].noun_faction);
+    } else {
+        pos += snprintf(buf + pos, sizeof(buf) - pos, ". %s", loc(SR_TILE_UNOWNED));
+    }
+
+    // City radius
+    if (sq->items & BIT_BASE_RADIUS) {
+        pos += snprintf(buf + pos, sizeof(buf) - pos, ". %s", loc(SR_TILE_IN_RADIUS));
+    }
+
+    // Base on tile
+    int base_id = base_at(x, y);
+    if (base_id >= 0) {
+        pos += snprintf(buf + pos, sizeof(buf) - pos,
+            loc(SR_BASE_AT), Bases[base_id].name);
+    }
+
+    // Units on this tile
+    if (Vehs && *VehCount > 0) {
+        int unit_count = 0;
+        for (int i = 0; i < *VehCount && unit_count < 3; i++) {
+            if (Vehs[i].x == x && Vehs[i].y == y) {
+                if (unit_count == 0) {
+                    pos += snprintf(buf + pos, sizeof(buf) - pos,
+                        loc(SR_UNIT_AT), Vehs[i].name());
+                } else {
+                    pos += snprintf(buf + pos, sizeof(buf) - pos,
+                        ", %s", Vehs[i].name());
+                }
+                unit_count++;
+            }
+        }
+        if (unit_count > 0) {
+            // Count remaining
+            int remaining = 0;
+            for (int i = 0; i < *VehCount; i++) {
+                if (Vehs[i].x == x && Vehs[i].y == y) remaining++;
+            }
+            if (remaining > unit_count) {
+                pos += snprintf(buf + pos, sizeof(buf) - pos,
+                    loc(SR_MORE_UNITS), remaining - unit_count);
+            }
+        }
+    }
+
+    sr_debug_log("TILE-ANNOUNCE (%d,%d): %s", x, y, buf);
+    sr_output(buf, true);
+}
+
+// Menu bar: live data access helpers.
+// Reads directly from MapWin->oMainMenu at runtime.
+// This ensures correct order, current items (F11 toggle), and valid IDs.
+
+/// Strip '&' from menu/item caption for screen reader output.
+static void sr_strip_ampersand(char* dst, const char* src, int maxlen) {
+    int j = 0;
+    for (int i = 0; src[i] && j < maxlen - 1; i++) {
+        if (src[i] != '&') {
+            dst[j++] = src[i];
+        }
+    }
+    dst[j] = '\0';
+}
+
+/// Get number of top-level menus from live game data.
+static int sr_get_menu_count() {
+    if (!MapWin) return 0;
+    int count = MapWin->oMainMenu.iBaseMenuItemCount;
+    if (count < 0 || count > 15) return 0;
+    return count;
+}
+
+/// Get top-level menu name (ampersand-stripped) into buf.
+static bool sr_get_menu_name(int index, char* buf, int bufsize) {
+    if (!MapWin || index < 0 || index >= sr_get_menu_count()) return false;
+    const char* caption = (const char*)MapWin->oMainMenu.aMainMenuItems[index].pszCaption;
+    if (!caption) return false;
+    sr_strip_ampersand(buf, caption, bufsize);
+    return true;
+}
+
+/// Get the CMenu submenu for a top-level menu index. Returns NULL if invalid.
+static CMenu* sr_get_submenu(int index) {
+    if (!MapWin || index < 0 || index >= sr_get_menu_count()) return NULL;
+    return MapWin->oMainMenu.aMainMenuItems[index].poSubMenu;
+}
+
+/// Get the number of VISIBLE items in a submenu (respects F11 simple/detailed toggle).
+static int sr_get_item_count(int menu_index) {
+    CMenu* sub = sr_get_submenu(menu_index);
+    if (!sub) return 0;
+    int count = sub->iVisibleItemCount;
+    if (count <= 0 || count > 64) count = sub->iMenuItemCount;
+    if (count < 0 || count > 64) count = 0;
+    return count;
+}
+
+/// Get submenu item caption (ampersand-stripped) into buf.
+static bool sr_get_item_name(int menu_index, int item_index, char* buf, int bufsize) {
+    CMenu* sub = sr_get_submenu(menu_index);
+    if (!sub || item_index < 0 || item_index >= sr_get_item_count(menu_index)) return false;
+    const char* caption = (const char*)sub->aMenuItems[item_index].pszCaption;
+    if (!caption) return false;
+    sr_strip_ampersand(buf, caption, bufsize);
+    return true;
+}
+
+/// Get submenu item hotkey string into buf.
+static bool sr_get_item_hotkey(int menu_index, int item_index, char* buf, int bufsize) {
+    CMenu* sub = sr_get_submenu(menu_index);
+    if (!sub || item_index < 0 || item_index >= sr_get_item_count(menu_index)) return false;
+    const char* hk = (const char*)sub->aMenuItems[item_index].pszHotKey;
+    if (!hk || !hk[0]) { buf[0] = '\0'; return false; }
+    strncpy(buf, hk, bufsize - 1);
+    buf[bufsize - 1] = '\0';
+    return true;
+}
+
+/// Activate a submenu item by calling the game's menu handler callback.
+static bool sr_activate_menu_item(int menu_index, int item_index) {
+    CMenu* sub = sr_get_submenu(menu_index);
+    if (!sub || item_index < 0 || item_index >= sr_get_item_count(menu_index)) return false;
+    int menu_id = sub->aMenuItems[item_index].iMenuID;
+    MENU_HANDLER_CB_F handler = MapWin->oMainMenu.pMenuHandlerCB;
+    if (!handler) {
+        debug("sr_activate_menu_item: no handler callback\n");
+        return false;
+    }
+    sr_debug_log("MENU-ACTIVATE menu=%d item=%d id=%d", menu_index, item_index, menu_id);
+    handler(menu_id);
+    return true;
+}
+
+// Scanner mode: jump to points of interest on the world map
+static int sr_scan_filter = 0;
+static const int SR_SCAN_FILTER_COUNT = 10;
+
+static const SrStr sr_scan_filter_names[SR_SCAN_FILTER_COUNT] = {
+    SR_SCAN_ALL, SR_SCAN_OWN_BASES, SR_SCAN_ENEMY_BASES,
+    SR_SCAN_ENEMY_UNITS, SR_SCAN_OWN_UNITS, SR_SCAN_OWN_FORMERS,
+    SR_SCAN_FUNGUS, SR_SCAN_PODS, SR_SCAN_IMPROVEMENTS, SR_SCAN_NATURE,
+};
+
+/// Check if tile (x,y) matches the current scanner filter for given faction.
+static bool sr_scan_matches(int x, int y, int filter, int faction) {
+    MAP* sq = mapsq(x, y);
+    if (!sq || !sq->is_visible(faction)) return false;
+
+    switch (filter) {
+    case 0: // All non-empty
+        return (sq->items & (BIT_BASE_IN_TILE | BIT_VEH_IN_TILE | BIT_FARM | BIT_MINE
+            | BIT_SOLAR | BIT_ROAD | BIT_MAGTUBE | BIT_FOREST | BIT_RIVER | BIT_FUNGUS
+            | BIT_CONDENSER | BIT_ECH_MIRROR | BIT_SOIL_ENRICHER | BIT_THERMAL_BORE
+            | BIT_BUNKER | BIT_AIRBASE | BIT_SENSOR | BIT_SUPPLY_POD | BIT_MONOLITH)) != 0;
+    case 1: // Own bases
+        return (sq->items & BIT_BASE_IN_TILE) && sq->owner == faction;
+    case 2: // Enemy bases
+        return (sq->items & BIT_BASE_IN_TILE) && sq->owner != faction && sq->owner >= 0;
+    case 3: // Enemy units
+        if (Vehs && *VehCount > 0) {
+            for (int i = 0; i < *VehCount; i++) {
+                if (Vehs[i].x == x && Vehs[i].y == y && Vehs[i].faction_id != faction)
+                    return true;
+            }
+        }
+        return false;
+    case 4: // Own units
+        if (Vehs && *VehCount > 0) {
+            for (int i = 0; i < *VehCount; i++) {
+                if (Vehs[i].x == x && Vehs[i].y == y && Vehs[i].faction_id == faction)
+                    return true;
+            }
+        }
+        return false;
+    case 5: // Own formers
+        if (Vehs && *VehCount > 0) {
+            for (int i = 0; i < *VehCount; i++) {
+                if (Vehs[i].x == x && Vehs[i].y == y && Vehs[i].faction_id == faction
+                    && Vehs[i].is_former())
+                    return true;
+            }
+        }
+        return false;
+    case 6: // Fungus
+        return sq->is_fungus();
+    case 7: // Supply pods / Monoliths
+        return (sq->items & (BIT_SUPPLY_POD | BIT_MONOLITH)) != 0;
+    case 8: // Improvements
+        return (sq->items & (BIT_FARM | BIT_MINE | BIT_SOLAR | BIT_ROAD | BIT_MAGTUBE
+            | BIT_SENSOR | BIT_BUNKER | BIT_AIRBASE | BIT_CONDENSER | BIT_ECH_MIRROR
+            | BIT_SOIL_ENRICHER | BIT_THERMAL_BORE)) != 0;
+    case 9: // Terrain & Nature
+        return (sq->items & (BIT_RIVER | BIT_FOREST | BIT_FUNGUS)) != 0
+            || sq->is_fungus();
+    }
+    return false;
+}
+
+/// Advance to next valid tile coordinate (row by row, left to right).
+/// Returns false if wrapped back to start position.
+static bool sr_scan_next_tile(int* x, int* y, int start_x, int start_y) {
+    *x += 2;
+    if (*x >= *MapAreaX) {
+        *y += 1;
+        if (*y >= *MapAreaY) {
+            *y = 0;
+        }
+        *x = (*y % 2 == 0) ? 0 : 1;
+    }
+    return !(*x == start_x && *y == start_y);
+}
+
+/// Go to previous valid tile coordinate (row by row, right to left).
+/// Returns false if wrapped back to start position.
+static bool sr_scan_prev_tile(int* x, int* y, int start_x, int start_y) {
+    *x -= 2;
+    if (*x < 0) {
+        *y -= 1;
+        if (*y < 0) {
+            *y = *MapAreaY - 1;
+        }
+        // Largest valid x in row: x+y must be even, x < MapAreaX
+        *x = *MapAreaX - 1;
+        if ((*x + *y) % 2 != 0) *x -= 1;
+    }
+    return !(*x == start_x && *y == start_y);
+}
+
 LRESULT WINAPI ModWinProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     const bool debug_cmd = DEBUG && !*GameHalted && msg == WM_CHAR;
     const bool is_editor = !*GameHalted
         && *GameState & STATE_SCENARIO_EDITOR && *GameState & STATE_OMNISCIENT_VIEW;
     static int delta_accum = 0;
+    static bool sr_initialized = false;
     POINT p;
     MAP* sq;
+
+    // Deferred screen reader init (COM not safe in DllMain)
+    if (!sr_initialized) {
+        sr_initialized = true;
+        if (sr_all_disabled()) {
+            // SR fully disabled (no_hooks.txt) — skip Tolk loading entirely
+        } else if (sr_init()) {
+            loc_init();
+            sr_output(loc(SR_MOD_LOADED), true);
+            sr_debug_log("SR init OK, sr_is_available=%d", sr_is_available());
+        } else {
+            sr_debug_log("SR init FAILED");
+        }
+    }
+
+    // === Screen reader: unified announce system ===
+
+    // Early in_menu check for HUD filter (full in_menu computed later too)
+    bool in_menu_early = (current_window() == GW_None
+        && *PopupDialogState == 0);
+
+    // HUD bar noise filter: status bar items that should not be auto-announced.
+    // These are drawn character-by-character and pollute all triggers.
+    // Available for on-demand readback in the future.
+    auto sr_is_hud_noise = [in_menu_early](const char* text) -> bool {
+        if (!text) return true;
+        // HUD bar items (drawn character-by-character)
+        // Short "Mission Year" = HUD/info panel noise.
+        // Long "Mission Year NNNN: message" = game status → let through.
+        if (strncmp(text, "Mission Year", 12) == 0 && strlen(text) < 30) return true;
+        if (strncmp(text, "Econ:", 5) == 0) return true;
+        if (strncmp(text, "Psych:", 6) == 0) return true;
+        if (strncmp(text, "Labs:", 5) == 0) return true;
+        // Info panel items (redundant with MAP-MOVE tracker)
+        if (strncmp(text, "Energy:", 7) == 0) return true;
+        if (strncmp(text, "Unexplored", 10) == 0) return true;
+        if (text[0] == '(' && strstr(text, " , ") != NULL) return true;
+        if (strncmp(text, "Elev:", 5) == 0) return true;
+        if (strcmp(text, "ENDANGERED") == 0) return true;
+        if (strncmp(text, "(Gov:", 5) == 0) return true;
+        // Terrain descriptors (handled by MAP-MOVE)
+        if (strstr(text, "Rolling") != NULL && strlen(text) < 20) return true;
+        if (strstr(text, "Flat") != NULL && strlen(text) < 20) return true;
+        if (strstr(text, "Rocky") != NULL && strlen(text) < 20) return true;
+        if (strstr(text, "Rainy") != NULL && strlen(text) < 20) return true;
+        if (strstr(text, "Arid") != NULL && strlen(text) < 15) return true;
+        if (strstr(text, "Moist") != NULL && strlen(text) < 15) return true;
+        if (strstr(text, "Xenofungus") != NULL) return true;
+        // Economic panel (world map overlay, drawn char-by-char)
+        if (strncmp(text, "Commerce", 8) == 0) return true;
+        if (strncmp(text, "Gross", 5) == 0) return true;
+        if (strncmp(text, "Total Cost", 10) == 0) return true;
+        if (strncmp(text, "NET ", 4) == 0) return true;
+        // Partial HUD build-up (character-by-character: "Mis", "Miss", etc.)
+        if (strncmp(text, "Mis", 3) == 0 && strlen(text) < 12) return true;
+        if (strncmp(text, "Eco", 3) == 0 && strlen(text) < 5) return true;
+        if (strncmp(text, "Psy", 3) == 0 && strlen(text) < 6) return true;
+        if (strncmp(text, "Lab", 3) == 0 && strlen(text) < 5) return true;
+        // Menu bar items (top of world map screen)
+        // Skip in menu context: these words can be real menu items there
+        if (!in_menu_early) {
+            if (strcmp(text, "GAME") == 0) return true;
+            if (strcmp(text, "NETWORK") == 0) return true;
+            if (strcmp(text, "ACTION") == 0) return true;
+            if (strcmp(text, "TERRAFORM") == 0) return true;
+            if (strcmp(text, "SCENARIO") == 0) return true;
+            if (strcmp(text, "EDIT MAP") == 0) return true;
+            if (strcmp(text, "HELP") == 0) return true;
+        }
+        return false;
+    };
+
+    //
+    static char sr_announced[2048] = "";
+    static DWORD sr_last_seen_record = 0;
+    static DWORD sr_stable_since = 0;
+    // Virtual exploration cursor (independent of game cursor)
+    static int sr_cursor_x = -1;
+    static int sr_cursor_y = -1;
+    static bool sr_arrow_active = false;
+    static WPARAM sr_arrow_dir = 0;  // VK_UP or VK_DOWN
+    static DWORD sr_arrow_time = 0;  // tick when arrow was pressed
+    // Menu bar navigation state
+    static bool sr_menubar_active = false;
+    static int sr_menubar_index = 0;
+    static bool sr_submenu_active = false;
+    static int sr_submenu_index = 0;
+
+    // Menu item cache: tracks position via key counting, caches text
+    static struct {
+        char items[32][256];  // cached text per position
+        int pos;              // current position (0-based)
+        bool active;          // cache is in use
+    } sr_mcache = {{}, 0, false};
+
+    if (sr_is_available()) {
+        DWORD now = GetTickCount();
+        GameWinState cur_win = current_window();
+        int cur_popup = *PopupDialogState;
+
+        // --- Screen state change tracking ---
+        static GameWinState sr_prev_win = GW_None;
+        static int sr_prev_popup = -1;
+        if (cur_win != sr_prev_win || cur_popup != sr_prev_popup) {
+            const char* wname = "None";
+            if (cur_win == GW_World) wname = "World";
+            else if (cur_win == GW_Base) wname = "Base";
+            else if (cur_win == GW_Design) wname = "Design";
+            sr_debug_log("SCREEN %s popup=%d", wname, cur_popup);
+
+            // Announce major screen transitions (spoken)
+            if (cur_win != sr_prev_win) {
+                if (sr_prev_win == GW_Base) {
+                    BaseScreenHandler::OnClose();
+                }
+                if (cur_win == GW_Base) {
+                    BaseScreenHandler::OnOpen();
+                } else if (cur_win == GW_Design) {
+                    sr_debug_log("ANNOUNCE-SCREEN: Design Workshop");
+                    sr_output(loc(SR_DESIGN_WORKSHOP), true);
+                }
+                // Clear settled text for new screen context
+                sr_announced[0] = '\0';
+            }
+
+            sr_prev_win = cur_win;
+            sr_prev_popup = cur_popup;
+        }
+
+        // --- World map position tracking ---
+        // Active when world map is focused (GW_World) OR during gameplay (popup >= 2)
+        static int sr_map_x = -999;
+        static int sr_map_y = -999;
+        static DWORD sr_map_change_time = 0;
+        static bool sr_map_pending = false;
+        bool on_world_map = MapWin &&
+            (cur_win == GW_World || (cur_win == GW_None && cur_popup >= 2));
+        // Menu/dialog context: arrow-navigated screens where auto-announce is noise.
+        // User navigates with arrows (Trigger 2). Popups handled by popup hooks.
+        bool in_menu = (cur_win == GW_None && cur_popup == 0);
+
+        // Invalidate menu cache when leaving menu context
+        if (!in_menu && sr_mcache.active) {
+            sr_debug_log("MCACHE invalidated (left menu)");
+            sr_mcache.active = false;
+        }
+
+        // Debug helper: log mcache events to file
+        auto mclog = [](const char* fmt, ...) {
+            FILE* f = fopen("mcache_debug.txt", "a");
+            if (!f) return;
+            va_list ap;
+            va_start(ap, fmt);
+            vfprintf(f, fmt, ap);
+            va_end(ap);
+            fprintf(f, "\n");
+            fclose(f);
+        };
+
+        // Announce world map transition (spoken)
+        static bool sr_prev_on_world_map = false;
+        if (on_world_map && !sr_prev_on_world_map) {
+            sr_debug_log("ANNOUNCE-SCREEN: World Map");
+            sr_output(loc(SR_WORLD_MAP), true);
+            sr_announced[0] = '\0';
+            // Initialize exploration cursor to current unit position
+            if (MapWin->iUnit >= 0 && Vehs && *VehCount > 0
+                && MapWin->iUnit < *VehCount) {
+                sr_cursor_x = Vehs[MapWin->iUnit].x;
+                sr_cursor_y = Vehs[MapWin->iUnit].y;
+            } else {
+                sr_cursor_x = MapWin->iTileX;
+                sr_cursor_y = MapWin->iTileY;
+            }
+            sr_debug_log("CURSOR-INIT (%d,%d)", sr_cursor_x, sr_cursor_y);
+        }
+        if (!on_world_map && sr_menubar_active) {
+            sr_menubar_active = false;
+            sr_submenu_active = false;
+        }
+        sr_prev_on_world_map = on_world_map;
+
+        if (on_world_map && *MapAreaX > 0 && *MapAreaY > 0) {
+            int mx = MapWin->iTileX;
+            int my = MapWin->iTileY;
+            // Skip if coordinates look uninitialized/garbage
+            if (mx < 0 || mx >= *MapAreaX || my < 0 || my >= *MapAreaY) {
+                sr_map_x = -999;
+                sr_map_y = -999;
+            } else if (mx != sr_map_x || my != sr_map_y) {
+                sr_map_x = mx;
+                sr_map_y = my;
+                sr_map_change_time = now;
+                sr_map_pending = true;
+            }
+            if (sr_map_pending && (now - sr_map_change_time) > 150) {
+                sr_map_pending = false;
+                sr_announce_tile(sr_map_x, sr_map_y);
+            }
+        } else {
+            sr_map_x = -999;
+            sr_map_y = -999;
+        }
+
+        // --- Player turn / unit selection detection ---
+        // When the game selects a unit for the player, announce "Your Turn".
+        static int sr_prev_unit = -1;
+        if (on_world_map && MapWin && Vehs && *VehCount > 0) {
+            int cur_unit = MapWin->iUnit;
+            if (cur_unit != sr_prev_unit) {
+                sr_debug_log("UNIT-CHANGE: prev=%d cur=%d VehCount=%d",
+                    sr_prev_unit, cur_unit, *VehCount);
+                if (cur_unit >= 0 && cur_unit < *VehCount) {
+                    VEH* veh = &Vehs[cur_unit];
+                    sr_debug_log("UNIT-CHECK: faction=%d owner=%d unit_id=%d",
+                        (int)veh->faction_id, (int)MapWin->cOwner,
+                        (int)veh->unit_id);
+                    if (veh->faction_id == MapWin->cOwner
+                        && veh->unit_id >= 0) {
+                        // Update cursor to new unit position
+                        sr_cursor_x = veh->x;
+                        sr_cursor_y = veh->y;
+                        int total_speed = veh_speed(cur_unit, 0);
+                        int remaining = max(0, total_speed - (int)veh->moves_spent);
+                        int disp_rem = remaining / Rules->move_rate_roads;
+                        int disp_tot = total_speed / Rules->move_rate_roads;
+                        char buf[256];
+                        char move_buf[64];
+                        snprintf(move_buf, sizeof(move_buf),
+                            loc(SR_MOVEMENT_POINTS), disp_rem, disp_tot);
+                        snprintf(buf, sizeof(buf), "%s. %s",
+                            loc(SR_YOUR_TURN), move_buf);
+                        // Fill in format args for SR_YOUR_TURN
+                        char full[320];
+                        snprintf(full, sizeof(full), buf,
+                            veh->name(), veh->x, veh->y);
+                        sr_debug_log("ANNOUNCE-TURN: %s", full);
+                        sr_output(full, true);
+                    }
+                }
+                sr_prev_unit = cur_unit;
+            }
+        } else {
+            sr_prev_unit = -1;
+        }
+
+        // --- Key tracking: reset capture on every significant keypress ---
+        if (msg == WM_KEYDOWN) {
+            sr_debug_log("KEY 0x%X popup=%d items=%d win=%d",
+                (unsigned)wParam, *PopupDialogState, sr_item_count(),
+                (int)current_window());
+
+            if (wParam == VK_UP || wParam == VK_DOWN) {
+                if (current_window() == GW_None && *PopupDialogState == 0) {
+                    // Activate cache on first arrow press
+                    // Start at pos=15 to allow UP navigation without clamping
+                    if (!sr_mcache.active) {
+                        memset(&sr_mcache, 0, sizeof(sr_mcache));
+                        sr_mcache.pos = 15;
+                        sr_mcache.active = true;
+                        mclog("MCACHE activated at pos=15");
+                    }
+
+                    // Update position
+                    if (wParam == VK_DOWN) {
+                        sr_mcache.pos++;
+                        if (sr_mcache.pos >= 32) sr_mcache.pos = 31;
+                    } else {
+                        sr_mcache.pos--;
+                        if (sr_mcache.pos < 0) sr_mcache.pos = 0;
+                    }
+
+                    // Check cache for instant announce
+                    if (sr_mcache.items[sr_mcache.pos][0] != '\0') {
+                        mclog("HIT pos=%d: %s",
+                            sr_mcache.pos, sr_mcache.items[sr_mcache.pos]);
+                        sr_output(sr_mcache.items[sr_mcache.pos], true);
+                        // Skip Trigger 2 for this press
+                        sr_arrow_active = false;
+                        sr_arrow_dir = 0;
+                        sr_arrow_time = 0;
+                    } else {
+                        // Cache miss: fall through to Trigger 2
+                        sr_arrow_active = true;
+                        sr_arrow_dir = wParam;
+                        sr_arrow_time = now;
+                        mclog("MISS pos=%d, waiting for T2",
+                            sr_mcache.pos);
+                    }
+                    sr_items_clear();
+                    sr_clear_text();
+                    sr_snapshot_consume();
+                    sr_last_seen_record = 0;
+                    sr_stable_since = 0;
+                    mclog("ARROW %s pos=%d",
+                        wParam == VK_DOWN ? "DOWN" : "UP",
+                        sr_mcache.pos);
+                }
+            } else if (wParam != VK_LEFT && wParam != VK_RIGHT
+                       && wParam != VK_SHIFT && wParam != VK_CONTROL
+                       && wParam != VK_MENU) {
+                sr_arrow_active = false;
+                sr_arrow_dir = 0;
+                // Invalidate cache on non-navigation keys
+                if (sr_mcache.active) {
+                    sr_debug_log("MCACHE invalidated (key 0x%X)",
+                        (unsigned)wParam);
+                    sr_mcache.active = false;
+                }
+                sr_items_clear();
+                sr_clear_text();
+                sr_snapshot_consume();
+                sr_last_seen_record = 0;
+                sr_stable_since = 0;
+            }
+        }
+
+        // Detect when new text is captured by hooks
+        DWORD last_record = sr_get_last_record_time();
+        if (last_record != sr_last_seen_record) {
+            sr_last_seen_record = last_record;
+            sr_stable_since = now;
+        }
+
+        // --- Trigger 1: Snapshot (draw cycle boundary) ---
+        // Suppress on world map (popup >= 2) — HUD data is noise there.
+        // World map feedback comes from MAP-MOVE tracker instead.
+        // Skip all announce triggers while sr_defer_active (planetfall etc.)
+        if (sr_snapshot_ready()) {
+            if (in_menu) {
+                sr_debug_log("SNAP-DISCARD (menu context)");
+            } else if (sr_arrow_active) {
+                sr_debug_log("SNAP-DISCARD (arrow)");
+            } else {
+                int sn = sr_snapshot_count();
+                if (sn > 10) {
+                    // Too many items (e.g. base screen buttons) — skip,
+                    // screen transition announcement handles orientation.
+                    sr_debug_log("SNAP-DISCARD (count=%d)", sn);
+                } else if (sn > 0) {
+                    // Only announce NEW non-HUD items
+                    char buf[2048];
+                    int pos = 0;
+                    char all[2048];
+                    int apos = 0;
+                    bool has_new = false;
+                    for (int i = 0; i < sn; i++) {
+                        const char* it = sr_snapshot_get(i);
+                        if (!it || strlen(it) < 3) continue;
+                        if (sr_is_hud_noise(it)) continue;
+                        int len = strlen(it);
+                        if (apos + len + 3 < (int)sizeof(all)) {
+                            if (apos > 0) { all[apos++] = '.'; all[apos++] = ' '; }
+                            memcpy(all + apos, it, len);
+                            apos += len;
+                        }
+                        if (strstr(sr_announced, it) == NULL) {
+                            has_new = true;
+                            if (pos + len + 3 < (int)sizeof(buf)) {
+                                if (pos > 0) { buf[pos++] = '.'; buf[pos++] = ' '; }
+                                memcpy(buf + pos, it, len);
+                                pos += len;
+                            }
+                        }
+                    }
+                    buf[pos] = '\0';
+                    all[apos] = '\0';
+                    if (has_new) {
+                        strncpy(sr_announced, all, sizeof(sr_announced) - 1);
+                        sr_announced[sizeof(sr_announced) - 1] = '\0';
+                        sr_debug_log("ANNOUNCE-SNAP(%d): %s", sn, buf);
+                        sr_output(buf, true);
+                    } else {
+                        sr_debug_log("SETTLE-SNAP(%d)", sn);
+                    }
+                }
+            }
+            sr_snapshot_consume();
+        }
+
+        // --- Trigger 2: Arrow navigation (50ms after keypress) ---
+        // Separate from timer: counts from KEY press, not from last capture.
+        // HUD data arrives character-by-character and prevents sr_stable_since
+        // from ever settling. This trigger ignores ongoing HUD captures.
+        if (sr_arrow_active && sr_arrow_time > 0 && !on_world_map) {
+            int count = sr_item_count();
+            DWORD elapsed = now - sr_arrow_time;
+            if ((count >= 2 && elapsed > 50) || (count == 1 && elapsed > 200)) {
+                // Find best nav target: skip HUD noise items
+                int nav_idx = -1;
+                if (count >= 2) {
+                    // Normal: item[0]=leaving, item[1]=entering
+                    // Boundary: item[0]=current, item[1]=HUD noise
+                    const char* it1 = sr_item_get(1);
+                    if (!sr_is_hud_noise(it1)) {
+                        nav_idx = 1;
+                    } else {
+                        sr_debug_log("NAV-BOUNDARY item[1] is HUD, using item[0]");
+                        nav_idx = 0;
+                    }
+                } else {
+                    nav_idx = 0;
+                }
+                const char* it = sr_item_get(nav_idx);
+                // Log all captured items for debugging
+                if (sr_mcache.active) {
+                    mclog("T2: count=%d nav_idx=%d dir=%s pos=%d",
+                        count, nav_idx,
+                        sr_arrow_dir == VK_DOWN ? "DN" : "UP",
+                        sr_mcache.pos);
+                    for (int di = 0; di < count && di < 5; di++) {
+                        const char* dit = sr_item_get(di);
+                        mclog("  item[%d]: %s%s", di,
+                            dit ? dit : "(null)",
+                            (dit && sr_is_hud_noise(dit)) ? " [HUD]" : "");
+                    }
+                }
+                if (it && strlen(it) >= 3 && !sr_is_hud_noise(it)) {
+                    // Cache entering item at current position
+                    if (sr_mcache.active && sr_mcache.pos >= 0
+                        && sr_mcache.pos < 32) {
+                        strncpy(sr_mcache.items[sr_mcache.pos], it,
+                            sizeof(sr_mcache.items[0]) - 1);
+                        sr_mcache.items[sr_mcache.pos][255] = '\0';
+                        mclog("STORE pos=%d: %s", sr_mcache.pos, it);
+                    }
+                    // Also cache the LEAVING item at previous position
+                    if (sr_mcache.active && count >= 2) {
+                        int prev_pos = sr_mcache.pos
+                            + (sr_arrow_dir == VK_DOWN ? -1 : 1);
+                        const char* leaving = sr_item_get(
+                            nav_idx == 1 ? 0 : 1);
+                        if (prev_pos >= 0 && prev_pos < 32
+                            && leaving && strlen(leaving) >= 3
+                            && !sr_is_hud_noise(leaving)
+                            && sr_mcache.items[prev_pos][0] == '\0') {
+                            strncpy(sr_mcache.items[prev_pos], leaving,
+                                sizeof(sr_mcache.items[0]) - 1);
+                            sr_mcache.items[prev_pos][255] = '\0';
+                            mclog("STORE-PREV pos=%d: %s",
+                                prev_pos, leaving);
+                        }
+                    }
+
+                    sr_debug_log("ANNOUNCE-NAV idx=%d/%d dir=%s: %s",
+                        nav_idx, count,
+                        sr_arrow_dir == VK_DOWN ? "DOWN" : "UP", it);
+                    sr_output(it, true);
+                    if (strstr(sr_announced, it) == NULL) {
+                        int al = strlen(sr_announced);
+                        int il = strlen(it);
+                        if (al + il + 3 < (int)sizeof(sr_announced)) {
+                            if (al > 0) {
+                                sr_announced[al++] = '.';
+                                sr_announced[al++] = ' ';
+                            }
+                            memcpy(sr_announced + al, it, il + 1);
+                        }
+                    }
+                }
+                sr_arrow_active = false;
+                sr_arrow_time = 0;
+            }
+        }
+
+        // --- Trigger 3: Timer (items stable for delay ms) ---
+        // Suppress on world map (HUD noise) and in menus (arrow nav handles it).
+        if (sr_stable_since > 0 && (now - sr_stable_since) > 300
+            && sr_item_count() > 0 && !on_world_map && !sr_arrow_active
+            && !in_menu) {
+            int count = sr_item_count();
+            {
+                // Only announce NEW non-HUD items; cap at 5 to prevent walls of text
+                char buf[2048];
+                int pos = 0;
+                char all[2048];
+                int apos = 0;
+                bool has_new = false;
+                int spoken = 0;
+                for (int i = 0; i < count; i++) {
+                    const char* it = sr_item_get(i);
+                    if (!it || strlen(it) < 3) continue;
+                    if (sr_is_hud_noise(it)) continue;
+                    int len = strlen(it);
+                    if (apos + len + 3 < (int)sizeof(all)) {
+                        if (apos > 0) { all[apos++] = '.'; all[apos++] = ' '; }
+                        memcpy(all + apos, it, len);
+                        apos += len;
+                    }
+                    if (strstr(sr_announced, it) == NULL && spoken < 5) {
+                        has_new = true;
+                        spoken++;
+                        if (pos + len + 3 < (int)sizeof(buf)) {
+                            if (pos > 0) { buf[pos++] = '.'; buf[pos++] = ' '; }
+                            memcpy(buf + pos, it, len);
+                            pos += len;
+                        }
+                    }
+                }
+                buf[pos] = '\0';
+                all[apos] = '\0';
+                if (has_new) {
+                    strncpy(sr_announced, all, sizeof(sr_announced) - 1);
+                    sr_announced[sizeof(sr_announced) - 1] = '\0';
+                    sr_debug_log("ANNOUNCE-TIMER(%d): %s", count, buf);
+                    sr_output(buf, true);
+                } else {
+                    sr_debug_log("SETTLE-TIMER(%d)", count);
+                }
+            }
+            sr_stable_since = 0;
+        }
+
+        // --- Trigger 4: World map important message announce ---
+        // On the world map, HUD draws char-by-char without gaps, preventing
+        // snapshot/timer triggers. Instead of announcing everything, we use a
+        // WHITELIST: only announce known important messages (tutorials, turn
+        // status). Polls every 500ms.
+        static DWORD sr_worldmap_poll_time = 0;
+        if (on_world_map && !sr_arrow_active) {
+            if (sr_worldmap_poll_time == 0) sr_worldmap_poll_time = now;
+            if ((now - sr_worldmap_poll_time) >= 500) {
+                sr_worldmap_poll_time = now;
+                int count = sr_item_count();
+                if (count > 0) {
+                    char buf[2048];
+                    int pos = 0;
+                    bool has_new = false;
+                    for (int i = 0; i < count; i++) {
+                        const char* it = sr_item_get(i);
+                        if (!it || strlen(it) < 3) continue;
+                        // Whitelist: only important messages
+                        bool important = false;
+                        if (strncmp(it, "ABOUT ", 6) == 0) important = true;
+                        if (strstr(it, "need new orders") != NULL) important = true;
+                        if (strstr(it, "Press ENTER") != NULL) important = true;
+                        if (!important) continue;
+                        if (strstr(sr_announced, it) != NULL) continue;
+                        has_new = true;
+                        int len = strlen(it);
+                        if (pos + len + 3 < (int)sizeof(buf)) {
+                            if (pos > 0) {
+                                buf[pos++] = '.';
+                                buf[pos++] = ' ';
+                            }
+                            memcpy(buf + pos, it, len);
+                            pos += len;
+                        }
+                    }
+                    buf[pos] = '\0';
+                    if (has_new) {
+                        // Append to sr_announced
+                        int al = strlen(sr_announced);
+                        int bl = strlen(buf);
+                        if (al + bl + 3 < (int)sizeof(sr_announced)) {
+                            if (al > 0) {
+                                sr_announced[al++] = '.';
+                                sr_announced[al++] = ' ';
+                            }
+                            memcpy(sr_announced + al, buf, bl + 1);
+                        }
+                        sr_debug_log("ANNOUNCE-WORLDMAP: %s", buf);
+                        sr_output(buf, true);
+                    }
+                }
+            }
+        } else {
+            sr_worldmap_poll_time = 0;
+        }
+    }
+    // === End screen reader announce system ===
 
     if (msg == WM_ACTIVATEAPP && conf.auto_minimise && !conf.reduced_mode) {
         if (!LOWORD(wParam)) {
@@ -646,9 +1555,35 @@ LRESULT WINAPI ModWinProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             return 0;
         }
 
+    // Screen reader: production picker intercepts ALL keys when active (must be first)
+    } else if (msg == WM_KEYDOWN && sr_is_available()
+    && current_window() == GW_Base
+    && BaseScreenHandler::IsPickerActive()) {
+        if (BaseScreenHandler::Update(msg, wParam)) return 0;
+
     } else if (msg == WM_KEYDOWN && (wParam == VK_UP || wParam == VK_DOWN)
-    && conf.render_high_detail && ctrl_key_down() && current_window() == GW_Base) {
-        base_resource_zoom(wParam == VK_UP);
+    && ctrl_key_down() && current_window() == GW_Base) {
+        if (sr_is_available()) {
+            BaseScreenHandler::Update(msg, wParam);
+        } else if (conf.render_high_detail) {
+            base_resource_zoom(wParam == VK_UP);
+        }
+
+    } else if (msg == WM_KEYDOWN && wParam == 'I' && ctrl_key_down()
+    && sr_is_available() && current_window() == GW_Base) {
+        BaseScreenHandler::Update(msg, wParam);
+
+    // Screen reader: Ctrl+Shift+P = open production picker
+    } else if (msg == WM_KEYDOWN && wParam == 'P' && ctrl_key_down()
+    && (GetKeyState(VK_SHIFT) & 0x8000) && sr_is_available()
+    && current_window() == GW_Base) {
+        if (BaseScreenHandler::Update(msg, wParam)) return 0;
+
+    // Screen reader: Ctrl+F1 = help for base screen
+    } else if (msg == WM_KEYDOWN && wParam == VK_F1 && ctrl_key_down()
+    && sr_is_available() && current_window() == GW_Base) {
+        sr_output(BaseScreenHandler::GetHelpText(), true);
+        return 0;
 
     } else if (msg == WM_KEYDOWN && (wParam == VK_LEFT || wParam == VK_RIGHT)
     && ctrl_key_down() && current_window() == GW_Base) {
@@ -660,6 +1595,15 @@ LRESULT WINAPI ModWinProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         }
         BaseWin->oRender.iResWindowTab = value;
         GraphicWin_redraw(BaseWin);
+        if (sr_is_available()) {
+            const char* tab_names[] = {loc(SR_TAB_RESOURCES), loc(SR_TAB_CITIZENS), loc(SR_TAB_PRODUCTION)};
+            char buf[64];
+            snprintf(buf, sizeof(buf), loc(SR_TAB_FMT), tab_names[value % 3]);
+            sr_output(buf, true);
+            // Set matching section and announce content (queued, non-interrupting)
+            BaseScreenHandler::SetSectionFromTab(value % 3);
+            BaseScreenHandler::AnnounceCurrentSection(false);
+        }
 
     } else if (msg == WM_KEYDOWN && wParam == 'H' && ctrl_key_down()
     && !*MultiplayerActive && current_window() == GW_Base && *CurrentBaseID >= 0
@@ -669,17 +1613,33 @@ LRESULT WINAPI ModWinProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         int mins = max(0, mineral_cost(*CurrentBaseID, base->item()) - base->minerals_accumulated);
         int cost = hurry_cost(*CurrentBaseID, base->item(), mins);
         if (base->can_hurry_item() && cost > 0 && mins > 0) {
-            if (max(0, f->energy_credits - f->hurry_cost_total) >= cost) {
+            int available = max(0, f->energy_credits - f->hurry_cost_total);
+            if (available >= cost) {
                 f->energy_credits -= cost;
                 base->minerals_accumulated += mins;
                 base->state_flags |= BSTATE_HURRY_PRODUCTION;
                 GraphicWin_redraw(BaseWin);
                 ok_callback();
+                if (sr_is_available()) {
+                    char buf[256];
+                    snprintf(buf, sizeof(buf), loc(SR_HURRY_OK),
+                        prod_name(base->item()), cost, f->energy_credits);
+                    sr_output(buf, true);
+                }
             } else {
                 wave_it(9); // Insufficient energy
+                if (sr_is_available()) {
+                    char buf[256];
+                    snprintf(buf, sizeof(buf), loc(SR_HURRY_NO_CREDITS),
+                        cost, available);
+                    sr_output(buf, true);
+                }
             }
         } else if (cost > 0 && mins > 0) {
             wave_it(8); // Cannot execute order
+            if (sr_is_available()) {
+                sr_output(loc(SR_HURRY_CANNOT), true);
+            }
         }
 
     } else if (conf.smooth_scrolling && msg >= WM_MOUSEFIRST && msg <= WM_MOUSELAST) {
@@ -717,12 +1677,455 @@ LRESULT WINAPI ModWinProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     } else if (conf.reduced_mode && msg == WM_CHAR && wParam == 'h' && alt_key_down()) {
         show_mod_menu();
 
+    // Screen reader: Ctrl+F2 activates menu bar navigation (world map only)
+    // Reads live data from MapWin->oMainMenu — reflects F11 toggle, correct order.
+    // Level 1 (menu bar): Left/Right switch menus, Down/Enter opens submenu
+    // Level 2 (submenu): Up/Down navigate items, Left/Right switch to adjacent menu
+    // Enter activates item via pMenuHandlerCB(iMenuID) — no mouse clicks needed.
+    } else if (msg == WM_KEYDOWN && wParam == VK_F2 && ctrl_key_down()
+    && sr_is_available() && sr_get_menu_count() > 0
+    && (current_window() == GW_World || (current_window() == GW_None && *PopupDialogState >= 2))) {
+        sr_menubar_active = true;
+        sr_submenu_active = false;
+        sr_menubar_index = 0;
+        sr_submenu_index = 0;
+        char buf[256], mname[64];
+        sr_get_menu_name(0, mname, sizeof(mname));
+        snprintf(buf, sizeof(buf), loc(SR_MENU_ENTRY_FMT),
+            mname, sr_get_item_count(0));
+        sr_output(buf, true);
+        return 0;
+
+    // Screen reader: Menu bar/submenu navigation while active
+    } else if (msg == WM_KEYDOWN && sr_menubar_active && sr_is_available()
+    && (wParam == VK_LEFT || wParam == VK_RIGHT || wParam == VK_UP
+        || wParam == VK_DOWN || wParam == VK_RETURN || wParam == VK_ESCAPE)) {
+        char buf[256], mname[64], iname[128], hkbuf[64];
+        int menu_count = sr_get_menu_count();
+        if (menu_count <= 0) { sr_menubar_active = false; return 0; }
+
+        // Helper lambda: announce a submenu item at position
+        auto announce_item = [&](int mi, int ii) {
+            int ic = sr_get_item_count(mi);
+            sr_get_item_name(mi, ii, iname, sizeof(iname));
+            if (sr_get_item_hotkey(mi, ii, hkbuf, sizeof(hkbuf))) {
+                char inner[200];
+                snprintf(inner, sizeof(inner), loc(SR_MENU_ITEM_FMT), iname, hkbuf);
+                snprintf(buf, sizeof(buf), loc(SR_MENU_NAV_FMT), ii + 1, ic, inner);
+            } else {
+                snprintf(buf, sizeof(buf), loc(SR_MENU_NAV_FMT), ii + 1, ic, iname);
+            }
+        };
+
+        // Helper lambda: announce menu header + first item
+        auto announce_menu_and_first = [&](int mi) {
+            sr_get_menu_name(mi, mname, sizeof(mname));
+            int ic = sr_get_item_count(mi);
+            char header[128];
+            snprintf(header, sizeof(header), loc(SR_MENU_ENTRY_FMT), mname, ic);
+            if (ic > 0) {
+                sr_get_item_name(mi, 0, iname, sizeof(iname));
+                if (sr_get_item_hotkey(mi, 0, hkbuf, sizeof(hkbuf))) {
+                    char inner[200];
+                    snprintf(inner, sizeof(inner), loc(SR_MENU_ITEM_FMT), iname, hkbuf);
+                    snprintf(buf, sizeof(buf), "%s. %s", header, inner);
+                } else {
+                    snprintf(buf, sizeof(buf), "%s. %s", header, iname);
+                }
+            } else {
+                snprintf(buf, sizeof(buf), "%s", header);
+            }
+        };
+
+        if (sr_submenu_active) {
+            // --- Level 2: Submenu item navigation ---
+            int item_count = sr_get_item_count(sr_menubar_index);
+            if (item_count <= 0) { sr_submenu_active = false; return 0; }
+
+            if (wParam == VK_DOWN) {
+                sr_submenu_index = (sr_submenu_index + 1) % item_count;
+                announce_item(sr_menubar_index, sr_submenu_index);
+                sr_output(buf, true);
+                return 0;
+
+            } else if (wParam == VK_UP) {
+                sr_submenu_index = (sr_submenu_index - 1 + item_count) % item_count;
+                announce_item(sr_menubar_index, sr_submenu_index);
+                sr_output(buf, true);
+                return 0;
+
+            } else if (wParam == VK_RIGHT) {
+                sr_menubar_index = (sr_menubar_index + 1) % menu_count;
+                sr_submenu_index = 0;
+                announce_menu_and_first(sr_menubar_index);
+                sr_output(buf, true);
+                return 0;
+
+            } else if (wParam == VK_LEFT) {
+                sr_menubar_index = (sr_menubar_index - 1 + menu_count) % menu_count;
+                sr_submenu_index = 0;
+                announce_menu_and_first(sr_menubar_index);
+                sr_output(buf, true);
+                return 0;
+
+            } else if (wParam == VK_ESCAPE) {
+                sr_submenu_active = false;
+                sr_get_menu_name(sr_menubar_index, mname, sizeof(mname));
+                snprintf(buf, sizeof(buf), loc(SR_MENU_ENTRY_FMT),
+                    mname, sr_get_item_count(sr_menubar_index));
+                sr_output(buf, true);
+                return 0;
+
+            } else if (wParam == VK_RETURN) {
+                // Activate item via game's menu handler callback
+                sr_get_item_name(sr_menubar_index, sr_submenu_index, iname, sizeof(iname));
+                sr_menubar_active = false;
+                sr_submenu_active = false;
+                sr_output(iname, true);
+                sr_activate_menu_item(sr_menubar_index, sr_submenu_index);
+                return 0;
+            }
+
+        } else {
+            // --- Level 1: Menu bar navigation ---
+            if (wParam == VK_RIGHT) {
+                sr_menubar_index = (sr_menubar_index + 1) % menu_count;
+                sr_get_menu_name(sr_menubar_index, mname, sizeof(mname));
+                snprintf(buf, sizeof(buf), loc(SR_MENU_ENTRY_FMT),
+                    mname, sr_get_item_count(sr_menubar_index));
+                sr_output(buf, true);
+                return 0;
+
+            } else if (wParam == VK_LEFT) {
+                sr_menubar_index = (sr_menubar_index - 1 + menu_count) % menu_count;
+                sr_get_menu_name(sr_menubar_index, mname, sizeof(mname));
+                snprintf(buf, sizeof(buf), loc(SR_MENU_ENTRY_FMT),
+                    mname, sr_get_item_count(sr_menubar_index));
+                sr_output(buf, true);
+                return 0;
+
+            } else if (wParam == VK_DOWN || wParam == VK_RETURN) {
+                int ic = sr_get_item_count(sr_menubar_index);
+                if (ic > 0) {
+                    sr_submenu_active = true;
+                    sr_submenu_index = 0;
+                    announce_item(sr_menubar_index, 0);
+                    sr_output(buf, true);
+                }
+                return 0;
+
+            } else if (wParam == VK_UP) {
+                return 0;
+
+            } else if (wParam == VK_ESCAPE) {
+                sr_menubar_active = false;
+                sr_submenu_active = false;
+                sr_output(loc(SR_MENU_CLOSED), true);
+                return 0;
+            }
+        }
+
     } else if (msg == WM_CHAR && wParam == 'o' && alt_key_down() && is_editor) {
         uint32_t seed = ThinkerVars->map_random_value;
         int value = pop_ask_number("modmenu", "MAPGEN", seed, 0);
         if (!value) { // OK button pressed
             console_world_generate(ParseNumTable[0]);
         }
+
+    // Screen reader: Scanner mode (Ctrl+Left/Right = jump, Ctrl+PgUp/PgDn = filter)
+    } else if (msg == WM_KEYDOWN && sr_is_available() && MapWin
+    && (current_window() == GW_World || (current_window() == GW_None && *PopupDialogState >= 2))
+    && *MapAreaX > 0 && *MapAreaY > 0
+    && ctrl_key_down() && !shift_key_down() && !alt_key_down()
+    && (wParam == VK_LEFT || wParam == VK_RIGHT || wParam == VK_PRIOR || wParam == VK_NEXT)) {
+        int faction = *CurrentPlayerFaction;
+
+        if (wParam == VK_NEXT) {
+            // Ctrl+PgDn: next filter
+            sr_scan_filter = (sr_scan_filter + 1) % SR_SCAN_FILTER_COUNT;
+            sr_output(loc(sr_scan_filter_names[sr_scan_filter]), true);
+            return 0;
+        }
+        if (wParam == VK_PRIOR) {
+            // Ctrl+PgUp: previous filter
+            sr_scan_filter = (sr_scan_filter + SR_SCAN_FILTER_COUNT - 1) % SR_SCAN_FILTER_COUNT;
+            sr_output(loc(sr_scan_filter_names[sr_scan_filter]), true);
+            return 0;
+        }
+
+        // Initialize cursor if needed
+        if (sr_cursor_x < 0 || sr_cursor_y < 0) {
+            if (MapWin->iUnit >= 0 && Vehs && *VehCount > 0
+                && MapWin->iUnit < *VehCount) {
+                sr_cursor_x = Vehs[MapWin->iUnit].x;
+                sr_cursor_y = Vehs[MapWin->iUnit].y;
+            } else {
+                sr_cursor_x = MapWin->iTileX;
+                sr_cursor_y = MapWin->iTileY;
+            }
+        }
+
+        int sx = sr_cursor_x;
+        int sy = sr_cursor_y;
+        int cx = sx;
+        int cy = sy;
+        bool found = false;
+
+        if (wParam == VK_RIGHT) {
+            // Scan forward
+            while (sr_scan_next_tile(&cx, &cy, sx, sy)) {
+                if (sr_scan_matches(cx, cy, sr_scan_filter, faction)) {
+                    found = true;
+                    break;
+                }
+            }
+        } else {
+            // Scan backward
+            while (sr_scan_prev_tile(&cx, &cy, sx, sy)) {
+                if (sr_scan_matches(cx, cy, sr_scan_filter, faction)) {
+                    found = true;
+                    break;
+                }
+            }
+        }
+
+        if (found) {
+            sr_cursor_x = cx;
+            sr_cursor_y = cy;
+            sr_announce_tile(sr_cursor_x, sr_cursor_y);
+        } else {
+            sr_output(loc(SR_SCAN_NOT_FOUND), true);
+        }
+        return 0;
+
+    // Screen reader: World map navigation (arrows = explore, Shift+arrows = move unit)
+    } else if (msg == WM_KEYDOWN && sr_is_available() && MapWin
+    && (current_window() == GW_World || (current_window() == GW_None && *PopupDialogState >= 2))
+    && *MapAreaX > 0 && *MapAreaY > 0
+    && (wParam == VK_UP || wParam == VK_DOWN || wParam == VK_LEFT || wParam == VK_RIGHT
+        || wParam == VK_HOME || wParam == VK_PRIOR || wParam == VK_END || wParam == VK_NEXT)) {
+        // Direction offsets for SMAC diamond grid (matching BaseOffset order)
+        // NE=0, E=1, SE=2, S=3, SW=4, W=5, NW=6, N=7
+        static const int dir_dx[] = { 1, 2, 1, 0, -1, -2, -1, 0 };
+        static const int dir_dy[] = { -1, 0, 1, 2, 1, 0, -1, -2 };
+        // Map keys to direction index
+        int dir = -1;
+        if (wParam == VK_UP)          dir = 7; // N
+        else if (wParam == VK_DOWN)   dir = 3; // S
+        else if (wParam == VK_LEFT)   dir = 5; // W
+        else if (wParam == VK_RIGHT)  dir = 1; // E
+        else if (wParam == VK_HOME)   dir = 6; // NW
+        else if (wParam == VK_PRIOR)  dir = 0; // NE (PgUp)
+        else if (wParam == VK_END)    dir = 4; // SW
+        else if (wParam == VK_NEXT)   dir = 2; // SE (PgDn)
+
+        if (shift_key_down()) {
+            // Shift+key = move unit to adjacent tile using set_move_to
+            int veh_id = MapWin->iUnit;
+            if (veh_id >= 0 && Vehs && *VehCount > 0 && veh_id < *VehCount) {
+                VEH* veh = &Vehs[veh_id];
+                if (veh->faction_id == MapWin->cOwner) {
+                    int tx = wrap(veh->x + dir_dx[dir]);
+                    int ty = veh->y + dir_dy[dir];
+                    if (ty >= 0 && ty < *MapAreaY) {
+                        int old_x = veh->x;
+                        int old_y = veh->y;
+                        sr_debug_log("UNIT-MOVE %s (%d,%d)->(%d,%d) dir=%d",
+                            veh->name(), old_x, old_y, tx, ty, dir);
+                        set_move_to(veh_id, tx, ty);
+                        action(veh_id);
+                        // Check if unit actually moved
+                        if (veh_id < *VehCount
+                            && (veh->x != old_x || veh->y != old_y)) {
+                            sr_cursor_x = veh->x;
+                            sr_cursor_y = veh->y;
+                            sr_announce_tile(sr_cursor_x, sr_cursor_y);
+                            // Announce remaining moves
+                            int total_speed = veh_speed(veh_id, 0);
+                            int remaining = max(0, total_speed - (int)veh->moves_spent);
+                            int disp_rem = remaining / Rules->move_rate_roads;
+                            int disp_tot = total_speed / Rules->move_rate_roads;
+                            char move_buf[64];
+                            snprintf(move_buf, sizeof(move_buf),
+                                loc(SR_MOVEMENT_POINTS), disp_rem, disp_tot);
+                            sr_output(move_buf, false);
+                        } else {
+                            sr_output(loc(SR_CANNOT_MOVE), true);
+                        }
+                    } else {
+                        sr_output(loc(SR_MAP_EDGE), true);
+                    }
+                }
+            }
+            return 0;
+        } else {
+            // No shift = explore: move virtual cursor, announce tile
+            // Initialize cursor to unit position if not set
+            if (sr_cursor_x < 0 || sr_cursor_y < 0) {
+                if (MapWin->iUnit >= 0 && Vehs && *VehCount > 0
+                    && MapWin->iUnit < *VehCount) {
+                    sr_cursor_x = Vehs[MapWin->iUnit].x;
+                    sr_cursor_y = Vehs[MapWin->iUnit].y;
+                } else {
+                    sr_cursor_x = MapWin->iTileX;
+                    sr_cursor_y = MapWin->iTileY;
+                }
+            }
+            int nx = sr_cursor_x + dir_dx[dir];
+            int ny = sr_cursor_y + dir_dy[dir];
+            // Wrap X coordinate (cylindrical map)
+            nx = wrap(nx);
+            // Clamp Y to map bounds
+            if (ny >= 0 && ny < *MapAreaY) {
+                sr_cursor_x = nx;
+                sr_cursor_y = ny;
+                sr_announce_tile(sr_cursor_x, sr_cursor_y);
+            } else {
+                sr_output(loc(SR_MAP_EDGE), true);
+            }
+        }
+        return 0; // Consume the key, don't pass to game
+
+    // Screen reader: Shift+Space = send unit to cursor position (Go To)
+    } else if (msg == WM_KEYDOWN && wParam == VK_SPACE && shift_key_down()
+    && sr_is_available() && MapWin
+    && (current_window() == GW_World || (current_window() == GW_None && *PopupDialogState >= 2))
+    && sr_cursor_x >= 0 && sr_cursor_y >= 0) {
+        int veh_id = MapWin->iUnit;
+        if (veh_id >= 0 && Vehs && *VehCount > 0 && veh_id < *VehCount) {
+            VEH* veh = &Vehs[veh_id];
+            if (veh->faction_id == MapWin->cOwner) {
+                set_move_to(veh_id, sr_cursor_x, sr_cursor_y);
+                char buf[256];
+                snprintf(buf, sizeof(buf), loc(SR_UNIT_MOVES_TO),
+                    veh->name(), sr_cursor_x, sr_cursor_y);
+                sr_debug_log("GO-TO: %s", buf);
+                sr_output(buf, true);
+                // Advance to next unit needing orders
+                mod_veh_skip(veh_id);
+            }
+        }
+        return 0;
+
+    // Screen reader: Escape on world map → read quit dialog text before game opens it
+    } else if (msg == WM_KEYDOWN && wParam == VK_ESCAPE && sr_is_available()
+    && !*GameHalted && current_window() == GW_World) {
+        char buf[512];
+        if (sr_read_popup_text("Script", "REALLYQUIT", buf, sizeof(buf))) {
+            sr_output(buf, false);
+        }
+        return WinProc(hwnd, msg, wParam, lParam);
+
+    // Screen reader: Shift+F1 = context-sensitive help for current unit/terrain
+    } else if (msg == WM_KEYDOWN && wParam == VK_F1 && shift_key_down()
+    && sr_is_available() && MapWin
+    && (current_window() == GW_World || (current_window() == GW_None && *PopupDialogState >= 2))) {
+        char buf[1024];
+        int pos = 0;
+        pos += snprintf(buf + pos, sizeof(buf) - pos, "%s", loc(SR_HELP_HEADER));
+
+        int veh_id = MapWin->iUnit;
+        VEH* veh = NULL;
+        if (veh_id >= 0 && Vehs && *VehCount > 0 && veh_id < *VehCount) {
+            veh = &Vehs[veh_id];
+        }
+
+        // Unit-specific commands
+        if (veh && veh->faction_id == MapWin->cOwner) {
+            MAP* tile = mapsq(veh->x, veh->y);
+            uint32_t items = tile ? tile->items : 0;
+
+            if (veh->is_former()) {
+                // Terraform commands based on terrain
+                if (tile && tile->is_fungus()) {
+                    pos += snprintf(buf + pos, sizeof(buf) - pos, " %s.", loc(SR_HELP_REMOVE_FUNGUS));
+                } else {
+                    if (!(items & BIT_ROAD)) {
+                        pos += snprintf(buf + pos, sizeof(buf) - pos, " %s.", loc(SR_HELP_BUILD_ROAD));
+                    } else if (!(items & BIT_MAGTUBE)) {
+                        pos += snprintf(buf + pos, sizeof(buf) - pos, " %s.", loc(SR_HELP_BUILD_MAGTUBE));
+                    }
+                    if (!(items & BIT_FARM)) {
+                        pos += snprintf(buf + pos, sizeof(buf) - pos, " %s.", loc(SR_HELP_BUILD_FARM));
+                    }
+                    if (!(items & BIT_MINE)) {
+                        pos += snprintf(buf + pos, sizeof(buf) - pos, " %s.", loc(SR_HELP_BUILD_MINE));
+                    }
+                    if (!(items & BIT_SOLAR)) {
+                        pos += snprintf(buf + pos, sizeof(buf) - pos, " %s.", loc(SR_HELP_BUILD_SOLAR));
+                    }
+                    if (!(items & BIT_FOREST)) {
+                        pos += snprintf(buf + pos, sizeof(buf) - pos, " %s.", loc(SR_HELP_BUILD_FOREST));
+                    }
+                    pos += snprintf(buf + pos, sizeof(buf) - pos, " %s.", loc(SR_HELP_BUILD_SENSOR));
+                    pos += snprintf(buf + pos, sizeof(buf) - pos, " %s.", loc(SR_HELP_BUILD_CONDENSER));
+                    pos += snprintf(buf + pos, sizeof(buf) - pos, " %s.", loc(SR_HELP_BUILD_BOREHOLE));
+                    pos += snprintf(buf + pos, sizeof(buf) - pos, " %s.", loc(SR_HELP_BUILD_AIRBASE));
+                    pos += snprintf(buf + pos, sizeof(buf) - pos, " %s.", loc(SR_HELP_BUILD_BUNKER));
+                }
+                pos += snprintf(buf + pos, sizeof(buf) - pos, " %s.", loc(SR_HELP_AUTOMATE));
+            }
+            if (veh->is_colony()) {
+                pos += snprintf(buf + pos, sizeof(buf) - pos, " %s.", loc(SR_HELP_BUILD_BASE));
+            }
+            if (veh->is_combat_unit()) {
+                pos += snprintf(buf + pos, sizeof(buf) - pos, " %s.", loc(SR_HELP_ATTACK));
+            }
+            if (veh->is_probe()) {
+                pos += snprintf(buf + pos, sizeof(buf) - pos, " %s.", loc(SR_HELP_PROBE));
+            }
+            if (veh->is_supply()) {
+                pos += snprintf(buf + pos, sizeof(buf) - pos, " %s.", loc(SR_HELP_CONVOY));
+            }
+            if (veh->is_transport()) {
+                pos += snprintf(buf + pos, sizeof(buf) - pos, " %s.", loc(SR_HELP_UNLOAD));
+            }
+            if (veh->triad() != TRIAD_SEA && veh->triad() != TRIAD_AIR) {
+                pos += snprintf(buf + pos, sizeof(buf) - pos, " %s.", loc(SR_HELP_AIRDROP));
+            }
+
+            // Terrain-specific hints
+            if (tile && tile->is_base()) {
+                pos += snprintf(buf + pos, sizeof(buf) - pos, " %s.", loc(SR_HELP_OPEN_BASE));
+            }
+            if (items & BIT_MONOLITH) {
+                pos += snprintf(buf + pos, sizeof(buf) - pos, " %s.", loc(SR_HELP_MONOLITH));
+            }
+            if (items & BIT_SUPPLY_POD) {
+                pos += snprintf(buf + pos, sizeof(buf) - pos, " %s.", loc(SR_HELP_SUPPLY_POD));
+            }
+        }
+
+        // Always-shown commands
+        pos += snprintf(buf + pos, sizeof(buf) - pos, " %s.", loc(SR_HELP_MOVE));
+        pos += snprintf(buf + pos, sizeof(buf) - pos, " %s.", loc(SR_HELP_EXPLORE));
+        pos += snprintf(buf + pos, sizeof(buf) - pos, " %s.", loc(SR_HELP_SKIP));
+        pos += snprintf(buf + pos, sizeof(buf) - pos, " %s.", loc(SR_HELP_HOLD));
+        pos += snprintf(buf + pos, sizeof(buf) - pos, " %s.", loc(SR_HELP_READ));
+        pos += snprintf(buf + pos, sizeof(buf) - pos, " %s.", loc(SR_HELP_GOTO));
+
+        sr_debug_log("CONTEXT-HELP: %s", buf);
+        sr_output(buf, true);
+        return 0;
+
+    // Screen reader: Ctrl+R = read current screen text, Ctrl+Shift+R = silence
+    } else if (msg == WM_KEYDOWN && wParam == 'R' && ctrl_key_down() && sr_is_available()) {
+        if (shift_key_down()) {
+            sr_debug_log("CTRL+SHIFT+R: silence");
+            sr_silence();
+        } else {
+            const char* text = sr_get_last_text();
+            sr_debug_log("CTRL+R: text=%s", (text && text[0]) ? text : "(empty)");
+            if (text && text[0]) {
+                sr_output(text, true);
+            } else {
+                sr_output(loc(SR_NO_TEXT), true);
+            }
+        }
+
+    // Screen reader: Ctrl+F12 = toggle debug logging
+    } else if (msg == WM_KEYDOWN && wParam == VK_F12 && ctrl_key_down() && sr_is_available()) {
+        sr_debug_toggle();
 
     } else if (msg == WM_CHAR && wParam == 'l' && alt_key_down() && is_editor
     && *ReplayEventSize > 0) {

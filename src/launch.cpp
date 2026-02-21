@@ -118,7 +118,7 @@ int main(int argc, char* argv[]) {
     Normally this should not return WAIT_TIMEOUT but terminating the game process
     in that case should not be required.
     */
-    DWORD waitValue = WaitForSingleObject(hThread, 5000);
+    DWORD waitValue = WaitForSingleObject(hThread, 30000);
     debug("WaitForSingleObject: %lu\n", waitValue);
 
     if (waitValue != WAIT_OBJECT_0 && waitValue != WAIT_TIMEOUT) {

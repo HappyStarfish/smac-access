@@ -1,0 +1,176 @@
+# Deutsche Screenreader-Texte fuer Thinker Accessibility Mod
+
+# Allgemein
+mod_loaded=Thinker Barrierefreiheits-Mod geladen.
+debug_on=Debug-Protokollierung an.
+debug_off=Debug-Protokollierung aus.
+no_text=Kein Text erfasst.
+
+# Weltkarte
+map_edge=Kartenrand.
+world_map=Weltkarte
+design_workshop=Entwurfswerkstatt
+your_turn=Dein Zug. %s bei (%d, %d)
+unit_moves_to=%s bewegt sich nach (%d, %d)
+tab_fmt=Reiter: %s
+tab_resources=Ressourcen
+tab_citizens=Bevoelkerung
+tab_production=Produktion
+terrain_ocean=Ozean
+terrain_shelf=Schelf
+terrain_rocky=Felsig
+terrain_rolling=Huegelig
+terrain_flat=Flach
+feature_fungus=Pilz
+feature_forest=Wald
+feature_river=Fluss
+feature_farm=Farm
+feature_mine=Mine
+feature_solar=Solarkollektor
+feature_road=Strasse
+feature_condenser=Kondensator
+feature_borehole=Bohrloch
+feature_bunker=Bunker
+feature_airbase=Luftstuetzpunkt
+feature_sensor=Sensor
+feature_supply_pod=Versorgungskapsel
+feature_monolith=Monolith
+feature_magtube=Magnetschwebebahn
+feature_soil_enricher=Bodenbereicher
+feature_ech_mirror=Echelonspiegel
+terrain_trench=Tiefsee
+terrain_arid=Trocken
+terrain_moist=Feucht
+terrain_rainy=Regnerisch
+terrain_high=Erhoeht
+tile_yields=%d Nahrung, %d Mineralien, %d Energie
+tile_owner=Gebiet: %s
+tile_in_radius=Im Basisradius
+tile_unowned=Herrenlos
+tile_unexplored=Unerforscht
+# Scanner
+scan_all=Scanner: Alle
+scan_own_bases=Scanner: Eigene Basen
+scan_enemy_bases=Scanner: Feindliche Basen
+scan_enemy_units=Scanner: Feindliche Einheiten
+scan_own_units=Scanner: Eigene Einheiten
+scan_own_formers=Scanner: Eigene Former
+scan_fungus=Scanner: Pilze
+scan_pods=Scanner: Kapseln und Monolithen
+scan_improvements=Scanner: Verbesserungen
+scan_nature=Scanner: Terrain und Natur
+scan_not_found=Scanner: Nichts gefunden
+
+base_at=. Basis: %s
+unit_at=. Einheit: %s
+more_units= (+%d weitere)
+
+# Basis-Bildschirm
+base_screen=Basis-Bildschirm
+sec_overview=Uebersicht
+sec_resources=Ressourcen
+sec_production=Produktion
+sec_economy=Wirtschaft
+sec_facilities=Einrichtungen
+sec_status=Status
+fmt_overview=Uebersicht: %s, Bevoelkerung %d. Talente %d, Drohnen %d, Spezialisten %d.
+fmt_resources=Ressourcen: Nahrung %d Ueberschuss (%d Aufnahme), Mineralien %d Ueberschuss (%d Aufnahme), Energie %d Ueberschuss (%d Aufnahme).
+fmt_production=Produktion: %s, %d von %d Mineralien.
+fmt_queue= Warteschlange:
+fmt_hurry_cost= Eilkosten: %d Energie.
+fmt_economy=Wirtschaft: %d Wirtschaft, %d Psyche, %d Forschung.
+fmt_facilities=Einrichtungen:
+fmt_facilities_none=Einrichtungen: Keine.
+fmt_status=Status:
+fmt_status_normal=Status: Normal.
+fmt_drone_riots= Drohnenaufstand!
+fmt_golden_age= Goldenes Zeitalter.
+fmt_eco_damage= Umweltschaden %d%%.
+fmt_governor= Gouverneur aktiv.
+fmt_nerve_staple= Nervenkontrolle %d Runden.
+fmt_base_open=Basis: %s, Bevoelkerung %d. Baut %s, %d von %d.
+
+# Basis-Bildschirm (erweitert)
+sec_units=Einheiten
+fmt_overview_v2=Uebersicht: %s bei (%d, %d), Bevoelkerung %d. %s. Talente %d, Drohnen %d.
+fmt_resources_v2=Ressourcen: Naehrstoffe +%d (%d von %d, %s). Mineralien +%d. Energie +%d.
+fmt_production_v2=Produktion: %s, %d von %d Mineralien, %s.
+fmt_economy_v2=Wirtschaft: %d Wirtschaft, %d Psyche, %d Forschung. %s.
+fmt_facilities_v2=Einrichtungen: %s.
+fmt_units=%d stationiert.
+fmt_units_none=Einheiten: Keine stationiert.
+fmt_base_open_v2=Basis: %s, Bevoelkerung %d. Baut %s, %d von %d, %s. Strg+Hoch/Runter: Sektionen.
+fmt_workers=%d Arbeiter
+base_help=Strg+Hoch/Runter: Sektionen. Strg+Links/Rechts: Reiter. Strg+I: Wiederholen. Strg+H: Beschleunigen. Strg+Shift+P: Produktion aendern. Escape: Schliessen.
+fmt_turns=%d Runden
+fmt_growth_never=kein Wachstum
+fmt_faction_credits=%d Energieguthaben
+fmt_facilities_count=%d gebaut, %d Wartung
+
+# Beschleunigung
+hurry_ok=%s beschleunigt. %d Credits ausgegeben, %d verbleibend.
+hurry_no_credits=Kann nicht beschleunigen: %d Credits noetig, %d vorhanden.
+hurry_cannot=Produktion kann nicht beschleunigt werden.
+
+# Produktionsauswahl
+prod_picker_open=Produktion aendern: %d Gegenstaende verfuegbar. Hoch/Runter zum Blaettern, Eingabe zum Auswaehlen, Escape zum Abbrechen.
+prod_picker_item=%d von %d: %s, %d Mineralien, %s
+prod_picker_select=Baut jetzt %s.
+prod_picker_cancel=Produktion unveraendert.
+prod_picker_empty=Keine Gegenstaende zum Bauen verfuegbar.
+prod_picker_current=Baut gerade: %s, %d von %d Mineralien, %s.
+prod_picker_current_none=Baut gerade: nichts.
+prod_detail_fac=%s. %s. Kosten: %d Mineralien, Wartung: %d pro Runde.
+prod_detail_project=%s. %s. Kosten: %d Mineralien. Geheimprojekt.
+prod_detail_unit=%s. %s, %s %d, %s %d, %s, %d Zuege, %d HP.
+
+# Bewegung & Navigation
+movement_points=%d von %d Zuegen
+cannot_move=Kann sich nicht dorthin bewegen.
+
+# Kontexthilfe (Strg+F1)
+help_header=Befehle:
+help_move=Shift+Pfeile: Bewegen
+help_explore=Pfeile: Erkunden
+help_skip=Leertaste: Einheit ueberspringen
+help_hold=H: Halten
+help_read=Strg+R: Bildschirm vorlesen
+help_goto=Shift+Leertaste: Zum Cursor gehen
+help_build_base=B: Basis gruenden
+help_build_road=R: Strasse bauen
+help_build_magtube=R: Magnetschwebebahn bauen
+help_build_farm=F: Farm bauen
+help_build_mine=M: Mine bauen
+help_build_solar=S: Solarkollektor bauen
+help_build_forest=Shift+F: Wald pflanzen
+help_build_sensor=O: Sensor bauen
+help_build_condenser=N: Kondensator bauen
+help_build_borehole=Shift+N: Bohrloch bauen
+help_build_airbase=.: Luftstuetzpunkt bauen
+help_build_bunker=Shift+.: Bunker bauen
+help_remove_fungus=F: Pilz entfernen
+help_automate=Shift+A: Automatisieren
+help_convoy=O: Ressourcen konvoieren
+help_unload=U: Transport entladen
+help_open_base=Eingabe: Basis oeffnen
+help_monolith=Monolith hier: Betreten zum Aufwerten
+help_supply_pod=Versorgungskapsel hier: Darauf bewegen
+help_attack=Shift+Pfeile: Angrenzende angreifen
+help_probe=Shift+Pfeile: Angrenzende sondieren
+help_airdrop=I: Luftlandung
+
+# Menüleiste (Weltkarte)
+menu_game=Spiel: Strg+S Speichern, Strg+L Laden, Strg+Q Beenden
+menu_hq=HQ: E Gesellschaftsform, U Entwurfswerkstatt, F1 Datenbank
+menu_network=Netzwerk: Strg+C Chat, Strg+Eingabe Zug beenden
+menu_map=Karte: F2 Zoom, Strg+Shift+M Zentrieren
+menu_action=Aktion: Leertaste Ueberspringen, H Halten, Shift+A Automatisieren
+menu_terraform=Terraforming: F Farm, M Mine, S Solar, R Strasse
+menu_scenario=Szenario
+menu_editmap=Karte bearbeiten
+menu_help=Hilfe: F1 Datenbank, Shift+F1 Befehle
+menu_closed=Menue geschlossen.
+menu_entry_fmt=%s, %d Eintraege
+menu_item_fmt=%s, %s
+menu_item_nohk=%s
+menu_nav_fmt=%d von %d: %s

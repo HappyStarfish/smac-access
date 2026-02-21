@@ -1,87 +1,129 @@
 
-SMACX Thinker Mod
-=================
+SmacAccess
+==========
 
-Thinker is a remake of many game engine features for Alpha Centauri: Alien Crossfire.
-This mod improves the AI in single player while providing many gameplay enhancements.
-By patching the game to use an additional DLL, many new features can be developed in C++.
+**Screen reader accessibility mod for Sid Meier's Alpha Centauri: Alien Crossfire.**
 
-* Vastly improved production/movement AI
-* Visual changes on map rendering and random map generation
-* More config options for many previously fixed settings in the game engine
-* Additional options for resolution settings and other user interface features
-* Improved automation features are also available for player factions
-* Mod also includes [Scient's patches](Details.md)
-
-This mod is tested to work with the [GOG version](https://www.gog.com/game/sid_meiers_alpha_centauri) of Alpha Centauri.
-Note that official Alien Crossfire patch version 2.0 must be installed for the launcher to work with terranx.exe.
-Older game version 1.0 is NOT supported by Thinker. Installing Scient's patch v2 also works since this terranx.exe can be used by the launcher.
-Thinker also includes changes to remove issues on Windows 11 that prevent playing the game expansion due to crashes after ending the turn.
-
-[See more information](Details.md) about the features and recommended settings.
-It's strongly recommended to read Details.md since many features are added not provided by the original game.
-[Discuss here](https://github.com/induktio/thinker/discussions) about anything related to Thinker development.
-Remember also to star and watch the repository to receive notifications about new updates.
+SmacAccess is a fork of [Thinker Mod](https://github.com/induktio/thinker) that adds full screen reader support to SMACX, making this classic 4X strategy game playable for blind and visually impaired players. It works with NVDA, JAWS, and other screen readers via the [Tolk](https://github.com/ndarilek/tolk) library.
 
 
-Download
+Features
 --------
-These links are the only original source to download binary releases. See also the [Changelog](Changelog.md) for useful release notes.
 
-* [Release versions](https://www.dropbox.com/sh/qsps5bhz8v020o9/AAAp6ioWxdo7vnG6Ity5W3o1a?dl=0&lst=)
-* [Develop builds](https://www.dropbox.com/sh/qsps5bhz8v020o9/AADv-0D0-bPq22pgoAIcDRC3a/develop?dl=0&lst=)
+**Screen Reader Integration**
+- All menus, dialogs, and popups announced via screen reader
+- Consistent announcement patterns: menu position, status changes, action confirmations
+- Localization support (English and German included)
+
+**World Map Navigation**
+- Virtual exploration cursor (arrow keys + diagonal navigation)
+- Tile announcements: terrain, features, bases, units, resource yields, ownership
+- Scanner mode: jump between points of interest with 10 filter categories
+- Step-by-step unit movement with tile and movement point feedback
+
+**Base Screen**
+- 7 navigable information sections (Overview, Resources, Production, Economy, Facilities, Status, Units)
+- Tab navigation with section content readout
+- Production picker with item details (facilities, units, secret projects)
+
+**Menu Bar**
+- Full menu bar navigation (Alt + arrow keys)
+- Shortcut summaries for each menu
+
+**Context Help**
+- Ctrl+F1: context-sensitive help for current unit/terrain
+- Available commands announced based on game state
+
+**All Thinker Mod Features**
+- Improved AI for single player
+- Enhanced map generation
+- Many gameplay configuration options
+- See [Details.md](Details.md) for the full Thinker feature list
+
+
+Requirements
+------------
+- [GOG version](https://www.gog.com/game/sid_meiers_alpha_centauri) of Alpha Centauri: Alien Crossfire (Planetary Pack)
+- Alien Crossfire patch v2.0 (included with GOG version)
+- A screen reader (NVDA recommended)
+- Windows 10 or 11
 
 
 Installation
 ------------
-1. Extract the files to Alpha Centauri game folder. Alphax.txt changes are optional.
-2. Check Changelog.md and Details.md for useful information.
-3. Change configuration from thinker.ini or just use the defaults.
-4. Start the game from thinker.exe.
-5. Press ALT+T to open Thinker's options menu. Other option is to check that mod version/build date is visible in the game version menu (CTRL+F4).
-6. If neither of those options display mod version, Thinker is incorrectly installed and not loaded.
+1. Extract all files to your Alpha Centauri game folder.
+2. Configure settings in `thinker.ini` (optional).
+3. Set screen reader language: `sr_language=en` or `sr_language=de` in `thinker.ini`.
+4. Start the game from `thinker.exe`.
+
+For troubleshooting, see the [Thinker troubleshooting section](#troubleshooting) below.
+
+
+Quick Start Keys
+----------------
+- **Ctrl+R** - Read current screen text
+- **Ctrl+Shift+R** - Stop speech
+- **Arrow keys** - Explore map / navigate menus
+- **Shift+Arrows** - Move selected unit
+- **Ctrl+Left/Right** - Scanner: jump to next point of interest
+- **Ctrl+PgUp/PgDn** - Scanner: change filter category
+- **Alt** - Open menu bar
+- **Ctrl+F1** - Context help
+- **Ctrl+Up/Down** - Base screen: cycle info sections
+
+For a complete list of original SMAC keys, see the in-game help or the game manual.
+
+
+Configuration
+-------------
+Screen reader settings in `thinker.ini`:
+
+- `sr_language=en` - Screen reader language (`en` or `de`)
+
+All other settings are inherited from Thinker. See [Details.md](Details.md) for configuration options.
+
+
+Building from Source
+--------------------
+SmacAccess requires a 32-bit (i686) MinGW GCC toolchain.
+
+**Requirements:**
+- GCC 14.2.0 i686 (msvcrt variant) - **GCC 15.x and ucrt builds will crash!**
+- CMake 3.31+
+- Ninja
+
+**Build:**
+```bash
+cmake -G Ninja -DCMAKE_BUILD_TYPE=Develop -B build_cmake -S .
+ninja -C build_cmake
+```
+
+**Output:** `build_cmake/thinker.dll` and `build_cmake/thinker.exe`
+
+Copy both files to the game directory. The Tolk DLLs (`Tolk.dll`, `nvdaControllerClient32.dll`, etc.) must also be in the game directory.
+
+See [Technical.md](Technical.md) for additional build information from upstream Thinker.
 
 
 Troubleshooting
 ---------------
-The launcher requires original Alien Crossfire v2.0 terranx.exe in the same folder but this file is not modified on disk.
-In case of startup problems, make sure the official v2.0 patch is applied on the game, and the mod is actually started
-from same folder with the game. Sometimes startup issues can be fixed by starting the launcher with administrator privileges.
-
-When starting the game with screen scaling set to something else than 100% some portion of the window may not be visible due to being
-clipped out of the screen. The game does not have proper support for screen scaling so as a workaround the scaling should be set to 100%.
-Sometimes opening/secret project video playback errors might be fixed by installing [DDrawCompat](https://github.com/narzoul/DDrawCompat)
-but otherwise it is not necessary.
-
-The current GOG Alpha Centauri Planetary Pack (13 November 2024) may not work on Windows XP by default. When starting the game
-there can be an error message "The application failed to start because dwmapi.dll was not found." To fix this simply remove ddraw.dll
-from the game folder. This file was added on the latest GOG version and it is not necessary to run the game on Windows XP.
-
-Alt-tabbing may sometimes not work by default in Alpha Centauri's GOG version. To re-enable alt-tab feature, follow these steps.
-First open a command prompt with administrator privileges in Alpha Centauri's installation folder. After entering the commands
-below alt-tabbing should now work when the game is restarted.
-
-    sdbinst -u game.sdb
-    sdbinst -u game_add.sdb
-
-After installing the game on Windows there might be a notification that Windows Features can't complete the requested changes.
-This might be caused by a failure to install DirectPlay. First open a command prompt with administrator privileges.
-Then after entering the command below DirectPlay should be automatically installed.
-
-    dism /online /Enable-Feature /FeatureName:DirectPlay /All
+- Make sure `terranx.exe` (Alien Crossfire v2.0) is in the game folder.
+- Start from `thinker.exe`, not `terranx.exe`.
+- Set Windows display scaling to 100% (the game does not support scaling).
+- If the game does not start, try running `thinker.exe` as administrator.
+- If no screen reader output: ensure `Tolk.dll` and screen reader client DLLs are in the game folder.
+- For additional troubleshooting, see the [Thinker documentation](Details.md).
 
 
-Other mods
-----------
-* [SMAC-in-SMACX mod](Details.md#smac-in-smacx-mod) can be installed to play a game similar to original SMAC while Thinker is enabled.
-* [Scient's patch](https://github.com/DrazharLn/scient-unofficial-smacx-patch) combines many fixes for the original game.
-* [OpenSMACX](https://github.com/b-casey/OpenSMACX) has been a long-term project to recreate SMACX game engine.
-* Also see [compatibility with other mods such as PRACX](Details.md#compatibility-with-other-mods).
+Credits
+-------
+- **SmacAccess** accessibility layer by Sonja
+- **[Thinker Mod](https://github.com/induktio/thinker)** by induktio - the foundation this mod builds on
+- **[Tolk](https://github.com/ndarilek/tolk)** screen reader abstraction library
+- **[OpenSMACX](https://github.com/b-casey/OpenSMACX)** - reverse engineering reference
+- **[Scient's patch](https://github.com/DrazharLn/scient-unofficial-smacx-patch)** - game bug fixes (included via Thinker)
 
-
-Compiling
----------
-For information on how to compile Thinker, see [Technical.md](Technical.md).
+Sid Meier's Alpha Centauri and Sid Meier's Alien Crossfire is Copyright (c) 1997, 1998 by Firaxis Games Inc and Electronic Arts Inc.
 
 
 License
@@ -89,5 +131,3 @@ License
 This software is licensed under the GNU General Public License version 2, or (at your option) version 3 of the GPL. See [License.txt](License.txt) for details.
 
 The original game assets are not covered by this license and remain property of Firaxis Games Inc and Electronic Arts Inc.
-
-Sid Meier's Alpha Centauri and Sid Meier's Alien Crossfire is Copyright © 1997, 1998 by Firaxis Games Inc and Electronic Arts Inc.

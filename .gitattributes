@@ -13,3 +13,8 @@
 *.txt eol=crlf
 *.ini eol=crlf
 *.md eol=crlf
+
+# binary dependencies
+*.dll binary
+*.lib binary
+*.exp binary

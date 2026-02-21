@@ -1,0 +1,176 @@
+# English screen reader strings for Thinker Accessibility Mod
+
+# General
+mod_loaded=Thinker Accessibility Mod loaded.
+debug_on=Debug logging on.
+debug_off=Debug logging off.
+no_text=No text captured.
+
+# World Map
+map_edge=Map edge.
+world_map=World Map
+design_workshop=Design Workshop
+your_turn=Your Turn. %s at (%d, %d)
+unit_moves_to=%s moves to (%d, %d)
+tab_fmt=Tab: %s
+tab_resources=Resources
+tab_citizens=Citizens
+tab_production=Production
+terrain_ocean=Ocean
+terrain_shelf=Shelf
+terrain_rocky=Rocky
+terrain_rolling=Rolling
+terrain_flat=Flat
+feature_fungus=Fungus
+feature_forest=Forest
+feature_river=River
+feature_farm=Farm
+feature_mine=Mine
+feature_solar=Solar
+feature_road=Road
+feature_condenser=Condenser
+feature_borehole=Borehole
+feature_bunker=Bunker
+feature_airbase=Airbase
+feature_sensor=Sensor
+feature_supply_pod=Supply Pod
+feature_monolith=Monolith
+feature_magtube=Magtube
+feature_soil_enricher=Soil Enricher
+feature_ech_mirror=Echelon Mirror
+terrain_trench=Deep Ocean
+terrain_arid=Arid
+terrain_moist=Moist
+terrain_rainy=Rainy
+terrain_high=Elevated
+tile_yields=%d food, %d minerals, %d energy
+tile_owner=Territory: %s
+tile_in_radius=In base radius
+tile_unowned=Unclaimed
+tile_unexplored=Unexplored
+# Scanner
+scan_all=Scanner: All
+scan_own_bases=Scanner: Own Bases
+scan_enemy_bases=Scanner: Enemy Bases
+scan_enemy_units=Scanner: Enemy Units
+scan_own_units=Scanner: Own Units
+scan_own_formers=Scanner: Own Formers
+scan_fungus=Scanner: Fungus
+scan_pods=Scanner: Pods and Monoliths
+scan_improvements=Scanner: Improvements
+scan_nature=Scanner: Terrain and Nature
+scan_not_found=Scanner: Nothing found
+
+base_at=. Base: %s
+unit_at=. Unit: %s
+more_units= (+%d more)
+
+# Base Screen
+base_screen=Base Screen
+sec_overview=Overview
+sec_resources=Resources
+sec_production=Production
+sec_economy=Economy
+sec_facilities=Facilities
+sec_status=Status
+fmt_overview=Overview: %s, Population %d. Talents %d, Drones %d, Specialists %d.
+fmt_resources=Resources: Nutrients %d surplus (%d intake), Minerals %d surplus (%d intake), Energy %d surplus (%d intake).
+fmt_production=Production: %s, %d of %d minerals.
+fmt_queue= Queue:
+fmt_hurry_cost= Hurry cost: %d energy.
+fmt_economy=Economy: %d economy, %d psych, %d labs.
+fmt_facilities=Facilities:
+fmt_facilities_none=Facilities: None.
+fmt_status=Status:
+fmt_status_normal=Status: Normal.
+fmt_drone_riots= Drone riots!
+fmt_golden_age= Golden age.
+fmt_eco_damage= Eco damage %d%%.
+fmt_governor= Governor active.
+fmt_nerve_staple= Nerve staple %d turns.
+fmt_base_open=Base: %s, Population %d. Building %s, %d of %d.
+
+# Base Screen (enhanced)
+sec_units=Units
+fmt_overview_v2=Overview: %s at (%d, %d), Population %d. %s. Talents %d, Drones %d.
+fmt_resources_v2=Resources: Nutrients +%d (%d of %d, %s). Minerals +%d. Energy +%d.
+fmt_production_v2=Production: %s, %d of %d minerals, %s.
+fmt_economy_v2=Economy: %d economy, %d psych, %d labs. %s.
+fmt_facilities_v2=Facilities: %s.
+fmt_units=%d stationed.
+fmt_units_none=Units: None stationed.
+fmt_base_open_v2=Base: %s, Population %d. Building %s, %d of %d, %s. Ctrl+Up/Down: Sections.
+fmt_workers=%d workers
+base_help=Ctrl+Up/Down: Sections. Ctrl+Left/Right: Tabs. Ctrl+I: Repeat. Ctrl+H: Hurry. Ctrl+Shift+P: Change production. Escape: Close.
+fmt_turns=%d turns
+fmt_growth_never=no growth
+fmt_faction_credits=%d energy credits
+fmt_facilities_count=%d built, %d maintenance
+
+# Hurry feedback
+hurry_ok=Hurried %s. %d credits spent, %d remaining.
+hurry_no_credits=Cannot hurry: need %d credits, have %d.
+hurry_cannot=Cannot hurry production.
+
+# Production Picker
+prod_picker_open=Change production: %d items available. Up/Down to browse, Enter to select, Escape to cancel.
+prod_picker_item=%d of %d: %s, %d minerals, %s
+prod_picker_select=Now building %s.
+prod_picker_cancel=Production unchanged.
+prod_picker_empty=No items available to build.
+prod_picker_current=Currently building: %s, %d of %d minerals, %s.
+prod_picker_current_none=Currently building: nothing.
+prod_detail_fac=%s. %s. Cost: %d minerals, Maintenance: %d per turn.
+prod_detail_project=%s. %s. Cost: %d minerals. Secret Project.
+prod_detail_unit=%s. %s, %s %d, %s %d, %s, %d moves, %d HP.
+
+# Movement & Navigation
+movement_points=%d of %d moves
+cannot_move=Cannot move there.
+
+# Context Help (Ctrl+F1)
+help_header=Commands:
+help_move=Shift+Arrows: Move
+help_explore=Arrows: Explore
+help_skip=Space: Skip unit
+help_hold=H: Hold
+help_read=Ctrl+R: Read screen
+help_goto=Shift+Space: Go to cursor
+help_build_base=B: Build base
+help_build_road=R: Build road
+help_build_magtube=R: Build mag tube
+help_build_farm=F: Build farm
+help_build_mine=M: Build mine
+help_build_solar=S: Build solar collector
+help_build_forest=Shift+F: Plant forest
+help_build_sensor=O: Build sensor
+help_build_condenser=N: Build condenser
+help_build_borehole=Shift+N: Build borehole
+help_build_airbase=.: Build airbase
+help_build_bunker=Shift+.: Build bunker
+help_remove_fungus=F: Remove fungus
+help_automate=Shift+A: Automate
+help_convoy=O: Convoy resources
+help_unload=U: Unload transport
+help_open_base=Enter: Open base
+help_monolith=Monolith here: enter to upgrade
+help_supply_pod=Supply Pod here: move onto it
+help_attack=Shift+Arrows: Attack adjacent
+help_probe=Shift+Arrows: Probe adjacent
+help_airdrop=I: Airdrop
+
+# Menu Bar (world map)
+menu_game=Game: Ctrl+S Save, Ctrl+L Load, Ctrl+Q Quit
+menu_hq=HQ: E Social Engineering, U Design Workshop, F1 Datalinks
+menu_network=Network: Ctrl+C Chat, Ctrl+Enter End Turn
+menu_map=Map: F2 Zoom, Ctrl+Shift+M Center
+menu_action=Action: Space Skip, H Hold, Shift+A Automate
+menu_terraform=Terraform: F Farm, M Mine, S Solar, R Road
+menu_scenario=Scenario
+menu_editmap=Edit Map
+menu_help=Help: F1 Datalinks, Shift+F1 Commands
+menu_closed=Menu closed.
+menu_entry_fmt=%s, %d entries
+menu_item_fmt=%s, %s
+menu_item_nohk=%s
+menu_nav_fmt=%d of %d: %s

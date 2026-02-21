@@ -359,25 +359,14 @@ static void init_video_config(Config* cf) {
             found = true;
         }
         if (!found) {
-            int value = MessageBoxA(0,
-                "Video player not found from MoviePlayerPath in Alpha Centauri.ini.\n"\
-                "Select YES to reset game to the default video player.\n"\
-                "Select NO to skip video playback temporarily.",
-                MOD_VERSION, MB_YESNO | MB_ICONWARNING);
-            if (value == IDYES) {
-                cf->video_player = 1;
-                prefs_put2("MoviePlayerPath", "");
-                prefs_put2("MoviePlayerArgs", "");
-            } else {
-                cf->video_player = 0;
-                prefs_put2("MoviePlayerPath", "<DEFAULT>");
-                prefs_put2("MoviePlayerArgs", args);
-            }
+            diag_log("WARNING: Video player not found, disabling video playback");
+            cf->video_player = 0;
+            prefs_put2("MoviePlayerPath", "<DEFAULT>");
+            prefs_put2("MoviePlayerArgs", args);
         }
     }
     if (!FileExists("modmenu.txt")) {
-        MessageBoxA(0, "Error while opening modmenu.txt. Game might not work as intended.",
-            MOD_VERSION, MB_OK | MB_ICONWARNING);
+        diag_log("WARNING: modmenu.txt not found");
     }
 }
 
@@ -1456,8 +1445,7 @@ bool patch_setup(Config* cf) {
         || !FileExists(ModHelpTxtFile)
         || !FileExists(ModTutorTxtFile)
         || !FileExists(ModConceptsTxtFile)) {
-            MessageBoxA(0, "Error while opening smac_mod folder. Unable to start smac_only mode.",
-                MOD_VERSION, MB_OK | MB_ICONSTOP);
+            diag_log("FATAL: smac_mod folder missing, cannot start smac_only mode");
             exit_fail();
         }
         *(int32_t*)0x45F97A = 0;
@@ -1757,6 +1745,8 @@ bool patch_setup(Config* cf) {
         write_bytes(0x526540, old_bytes, new_bytes, sizeof(new_bytes));
     }
     */
+
+    sr_install_text_hooks();
 
     if (!VirtualProtect(AC_IMAGE_BASE, AC_IMAGE_LEN, PAGE_EXECUTE_READ, &attrs)) {
         return false;

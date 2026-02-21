@@ -1,4 +1,5 @@
 build/
+build_cmake/
 rel/
 patch/
 utils/
@@ -6,8 +7,29 @@ utils/
 *.depend
 *.cscope_file_list
 
-# Jetbrains folder for CLion
+# IDE folders
 .idea/
+.vscode/
 
 # CMake work dir
 .cmake/
+CMakeCache.txt
+CMakeFiles/
+
+# Claude Code
+.claude/
+
+# Local build scripts
+build.ps1
+
+# Internal project tracking
+project_status.md
+CLAUDE.md
+
+# Internal development docs (accessibility research, reverse engineering notes)
+docs/accessibility-feasibility.md
+docs/accessibility-patterns.md
+docs/game-api.md
+docs/keybindings.md
+docs/menu-accessibility-checklist.md
+docs/modding-feasibility-other-games.md

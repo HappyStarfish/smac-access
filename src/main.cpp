@@ -25,6 +25,22 @@ AIPlans plans[MaxPlayerNum];
 set_str_t movedlabels;
 map_str_t musiclabels;
 
+// Diagnostic log to %TEMP% (works even without write access to game directory)
+void diag_log(const char* msg) {
+    char path[MAX_PATH];
+    if (GetTempPathA(MAX_PATH, path)) {
+        strncat(path, "thinker_diag.log", MAX_PATH - strlen(path) - 1);
+        FILE* f = fopen(path, "a");
+        if (f) {
+            SYSTEMTIME st;
+            GetLocalTime(&st);
+            fprintf(f, "[%02d:%02d:%02d.%03d] %s\n",
+                st.wHour, st.wMinute, st.wSecond, st.wMilliseconds, msg);
+            fclose(f);
+        }
+    }
+}
+
 
 int option_handler(void* user, const char* section, const char* name, const char* value) {
     #define MATCH(n) strcmp(name, n) == 0
@@ -383,12 +399,9 @@ int opt_handle_error(const char* section, const char* name) {
     char msg[1024] = {};
     if (!unknown_option) {
         snprintf(msg, sizeof(msg),
-            "Unknown configuration option detected in thinker.ini.\n"
-            "Game might not work as intended.\n"
-            "Header: %s\n"
-            "Option: %s\n",
+            "WARNING: Unknown INI option [%s] %s",
             section, name);
-        MessageBoxA(0, msg, MOD_VERSION, MB_OK | MB_ICONWARNING);
+        diag_log(msg);
     }
     unknown_option = true;
     return 0;
@@ -429,14 +442,14 @@ bool FileExists(const char* path) {
 void exit_fail(int32_t addr) {
     char buf[512];
     snprintf(buf, sizeof(buf),
-        "Error while patching address %08X in the game binary.\n"
-        "This mod requires Alien Crossfire v2.0 terranx.exe in the same folder.", addr);
-    MessageBoxA(0, buf, MOD_VERSION, MB_OK | MB_ICONSTOP);
-    exit(EXIT_FAILURE);
+        "FATAL: Error patching address %08X. Requires Alien Crossfire v2.0 terranx.exe.", addr);
+    diag_log(buf);
+    TerminateProcess(GetCurrentProcess(), EXIT_FAILURE);
 }
 
 void exit_fail() {
-    exit(EXIT_FAILURE);
+    diag_log("FATAL: exit_fail() called");
+    TerminateProcess(GetCurrentProcess(), EXIT_FAILURE);
 }
 
 DLL_EXPORT DWORD ThinkerModule() {
@@ -447,37 +460,41 @@ DLL_EXPORT BOOL APIENTRY DllMain(HINSTANCE UNUSED(hinstDLL), DWORD fdwReason, LP
     size_t seed;
     switch (fdwReason) {
         case DLL_PROCESS_ATTACH:
+            diag_log("DllMain: DLL_PROCESS_ATTACH start");
             if (DEBUG && !(debug_log = fopen("debug.txt", "w"))) {
-                MessageBoxA(0, "Error while opening debug.txt file.",
-                    MOD_VERSION, MB_OK | MB_ICONSTOP);
+                diag_log("DllMain: Failed to open debug.txt");
                 exit_fail();
             }
+            diag_log("DllMain: Parsing thinker.ini");
             if (ini_parse("thinker.ini", option_handler, &conf) < 0) {
-                MessageBoxA(0, "Error while opening thinker.ini file.",
-                    MOD_VERSION, MB_OK | MB_ICONSTOP);
+                diag_log("DllMain: FAILED to parse thinker.ini");
                 exit_fail();
             }
+            diag_log("DllMain: thinker.ini parsed OK");
             if (FileExists("thinker_user.ini")
             && ini_parse("thinker_user.ini", option_handler, &conf) < 0) {
-                MessageBoxA(0, "Error while opening thinker_user.ini file.",
-                    MOD_VERSION, MB_OK | MB_ICONSTOP);
+                diag_log("DllMain: FAILED to parse thinker_user.ini");
                 exit_fail();
             }
+            diag_log("DllMain: Calling cmd_parse + patch_setup");
             if (!cmd_parse(&conf) || !patch_setup(&conf)) {
-                MessageBoxA(0, "Error while loading the game.",
-                    MOD_VERSION, MB_OK | MB_ICONSTOP);
+                diag_log("DllMain: FAILED in cmd_parse or patch_setup");
                 exit_fail();
             }
+            diag_log("DllMain: patch_setup OK, init complete");
             *EngineVersion = MOD_VERSION;
             *EngineDate = MOD_DATE;
             seed = GetTickCount();
             random_reseed(seed);
             map_rand.reseed(seed ^ 0xffff);
             debug("random_reseed %u\n", seed);
+            // Tolk init deferred to first window message (COM not safe in DllMain)
             flushlog();
+            diag_log("DllMain: DLL_PROCESS_ATTACH complete");
             break;
 
         case DLL_PROCESS_DETACH:
+            sr_shutdown();
             if (debug_log) {
                 fclose(debug_log);
             }
