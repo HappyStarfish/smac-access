@@ -1167,8 +1167,31 @@ LRESULT WINAPI ModWinProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                 (unsigned)wParam, *PopupDialogState, sr_item_count(),
                 (int)current_window());
 
-            if (wParam == VK_UP || wParam == VK_DOWN) {
-                if (current_window() == GW_None && *PopupDialogState == 0) {
+            // Popup list navigation (research priorities, etc.)
+            if ((wParam == VK_UP || wParam == VK_DOWN)
+                && sr_popup_list.active && sr_popup_list.count > 0) {
+                if (wParam == VK_DOWN) {
+                    sr_popup_list.index++;
+                    if (sr_popup_list.index >= sr_popup_list.count)
+                        sr_popup_list.index = sr_popup_list.count - 1;
+                } else {
+                    sr_popup_list.index--;
+                    if (sr_popup_list.index < 0)
+                        sr_popup_list.index = 0;
+                }
+                char buf[300];
+                snprintf(buf, sizeof(buf), loc(SR_POPUP_LIST_FMT),
+                    sr_popup_list.index + 1,
+                    sr_popup_list.count,
+                    sr_popup_list.items[sr_popup_list.index]);
+                sr_output(buf, true);
+                sr_debug_log("POPUP-LIST nav %d/%d: %s",
+                    sr_popup_list.index + 1,
+                    sr_popup_list.count,
+                    sr_popup_list.items[sr_popup_list.index]);
+            } else if (wParam == VK_UP || wParam == VK_DOWN) {
+                if (!on_world_map && cur_win != GW_Base
+                    && cur_win != GW_Design) {
                     // Activate cache on first arrow press
                     // Start at pos=15 to allow UP navigation without clamping
                     if (!sr_mcache.active) {
@@ -1559,6 +1582,17 @@ LRESULT WINAPI ModWinProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     } else if (msg == WM_KEYDOWN && sr_is_available()
     && current_window() == GW_Base
     && BaseScreenHandler::IsPickerActive()) {
+        if (BaseScreenHandler::Update(msg, wParam)) return 0;
+
+    // Screen reader: queue mode intercepts ALL keys when active
+    } else if (msg == WM_KEYDOWN && sr_is_available()
+    && current_window() == GW_Base
+    && BaseScreenHandler::IsQueueActive()) {
+        if (BaseScreenHandler::Update(msg, wParam)) return 0;
+
+    // Screen reader: Ctrl+Q = open queue management
+    } else if (msg == WM_KEYDOWN && wParam == 'Q' && ctrl_key_down()
+    && sr_is_available() && current_window() == GW_Base) {
         if (BaseScreenHandler::Update(msg, wParam)) return 0;
 
     } else if (msg == WM_KEYDOWN && (wParam == VK_UP || wParam == VK_DOWN)

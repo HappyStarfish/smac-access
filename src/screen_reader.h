@@ -67,6 +67,22 @@ bool sr_read_popup_text(const char* filename, const char* label,
 bool sr_defer_active();
 void sr_defer_set(bool active);
 
+// Popup list navigation: tracks selectable options in popup dialogs
+// that use highlight bars instead of re-rendering text on arrow nav.
+// Options are parsed from the script file (blank line separates
+// description from options, or #itemlist directive).
+#define SR_POPUP_LIST_MAX 16
+struct SrPopupList {
+    char items[SR_POPUP_LIST_MAX][256];
+    int count;
+    int index;      // current selection (0-based)
+    bool active;
+};
+extern SrPopupList sr_popup_list;
+void sr_popup_list_clear();
+// Parse options from a script file section. Returns number of options found.
+int sr_popup_list_parse(const char* filename, const char* label);
+
 // Debug logging (Ctrl+F12 toggle at runtime)
 bool sr_debug_active();
 void sr_debug_toggle();

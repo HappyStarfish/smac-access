@@ -432,6 +432,136 @@ void sr_debug_log(const char* fmt, ...) {
     sr_log(buf);
 }
 
+// ========== Popup List Navigation ==========
+
+SrPopupList sr_popup_list = {{}, 0, 0, false};
+
+void sr_popup_list_clear() {
+    sr_popup_list.active = false;
+    sr_popup_list.count = 0;
+    sr_popup_list.index = 0;
+}
+
+/*
+Parse selectable options from a script file popup section.
+Options are lines after the first blank line (or after #itemlist).
+Skips directive lines (#), comment lines (;), and empty lines before options.
+Strips ^ paragraph markers and {curly} braces from option text.
+*/
+int sr_popup_list_parse(const char* filename, const char* label) {
+    sr_popup_list_clear();
+    if (!filename || !label) return 0;
+
+    char filepath[MAX_PATH];
+    // Game sometimes passes filename with .txt extension already
+    int flen = strlen(filename);
+    if (flen > 4 && _stricmp(filename + flen - 4, ".txt") == 0) {
+        snprintf(filepath, sizeof(filepath), "%s", filename);
+    } else {
+        snprintf(filepath, sizeof(filepath), "%s.txt", filename);
+    }
+
+    FILE* f = fopen(filepath, "r");
+    if (!f) return 0;
+
+    // Find the #LABEL line
+    char line[512];
+    char search[256];
+    snprintf(search, sizeof(search), "#%s", label);
+    bool found = false;
+    while (fgets(line, sizeof(line), f)) {
+        // Strip trailing whitespace
+        int len = strlen(line);
+        while (len > 0 && (line[len-1] == '\n' || line[len-1] == '\r'
+               || line[len-1] == ' ')) {
+            line[--len] = '\0';
+        }
+        if (_stricmp(line, search) == 0) {
+            found = true;
+            break;
+        }
+    }
+    if (!found) { fclose(f); return 0; }
+
+    // Read lines: skip directives, find blank line separator, then options
+    bool past_separator = false;
+    bool has_itemlist = false;
+    int count = 0;
+
+    while (fgets(line, sizeof(line), f) && count < SR_POPUP_LIST_MAX) {
+        int len = strlen(line);
+        while (len > 0 && (line[len-1] == '\n' || line[len-1] == '\r'
+               || line[len-1] == ' ')) {
+            line[--len] = '\0';
+        }
+
+        // Stop at next section label
+        if (len > 1 && line[0] == '#' && isupper((unsigned char)line[1])) {
+            break;
+        }
+
+        // Skip comment lines
+        if (line[0] == ';') continue;
+
+        // Check for #itemlist directive
+        if (_strnicmp(line, "#itemlist", 9) == 0) {
+            has_itemlist = true;
+            past_separator = true;
+            continue;
+        }
+
+        // Skip other directive lines
+        if (line[0] == '#') continue;
+
+        // Blank line = separator between description and options
+        if (len == 0) {
+            if (!has_itemlist) {
+                past_separator = true;
+            }
+            continue;
+        }
+
+        // Only collect lines after the separator
+        if (!past_separator) continue;
+
+        // Strip ^ paragraph markers and {curly} braces
+        char clean[256];
+        int ci = 0;
+        for (int i = 0; i < len && ci < 254; i++) {
+            if (line[i] == '^') continue;
+            if (line[i] == '{' || line[i] == '}') continue;
+            clean[ci++] = line[i];
+        }
+        clean[ci] = '\0';
+
+        // Skip empty results
+        if (ci < 1) continue;
+
+        // Skip sub-items (lines starting with __ are indented sub-options)
+        // Keep them but strip the underscores
+        char* text = clean;
+        while (*text == '_') text++;
+
+        strncpy(sr_popup_list.items[count], text, 255);
+        sr_popup_list.items[count][255] = '\0';
+        count++;
+    }
+
+    fclose(f);
+
+    if (count > 1) {
+        sr_popup_list.count = count;
+        sr_popup_list.index = 0;
+        sr_popup_list.active = true;
+        sr_debug_log("POPUP-LIST parsed %d options from %s#%s",
+            count, filename, label);
+        for (int i = 0; i < count; i++) {
+            sr_debug_log("  option[%d]: %s", i, sr_popup_list.items[i]);
+        }
+    }
+    return count;
+}
+
 // ========== Popup Text Capture (popp/popb hooks) ==========
 
 // Saved original function pointers
@@ -593,10 +723,12 @@ static int __cdecl sr_hook_popp(const char* filename, const char* label,
         if (sr_read_popup_text(filename, label, buf, sizeof(buf))) {
             sr_output(buf, false); // queue, don't interrupt
         }
+        sr_popup_list_parse(filename, label);
     }
     sr_popup_active = true;
     int result = sr_orig_popp(filename, label, a3, pcx, a5);
     sr_popup_active = false;
+    sr_popup_list_clear();
     sr_clear_text();
     return result;
 }
@@ -613,10 +745,12 @@ static int __cdecl sr_hook_popb(const char* label, int flags,
         if (sr_read_popup_text("script", label, buf, sizeof(buf))) {
             sr_output(buf, false);
         }
+        sr_popup_list_parse("script", label);
     }
     sr_popup_active = true;
     int result = sr_orig_popb(label, flags, sound_id, pcx, a5);
     sr_popup_active = false;
+    sr_popup_list_clear();
     sr_clear_text();
     return result;
 }
@@ -636,10 +770,12 @@ static int __cdecl sr_hook_x_pop(const char* filename, const char* label,
         if (sr_read_popup_text(filename, label, buf, sizeof(buf))) {
             sr_output(buf, false);
         }
+        sr_popup_list_parse(filename, label);
     }
     sr_popup_active = true;
     int result = sr_orig_x_pop(filename, label, a3, a4, a5, a6);
     sr_popup_active = false;
+    sr_popup_list_clear();
     sr_clear_text();
     return result;
 }
@@ -656,10 +792,12 @@ static int __cdecl sr_hook_x_pops(const char* filename, const char* label,
         if (sr_read_popup_text(filename, label, buf, sizeof(buf))) {
             sr_output(buf, false);
         }
+        sr_popup_list_parse(filename, label);
     }
     sr_popup_active = true;
     int result = sr_orig_x_pops(filename, label, a3, a4, a5, a6, a7, a8, a9);
     sr_popup_active = false;
+    sr_popup_list_clear();
     sr_clear_text();
     return result;
 }

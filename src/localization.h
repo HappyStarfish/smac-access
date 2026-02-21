@@ -168,6 +168,20 @@ enum SrStr {
     SR_PROD_DETAIL_PROJECT,
     SR_PROD_DETAIL_UNIT,
 
+    // Queue Management
+    SR_QUEUE_OPEN,
+    SR_QUEUE_OPEN_ONE,
+    SR_QUEUE_ITEM,
+    SR_QUEUE_ITEM_CURRENT,
+    SR_QUEUE_MOVED,
+    SR_QUEUE_REMOVED,
+    SR_QUEUE_ADDED,
+    SR_QUEUE_FULL,
+    SR_QUEUE_CANNOT_MOVE_CURRENT,
+    SR_QUEUE_CANNOT_REMOVE_CURRENT,
+    SR_QUEUE_CLOSED,
+    SR_QUEUE_EMPTY,
+
     // Menu Bar (world map)
     SR_MENU_GAME,
     SR_MENU_HQ,
@@ -183,6 +197,9 @@ enum SrStr {
     SR_MENU_ITEM_FMT,
     SR_MENU_ITEM_NOHK,
     SR_MENU_NAV_FMT,
+
+    // Popup list navigation
+    SR_POPUP_LIST_FMT,      // "%d of %d: %s"
 
     SR_COUNT
 };

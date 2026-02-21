@@ -113,7 +113,7 @@ static const char* sr_defaults[SR_COUNT] = {
     /* SR_FMT_UNITS_NONE     */ "Units: None stationed.",
     /* SR_FMT_BASE_OPEN_V2   */ "Base: %s, Population %d. Building %s, %d of %d, %s. Ctrl+Up/Down: Sections.",
     /* SR_FMT_WORKERS        */ "%d workers",
-    /* SR_BASE_HELP          */ "Ctrl+Up/Down: Sections. Ctrl+Left/Right: Tabs. Ctrl+I: Repeat. Ctrl+H: Hurry. Ctrl+Shift+P: Change production. Escape: Close.",
+    /* SR_BASE_HELP          */ "Ctrl+Up/Down: Sections. Ctrl+Left/Right: Tabs. Ctrl+I: Repeat. Ctrl+H: Hurry. Ctrl+Shift+P: Change production. Ctrl+Q: Queue. Escape: Close.",
     /* SR_FMT_TURNS          */ "%d turns",
     /* SR_FMT_GROWTH_NEVER   */ "no growth",
     /* SR_FMT_FACTION_CREDITS */ "%d energy credits",
@@ -171,6 +171,20 @@ static const char* sr_defaults[SR_COUNT] = {
     /* SR_PROD_DETAIL_PROJECT */ "%s. %s. Cost: %d minerals. Secret Project.",
     /* SR_PROD_DETAIL_UNIT   */ "%s. %s, %s %d, %s %d, %s, %d moves, %d HP.",
 
+    // Queue Management
+    /* SR_QUEUE_OPEN                 */ "Queue: %d items. Up/Down navigate, Shift+Up/Down reorder, Delete remove, Insert add, Escape close.",
+    /* SR_QUEUE_OPEN_ONE             */ "Queue: 1 item. %s. Insert to add, Escape close.",
+    /* SR_QUEUE_ITEM                 */ "%d of %d: %s, %d minerals, %s.",
+    /* SR_QUEUE_ITEM_CURRENT         */ "%d of %d: %s, %d of %d minerals, %s. Current production.",
+    /* SR_QUEUE_MOVED                */ "%s moved to position %d.",
+    /* SR_QUEUE_REMOVED              */ "Removed %s. %d items remaining.",
+    /* SR_QUEUE_ADDED                */ "Added %s at position %d.",
+    /* SR_QUEUE_FULL                 */ "Cannot: queue full, 10 items.",
+    /* SR_QUEUE_CANNOT_MOVE_CURRENT  */ "Cannot move current production.",
+    /* SR_QUEUE_CANNOT_REMOVE_CURRENT */ "Cannot remove current production. Use Ctrl+Shift+P to change.",
+    /* SR_QUEUE_CLOSED               */ "Queue closed.",
+    /* SR_QUEUE_EMPTY                */ "Queue empty.",
+
     // Menu Bar (world map)
     /* SR_MENU_GAME        */ "Game: Ctrl+S Save, Ctrl+L Load, Ctrl+Q Quit",
     /* SR_MENU_HQ          */ "HQ: E Social Engineering, U Design Workshop, F1 Datalinks",
@@ -186,6 +200,7 @@ static const char* sr_defaults[SR_COUNT] = {
     /* SR_MENU_ITEM_FMT    */ "%s, %s",
     /* SR_MENU_ITEM_NOHK   */ "%s",
     /* SR_MENU_NAV_FMT     */ "%d of %d: %s",
+    /* SR_POPUP_LIST_FMT   */ "%d of %d: %s",
 };
 
 // Key names matching the enum order (for file parsing)
@@ -230,10 +245,15 @@ static const char* sr_keys[SR_COUNT] = {
     "prod_picker_cancel", "prod_picker_empty",
     "prod_picker_current", "prod_picker_current_none",
     "prod_detail_fac", "prod_detail_project", "prod_detail_unit",
+    "queue_open", "queue_open_one", "queue_item", "queue_item_current",
+    "queue_moved", "queue_removed", "queue_added", "queue_full",
+    "queue_cannot_move_current", "queue_cannot_remove_current",
+    "queue_closed", "queue_empty",
     "menu_game", "menu_hq", "menu_network", "menu_map", "menu_action",
     "menu_terraform", "menu_scenario", "menu_editmap", "menu_help",
     "menu_closed", "menu_entry_fmt", "menu_item_fmt", "menu_item_nohk",
     "menu_nav_fmt",
+    "popup_list_fmt",
 };
 
 // Loaded strings (dynamically allocated, or NULL = use default)

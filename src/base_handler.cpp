@@ -19,6 +19,11 @@ static int _prodPickerIndex = 0;
 static int _prodPickerCount = 0;
 static int _prodPickerItems[600]; // item IDs: positive=unit, negative=facility/project
 
+// Queue management state
+static bool _queueActive = false;
+static int _queueIndex = 0;
+static bool _queueInsertMode = false; // picker opened from queue Insert key
+
 static const SrStr section_str_ids[] = {
     SR_SEC_OVERVIEW,
     SR_SEC_RESOURCES,
@@ -405,6 +410,130 @@ static void prod_picker_announce_item(bool interrupt = true) {
     sr_output(buf, interrupt);
 }
 
+/// Announce queue item at _queueIndex with position, cost, and turns info.
+static void queue_announce_item(bool interrupt = true) {
+    if (!valid_base()) return;
+    BASE* base = &Bases[*CurrentBaseID];
+    int total = base->queue_size + 1;
+    if (_queueIndex < 0 || _queueIndex >= total) return;
+
+    int item = base->queue_items[_queueIndex];
+    int cost = mineral_cost(*CurrentBaseID, item);
+
+    char turns_str[64];
+    if (base->mineral_surplus <= 0) {
+        snprintf(turns_str, sizeof(turns_str), "%s", loc(SR_FMT_GROWTH_NEVER));
+    } else {
+        int remaining = (_queueIndex == 0)
+            ? max(0, cost - base->minerals_accumulated)
+            : cost;
+        int turns = (remaining + base->mineral_surplus - 1) / base->mineral_surplus;
+        snprintf(turns_str, sizeof(turns_str), loc(SR_FMT_TURNS), turns);
+    }
+
+    char buf[256];
+    if (_queueIndex == 0) {
+        snprintf(buf, sizeof(buf), loc(SR_QUEUE_ITEM_CURRENT),
+            _queueIndex + 1, total, prod_name(item),
+            base->minerals_accumulated, cost, turns_str);
+    } else {
+        snprintf(buf, sizeof(buf), loc(SR_QUEUE_ITEM),
+            _queueIndex + 1, total, prod_name(item), cost, turns_str);
+    }
+    sr_output(buf, interrupt);
+}
+
+/// Swap two queue entries. Does not allow swapping item 0.
+static bool queue_swap_items(int a, int b) {
+    if (!valid_base()) return false;
+    BASE* base = &Bases[*CurrentBaseID];
+    int total = base->queue_size + 1;
+    if (a <= 0 || b <= 0 || a >= total || b >= total) return false;
+
+    int tmp = base->queue_items[a];
+    base->queue_items[a] = base->queue_items[b];
+    base->queue_items[b] = tmp;
+    GraphicWin_redraw(BaseWin);
+    return true;
+}
+
+/// Remove item at given index from queue (not item 0). Shifts remaining items down.
+static bool queue_remove_item(int idx) {
+    if (!valid_base()) return false;
+    BASE* base = &Bases[*CurrentBaseID];
+    int total = base->queue_size + 1;
+    if (idx <= 0 || idx >= total) return false;
+
+    for (int i = idx; i < total - 1; i++) {
+        base->queue_items[i] = base->queue_items[i + 1];
+    }
+    base->queue_items[total - 1] = 0;
+    base->queue_size--;
+    GraphicWin_redraw(BaseWin);
+    return true;
+}
+
+/// Insert item at given position in queue. Shifts items up.
+static bool queue_insert_item(int item_id, int pos) {
+    if (!valid_base()) return false;
+    BASE* base = &Bases[*CurrentBaseID];
+    int total = base->queue_size + 1;
+    if (total >= 10) return false; // queue full
+    if (pos < 1) pos = 1;
+    if (pos > total) pos = total;
+
+    // Shift items up from end to pos
+    for (int i = total; i > pos; i--) {
+        base->queue_items[i] = base->queue_items[i - 1];
+    }
+    base->queue_items[pos] = item_id;
+    base->queue_size++;
+    GraphicWin_redraw(BaseWin);
+    return true;
+}
+
+/// Announce detail for the current queue item (reuses prod_picker_announce_detail logic).
+static void queue_announce_detail() {
+    if (!valid_base() || !_queueActive) return;
+    BASE* base = &Bases[*CurrentBaseID];
+    int total = base->queue_size + 1;
+    if (_queueIndex < 0 || _queueIndex >= total) return;
+
+    int item = base->queue_items[_queueIndex];
+    int cost = mineral_cost(*CurrentBaseID, item);
+    char buf[1024];
+
+    if (item < 0) {
+        int fac_id = -item;
+        const char* name = Facility[fac_id].name ? Facility[fac_id].name : "???";
+        const char* effect = Facility[fac_id].effect ? Facility[fac_id].effect : "";
+        if (fac_id >= SP_ID_First) {
+            snprintf(buf, sizeof(buf), loc(SR_PROD_DETAIL_PROJECT), name, effect, cost);
+        } else {
+            snprintf(buf, sizeof(buf), loc(SR_PROD_DETAIL_FAC),
+                name, effect, cost, (int)Facility[fac_id].maint);
+        }
+    } else {
+        UNIT* u = &Units[item];
+        const char* chassis_name = Chassis[u->chassis_id].offsv1_name
+            ? Chassis[u->chassis_id].offsv1_name : "???";
+        const char* weapon_name = Weapon[u->weapon_id].name
+            ? Weapon[u->weapon_id].name : "???";
+        const char* armor_name = Armor[u->armor_id].name
+            ? Armor[u->armor_id].name : "???";
+        const char* reactor_name = Reactor[u->reactor_id].name
+            ? Reactor[u->reactor_id].name : "???";
+        int atk = Weapon[u->weapon_id].offense_value;
+        int def = Armor[u->armor_id].defense_value;
+        int move_speed = Chassis[u->chassis_id].speed;
+        int hp = 10 * Reactor[u->reactor_id].power;
+        snprintf(buf, sizeof(buf), loc(SR_PROD_DETAIL_UNIT),
+            u->name, chassis_name, weapon_name, atk,
+            armor_name, def, reactor_name, move_speed, hp);
+    }
+    sr_output(buf, true);
+}
+
 static void announce_current_section() {
     switch (_currentSection) {
         case BS_Overview:    announce_section_overview(); break;
@@ -421,6 +550,10 @@ namespace BaseScreenHandler {
 
 bool IsPickerActive() {
     return _prodPickerActive;
+}
+
+bool IsQueueActive() {
+    return _queueActive;
 }
 
 bool IsActive() {
@@ -465,6 +598,8 @@ void OnOpen() {
 void OnClose() {
     _lastBaseID = -1;
     _prodPickerActive = false;
+    _queueActive = false;
+    _queueInsertMode = false;
     sr_debug_log("BASE-CLOSE");
 }
 
@@ -508,23 +643,50 @@ bool Update(UINT msg, WPARAM wParam) {
         }
         if (wParam == VK_RETURN) {
             if (_prodPickerCount > 0 && valid_base()) {
-                BASE* base = &Bases[*CurrentBaseID];
                 int item = _prodPickerItems[_prodPickerIndex];
-                base->queue_items[0] = item;
-                base->minerals_accumulated = 0;
-                GraphicWin_redraw(BaseWin);
-                char buf[256];
-                snprintf(buf, sizeof(buf), loc(SR_PROD_PICKER_SELECT),
-                    prod_name(item));
-                sr_output(buf, true);
-                sr_debug_log("PROD-PICKER: selected %s (id=%d)", prod_name(item), item);
+                if (_queueInsertMode) {
+                    // Insert into queue after _queueIndex
+                    int insert_pos = _queueIndex + 1;
+                    if (queue_insert_item(item, insert_pos)) {
+                        _queueIndex = insert_pos;
+                        char buf[256];
+                        snprintf(buf, sizeof(buf), loc(SR_QUEUE_ADDED),
+                            prod_name(item), insert_pos + 1);
+                        sr_output(buf, true);
+                        sr_debug_log("QUEUE-INSERT: %s at pos %d", prod_name(item), insert_pos);
+                    }
+                    _prodPickerActive = false;
+                    _queueInsertMode = false;
+                    // Stay in queue mode, announce current item
+                    queue_announce_item(false);
+                } else {
+                    BASE* base = &Bases[*CurrentBaseID];
+                    base->queue_items[0] = item;
+                    base->minerals_accumulated = 0;
+                    GraphicWin_redraw(BaseWin);
+                    char buf[256];
+                    snprintf(buf, sizeof(buf), loc(SR_PROD_PICKER_SELECT),
+                        prod_name(item));
+                    sr_output(buf, true);
+                    sr_debug_log("PROD-PICKER: selected %s (id=%d)", prod_name(item), item);
+                    _prodPickerActive = false;
+                }
+            } else {
+                _prodPickerActive = false;
+                _queueInsertMode = false;
             }
-            _prodPickerActive = false;
             return true;
         }
         if (wParam == VK_ESCAPE) {
             _prodPickerActive = false;
-            sr_output(loc(SR_PROD_PICKER_CANCEL), true);
+            if (_queueInsertMode) {
+                _queueInsertMode = false;
+                sr_output(loc(SR_PROD_PICKER_CANCEL), true);
+                // Return to queue mode, announce current item
+                queue_announce_item(false);
+            } else {
+                sr_output(loc(SR_PROD_PICKER_CANCEL), true);
+            }
             return true;
         }
         if (wParam == 'D') {
@@ -532,6 +694,136 @@ bool Update(UINT msg, WPARAM wParam) {
             return true;
         }
         // Consume all other keys while picker is active
+        return true;
+    }
+
+    // Queue management mode: intercept navigation keys
+    if (_queueActive) {
+        if (!valid_base()) {
+            _queueActive = false;
+            return true;
+        }
+        BASE* base = &Bases[*CurrentBaseID];
+        int total = base->queue_size + 1;
+        bool shift = (GetKeyState(VK_SHIFT) & 0x8000) != 0;
+
+        if (wParam == VK_UP && !shift) {
+            _queueIndex = (_queueIndex + total - 1) % total;
+            queue_announce_item();
+            return true;
+        }
+        if (wParam == VK_DOWN && !shift) {
+            _queueIndex = (_queueIndex + 1) % total;
+            queue_announce_item();
+            return true;
+        }
+        if (wParam == VK_UP && shift) {
+            if (_queueIndex == 0) {
+                sr_output(loc(SR_QUEUE_CANNOT_MOVE_CURRENT), true);
+            } else if (_queueIndex == 1) {
+                // Can't swap with item 0
+                sr_output(loc(SR_QUEUE_CANNOT_MOVE_CURRENT), true);
+            } else {
+                int item = base->queue_items[_queueIndex];
+                queue_swap_items(_queueIndex, _queueIndex - 1);
+                _queueIndex--;
+                char buf[256];
+                snprintf(buf, sizeof(buf), loc(SR_QUEUE_MOVED),
+                    prod_name(item), _queueIndex + 1);
+                sr_output(buf, true);
+            }
+            return true;
+        }
+        if (wParam == VK_DOWN && shift) {
+            if (_queueIndex == 0) {
+                sr_output(loc(SR_QUEUE_CANNOT_MOVE_CURRENT), true);
+            } else if (_queueIndex >= total - 1) {
+                // Already at bottom, nowhere to move
+                sr_output(loc(SR_QUEUE_CANNOT_MOVE_CURRENT), true);
+            } else {
+                int item = base->queue_items[_queueIndex];
+                queue_swap_items(_queueIndex, _queueIndex + 1);
+                _queueIndex++;
+                char buf[256];
+                snprintf(buf, sizeof(buf), loc(SR_QUEUE_MOVED),
+                    prod_name(item), _queueIndex + 1);
+                sr_output(buf, true);
+            }
+            return true;
+        }
+        if (wParam == VK_DELETE) {
+            if (_queueIndex == 0) {
+                sr_output(loc(SR_QUEUE_CANNOT_REMOVE_CURRENT), true);
+            } else {
+                const char* name = prod_name(base->queue_items[_queueIndex]);
+                char buf[256];
+                queue_remove_item(_queueIndex);
+                int new_total = base->queue_size + 1;
+                snprintf(buf, sizeof(buf), loc(SR_QUEUE_REMOVED), name, new_total);
+                sr_output(buf, true);
+                sr_debug_log("QUEUE-REMOVE: %s, %d remaining", name, new_total);
+                // Clamp index
+                if (_queueIndex >= new_total) {
+                    _queueIndex = new_total - 1;
+                }
+                queue_announce_item(false);
+            }
+            return true;
+        }
+        if (wParam == VK_INSERT) {
+            if (total >= 10) {
+                sr_output(loc(SR_QUEUE_FULL), true);
+            } else {
+                // Open picker in insert mode
+                prod_picker_build_list();
+                if (_prodPickerCount == 0) {
+                    sr_output(loc(SR_PROD_PICKER_EMPTY), true);
+                } else {
+                    _prodPickerActive = true;
+                    _queueInsertMode = true;
+                    _prodPickerIndex = 0;
+                    char buf[256];
+                    snprintf(buf, sizeof(buf), loc(SR_PROD_PICKER_OPEN), _prodPickerCount);
+                    sr_output(buf, true);
+                    prod_picker_announce_item(false);
+                }
+            }
+            return true;
+        }
+        if (wParam == 'D') {
+            queue_announce_detail();
+            return true;
+        }
+        if (wParam == VK_ESCAPE) {
+            _queueActive = false;
+            sr_output(loc(SR_QUEUE_CLOSED), true);
+            return true;
+        }
+        // Consume all other keys while queue is active
+        return true;
+    }
+
+    // Ctrl+Q: toggle queue management mode
+    if (wParam == 'Q' && ctrl_key_down()) {
+        if (!valid_base()) return true;
+        BASE* base = &Bases[*CurrentBaseID];
+        if (base->faction_id != MapWin->cOwner) return true;
+
+        int total = base->queue_size + 1;
+        _queueActive = true;
+        _queueIndex = 0;
+
+        if (total <= 1) {
+            char buf[256];
+            snprintf(buf, sizeof(buf), loc(SR_QUEUE_OPEN_ONE), prod_name(base->queue_items[0]));
+            sr_output(buf, true);
+        } else {
+            char buf[256];
+            snprintf(buf, sizeof(buf), loc(SR_QUEUE_OPEN), total);
+            sr_output(buf, true);
+            queue_announce_item(false);
+        }
+        sr_debug_log("QUEUE-OPEN: %d items", total);
         return true;
     }
 

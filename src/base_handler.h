@@ -17,6 +17,7 @@ namespace BaseScreenHandler {
 
 bool IsActive();
 bool IsPickerActive();
+bool IsQueueActive();
 bool Update(UINT msg, WPARAM wParam);
 void OnOpen();
 void OnClose();

@@ -101,7 +101,7 @@ fmt_units=%d stationiert.
 fmt_units_none=Einheiten: Keine stationiert.
 fmt_base_open_v2=Basis: %s, Bevoelkerung %d. Baut %s, %d von %d, %s. Strg+Hoch/Runter: Sektionen.
 fmt_workers=%d Arbeiter
-base_help=Strg+Hoch/Runter: Sektionen. Strg+Links/Rechts: Reiter. Strg+I: Wiederholen. Strg+H: Beschleunigen. Strg+Shift+P: Produktion aendern. Escape: Schliessen.
+base_help=Strg+Hoch/Runter: Sektionen. Strg+Links/Rechts: Reiter. Strg+I: Wiederholen. Strg+H: Beschleunigen. Strg+Shift+P: Produktion aendern. Strg+Q: Warteschlange. Escape: Schliessen.
 fmt_turns=%d Runden
 fmt_growth_never=kein Wachstum
 fmt_faction_credits=%d Energieguthaben
@@ -123,6 +123,20 @@ prod_picker_current_none=Baut gerade: nichts.
 prod_detail_fac=%s. %s. Kosten: %d Mineralien, Wartung: %d pro Runde.
 prod_detail_project=%s. %s. Kosten: %d Mineralien. Geheimprojekt.
 prod_detail_unit=%s. %s, %s %d, %s %d, %s, %d Zuege, %d HP.
+
+# Warteschlangenverwaltung
+queue_open=Warteschlange: %d Eintraege. Hoch/Runter navigieren, Shift+Hoch/Runter umordnen, Entfernen loeschen, Einfuegen hinzufuegen, Escape schliessen.
+queue_open_one=Warteschlange: 1 Eintrag. %s. Einfuegen zum Hinzufuegen, Escape schliessen.
+queue_item=%d von %d: %s, %d Mineralien, %s.
+queue_item_current=%d von %d: %s, %d von %d Mineralien, %s. Aktuelle Produktion.
+queue_moved=%s auf Position %d verschoben.
+queue_removed=%s entfernt. %d Eintraege verbleibend.
+queue_added=%s an Position %d hinzugefuegt.
+queue_full=Nicht moeglich: Warteschlange voll, 10 Eintraege.
+queue_cannot_move_current=Aktuelle Produktion kann nicht verschoben werden.
+queue_cannot_remove_current=Aktuelle Produktion kann nicht entfernt werden. Strg+Shift+P zum Aendern.
+queue_closed=Warteschlange geschlossen.
+queue_empty=Warteschlange leer.
 
 # Bewegung & Navigation
 movement_points=%d von %d Zuegen
@@ -174,3 +188,6 @@ menu_entry_fmt=%s, %d Eintraege
 menu_item_fmt=%s, %s
 menu_item_nohk=%s
 menu_nav_fmt=%d von %d: %s
+
+# Popup-Listennavigation
+popup_list_fmt=%d von %d: %s

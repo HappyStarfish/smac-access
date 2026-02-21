@@ -101,7 +101,7 @@ fmt_units=%d stationed.
 fmt_units_none=Units: None stationed.
 fmt_base_open_v2=Base: %s, Population %d. Building %s, %d of %d, %s. Ctrl+Up/Down: Sections.
 fmt_workers=%d workers
-base_help=Ctrl+Up/Down: Sections. Ctrl+Left/Right: Tabs. Ctrl+I: Repeat. Ctrl+H: Hurry. Ctrl+Shift+P: Change production. Escape: Close.
+base_help=Ctrl+Up/Down: Sections. Ctrl+Left/Right: Tabs. Ctrl+I: Repeat. Ctrl+H: Hurry. Ctrl+Shift+P: Change production. Ctrl+Q: Queue. Escape: Close.
 fmt_turns=%d turns
 fmt_growth_never=no growth
 fmt_faction_credits=%d energy credits
@@ -123,6 +123,20 @@ prod_picker_current_none=Currently building: nothing.
 prod_detail_fac=%s. %s. Cost: %d minerals, Maintenance: %d per turn.
 prod_detail_project=%s. %s. Cost: %d minerals. Secret Project.
 prod_detail_unit=%s. %s, %s %d, %s %d, %s, %d moves, %d HP.
+
+# Queue Management
+queue_open=Queue: %d items. Up/Down navigate, Shift+Up/Down reorder, Delete remove, Insert add, Escape close.
+queue_open_one=Queue: 1 item. %s. Insert to add, Escape close.
+queue_item=%d of %d: %s, %d minerals, %s.
+queue_item_current=%d of %d: %s, %d of %d minerals, %s. Current production.
+queue_moved=%s moved to position %d.
+queue_removed=Removed %s. %d items remaining.
+queue_added=Added %s at position %d.
+queue_full=Cannot: queue full, 10 items.
+queue_cannot_move_current=Cannot move current production.
+queue_cannot_remove_current=Cannot remove current production. Use Ctrl+Shift+P to change.
+queue_closed=Queue closed.
+queue_empty=Queue empty.
 
 # Movement & Navigation
 movement_points=%d of %d moves
@@ -174,3 +188,6 @@ menu_entry_fmt=%s, %d entries
 menu_item_fmt=%s, %s
 menu_item_nohk=%s
 menu_nav_fmt=%d of %d: %s
+
+# Popup List Navigation
+popup_list_fmt=%d of %d: %s
