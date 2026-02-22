@@ -1090,6 +1090,11 @@ LRESULT WINAPI ModWinProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                 sr_cursor_x = MapWin->iTileX;
                 sr_cursor_y = MapWin->iTileY;
             }
+            // Initialize map tracker to current position so no initial
+            // tile announcement fires — only announce on actual movement
+            sr_map_x = MapWin->iTileX;
+            sr_map_y = MapWin->iTileY;
+            sr_map_pending = false;
             sr_debug_log("CURSOR-INIT (%d,%d)", sr_cursor_x, sr_cursor_y);
         }
         if (!on_world_map && sr_menubar_active) {
@@ -1268,7 +1273,10 @@ LRESULT WINAPI ModWinProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         // World map feedback comes from MAP-MOVE tracker instead.
         // Skip all announce triggers while sr_defer_active (planetfall etc.)
         if (sr_snapshot_ready()) {
-            if (in_menu) {
+            if (sr_tutorial_announce_time > 0
+                && (now - sr_tutorial_announce_time) < 3000) {
+                sr_debug_log("SNAP-DISCARD (tutorial recent)");
+            } else if (in_menu) {
                 sr_debug_log("SNAP-DISCARD (menu context)");
             } else if (sr_arrow_active) {
                 sr_debug_log("SNAP-DISCARD (arrow)");
@@ -1460,10 +1468,26 @@ LRESULT WINAPI ModWinProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         static DWORD sr_worldmap_poll_time = 0;
         if (on_world_map && !sr_arrow_active) {
             if (sr_worldmap_poll_time == 0) sr_worldmap_poll_time = now;
-            if ((now - sr_worldmap_poll_time) >= 500) {
+            // Suppress worldmap announcements for 3s after tutorial popup
+            if (sr_tutorial_announce_time > 0
+                && (now - sr_tutorial_announce_time) < 3000) {
+                sr_worldmap_poll_time = now; // keep resetting poll timer
+            } else if ((now - sr_worldmap_poll_time) >= 500) {
                 sr_worldmap_poll_time = now;
                 int count = sr_item_count();
                 if (count > 0) {
+                    // First pass: check if a tutorial popup is open
+                    // (any item starts with "ABOUT "). If so, include
+                    // all non-HUD items (body text rendered via
+                    // Buffer_write_strings doesn't match whitelist).
+                    bool has_about = false;
+                    for (int i = 0; i < count; i++) {
+                        const char* it = sr_item_get(i);
+                        if (it && strncmp(it, "ABOUT ", 6) == 0) {
+                            has_about = true;
+                            break;
+                        }
+                    }
                     char buf[2048];
                     int pos = 0;
                     bool has_new = false;
@@ -1475,6 +1499,8 @@ LRESULT WINAPI ModWinProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                         if (strncmp(it, "ABOUT ", 6) == 0) important = true;
                         if (strstr(it, "need new orders") != NULL) important = true;
                         if (strstr(it, "Press ENTER") != NULL) important = true;
+                        // Tutorial popup open: include all non-HUD items
+                        if (has_about && !sr_is_hud_noise(it)) important = true;
                         if (!important) continue;
                         if (strstr(sr_announced, it) != NULL) continue;
                         has_new = true;
@@ -3284,9 +3310,60 @@ int __thiscall mod_NetMsg_pop(void* This, const char* label, int delay, int a4, 
     return NetMsg_pop(This, label, -1, a4, a5);
 }
 
+// Labels that are navigable menus — announce only the menu name, not body.
+// Returns a friendly name for the menu, or NULL if not a menu label.
+static const char* sr_menu_name(const char* label) {
+    static const struct { const char* label; const char* name; } menus[] = {
+        {"TOPMENU",       "Main Menu"},
+        {"MAPMENU",       "Map Menu"},
+        {"MULTIMENU",     "Multiplayer"},
+        {"SCENARIOMENU",  "Scenario"},
+        {"MAINMENU",      "Thinker Menu"},
+        {"GAMEMENU",      "Game Menu"},
+        {"WORLDSIZE",     NULL},  // NULL = read #caption from file
+        {"WORLDLAND",     NULL},
+        {"WORLDTIDES",    NULL},
+        {"WORLDORBIT",    NULL},
+        {"WORLDLIFE",     NULL},
+        {"WORLDCLOUD",    NULL},
+        {"WORLDNATIVE",   NULL},
+    };
+    for (int i = 0; i < (int)(sizeof(menus) / sizeof(menus[0])); i++) {
+        if (_stricmp(label, menus[i].label) == 0) {
+            return menus[i].name ? menus[i].name : "";
+        }
+    }
+    return NULL;  // not a menu
+}
+
 int __thiscall mod_BasePop_start(
 void* This, const char* filename, const char* label, int a4, int a5, int a6, int a7)
 {
+    if (!sr_popup_is_active() && sr_is_available() && filename && label) {
+        const char* menu = sr_menu_name(label);
+        if (menu) {
+            // Menu: announce just the name (or read #caption from file)
+            if (menu[0]) {
+                sr_output(menu, true);
+            } else {
+                // Empty string = read #caption from file
+                char buf[2048];
+                buf[0] = '\0';
+                if (sr_read_popup_text(filename, label, buf, sizeof(buf))) {
+                    // Caption is prepended, cut at ". " to drop body
+                    char* dot = strstr(buf, ". ");
+                    if (dot) *dot = '\0';
+                }
+                sr_output(buf[0] ? buf : label, true);
+            }
+        } else {
+            // Dialog: announce full popup text (caption + body)
+            char buf[2048];
+            if (sr_read_popup_text(filename, label, buf, sizeof(buf))) {
+                sr_output(buf, true);
+            }
+        }
+    }
     if (movedlabels.count(label)) {
         return BasePop_start(This, "modmenu", label, a4, a5, a6, a7);
     }

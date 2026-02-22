@@ -76,12 +76,15 @@ static DWORD sr_trace_until = 0; // GetTickCount() deadline for trace logging
 // Popup suppress: while a popup function is executing, suppress sr_record_text
 // so the popup's own UI rendering doesn't trigger the deferred announce timer
 static bool sr_popup_active = false;
+// Timestamp of last tutorial popup announcement (for suppressing worldmap trigger)
+DWORD sr_tutorial_announce_time = 0;
 
 // Defer announce: text capture continues but gui.cpp should not fire announce triggers.
 // Used by blocking hooks (planetfall) that collect rendered text and announce after return.
 static bool sr_defer_flag = false;
 
 bool sr_defer_active() { return sr_defer_flag; }
+bool sr_popup_is_active() { return sr_popup_active; }
 void sr_defer_set(bool active) { sr_defer_flag = active; }
 
 static void sr_trace_call(const char* func, const char* text) {
@@ -256,6 +259,104 @@ static bool sr_is_junk(const char* text) {
 }
 
 /*
+Try to match rendered text against tutorial popup captions in tutor.txt.
+Tutorial popups often appear nested inside other popups (e.g., the
+research tutorial during tech selection). Since sr_popup_active blocks
+normal text capture, this function provides a bypass: it reads the
+body text directly from tutor.txt and announces it.
+*/
+static void sr_try_tutorial_announce(const char* text) {
+    if (!text || strlen(text) < 5) return;
+    if (!sr_is_available()) return;
+
+    // Debounce: don't re-announce the same tutorial
+    static char last_tutorial[256] = "";
+    if (_stricmp(last_tutorial, text) == 0) return;
+
+    // Open tutor.txt from game working directory
+    FILE* f = fopen("tutor.txt", "r");
+    if (!f) {
+        sr_debug_log("TUTOR: cannot open tutor.txt");
+        return;
+    }
+
+    // Scan for #caption matching the rendered text (case-insensitive)
+    char line[512];
+    bool found = false;
+    while (fgets(line, sizeof(line), f)) {
+        int len = strlen(line);
+        while (len > 0 && (line[len-1] == '\n' || line[len-1] == '\r'
+               || line[len-1] == ' '))
+            line[--len] = '\0';
+        if (strncmp(line, "#caption ", 9) == 0 && _stricmp(line + 9, text) == 0) {
+            found = true;
+            break;
+        }
+    }
+
+    if (!found) {
+        fclose(f);
+        return;
+    }
+
+    // Read body text lines after the caption (reuses sr_read_popup_text logic)
+    char body[2048];
+    int pos = 0;
+    bool has_body = false;
+
+    while (fgets(line, sizeof(line), f)) {
+        int len = strlen(line);
+        while (len > 0 && (line[len-1] == '\n' || line[len-1] == '\r'
+               || line[len-1] == ' '))
+            line[--len] = '\0';
+
+        // Next section starts
+        if (len > 1 && line[0] == '#' && line[1] >= 'A' && line[1] <= 'Z') break;
+        // Skip directives
+        if (line[0] == '#') continue;
+        // Skip comments
+        if (line[0] == ';') continue;
+        // Empty line = paragraph break
+        if (len == 0) {
+            if (has_body && pos > 0 && pos < (int)sizeof(body) - 2)
+                body[pos++] = ' ';
+            continue;
+        }
+        // Strip {curly} formatting markers
+        char clean[512];
+        int cpos = 0;
+        for (int i = 0; i < len && cpos < (int)sizeof(clean) - 1; i++) {
+            if (line[i] == '{' || line[i] == '}') continue;
+            clean[cpos++] = line[i];
+        }
+        clean[cpos] = '\0';
+        if (cpos == 0) continue;
+
+        if (pos > 0 && pos < (int)sizeof(body) - 2) body[pos++] = ' ';
+        int copy_len = cpos;
+        if (pos + copy_len >= (int)sizeof(body) - 1)
+            copy_len = (int)sizeof(body) - 1 - pos;
+        if (copy_len > 0) {
+            memcpy(body + pos, clean, copy_len);
+            pos += copy_len;
+            has_body = true;
+        }
+    }
+    body[pos] = '\0';
+    fclose(f);
+
+    if (has_body) {
+        strncpy(last_tutorial, text, sizeof(last_tutorial) - 1);
+        last_tutorial[sizeof(last_tutorial) - 1] = '\0';
+        char announcement[2560];
+        snprintf(announcement, sizeof(announcement), "%s. %s", text, body);
+        sr_output(announcement, true);
+        sr_tutorial_announce_time = GetTickCount();
+        sr_debug_log("TUTORIAL-POPUP: %.200s", announcement);
+    }
+}
+
+/*
 Record text drawn by the game into the capture buffer.
 Auto-clears when a new draw cycle starts (>100ms gap between calls).
 Deduplicates against entire buffer within the same cycle.
@@ -263,8 +364,12 @@ Deduplicates against entire buffer within the same cycle.
 void sr_record_text(const char* text, int y) {
     if (!text || !text[0]) return;
 
-    // During popup display, don't accumulate text (popup body already spoken)
-    if (sr_popup_active) return;
+    // During popup display, don't accumulate normal text.
+    // But check for tutorial popup captions (nested inside other popups).
+    if (sr_popup_active) {
+        sr_try_tutorial_announce(text);
+        return;
+    }
 
     int len = strlen(text);
     if (len < 3) {
@@ -643,7 +748,22 @@ bool sr_read_popup_text(const char* filename, const char* label,
             break;
         }
 
-        // Skip directive lines (#xs, #caption, #button, #wave, etc.)
+        // Extract #caption text and prepend to body
+        if (strncmp(line, "#caption ", 9) == 0) {
+            const char* cap = line + 9;
+            int clen = strlen(cap);
+            if (clen > 0 && pos + clen + 3 < bufsize) {
+                memcpy(buf + pos, cap, clen);
+                pos += clen;
+                buf[pos++] = '.';
+                buf[pos++] = ' ';
+                buf[pos] = '\0';
+                has_body = true;
+            }
+            continue;
+        }
+
+        // Skip other directive lines (#xs, #button, #wave, etc.)
         if (line[0] == '#') {
             continue;
         }
@@ -704,6 +824,44 @@ bool sr_read_popup_text(const char* filename, const char* label,
     buf[pos] = '\0';
     fclose(f);
 
+    // Substitute game variables ($BASENAME0, $UNITNAME1, etc.)
+    // using ParseStrBuffer slots filled by parse_says before popup display
+    if (ParseStrBuffer) {
+        char tmp[2048];
+        bool changed = true;
+        // Iterate until no more substitutions (handles multiple vars)
+        while (changed) {
+            changed = false;
+            char* p = buf;
+            while ((p = strchr(p, '$')) != NULL) {
+                // Check for $WORD# pattern (uppercase letters + single digit)
+                char* start = p;
+                p++; // skip $
+                // Skip uppercase letters
+                while (*p >= 'A' && *p <= 'Z') p++;
+                // Must have at least one letter and end with a digit
+                if (p > start + 1 && *p >= '0' && *p <= '9') {
+                    int slot = *p - '0';
+                    p++; // skip digit
+                    // Also handle two-digit slot (e.g. $BASENAME10)
+                    if (*p >= '0' && *p <= '9') {
+                        slot = slot * 10 + (*p - '0');
+                        p++;
+                    }
+                    if (slot < 8 && ParseStrBuffer[slot].str[0]) {
+                        int prefix = (int)(start - buf);
+                        snprintf(tmp, sizeof(tmp), "%.*s%s%s",
+                            prefix, buf, ParseStrBuffer[slot].str, p);
+                        strncpy(buf, tmp, bufsize - 1);
+                        buf[bufsize - 1] = '\0';
+                        changed = true;
+                        break; // restart scan from beginning
+                    }
+                }
+            }
+        }
+    }
+
     {
         char logbuf[512];
         snprintf(logbuf, sizeof(logbuf), "POPUP read [%s#%s]: %.200s", filename, label, buf);
@@ -728,6 +886,10 @@ static int __cdecl sr_hook_popp(const char* filename, const char* label,
     sr_popup_active = true;
     int result = sr_orig_popp(filename, label, a3, pcx, a5);
     sr_popup_active = false;
+    // Update tutorial timestamp to popup close time (not open time)
+    if (sr_tutorial_announce_time > 0) {
+        sr_tutorial_announce_time = GetTickCount();
+    }
     sr_popup_list_clear();
     sr_clear_text();
     return result;
@@ -750,6 +912,9 @@ static int __cdecl sr_hook_popb(const char* label, int flags,
     sr_popup_active = true;
     int result = sr_orig_popb(label, flags, sound_id, pcx, a5);
     sr_popup_active = false;
+    if (sr_tutorial_announce_time > 0) {
+        sr_tutorial_announce_time = GetTickCount();
+    }
     sr_popup_list_clear();
     sr_clear_text();
     return result;
@@ -775,6 +940,9 @@ static int __cdecl sr_hook_x_pop(const char* filename, const char* label,
     sr_popup_active = true;
     int result = sr_orig_x_pop(filename, label, a3, a4, a5, a6);
     sr_popup_active = false;
+    if (sr_tutorial_announce_time > 0) {
+        sr_tutorial_announce_time = GetTickCount();
+    }
     sr_popup_list_clear();
     sr_clear_text();
     return result;
@@ -797,6 +965,9 @@ static int __cdecl sr_hook_x_pops(const char* filename, const char* label,
     sr_popup_active = true;
     int result = sr_orig_x_pops(filename, label, a3, a4, a5, a6, a7, a8, a9);
     sr_popup_active = false;
+    if (sr_tutorial_announce_time > 0) {
+        sr_tutorial_announce_time = GetTickCount();
+    }
     sr_popup_list_clear();
     sr_clear_text();
     return result;

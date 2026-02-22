@@ -83,6 +83,12 @@ void sr_popup_list_clear();
 // Parse options from a script file section. Returns number of options found.
 int sr_popup_list_parse(const char* filename, const char* label);
 
+// Timestamp of last tutorial popup announcement (suppress worldmap trigger)
+extern DWORD sr_tutorial_announce_time;
+
+// Check if a popup hook is currently active (blocks duplicate announcements)
+bool sr_popup_is_active();
+
 // Debug logging (Ctrl+F12 toggle at runtime)
 bool sr_debug_active();
 void sr_debug_toggle();
