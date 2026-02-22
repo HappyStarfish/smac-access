@@ -51,12 +51,43 @@ Requirements
 
 Installation
 ------------
-1. Extract all files to your Alpha Centauri game folder.
-2. Configure settings in `thinker.ini` (optional).
-3. Set screen reader language: `sr_language=en` or `sr_language=de` in `thinker.ini`.
-4. Start the game from `thinker.exe`.
 
-For troubleshooting, see the [Thinker troubleshooting section](#troubleshooting) below.
+### What You Need
+
+- The [GOG version](https://www.gog.com/game/sid_meiers_alpha_centauri) of Alpha Centauri: Alien Crossfire (Planetary Pack), installed
+- A screen reader running (NVDA recommended, JAWS also supported)
+- The SmacAccess release ZIP ([download from Releases](https://github.com/HappyStarfish/smac-access/releases))
+
+### Step by Step
+
+1. Download the latest `SmacAccess.zip` from [Releases](https://github.com/HappyStarfish/smac-access/releases).
+2. Open your Alpha Centauri game folder (usually `C:\Program Files (x86)\Sid Meier's Alpha Centauri Planetary Pack\` or wherever you installed it).
+3. Extract the entire ZIP into the game folder. Overwrite files if asked.
+4. **Optional:** Open `thinker.ini` in a text editor and set `sr_language=de` for German screen reader output (default is English).
+5. Start the game by running `thinker.exe` (not `terranx.exe`).
+
+### What Gets Installed
+
+The ZIP contains these files, all going into your game folder:
+
+- `thinker.dll` — the mod (replaces the original if you had Thinker installed)
+- `thinker.exe` — launcher, start the game with this
+- `thinker.ini` — configuration (screen reader language, AI settings, gameplay options)
+- `modmenu.txt` — menu definitions (required)
+- `Tolk.dll` — screen reader library
+- `nvdaControllerClient32.dll` — NVDA support
+- `SAAPI32.dll` — SAPI support
+- `dolapi32.dll` — JAWS support
+- `sr_lang/en.txt` — English screen reader text
+- `sr_lang/de.txt` — German screen reader text
+
+### Updating
+
+To update SmacAccess, download the new ZIP and extract it over the existing files. Your `thinker.ini` settings will be overwritten, so back it up first if you customized it.
+
+### Uninstalling
+
+Delete the files listed above from your game folder. The original game is not modified and will continue to work normally.
 
 
 Quick Start Keys
@@ -100,18 +131,25 @@ ninja -C build_cmake
 
 **Output:** `build_cmake/thinker.dll` and `build_cmake/thinker.exe`
 
-Copy both files to the game directory. The Tolk DLLs (`Tolk.dll`, `nvdaControllerClient32.dll`, etc.) must also be in the game directory.
+**Package a release ZIP:**
+```bash
+./tools/package_release.sh
+```
+This creates `rel/SmacAccess.zip` with all files needed for installation (mod DLLs, Tolk, language files, config, docs).
+
+**Manual deployment:** Copy `thinker.dll` and `thinker.exe` to the game directory. The Tolk DLLs, `sr_lang/` folder, `thinker.ini`, and `modmenu.txt` must also be present (see [Installation](#installation)).
 
 See [Technical.md](Technical.md) for additional build information from upstream Thinker.
 
 
 Troubleshooting
 ---------------
-- Make sure `terranx.exe` (Alien Crossfire v2.0) is in the game folder.
-- Start from `thinker.exe`, not `terranx.exe`.
-- Set Windows display scaling to 100% (the game does not support scaling).
-- If the game does not start, try running `thinker.exe` as administrator.
-- If no screen reader output: ensure `Tolk.dll` and screen reader client DLLs are in the game folder.
+- **Game does not start:** Make sure `terranx.exe` (Alien Crossfire v2.0) is in the game folder. Always start from `thinker.exe`, not `terranx.exe`.
+- **Permission errors:** Try running `thinker.exe` as administrator, especially if the game is installed in Program Files.
+- **No screen reader output:** Check that `Tolk.dll` and the screen reader client DLLs (`nvdaControllerClient32.dll`, `SAAPI32.dll`, `dolapi32.dll`) are in the game folder alongside `thinker.dll`. Make sure your screen reader (NVDA, JAWS) is running before starting the game.
+- **Missing modmenu.txt error:** The file `modmenu.txt` must be in the game folder. Re-extract the SmacAccess ZIP.
+- **Language files not found:** The folder `sr_lang/` with `en.txt` and `de.txt` must be in the game folder (not a subfolder of something else).
+- **Display issues:** Set Windows display scaling to 100% (the game does not support scaling).
 - For additional troubleshooting, see the [Thinker documentation](Details.md).
 
 
