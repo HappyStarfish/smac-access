@@ -102,10 +102,10 @@ static void sr_trace_call(const char* func, const char* text) {
 }
 
 // Write diagnostic info to a file accessible without admin rights
-static void sr_log(const char* msg) {
+static void sr_write_log(const char* filename, const char* msg) {
     char path[MAX_PATH];
     if (GetTempPathA(MAX_PATH, path)) {
-        strncat(path, "thinker_sr.log", MAX_PATH - strlen(path) - 1);
+        strncat(path, filename, MAX_PATH - strlen(path) - 1);
         FILE* f = fopen(path, "a");
         if (f) {
             fprintf(f, "%s\n", msg);
@@ -114,18 +114,10 @@ static void sr_log(const char* msg) {
     }
 }
 
+static void sr_log(const char* msg) { sr_write_log("thinker_sr.log", msg); }
+
 // Persistent hook installation log (NOT cleared by debug toggle)
-static void sr_hook_log(const char* msg) {
-    char path[MAX_PATH];
-    if (GetTempPathA(MAX_PATH, path)) {
-        strncat(path, "thinker_hooks.log", MAX_PATH - strlen(path) - 1);
-        FILE* f = fopen(path, "a");
-        if (f) {
-            fprintf(f, "%s\n", msg);
-            fclose(f);
-        }
-    }
-}
+static void sr_hook_log(const char* msg) { sr_write_log("thinker_hooks.log", msg); }
 
 /*
 Load Tolk.dll and resolve all function pointers.
@@ -824,8 +816,8 @@ bool sr_read_popup_text(const char* filename, const char* label,
     buf[pos] = '\0';
     fclose(f);
 
-    // Substitute game variables ($BASENAME0, $UNITNAME1, etc.)
-    // using ParseStrBuffer slots filled by parse_says before popup display
+    // Substitute game variables ($BASENAME0, $UNITNAME1, $NUM0, etc.)
+    // String vars use ParseStrBuffer, numeric vars ($NUM#) use ParseNumTable
     if (ParseStrBuffer) {
         char tmp[2048];
         bool changed = true;
@@ -837,10 +829,12 @@ bool sr_read_popup_text(const char* filename, const char* label,
                 // Check for $WORD# pattern (uppercase letters + single digit)
                 char* start = p;
                 p++; // skip $
+                char* word_start = p;
                 // Skip uppercase letters
                 while (*p >= 'A' && *p <= 'Z') p++;
+                int word_len = (int)(p - word_start);
                 // Must have at least one letter and end with a digit
-                if (p > start + 1 && *p >= '0' && *p <= '9') {
+                if (word_len > 0 && *p >= '0' && *p <= '9') {
                     int slot = *p - '0';
                     p++; // skip digit
                     // Also handle two-digit slot (e.g. $BASENAME10)
@@ -848,7 +842,21 @@ bool sr_read_popup_text(const char* filename, const char* label,
                         slot = slot * 10 + (*p - '0');
                         p++;
                     }
-                    if (slot < 8 && ParseStrBuffer[slot].str[0]) {
+                    // Check if this is $NUM# (numeric variable)
+                    bool is_num = (word_len == 3
+                        && word_start[0] == 'N'
+                        && word_start[1] == 'U'
+                        && word_start[2] == 'M');
+                    if (is_num && slot < 16 && ParseNumTable) {
+                        int prefix = (int)(start - buf);
+                        snprintf(tmp, sizeof(tmp), "%.*s%d%s",
+                            prefix, buf, ParseNumTable[slot], p);
+                        strncpy(buf, tmp, bufsize - 1);
+                        buf[bufsize - 1] = '\0';
+                        changed = true;
+                        break;
+                    }
+                    if (!is_num && slot < 8 && ParseStrBuffer[slot].str[0]) {
                         int prefix = (int)(start - buf);
                         snprintf(tmp, sizeof(tmp), "%.*s%s%s",
                             prefix, buf, ParseStrBuffer[slot].str, p);
@@ -874,49 +882,40 @@ bool sr_read_popup_text(const char* filename, const char* label,
 Wrapper for popp: reads popup text from file and sends to screen reader,
 then calls the original game function.
 */
-static int __cdecl sr_hook_popp(const char* filename, const char* label,
-                                int a3, const char* pcx, int a5) {
+// Shared pre/post boilerplate for popup hook wrappers.
+static void sr_pre_popup(const char* filename, const char* label) {
     if (sr_is_available() && filename && label) {
         char buf[2048];
         if (sr_read_popup_text(filename, label, buf, sizeof(buf))) {
-            sr_output(buf, false); // queue, don't interrupt
+            sr_output(buf, false);
         }
         sr_popup_list_parse(filename, label);
     }
     sr_popup_active = true;
-    int result = sr_orig_popp(filename, label, a3, pcx, a5);
+}
+
+static void sr_post_popup() {
     sr_popup_active = false;
-    // Update tutorial timestamp to popup close time (not open time)
     if (sr_tutorial_announce_time > 0) {
         sr_tutorial_announce_time = GetTickCount();
     }
     sr_popup_list_clear();
     sr_clear_text();
+}
+
+static int __cdecl sr_hook_popp(const char* filename, const char* label,
+                                int a3, const char* pcx, int a5) {
+    sr_pre_popup(filename, label);
+    int result = sr_orig_popp(filename, label, a3, pcx, a5);
+    sr_post_popup();
     return result;
 }
 
-/*
-Wrapper for popb: reads popup text from default script file and sends
-to screen reader, then calls the original game function.
-popb uses Script.txt as its text source (same as ScriptFile = "script").
-*/
 static int __cdecl sr_hook_popb(const char* label, int flags,
                                 int sound_id, const char* pcx, int a5) {
-    if (sr_is_available() && label) {
-        char buf[2048];
-        if (sr_read_popup_text("script", label, buf, sizeof(buf))) {
-            sr_output(buf, false);
-        }
-        sr_popup_list_parse("script", label);
-    }
-    sr_popup_active = true;
+    sr_pre_popup("script", label);
     int result = sr_orig_popb(label, flags, sound_id, pcx, a5);
-    sr_popup_active = false;
-    if (sr_tutorial_announce_time > 0) {
-        sr_tutorial_announce_time = GetTickCount();
-    }
-    sr_popup_list_clear();
-    sr_clear_text();
+    sr_post_popup();
     return result;
 }
 
@@ -924,52 +923,20 @@ static int __cdecl sr_hook_popb(const char* label, int flags,
 static FX_pop sr_orig_x_pop = NULL;
 static FX_pops sr_orig_x_pops = NULL;
 
-/*
-Wrapper for X_pop: reads popup text from file and sends to screen reader.
-X_pop is the extended popup function used by tutorials and help topics.
-*/
 static int __cdecl sr_hook_x_pop(const char* filename, const char* label,
                                   int a3, int a4, int a5, int a6) {
-    if (sr_is_available() && filename && label) {
-        char buf[2048];
-        if (sr_read_popup_text(filename, label, buf, sizeof(buf))) {
-            sr_output(buf, false);
-        }
-        sr_popup_list_parse(filename, label);
-    }
-    sr_popup_active = true;
+    sr_pre_popup(filename, label);
     int result = sr_orig_x_pop(filename, label, a3, a4, a5, a6);
-    sr_popup_active = false;
-    if (sr_tutorial_announce_time > 0) {
-        sr_tutorial_announce_time = GetTickCount();
-    }
-    sr_popup_list_clear();
-    sr_clear_text();
+    sr_post_popup();
     return result;
 }
 
-/*
-Wrapper for X_pops: reads popup text from file and sends to screen reader.
-X_pops is the extended popup function with more formatting parameters.
-*/
 static int __cdecl sr_hook_x_pops(const char* filename, const char* label,
                                    int a3, int a4, int a5, int a6,
                                    int a7, int a8, int a9) {
-    if (sr_is_available() && filename && label) {
-        char buf[2048];
-        if (sr_read_popup_text(filename, label, buf, sizeof(buf))) {
-            sr_output(buf, false);
-        }
-        sr_popup_list_parse(filename, label);
-    }
-    sr_popup_active = true;
+    sr_pre_popup(filename, label);
     int result = sr_orig_x_pops(filename, label, a3, a4, a5, a6, a7, a8, a9);
-    sr_popup_active = false;
-    if (sr_tutorial_announce_time > 0) {
-        sr_tutorial_announce_time = GetTickCount();
-    }
-    sr_popup_list_clear();
-    sr_clear_text();
+    sr_post_popup();
     return result;
 }
 

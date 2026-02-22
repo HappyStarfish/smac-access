@@ -8,6 +8,7 @@
 #include "social_handler.h"
 #include "engine.h"
 #include "gui.h"
+#include "modal_utils.h"
 #include "screen_reader.h"
 #include "localization.h"
 
@@ -317,26 +318,7 @@ void RunModal() {
     sr_debug_log("SocialEngHandler::RunModal enter\n");
     announce_summary();
 
-    // Modal message pump — runs until Update() sets _wantClose
-    MSG msg;
-    while (!_wantClose) {
-        if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
-            if (msg.message == WM_QUIT) {
-                PostQuitMessage((int)msg.wParam);
-                break;
-            }
-            TranslateMessage(&msg);
-            DispatchMessage(&msg);
-        } else {
-            Sleep(10);
-        }
-    }
-
-    // Drain leftover WM_CHAR/WM_KEYUP from the last key press to prevent
-    // them from reaching the game's WinProc after we return
-    MSG drain;
-    while (PeekMessage(&drain, NULL, WM_CHAR, WM_CHAR, PM_REMOVE)) {}
-    while (PeekMessage(&drain, NULL, WM_KEYUP, WM_KEYUP, PM_REMOVE)) {}
+    sr_run_modal_pump(&_wantClose);
 
     // Apply or discard changes
     if (_confirmed) {

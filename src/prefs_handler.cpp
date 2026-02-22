@@ -8,6 +8,7 @@
 #include "prefs_handler.h"
 #include "engine.h"
 #include "gui.h"
+#include "modal_utils.h"
 #include "screen_reader.h"
 #include "localization.h"
 
@@ -312,25 +313,7 @@ void RunModal() {
     sr_debug_log("PrefsHandler::RunModal enter\n");
     announce_tab();
 
-    // Modal message pump
-    MSG msg;
-    while (!_wantClose) {
-        if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
-            if (msg.message == WM_QUIT) {
-                PostQuitMessage((int)msg.wParam);
-                break;
-            }
-            TranslateMessage(&msg);
-            DispatchMessage(&msg);
-        } else {
-            Sleep(10);
-        }
-    }
-
-    // Drain leftover messages
-    MSG drain;
-    while (PeekMessage(&drain, NULL, WM_CHAR, WM_CHAR, PM_REMOVE)) {}
-    while (PeekMessage(&drain, NULL, WM_KEYUP, WM_KEYUP, PM_REMOVE)) {}
+    sr_run_modal_pump(&_wantClose);
 
     if (_confirmed) {
         // Sync game globals to AlphaIniPrefs before saving

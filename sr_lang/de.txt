@@ -101,7 +101,7 @@ fmt_units=%d stationiert.
 fmt_units_none=Einheiten: Keine stationiert.
 fmt_base_open_v2=Basis: %s, Bevoelkerung %d. Baut %s, %d von %d, %s. Strg+Hoch/Runter: Sektionen.
 fmt_workers=%d Arbeiter
-base_help=Strg+Hoch/Runter: Sektionen. Strg+Links/Rechts: Reiter. Strg+I: Wiederholen. Strg+H: Beschleunigen. Strg+Shift+P: Produktion aendern. Strg+Q: Warteschlange. Escape: Schliessen.
+base_help=Strg+Hoch/Runter: Sektionen. Strg+Links/Rechts: Reiter. Strg+I: Wiederholen. Strg+H: Beschleunigen. Strg+Shift+P: Produktion aendern. Strg+Q: Warteschlange. Strg+W: Buerger. Escape: Schliessen.
 fmt_turns=%d Runden
 fmt_growth_never=kein Wachstum
 fmt_faction_credits=%d Energieguthaben
@@ -308,3 +308,36 @@ pref_prod_with_names=Produktion mit Basisnamen
 pref_flat_terrain=Flaches Terrain
 pref_grid_ocean=Gitter fuer Ozeanfelder
 pref_show_goto_path=Goto-Pfad anzeigen
+
+# Spezialistenverwaltung (Strg+W)
+spec_open=Buerger: %s
+spec_close=Buerger geschlossen.
+spec_worker=%d von %d: Arbeiter. %s
+spec_specialist=%d von %d: %s. %s
+spec_bonus=+%d Wirtschaft, +%d Psych, +%d Forschung
+spec_to_specialist=Umgewandelt zu %s.
+spec_to_worker=Umgewandelt zu Arbeiter.
+spec_type_changed=Geaendert zu %s.
+spec_cannot_more=Nicht moeglich: Basis zu klein fuer weitere Spezialisten.
+spec_cannot_less=Nicht moeglich: Keine Spezialisten zum Umwandeln.
+spec_cannot_center=Nicht moeglich: Basiszentrum wird immer bearbeitet.
+spec_help=Hoch/Runter: Buerger navigieren. Eingabe: Arbeiter/Spezialist umschalten. Links/Rechts: Spezialistentyp aendern. S: Zusammenfassung. Escape: Schliessen.
+spec_summary=%d Arbeiter, %d Spezialisten.
+spec_center=Basiszentrum.
+spec_no_other_type=Keine weiteren Spezialistentypen verfuegbar.
+spec_worker_no_type=Arbeiter haben keinen Typ. Eingabe zum Umwandeln.
+
+# Zielauswahl & Zur Basis gehen
+targeting_mode=Zielauswahl. Pfeiltasten bewegen Cursor, Eingabe bestaetigt, Escape bricht ab.
+targeting_cancel=Abgebrochen.
+go_to_base=Zur Basis gehen: %d Basen. Hoch/Runter zum Blaettern, Eingabe zum Senden, Escape zum Abbrechen.
+base_list_fmt=%d von %d: %s (%d, %d), %d Felder entfernt
+base_list_empty=Keine Basen verfuegbar.
+going_home=Gehe zur Heimatbasis: %s
+going_to_base=Gehe zu %s
+no_unit_selected=Keine Einheit ausgewaehlt.
+help_go_to_base=G: Zur Basis gehen
+help_go_home=Shift+G: Zur Heimatbasis
+help_group_goto=J: Gruppenbewegung
+help_patrol=P: Patrouille
+help_artillery=F: Fernkampf

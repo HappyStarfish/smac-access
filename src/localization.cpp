@@ -113,7 +113,7 @@ static const char* sr_defaults[SR_COUNT] = {
     /* SR_FMT_UNITS_NONE     */ "Units: None stationed.",
     /* SR_FMT_BASE_OPEN_V2   */ "Base: %s, Population %d. Building %s, %d of %d, %s. Ctrl+Up/Down: Sections.",
     /* SR_FMT_WORKERS        */ "%d workers",
-    /* SR_BASE_HELP          */ "Ctrl+Up/Down: Sections. Ctrl+Left/Right: Tabs. Ctrl+I: Repeat. Ctrl+H: Hurry. Ctrl+Shift+P: Change production. Ctrl+Q: Queue. Escape: Close.",
+    /* SR_BASE_HELP          */ "Ctrl+Up/Down: Sections. Ctrl+Left/Right: Tabs. Ctrl+I: Repeat. Ctrl+H: Hurry. Ctrl+Shift+P: Change production. Ctrl+Q: Queue. Ctrl+W: Citizens. Escape: Close.",
     /* SR_FMT_TURNS          */ "%d turns",
     /* SR_FMT_GROWTH_NEVER   */ "no growth",
     /* SR_FMT_FACTION_CREDITS */ "%d energy credits",
@@ -318,6 +318,39 @@ static const char* sr_defaults[SR_COUNT] = {
     /* SR_PREF_FLAT_TERRAIN            */ "Flat terrain",
     /* SR_PREF_GRID_OCEAN              */ "Grid ocean squares",
     /* SR_PREF_SHOW_GOTO_PATH          */ "Show goto path",
+
+    // Specialist Management (Ctrl+W)
+    /* SR_SPEC_OPEN           */ "Citizens: %s",
+    /* SR_SPEC_CLOSE          */ "Citizens closed.",
+    /* SR_SPEC_WORKER         */ "%d of %d: Worker. %s",
+    /* SR_SPEC_SPECIALIST     */ "%d of %d: %s. %s",
+    /* SR_SPEC_BONUS          */ "+%d Economy, +%d Psych, +%d Labs",
+    /* SR_SPEC_TO_SPECIALIST  */ "Converted to %s.",
+    /* SR_SPEC_TO_WORKER      */ "Converted to Worker.",
+    /* SR_SPEC_TYPE_CHANGED   */ "Changed to %s.",
+    /* SR_SPEC_CANNOT_MORE    */ "Cannot: base too small for more specialists.",
+    /* SR_SPEC_CANNOT_LESS    */ "Cannot: no specialists to convert.",
+    /* SR_SPEC_CANNOT_CENTER  */ "Cannot: base center always worked.",
+    /* SR_SPEC_HELP           */ "Up/Down: Navigate citizens. Enter: Toggle worker/specialist. Left/Right: Change specialist type. S: Summary. Escape: Close.",
+    /* SR_SPEC_SUMMARY        */ "%d workers, %d specialists.",
+    /* SR_SPEC_CENTER         */ "Base center.",
+    /* SR_SPEC_NO_OTHER_TYPE  */ "No other specialist types available.",
+    /* SR_SPEC_WORKER_NO_TYPE */ "Workers have no type. Use Enter to convert.",
+
+    // Targeting Mode & Go to Base
+    /* SR_TARGETING_MODE     */ "Target selection. Arrows move cursor, Enter confirms, Escape cancels.",
+    /* SR_TARGETING_CANCEL   */ "Cancelled.",
+    /* SR_GO_TO_BASE         */ "Go to base: %d bases. Up/Down to browse, Enter to send, Escape to cancel.",
+    /* SR_BASE_LIST_FMT      */ "%d of %d: %s (%d, %d), %d tiles away",
+    /* SR_BASE_LIST_EMPTY    */ "No bases available.",
+    /* SR_GOING_HOME         */ "Going to home base: %s",
+    /* SR_GOING_TO_BASE      */ "Going to %s",
+    /* SR_NO_UNIT_SELECTED   */ "No unit selected.",
+    /* SR_HELP_GO_TO_BASE    */ "G: Go to base",
+    /* SR_HELP_GO_HOME       */ "Shift+G: Go to home base",
+    /* SR_HELP_GROUP_GOTO    */ "J: Group go to",
+    /* SR_HELP_PATROL        */ "P: Patrol",
+    /* SR_HELP_ARTILLERY     */ "F: Long range fire",
 };
 
 // Key names matching the enum order (for file parsing)
@@ -416,6 +449,17 @@ static const char* sr_keys[SR_COUNT] = {
     "pref_show_grid", "pref_show_base_grid", "pref_fog_of_war",
     "pref_base_names", "pref_prod_with_names", "pref_flat_terrain",
     "pref_grid_ocean", "pref_show_goto_path",
+    // Specialist Management
+    "spec_open", "spec_close", "spec_worker", "spec_specialist",
+    "spec_bonus", "spec_to_specialist", "spec_to_worker", "spec_type_changed",
+    "spec_cannot_more", "spec_cannot_less", "spec_cannot_center",
+    "spec_help", "spec_summary", "spec_center",
+    "spec_no_other_type", "spec_worker_no_type",
+    // Targeting Mode & Go to Base
+    "targeting_mode", "targeting_cancel", "go_to_base", "base_list_fmt",
+    "base_list_empty", "going_home", "going_to_base", "no_unit_selected",
+    "help_go_to_base", "help_go_home", "help_group_goto", "help_patrol",
+    "help_artillery",
 };
 
 // Loaded strings (dynamically allocated, or NULL = use default)

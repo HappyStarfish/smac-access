@@ -101,7 +101,7 @@ fmt_units=%d stationed.
 fmt_units_none=Units: None stationed.
 fmt_base_open_v2=Base: %s, Population %d. Building %s, %d of %d, %s. Ctrl+Up/Down: Sections.
 fmt_workers=%d workers
-base_help=Ctrl+Up/Down: Sections. Ctrl+Left/Right: Tabs. Ctrl+I: Repeat. Ctrl+H: Hurry. Ctrl+Shift+P: Change production. Ctrl+Q: Queue. Escape: Close.
+base_help=Ctrl+Up/Down: Sections. Ctrl+Left/Right: Tabs. Ctrl+I: Repeat. Ctrl+H: Hurry. Ctrl+Shift+P: Change production. Ctrl+Q: Queue. Ctrl+W: Citizens. Escape: Close.
 fmt_turns=%d turns
 fmt_growth_never=no growth
 fmt_faction_credits=%d energy credits
@@ -308,3 +308,36 @@ pref_prod_with_names=Production with base names
 pref_flat_terrain=Flat terrain
 pref_grid_ocean=Grid ocean squares
 pref_show_goto_path=Show goto path
+
+# Specialist Management (Ctrl+W)
+spec_open=Citizens: %s
+spec_close=Citizens closed.
+spec_worker=%d of %d: Worker. %s
+spec_specialist=%d of %d: %s. %s
+spec_bonus=+%d Economy, +%d Psych, +%d Labs
+spec_to_specialist=Converted to %s.
+spec_to_worker=Converted to Worker.
+spec_type_changed=Changed to %s.
+spec_cannot_more=Cannot: base too small for more specialists.
+spec_cannot_less=Cannot: no specialists to convert.
+spec_cannot_center=Cannot: base center always worked.
+spec_help=Up/Down: Navigate citizens. Enter: Toggle worker/specialist. Left/Right: Change specialist type. S: Summary. Escape: Close.
+spec_summary=%d workers, %d specialists.
+spec_center=Base center.
+spec_no_other_type=No other specialist types available.
+spec_worker_no_type=Workers have no type. Use Enter to convert.
+
+# Targeting Mode & Go to Base
+targeting_mode=Target selection. Arrows move cursor, Enter confirms, Escape cancels.
+targeting_cancel=Cancelled.
+go_to_base=Go to base: %d bases. Up/Down to browse, Enter to send, Escape to cancel.
+base_list_fmt=%d of %d: %s (%d, %d), %d tiles away
+base_list_empty=No bases available.
+going_home=Going to home base: %s
+going_to_base=Going to %s
+no_unit_selected=No unit selected.
+help_go_to_base=G: Go to base
+help_go_home=Shift+G: Go to home base
+help_group_goto=J: Group go to
+help_patrol=P: Patrol
+help_artillery=F: Long range fire

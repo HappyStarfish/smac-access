@@ -55,6 +55,7 @@ const int ColorWhite = 255;
 bool shift_key_down();
 bool ctrl_key_down();
 bool alt_key_down();
+GameWinState current_window();
 bool win_has_focus();
 int __thiscall Win_is_visible(Win* This);
 LRESULT WINAPI ModWinProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
