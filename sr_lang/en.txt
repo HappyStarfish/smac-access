@@ -191,3 +191,19 @@ menu_nav_fmt=%d of %d: %s
 
 # Popup List Navigation
 popup_list_fmt=%d of %d: %s
+
+# Social Engineering
+soceng_title=Social Engineering
+soceng_category_fmt=Category %d of 4: %s. Current: %s
+soceng_model_fmt=%d of %d: %s
+soceng_effects=Effects: %s
+soceng_no_effect=No effects
+soceng_unavailable_tech=Not available, requires %s
+soceng_unavailable_opposition=Not available, faction opposition
+soceng_selected=Selected: %s
+soceng_current=Current selection
+soceng_pending=Pending change to %s
+soceng_summary_fmt=%s: %s
+soceng_upheaval_cost=Upheaval cost: %d energy credits
+soceng_help=Up/Down: Categories. Left/Right: Choose model. Enter: Confirm and close. S or Tab: Summary. Ctrl+I: Repeat. Escape: Cancel and close.
+soceng_closed=Social Engineering closed.

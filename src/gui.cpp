@@ -1,6 +1,7 @@
 
 #include "gui.h"
 #include "base_handler.h"
+#include "social_handler.h"
 #include "localization.h"
 
 const int32_t MainWinHandle = (int32_t)(&MapWin->oMainWin.oWinBase.field_4); // 0x939444
@@ -1578,6 +1579,16 @@ LRESULT WINAPI ModWinProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             return 0;
         }
 
+    // Screen reader: Social Engineering handler intercepts ALL messages when modal loop
+    // is active. WM_CHAR must also be consumed to prevent the game's WinProc from
+    // seeing the translated 'e' keypress and calling social_select inside our loop.
+    } else if ((msg == WM_KEYDOWN || msg == WM_CHAR) && sr_is_available()
+    && SocialEngHandler::IsActive()) {
+        if (msg == WM_KEYDOWN) {
+            if (SocialEngHandler::Update(msg, wParam)) return 0;
+        }
+        return 0; // consume WM_CHAR and unhandled WM_KEYDOWN
+
     // Screen reader: production picker intercepts ALL keys when active (must be first)
     } else if (msg == WM_KEYDOWN && sr_is_available()
     && current_window() == GW_Base
@@ -2039,6 +2050,13 @@ LRESULT WINAPI ModWinProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                 mod_veh_skip(veh_id);
             }
         }
+        return 0;
+
+    // Screen reader: E on world map → open accessible Social Engineering handler
+    } else if (msg == WM_KEYDOWN && wParam == 'E' && sr_is_available()
+    && !ctrl_key_down() && !alt_key_down()
+    && !*GameHalted && current_window() == GW_World) {
+        SocialEngHandler::RunModal();
         return 0;
 
     // Screen reader: Escape on world map → read quit dialog text before game opens it

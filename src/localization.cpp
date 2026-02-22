@@ -201,6 +201,22 @@ static const char* sr_defaults[SR_COUNT] = {
     /* SR_MENU_ITEM_NOHK   */ "%s",
     /* SR_MENU_NAV_FMT     */ "%d of %d: %s",
     /* SR_POPUP_LIST_FMT   */ "%d of %d: %s",
+
+    // Social Engineering
+    /* SR_SOCENG_TITLE                 */ "Social Engineering",
+    /* SR_SOCENG_CATEGORY_FMT          */ "Category %d of 4: %s. Current: %s",
+    /* SR_SOCENG_MODEL_FMT             */ "%d of %d: %s",
+    /* SR_SOCENG_EFFECTS               */ "Effects: %s",
+    /* SR_SOCENG_NO_EFFECT             */ "No effects",
+    /* SR_SOCENG_UNAVAILABLE_TECH      */ "Not available, requires %s",
+    /* SR_SOCENG_UNAVAILABLE_OPPOSITION */ "Not available, faction opposition",
+    /* SR_SOCENG_SELECTED              */ "Selected: %s",
+    /* SR_SOCENG_CURRENT               */ "Current selection",
+    /* SR_SOCENG_PENDING               */ "Pending change to %s",
+    /* SR_SOCENG_SUMMARY_FMT           */ "%s: %s",
+    /* SR_SOCENG_UPHEAVAL_COST         */ "Upheaval cost: %d energy credits",
+    /* SR_SOCENG_HELP                  */ "Up/Down: Categories. Left/Right: Models. Enter: Select model. Ctrl+Enter: Confirm and close. S or Tab: Summary. Ctrl+I: Repeat. Escape: Cancel and close.",
+    /* SR_SOCENG_CLOSED                */ "Social Engineering closed.",
 };
 
 // Key names matching the enum order (for file parsing)
@@ -254,6 +270,11 @@ static const char* sr_keys[SR_COUNT] = {
     "menu_closed", "menu_entry_fmt", "menu_item_fmt", "menu_item_nohk",
     "menu_nav_fmt",
     "popup_list_fmt",
+    "soceng_title", "soceng_category_fmt", "soceng_model_fmt",
+    "soceng_effects", "soceng_no_effect", "soceng_unavailable_tech",
+    "soceng_unavailable_opposition", "soceng_selected", "soceng_current",
+    "soceng_pending", "soceng_summary_fmt", "soceng_upheaval_cost",
+    "soceng_help", "soceng_closed",
 };
 
 // Loaded strings (dynamically allocated, or NULL = use default)
