@@ -217,6 +217,107 @@ static const char* sr_defaults[SR_COUNT] = {
     /* SR_SOCENG_UPHEAVAL_COST         */ "Upheaval cost: %d energy credits",
     /* SR_SOCENG_HELP                  */ "Up/Down: Categories. Left/Right: Models. Enter: Select model. Ctrl+Enter: Confirm and close. S or Tab: Summary. Ctrl+I: Repeat. Escape: Cancel and close.",
     /* SR_SOCENG_CLOSED                */ "Social Engineering closed.",
+
+    // Preferences Handler
+    /* SR_PREF_TITLE                   */ "Preferences",
+    /* SR_PREF_TAB_FMT                 */ "Preferences, Tab: %s, %d options",
+    /* SR_PREF_OPTION_FMT              */ "%d of %d: %s, %s",
+    /* SR_PREF_TOGGLED_FMT             */ "%s, %s",
+    /* SR_PREF_SAVED                   */ "Preferences saved.",
+    /* SR_PREF_CANCELLED               */ "Preferences cancelled.",
+    /* SR_PREF_HELP                    */ "Left/Right: Tabs. Up/Down: Options. Space: Toggle. S or Tab: Summary. Ctrl+I: Repeat. Ctrl+F1: Help. Enter: Save. Escape: Cancel.",
+    /* SR_PREF_SUMMARY_FMT             */ "%s: %s",
+    /* SR_PREF_ENABLED                 */ "enabled",
+    /* SR_PREF_DISABLED                */ "disabled",
+
+    // Preferences: Tab names
+    /* SR_PREF_TAB_GENERAL             */ "General",
+    /* SR_PREF_TAB_WARNINGS            */ "Warnings",
+    /* SR_PREF_TAB_ADVANCED            */ "Advanced",
+    /* SR_PREF_TAB_AUTOMATION          */ "Automation",
+    /* SR_PREF_TAB_AUDIO_VISUAL        */ "Audio and Visual",
+    /* SR_PREF_TAB_MAP_DISPLAY         */ "Map Display",
+
+    // Preferences: General tab
+    /* SR_PREF_PAUSE_END_TURN          */ "Pause at end of turn",
+    /* SR_PREF_AUTOSAVE                */ "Autosave each turn",
+    /* SR_PREF_QUICK_ENEMY             */ "Quick move enemy vehicles",
+    /* SR_PREF_TUTORIAL                */ "Tutorial messages",
+    /* SR_PREF_MOUSE_EDGE_SCROLL       */ "Mouse edge scroll",
+    /* SR_PREF_AUTO_DESIGN             */ "Auto design vehicles",
+    /* SR_PREF_QUICK_ALLY              */ "Quick move ally vehicles",
+    /* SR_PREF_AUTO_PRUNE              */ "Auto prune obsolete vehicles",
+
+    // Preferences: Warnings tab
+    /* SR_PREF_WARN_FAC_BUILT          */ "Facility built",
+    /* SR_PREF_WARN_NON_COMBAT_BUILT   */ "Non-combat unit built",
+    /* SR_PREF_WARN_PROTOTYPE          */ "Prototype complete",
+    /* SR_PREF_WARN_DRONE_RIOTS        */ "Drone riots",
+    /* SR_PREF_WARN_DRONE_RIOTS_END    */ "Drone riots end",
+    /* SR_PREF_WARN_GOLDEN_AGE         */ "Golden age",
+    /* SR_PREF_WARN_GOLDEN_AGE_END     */ "Golden age end",
+    /* SR_PREF_WARN_NUTRIENT_SHORTAGE  */ "Nutrient shortage",
+    /* SR_PREF_WARN_BUILD_OUT_OF_DATE  */ "Build out of date",
+    /* SR_PREF_WARN_COMBAT_BUILT       */ "Combat unit built",
+    /* SR_PREF_WARN_POP_LIMIT          */ "Population limit reached",
+    /* SR_PREF_WARN_DELAY_TRANSCEND    */ "Delay in transcendence",
+    /* SR_PREF_WARN_BUILT_VIA_QUEUE    */ "Built via governor queue",
+    /* SR_PREF_WARN_STARVATION         */ "Starvation",
+    /* SR_PREF_WARN_MINERAL_SHORTAGE   */ "Mineral shortage",
+    /* SR_PREF_WARN_ENERGY_SHORTAGE    */ "Energy shortage",
+    /* SR_PREF_WARN_RANDOM_EVENT       */ "Random event",
+
+    // Preferences: Advanced tab
+    /* SR_PREF_FAST_BATTLE             */ "Fast battle resolution",
+    /* SR_PREF_NO_CENTER_ORDERS        */ "Don't center on unit with orders",
+    /* SR_PREF_PAUSE_AFTER_BATTLE      */ "Pause after battles",
+    /* SR_PREF_ZOOM_NO_RECENTER        */ "Zoom base no recenter",
+    /* SR_PREF_QUICK_MOVE_ORDERS       */ "Quick move vehicle orders",
+    /* SR_PREF_QUICK_MOVE_ALL          */ "Quick move all vehicles",
+    /* SR_PREF_RIGHT_CLICK_MENU        */ "Right-click popup menu",
+    /* SR_PREF_DETAIL_RIGHT_CLICK      */ "Detail right-click menus",
+    /* SR_PREF_CONFIRM_ODDS            */ "Confirm odds before attacking",
+    /* SR_PREF_DETAIL_MAIN_MENUS       */ "Detail main menus",
+    /* SR_PREF_RADIO_SINGLE_CLICK      */ "Radio button single click",
+
+    // Preferences: Automation tab
+    /* SR_PREF_FORMER_RAISE_LOWER      */ "Former: raise and lower terrain",
+    /* SR_PREF_FORMER_PLANT_FOREST     */ "Former: plant forests",
+    /* SR_PREF_FORMER_BUILD_ADV        */ "Former: build advanced",
+    /* SR_PREF_FORMER_REMOVE_FUNGUS    */ "Former: remove fungus",
+    /* SR_PREF_FORMER_BUILD_SENSORS    */ "Former: build sensors",
+    /* SR_PREF_FORMER_BUILD_ROADS      */ "Former: build roads and tubes",
+    /* SR_PREF_END_MOVE_PACT           */ "End move: spot pact vehicle",
+    /* SR_PREF_END_MOVE_TREATY         */ "End move: spot treaty vehicle",
+    /* SR_PREF_END_MOVE_TRUCE          */ "End move: spot truce vehicle",
+    /* SR_PREF_END_MOVE_WAR            */ "End move: spot war vehicle",
+    /* SR_PREF_END_MOVE_DIFF_TRIAD     */ "End move: different triad",
+    /* SR_PREF_AIR_RETURN_HOME         */ "Air vehicle return home",
+    /* SR_PREF_WAKE_ON_LAND            */ "Wake vehicle on land",
+    /* SR_PREF_ALWAYS_INSPECT_MONOLITH */ "Always inspect monolith",
+
+    // Preferences: Audio/Visual tab
+    /* SR_PREF_SOUND_EFFECTS           */ "Sound effects",
+    /* SR_PREF_BACKGROUND_MUSIC        */ "Background music",
+    /* SR_PREF_MAP_ANIMATIONS          */ "Map animations",
+    /* SR_PREF_SLIDING_WINDOWS         */ "Sliding windows",
+    /* SR_PREF_PROJECT_MOVIES          */ "Secret project movies",
+    /* SR_PREF_INTERLUDES              */ "Interludes",
+    /* SR_PREF_VOICEOVER               */ "Voice over",
+    /* SR_PREF_STOP_VOICE_CLOSE        */ "Stop voice on close",
+    /* SR_PREF_SLIDING_SCROLLBARS      */ "Sliding scrollbars",
+    /* SR_PREF_WHOLE_VEH_BLINKS        */ "Whole vehicle blinks",
+    /* SR_PREF_MONUMENTS               */ "Monuments",
+
+    // Preferences: Map Display tab
+    /* SR_PREF_SHOW_GRID               */ "Show grid",
+    /* SR_PREF_SHOW_BASE_GRID          */ "Show base grid",
+    /* SR_PREF_FOG_OF_WAR              */ "Fog of war",
+    /* SR_PREF_BASE_NAMES              */ "Base names",
+    /* SR_PREF_PROD_WITH_NAMES         */ "Production with base names",
+    /* SR_PREF_FLAT_TERRAIN            */ "Flat terrain",
+    /* SR_PREF_GRID_OCEAN              */ "Grid ocean squares",
+    /* SR_PREF_SHOW_GOTO_PATH          */ "Show goto path",
 };
 
 // Key names matching the enum order (for file parsing)
@@ -275,6 +376,46 @@ static const char* sr_keys[SR_COUNT] = {
     "soceng_unavailable_opposition", "soceng_selected", "soceng_current",
     "soceng_pending", "soceng_summary_fmt", "soceng_upheaval_cost",
     "soceng_help", "soceng_closed",
+    // Preferences Handler
+    "pref_title", "pref_tab_fmt", "pref_option_fmt", "pref_toggled_fmt",
+    "pref_saved", "pref_cancelled", "pref_help", "pref_summary_fmt",
+    "pref_enabled", "pref_disabled",
+    // Preferences: Tab names
+    "pref_tab_general", "pref_tab_warnings", "pref_tab_advanced",
+    "pref_tab_automation", "pref_tab_audio_visual", "pref_tab_map_display",
+    // Preferences: General tab
+    "pref_pause_end_turn", "pref_autosave", "pref_quick_enemy",
+    "pref_tutorial", "pref_mouse_edge_scroll", "pref_auto_design",
+    "pref_quick_ally", "pref_auto_prune",
+    // Preferences: Warnings tab
+    "pref_warn_fac_built", "pref_warn_non_combat_built", "pref_warn_prototype",
+    "pref_warn_drone_riots", "pref_warn_drone_riots_end", "pref_warn_golden_age",
+    "pref_warn_golden_age_end", "pref_warn_nutrient_shortage",
+    "pref_warn_build_out_of_date", "pref_warn_combat_built",
+    "pref_warn_pop_limit", "pref_warn_delay_transcend",
+    "pref_warn_built_via_queue", "pref_warn_starvation",
+    "pref_warn_mineral_shortage", "pref_warn_energy_shortage",
+    "pref_warn_random_event",
+    // Preferences: Advanced tab
+    "pref_fast_battle", "pref_no_center_orders", "pref_pause_after_battle",
+    "pref_zoom_no_recenter", "pref_quick_move_orders", "pref_quick_move_all",
+    "pref_right_click_menu", "pref_detail_right_click", "pref_confirm_odds",
+    "pref_detail_main_menus", "pref_radio_single_click",
+    // Preferences: Automation tab
+    "pref_former_raise_lower", "pref_former_plant_forest", "pref_former_build_adv",
+    "pref_former_remove_fungus", "pref_former_build_sensors",
+    "pref_former_build_roads", "pref_end_move_pact", "pref_end_move_treaty",
+    "pref_end_move_truce", "pref_end_move_war", "pref_end_move_diff_triad",
+    "pref_air_return_home", "pref_wake_on_land", "pref_always_inspect_monolith",
+    // Preferences: Audio/Visual tab
+    "pref_sound_effects", "pref_background_music", "pref_map_animations",
+    "pref_sliding_windows", "pref_project_movies", "pref_interludes",
+    "pref_voiceover", "pref_stop_voice_close", "pref_sliding_scrollbars",
+    "pref_whole_veh_blinks", "pref_monuments",
+    // Preferences: Map Display tab
+    "pref_show_grid", "pref_show_base_grid", "pref_fog_of_war",
+    "pref_base_names", "pref_prod_with_names", "pref_flat_terrain",
+    "pref_grid_ocean", "pref_show_goto_path",
 };
 
 // Loaded strings (dynamically allocated, or NULL = use default)

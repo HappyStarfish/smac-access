@@ -207,3 +207,104 @@ soceng_summary_fmt=%s: %s
 soceng_upheaval_cost=Umbruchkosten: %d Energieguthaben
 soceng_help=Hoch/Runter: Kategorien. Links/Rechts: Modell waehlen. Eingabe: Bestaetigen und schliessen. S oder Tab: Zusammenfassung. Strg+I: Wiederholen. Escape: Abbrechen und schliessen.
 soceng_closed=Gesellschaftsform geschlossen.
+
+# Einstellungen
+pref_title=Einstellungen
+pref_tab_fmt=Einstellungen, Reiter: %s, %d Optionen
+pref_option_fmt=%d von %d: %s, %s
+pref_toggled_fmt=%s, %s
+pref_saved=Einstellungen gespeichert.
+pref_cancelled=Einstellungen abgebrochen.
+pref_help=Links/Rechts: Reiter. Hoch/Runter: Optionen. Leertaste: Umschalten. S oder Tab: Zusammenfassung. Strg+I: Wiederholen. Strg+F1: Hilfe. Eingabe: Speichern. Escape: Abbrechen.
+pref_summary_fmt=%s: %s
+pref_enabled=aktiviert
+pref_disabled=deaktiviert
+
+# Einstellungen: Reiternamen
+pref_tab_general=Allgemein
+pref_tab_warnings=Warnungen
+pref_tab_advanced=Erweitert
+pref_tab_automation=Automatisierung
+pref_tab_audio_visual=Audio und Grafik
+pref_tab_map_display=Kartenanzeige
+
+# Einstellungen: Allgemein
+pref_pause_end_turn=Pause am Zugende
+pref_autosave=Automatisch speichern jede Runde
+pref_quick_enemy=Feindliche Fahrzeuge schnell bewegen
+pref_tutorial=Tutorialmeldungen
+pref_mouse_edge_scroll=Maus-Randscrolling
+pref_auto_design=Fahrzeuge automatisch entwerfen
+pref_quick_ally=Verbuendete Fahrzeuge schnell bewegen
+pref_auto_prune=Veraltete Fahrzeuge automatisch entfernen
+
+# Einstellungen: Warnungen
+pref_warn_fac_built=Einrichtung gebaut
+pref_warn_non_combat_built=Nicht-Kampfeinheit gebaut
+pref_warn_prototype=Prototyp fertig
+pref_warn_drone_riots=Drohnenaufstand
+pref_warn_drone_riots_end=Drohnenaufstand beendet
+pref_warn_golden_age=Goldenes Zeitalter
+pref_warn_golden_age_end=Goldenes Zeitalter beendet
+pref_warn_nutrient_shortage=Nahrungsmangel
+pref_warn_build_out_of_date=Bauauftrag veraltet
+pref_warn_combat_built=Kampfeinheit gebaut
+pref_warn_pop_limit=Bevoelkerungsgrenze erreicht
+pref_warn_delay_transcend=Verzoegerung bei Transzendenz
+pref_warn_built_via_queue=Ueber Gouverneur-Warteschlange gebaut
+pref_warn_starvation=Hungersnot
+pref_warn_mineral_shortage=Mineralienmangel
+pref_warn_energy_shortage=Energiemangel
+pref_warn_random_event=Zufallsereignis
+
+# Einstellungen: Erweitert
+pref_fast_battle=Schnelle Kampfaufloesung
+pref_no_center_orders=Nicht auf Einheit mit Befehlen zentrieren
+pref_pause_after_battle=Pause nach Kaempfen
+pref_zoom_no_recenter=Basiszoom ohne Neuzentrierung
+pref_quick_move_orders=Fahrzeugbefehle schnell ausfuehren
+pref_quick_move_all=Alle Fahrzeuge schnell bewegen
+pref_right_click_menu=Rechtsklick-Popupmenue
+pref_detail_right_click=Detaillierte Rechtsklick-Menues
+pref_confirm_odds=Chancen vor Angriff bestaetigen
+pref_detail_main_menus=Detaillierte Hauptmenues
+pref_radio_single_click=Radioknopf Einzelklick
+
+# Einstellungen: Automatisierung
+pref_former_raise_lower=Former: Terrain anheben und senken
+pref_former_plant_forest=Former: Waelder pflanzen
+pref_former_build_adv=Former: Erweitert bauen
+pref_former_remove_fungus=Former: Pilz entfernen
+pref_former_build_sensors=Former: Sensoren bauen
+pref_former_build_roads=Former: Strassen und Roehren bauen
+pref_end_move_pact=Zug beenden: Pakt-Fahrzeug entdeckt
+pref_end_move_treaty=Zug beenden: Vertrags-Fahrzeug entdeckt
+pref_end_move_truce=Zug beenden: Waffenstillstands-Fahrzeug entdeckt
+pref_end_move_war=Zug beenden: Kriegs-Fahrzeug entdeckt
+pref_end_move_diff_triad=Zug beenden: Andere Triade
+pref_air_return_home=Luftfahrzeug kehrt zurueck
+pref_wake_on_land=Fahrzeug bei Landung wecken
+pref_always_inspect_monolith=Monolith immer untersuchen
+
+# Einstellungen: Audio und Grafik
+pref_sound_effects=Soundeffekte
+pref_background_music=Hintergrundmusik
+pref_map_animations=Kartenanimationen
+pref_sliding_windows=Gleitende Fenster
+pref_project_movies=Geheimprojekt-Filme
+pref_interludes=Zwischenspiele
+pref_voiceover=Sprachausgabe
+pref_stop_voice_close=Sprache bei Schliessen stoppen
+pref_sliding_scrollbars=Gleitende Bildlaufleisten
+pref_whole_veh_blinks=Ganzes Fahrzeug blinkt
+pref_monuments=Monumente
+
+# Einstellungen: Kartenanzeige
+pref_show_grid=Gitter anzeigen
+pref_show_base_grid=Basisgitter anzeigen
+pref_fog_of_war=Kriegsnebel
+pref_base_names=Basisnamen
+pref_prod_with_names=Produktion mit Basisnamen
+pref_flat_terrain=Flaches Terrain
+pref_grid_ocean=Gitter fuer Ozeanfelder
+pref_show_goto_path=Goto-Pfad anzeigen

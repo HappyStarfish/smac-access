@@ -2,6 +2,7 @@
 #include "gui.h"
 #include "base_handler.h"
 #include "social_handler.h"
+#include "prefs_handler.h"
 #include "localization.h"
 
 const int32_t MainWinHandle = (int32_t)(&MapWin->oMainWin.oWinBase.field_4); // 0x939444
@@ -1273,7 +1274,9 @@ LRESULT WINAPI ModWinProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         // World map feedback comes from MAP-MOVE tracker instead.
         // Skip all announce triggers while sr_defer_active (planetfall etc.)
         if (sr_snapshot_ready()) {
-            if (sr_tutorial_announce_time > 0
+            if (Win_is_visible(TutWin)) {
+                sr_debug_log("SNAP-DISCARD (tour active)");
+            } else if (sr_tutorial_announce_time > 0
                 && (now - sr_tutorial_announce_time) < 3000) {
                 sr_debug_log("SNAP-DISCARD (tutorial recent)");
             } else if (in_menu) {
@@ -1468,8 +1471,11 @@ LRESULT WINAPI ModWinProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         static DWORD sr_worldmap_poll_time = 0;
         if (on_world_map && !sr_arrow_active) {
             if (sr_worldmap_poll_time == 0) sr_worldmap_poll_time = now;
+            // Suppress all worldmap announcements while tour window is open
+            if (Win_is_visible(TutWin)) {
+                sr_worldmap_poll_time = now; // keep resetting poll timer
             // Suppress worldmap announcements for 3s after tutorial popup
-            if (sr_tutorial_announce_time > 0
+            } else if (sr_tutorial_announce_time > 0
                 && (now - sr_tutorial_announce_time) < 3000) {
                 sr_worldmap_poll_time = now; // keep resetting poll timer
             } else if ((now - sr_worldmap_poll_time) >= 500) {
@@ -1612,6 +1618,14 @@ LRESULT WINAPI ModWinProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     && SocialEngHandler::IsActive()) {
         if (msg == WM_KEYDOWN) {
             if (SocialEngHandler::Update(msg, wParam)) return 0;
+        }
+        return 0; // consume WM_CHAR and unhandled WM_KEYDOWN
+
+    // Screen reader: Preferences handler intercepts ALL messages when modal loop is active.
+    } else if ((msg == WM_KEYDOWN || msg == WM_CHAR) && sr_is_available()
+    && PrefsHandler::IsActive()) {
+        if (msg == WM_KEYDOWN) {
+            if (PrefsHandler::Update(msg, wParam)) return 0;
         }
         return 0; // consume WM_CHAR and unhandled WM_KEYDOWN
 
@@ -2083,6 +2097,13 @@ LRESULT WINAPI ModWinProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     && !ctrl_key_down() && !alt_key_down()
     && !*GameHalted && current_window() == GW_World) {
         SocialEngHandler::RunModal();
+        return 0;
+
+    // Screen reader: Ctrl+P on world map → open accessible Preferences handler
+    } else if (msg == WM_KEYDOWN && wParam == 'P' && sr_is_available()
+    && ctrl_key_down() && !alt_key_down()
+    && !*GameHalted && current_window() == GW_World) {
+        PrefsHandler::RunModal();
         return 0;
 
     // Screen reader: Escape on world map → read quit dialog text before game opens it

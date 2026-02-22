@@ -207,3 +207,104 @@ soceng_summary_fmt=%s: %s
 soceng_upheaval_cost=Upheaval cost: %d energy credits
 soceng_help=Up/Down: Categories. Left/Right: Choose model. Enter: Confirm and close. S or Tab: Summary. Ctrl+I: Repeat. Escape: Cancel and close.
 soceng_closed=Social Engineering closed.
+
+# Preferences
+pref_title=Preferences
+pref_tab_fmt=Preferences, Tab: %s, %d options
+pref_option_fmt=%d of %d: %s, %s
+pref_toggled_fmt=%s, %s
+pref_saved=Preferences saved.
+pref_cancelled=Preferences cancelled.
+pref_help=Left/Right: Tabs. Up/Down: Options. Space: Toggle. S or Tab: Summary. Ctrl+I: Repeat. Ctrl+F1: Help. Enter: Save. Escape: Cancel.
+pref_summary_fmt=%s: %s
+pref_enabled=enabled
+pref_disabled=disabled
+
+# Preferences: Tab names
+pref_tab_general=General
+pref_tab_warnings=Warnings
+pref_tab_advanced=Advanced
+pref_tab_automation=Automation
+pref_tab_audio_visual=Audio and Visual
+pref_tab_map_display=Map Display
+
+# Preferences: General tab
+pref_pause_end_turn=Pause at end of turn
+pref_autosave=Autosave each turn
+pref_quick_enemy=Quick move enemy vehicles
+pref_tutorial=Tutorial messages
+pref_mouse_edge_scroll=Mouse edge scroll
+pref_auto_design=Auto design vehicles
+pref_quick_ally=Quick move ally vehicles
+pref_auto_prune=Auto prune obsolete vehicles
+
+# Preferences: Warnings tab
+pref_warn_fac_built=Facility built
+pref_warn_non_combat_built=Non-combat unit built
+pref_warn_prototype=Prototype complete
+pref_warn_drone_riots=Drone riots
+pref_warn_drone_riots_end=Drone riots end
+pref_warn_golden_age=Golden age
+pref_warn_golden_age_end=Golden age end
+pref_warn_nutrient_shortage=Nutrient shortage
+pref_warn_build_out_of_date=Build out of date
+pref_warn_combat_built=Combat unit built
+pref_warn_pop_limit=Population limit reached
+pref_warn_delay_transcend=Delay in transcendence
+pref_warn_built_via_queue=Built via governor queue
+pref_warn_starvation=Starvation
+pref_warn_mineral_shortage=Mineral shortage
+pref_warn_energy_shortage=Energy shortage
+pref_warn_random_event=Random event
+
+# Preferences: Advanced tab
+pref_fast_battle=Fast battle resolution
+pref_no_center_orders=Don't center on unit with orders
+pref_pause_after_battle=Pause after battles
+pref_zoom_no_recenter=Zoom base no recenter
+pref_quick_move_orders=Quick move vehicle orders
+pref_quick_move_all=Quick move all vehicles
+pref_right_click_menu=Right-click popup menu
+pref_detail_right_click=Detail right-click menus
+pref_confirm_odds=Confirm odds before attacking
+pref_detail_main_menus=Detail main menus
+pref_radio_single_click=Radio button single click
+
+# Preferences: Automation tab
+pref_former_raise_lower=Former: raise and lower terrain
+pref_former_plant_forest=Former: plant forests
+pref_former_build_adv=Former: build advanced
+pref_former_remove_fungus=Former: remove fungus
+pref_former_build_sensors=Former: build sensors
+pref_former_build_roads=Former: build roads and tubes
+pref_end_move_pact=End move: spot pact vehicle
+pref_end_move_treaty=End move: spot treaty vehicle
+pref_end_move_truce=End move: spot truce vehicle
+pref_end_move_war=End move: spot war vehicle
+pref_end_move_diff_triad=End move: different triad
+pref_air_return_home=Air vehicle return home
+pref_wake_on_land=Wake vehicle on land
+pref_always_inspect_monolith=Always inspect monolith
+
+# Preferences: Audio/Visual tab
+pref_sound_effects=Sound effects
+pref_background_music=Background music
+pref_map_animations=Map animations
+pref_sliding_windows=Sliding windows
+pref_project_movies=Secret project movies
+pref_interludes=Interludes
+pref_voiceover=Voice over
+pref_stop_voice_close=Stop voice on close
+pref_sliding_scrollbars=Sliding scrollbars
+pref_whole_veh_blinks=Whole vehicle blinks
+pref_monuments=Monuments
+
+# Preferences: Map Display tab
+pref_show_grid=Show grid
+pref_show_base_grid=Show base grid
+pref_fog_of_war=Fog of war
+pref_base_names=Base names
+pref_prod_with_names=Production with base names
+pref_flat_terrain=Flat terrain
+pref_grid_ocean=Grid ocean squares
+pref_show_goto_path=Show goto path
