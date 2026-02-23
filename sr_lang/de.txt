@@ -101,7 +101,7 @@ fmt_units=%d stationiert.
 fmt_units_none=Einheiten: Keine stationiert.
 fmt_base_open_v2=Basis: %s, Bevoelkerung %d. Baut %s, %d von %d, %s. Strg+Hoch/Runter: Sektionen.
 fmt_workers=%d Arbeiter
-base_help=Strg+Hoch/Runter: Sektionen. Strg+Links/Rechts: Reiter. Strg+I: Wiederholen. Strg+H: Beschleunigen. Strg+Shift+P: Produktion aendern. Strg+Q: Warteschlange. Strg+W: Buerger. Escape: Schliessen.
+base_help=Strg+Hoch/Runter: Sektionen. Strg+Links/Rechts: Reiter. Strg+I: Wiederholen. Strg+H: Beschleunigen. Strg+Shift+P: Produktion aendern. Strg+Q: Warteschlange. Strg+D: Gebaeude abreissen. Strg+W: Buerger. Escape: Schliessen.
 fmt_turns=%d Runden
 fmt_growth_never=kein Wachstum
 fmt_faction_credits=%d Energieguthaben
@@ -191,6 +191,7 @@ menu_nav_fmt=%d von %d: %s
 
 # Popup-Listennavigation
 popup_list_fmt=%d von %d: %s
+popup_continue=Eingabe zum Fortfahren.
 
 # Gesellschaftsform
 soceng_title=Gesellschaftsform
@@ -326,6 +327,16 @@ spec_summary=%d Arbeiter, %d Spezialisten.
 spec_center=Basiszentrum.
 spec_no_other_type=Keine weiteren Spezialistentypen verfuegbar.
 spec_worker_no_type=Arbeiter haben keinen Typ. Eingabe zum Umwandeln.
+
+# Gebaeude abreissen (Strg+D)
+demolition_open=Gebaeude abreissen. %d Gebaeude. %d von %d: %s
+demolition_item=%d von %d: %s, Unterhalt %d
+demolition_detail=%s. %s. Kosten %d, Unterhalt %d
+demolition_confirm=Entfernen erneut druecken um %s abzureissen
+demolition_done=%s abgerissen
+demolition_blocked=Nicht moeglich: bereits ein Gebaeude diese Runde abgerissen
+demolition_empty=Keine Gebaeude zum Abreissen
+demolition_cancel=Abriss-Modus geschlossen
 
 # Zielauswahl & Zur Basis gehen
 targeting_mode=Zielauswahl. Pfeiltasten bewegen Cursor, Eingabe bestaetigt, Escape bricht ab.

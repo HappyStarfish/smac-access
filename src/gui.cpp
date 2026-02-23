@@ -1044,6 +1044,17 @@ LRESULT WINAPI ModWinProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     && BaseScreenHandler::IsQueueActive()) {
         if (BaseScreenHandler::Update(msg, wParam)) return 0;
 
+    // Screen reader: demolition mode intercepts ALL keys when active
+    } else if (msg == WM_KEYDOWN && sr_is_available()
+    && current_window() == GW_Base
+    && BaseScreenHandler::IsDemolitionActive()) {
+        if (BaseScreenHandler::Update(msg, wParam)) return 0;
+
+    // Screen reader: Ctrl+D = open facility demolition
+    } else if (msg == WM_KEYDOWN && wParam == 'D' && ctrl_key_down()
+    && sr_is_available() && current_window() == GW_Base) {
+        if (BaseScreenHandler::Update(msg, wParam)) return 0;
+
     // Screen reader: Ctrl+Q = open queue management
     } else if (msg == WM_KEYDOWN && wParam == 'Q' && ctrl_key_down()
     && sr_is_available() && current_window() == GW_Base) {

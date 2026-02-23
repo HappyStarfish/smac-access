@@ -776,12 +776,21 @@ bool sr_read_popup_text(const char* filename, const char* label,
             continue;
         }
 
-        // Handle ^ paragraph separator
+        // Handle ^ paragraph marker: strip leading ^ but keep text after
         if (line[0] == '^') {
             if (pos > 0 && pos < bufsize - 2) {
                 buf[pos++] = ' ';
             }
-            continue;
+            // Strip leading ^ characters and whitespace
+            char* rest = line;
+            while (*rest == '^') rest++;
+            while (*rest == ' ' || *rest == '\t') rest++;
+            if (*rest == '\0') continue; // Only ^ markers, no text
+            // Shift remaining text into line for brace stripping below
+            int rest_len = strlen(rest);
+            memmove(line, rest, rest_len + 1);
+            len = rest_len;
+            // Fall through to brace stripping
         }
 
         // Strip {curly} formatting markers from the line
@@ -882,14 +891,36 @@ bool sr_read_popup_text(const char* filename, const char* label,
 Wrapper for popp: reads popup text from file and sends to screen reader,
 then calls the original game function.
 */
+// Interlude hook: capture current interlude ID for story text lookup
+static fp_4int sr_orig_interlude = NULL;
+static int sr_interlude_id = -1;
+
 // Shared pre/post boilerplate for popup hook wrappers.
 static void sr_pre_popup(const char* filename, const char* label) {
     if (sr_is_available() && filename && label) {
         char buf[2048];
-        if (sr_read_popup_text(filename, label, buf, sizeof(buf))) {
-            sr_output(buf, false);
+        bool has_text = sr_read_popup_text(filename, label, buf, sizeof(buf));
+
+        // Interlude header popup: read the actual story text instead
+        if (_strnicmp(filename, "INTERLUDE", 9) == 0
+            && _stricmp(label, "INTERLUDE") == 0
+            && sr_interlude_id >= 0) {
+            char story_label[32];
+            snprintf(story_label, sizeof(story_label), "INTERLUDE%d", sr_interlude_id);
+            has_text = sr_read_popup_text(filename, story_label, buf, sizeof(buf));
         }
-        sr_popup_list_parse(filename, label);
+
+        int options = sr_popup_list_parse(filename, label);
+        // For info-only popups (0-1 options), append dismiss hint to text
+        if (has_text && options <= 1) {
+            int pos = strlen(buf);
+            snprintf(buf + pos, sizeof(buf) - pos, " %s", loc(SR_POPUP_CONTINUE));
+        }
+        if (has_text) {
+            sr_output(buf, false);
+        } else if (options <= 1) {
+            sr_output(loc(SR_POPUP_CONTINUE), false);
+        }
     }
     sr_popup_active = true;
 }
@@ -937,6 +968,13 @@ static int __cdecl sr_hook_x_pops(const char* filename, const char* label,
     sr_pre_popup(filename, label);
     int result = sr_orig_x_pops(filename, label, a3, a4, a5, a6, a7, a8, a9);
     sr_post_popup();
+    return result;
+}
+
+static int __cdecl sr_hook_interlude(int id, int a2, int a3, int a4) {
+    sr_interlude_id = id;
+    int result = sr_orig_interlude(id, a2, a3, a4);
+    sr_interlude_id = -1;
     return result;
 }
 
@@ -1418,6 +1456,17 @@ static int sr_install_popup_hooks(uint8_t* tramp_slot) {
         count++;
     }
 
+    // Hook interlude at 0x5230E0 (story cutscenes)
+    // NOTE: Do NOT set interlude = trampoline here. Mod code calls interlude()
+    // through the function pointer, so it must hit the hooked address (0x5230E0)
+    // to trigger sr_hook_interlude and capture the interlude ID.
+    tramp = install_inline_hook(0x5230E0, (void*)sr_hook_interlude, tramp_slot);
+    if (tramp) {
+        sr_orig_interlude = (fp_4int)tramp;
+        tramp_slot += 32;
+        count++;
+    }
+
     // Hook planetfall at 0x589180 (intro screen on game start)
     tramp = install_inline_hook(0x589180, (void*)sr_hook_planetfall, tramp_slot);
     if (tramp) {
@@ -1428,7 +1477,7 @@ static int sr_install_popup_hooks(uint8_t* tramp_slot) {
     }
 
     char logbuf[128];
-    snprintf(logbuf, sizeof(logbuf), "popup hooks: %d of 5 installed", count);
+    snprintf(logbuf, sizeof(logbuf), "popup hooks: %d of 6 installed", count);
     sr_hook_log(logbuf);
     sr_log(logbuf);
     return count;

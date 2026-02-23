@@ -113,7 +113,7 @@ static const char* sr_defaults[SR_COUNT] = {
     /* SR_FMT_UNITS_NONE     */ "Units: None stationed.",
     /* SR_FMT_BASE_OPEN_V2   */ "Base: %s, Population %d. Building %s, %d of %d, %s. Ctrl+Up/Down: Sections.",
     /* SR_FMT_WORKERS        */ "%d workers",
-    /* SR_BASE_HELP          */ "Ctrl+Up/Down: Sections. Ctrl+Left/Right: Tabs. Ctrl+I: Repeat. Ctrl+H: Hurry. Ctrl+Shift+P: Change production. Ctrl+Q: Queue. Ctrl+W: Citizens. Escape: Close.",
+    /* SR_BASE_HELP          */ "Ctrl+Up/Down: Sections. Ctrl+Left/Right: Tabs. Ctrl+I: Repeat. Ctrl+H: Hurry. Ctrl+Shift+P: Change production. Ctrl+Q: Queue. Ctrl+D: Demolish facility. Ctrl+W: Citizens. Escape: Close.",
     /* SR_FMT_TURNS          */ "%d turns",
     /* SR_FMT_GROWTH_NEVER   */ "no growth",
     /* SR_FMT_FACTION_CREDITS */ "%d energy credits",
@@ -201,6 +201,7 @@ static const char* sr_defaults[SR_COUNT] = {
     /* SR_MENU_ITEM_NOHK   */ "%s",
     /* SR_MENU_NAV_FMT     */ "%d of %d: %s",
     /* SR_POPUP_LIST_FMT   */ "%d of %d: %s",
+    /* SR_POPUP_CONTINUE   */ "Enter to continue.",
 
     // Social Engineering
     /* SR_SOCENG_TITLE                 */ "Social Engineering",
@@ -337,6 +338,16 @@ static const char* sr_defaults[SR_COUNT] = {
     /* SR_SPEC_NO_OTHER_TYPE  */ "No other specialist types available.",
     /* SR_SPEC_WORKER_NO_TYPE */ "Workers have no type. Use Enter to convert.",
 
+    // Facility Demolition (Ctrl+D)
+    /* SR_DEMOLITION_OPEN    */ "Facility demolition. %d facilities. %d of %d: %s",
+    /* SR_DEMOLITION_ITEM    */ "%d of %d: %s, maintenance %d",
+    /* SR_DEMOLITION_DETAIL  */ "%s. %s. Cost %d, maintenance %d",
+    /* SR_DEMOLITION_CONFIRM */ "Press Delete again to demolish %s",
+    /* SR_DEMOLITION_DONE    */ "%s demolished",
+    /* SR_DEMOLITION_BLOCKED */ "Cannot: already scrapped one facility this turn",
+    /* SR_DEMOLITION_EMPTY   */ "No facilities to demolish",
+    /* SR_DEMOLITION_CANCEL  */ "Demolition mode closed",
+
     // Targeting Mode & Go to Base
     /* SR_TARGETING_MODE     */ "Target selection. Arrows move cursor, Enter confirms, Escape cancels.",
     /* SR_TARGETING_CANCEL   */ "Cancelled.",
@@ -403,7 +414,7 @@ static const char* sr_keys[SR_COUNT] = {
     "menu_terraform", "menu_scenario", "menu_editmap", "menu_help",
     "menu_closed", "menu_entry_fmt", "menu_item_fmt", "menu_item_nohk",
     "menu_nav_fmt",
-    "popup_list_fmt",
+    "popup_list_fmt", "popup_continue",
     "soceng_title", "soceng_category_fmt", "soceng_model_fmt",
     "soceng_effects", "soceng_no_effect", "soceng_unavailable_tech",
     "soceng_unavailable_opposition", "soceng_selected", "soceng_current",
@@ -455,6 +466,10 @@ static const char* sr_keys[SR_COUNT] = {
     "spec_cannot_more", "spec_cannot_less", "spec_cannot_center",
     "spec_help", "spec_summary", "spec_center",
     "spec_no_other_type", "spec_worker_no_type",
+    // Facility Demolition
+    "demolition_open", "demolition_item", "demolition_detail",
+    "demolition_confirm", "demolition_done", "demolition_blocked",
+    "demolition_empty", "demolition_cancel",
     // Targeting Mode & Go to Base
     "targeting_mode", "targeting_cancel", "go_to_base", "base_list_fmt",
     "base_list_empty", "going_home", "going_to_base", "no_unit_selected",

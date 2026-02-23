@@ -24,6 +24,13 @@ static bool _queueActive = false;
 static int _queueIndex = 0;
 static bool _queueInsertMode = false; // picker opened from queue Insert key
 
+// Facility demolition state
+static bool _demolitionActive = false;
+static int _demolitionIndex = 0;
+static int _demolitionCount = 0;
+static int _demolitionItems[65]; // FacilityId values of built facilities
+static bool _demolitionConfirm = false; // Awaiting second Delete press
+
 static const SrStr section_str_ids[] = {
     SR_SEC_OVERVIEW,
     SR_SEC_RESOURCES,
@@ -534,6 +541,82 @@ static void queue_announce_detail() {
     sr_output(buf, true);
 }
 
+/// Build list of built facilities for demolition mode.
+static void demolition_build_list() {
+    _demolitionCount = 0;
+    if (!valid_base()) return;
+    BASE* base = &Bases[*CurrentBaseID];
+    for (int i = FAC_HEADQUARTERS; i <= Fac_ID_Last; i++) {
+        if (base->has_fac_built((FacilityId)i) && Facility[i].name) {
+            if (_demolitionCount < 65) {
+                _demolitionItems[_demolitionCount++] = i;
+            }
+        }
+    }
+}
+
+/// Announce the current demolition list item.
+static void demolition_announce_item(bool interrupt = true) {
+    if (_demolitionCount == 0) return;
+    int fac_id = _demolitionItems[_demolitionIndex];
+    char buf[256];
+    snprintf(buf, sizeof(buf), loc(SR_DEMOLITION_ITEM),
+        _demolitionIndex + 1, _demolitionCount,
+        Facility[fac_id].name, (int)Facility[fac_id].maint);
+    sr_output(buf, interrupt);
+}
+
+/// Announce detailed info about the selected facility.
+static void demolition_announce_detail() {
+    if (_demolitionCount == 0) return;
+    int fac_id = _demolitionItems[_demolitionIndex];
+    const char* name = Facility[fac_id].name ? Facility[fac_id].name : "???";
+    const char* effect = Facility[fac_id].effect ? Facility[fac_id].effect : "";
+    int cost = Facility[fac_id].cost;
+    int maint = Facility[fac_id].maint;
+    char buf[512];
+    snprintf(buf, sizeof(buf), loc(SR_DEMOLITION_DETAIL),
+        name, effect, cost, maint);
+    sr_output(buf, true);
+}
+
+/// Execute facility demolition: remove facility, set scrapped flag, recalculate.
+static void demolition_execute() {
+    if (_demolitionCount == 0 || !valid_base()) return;
+    BASE* base = &Bases[*CurrentBaseID];
+
+    if (base->state_flags & BSTATE_FACILITY_SCRAPPED) {
+        sr_output(loc(SR_DEMOLITION_BLOCKED), true);
+        return;
+    }
+
+    int fac_id = _demolitionItems[_demolitionIndex];
+    const char* name = Facility[fac_id].name ? Facility[fac_id].name : "???";
+
+    // Remove facility using set_fac
+    set_fac((FacilityId)fac_id, *CurrentBaseID, false);
+    base->state_flags |= BSTATE_FACILITY_SCRAPPED;
+    base_compute(1);
+    GraphicWin_redraw(BaseWin);
+
+    char buf[256];
+    snprintf(buf, sizeof(buf), loc(SR_DEMOLITION_DONE), name);
+    sr_output(buf, true);
+    sr_debug_log("DEMOLITION: %s (fac_id=%d)", name, fac_id);
+
+    // Rebuild list and adjust index
+    demolition_build_list();
+    if (_demolitionCount == 0) {
+        sr_output(loc(SR_DEMOLITION_EMPTY), false);
+        _demolitionActive = false;
+    } else {
+        if (_demolitionIndex >= _demolitionCount) {
+            _demolitionIndex = _demolitionCount - 1;
+        }
+        demolition_announce_item(false);
+    }
+}
+
 static void announce_current_section() {
     switch (_currentSection) {
         case BS_Overview:    announce_section_overview(); break;
@@ -554,6 +637,10 @@ bool IsPickerActive() {
 
 bool IsQueueActive() {
     return _queueActive;
+}
+
+bool IsDemolitionActive() {
+    return _demolitionActive;
 }
 
 bool IsActive() {
@@ -600,6 +687,8 @@ void OnClose() {
     _prodPickerActive = false;
     _queueActive = false;
     _queueInsertMode = false;
+    _demolitionActive = false;
+    _demolitionConfirm = false;
     sr_debug_log("BASE-CLOSE");
 }
 
@@ -803,6 +892,61 @@ bool Update(UINT msg, WPARAM wParam) {
         return true;
     }
 
+    // Facility demolition mode: intercept navigation keys
+    if (_demolitionActive) {
+        if (!valid_base()) {
+            _demolitionActive = false;
+            _demolitionConfirm = false;
+            return true;
+        }
+
+        if (wParam == VK_UP) {
+            _demolitionConfirm = false;
+            if (_demolitionCount > 0) {
+                _demolitionIndex = (_demolitionIndex + _demolitionCount - 1) % _demolitionCount;
+                demolition_announce_item();
+            }
+            return true;
+        }
+        if (wParam == VK_DOWN) {
+            _demolitionConfirm = false;
+            if (_demolitionCount > 0) {
+                _demolitionIndex = (_demolitionIndex + 1) % _demolitionCount;
+                demolition_announce_item();
+            }
+            return true;
+        }
+        if (wParam == VK_DELETE) {
+            if (_demolitionCount > 0) {
+                if (!_demolitionConfirm) {
+                    _demolitionConfirm = true;
+                    int fac_id = _demolitionItems[_demolitionIndex];
+                    char buf[256];
+                    snprintf(buf, sizeof(buf), loc(SR_DEMOLITION_CONFIRM),
+                        Facility[fac_id].name);
+                    sr_output(buf, true);
+                } else {
+                    _demolitionConfirm = false;
+                    demolition_execute();
+                }
+            }
+            return true;
+        }
+        if (wParam == 'D') {
+            _demolitionConfirm = false;
+            demolition_announce_detail();
+            return true;
+        }
+        if (wParam == VK_ESCAPE) {
+            _demolitionActive = false;
+            _demolitionConfirm = false;
+            sr_output(loc(SR_DEMOLITION_CANCEL), true);
+            return true;
+        }
+        // Consume all other keys while demolition is active
+        return true;
+    }
+
     // Ctrl+Q: toggle queue management mode
     if (wParam == 'Q' && ctrl_key_down()) {
         if (!valid_base()) return true;
@@ -865,6 +1009,31 @@ bool Update(UINT msg, WPARAM wParam) {
         sr_output(buf, false);
         // Announce first item (queued after open message)
         prod_picker_announce_item(false);
+        return true;
+    }
+
+    // Ctrl+D: open facility demolition mode
+    if (wParam == 'D' && ctrl_key_down()) {
+        if (!valid_base()) return true;
+        BASE* base = &Bases[*CurrentBaseID];
+        if (base->faction_id != MapWin->cOwner) return true;
+
+        demolition_build_list();
+        if (_demolitionCount == 0) {
+            sr_output(loc(SR_DEMOLITION_EMPTY), true);
+            return true;
+        }
+
+        _demolitionActive = true;
+        _demolitionConfirm = false;
+        _demolitionIndex = 0;
+
+        char buf[256];
+        snprintf(buf, sizeof(buf), loc(SR_DEMOLITION_OPEN),
+            _demolitionCount, 1, _demolitionCount,
+            Facility[_demolitionItems[0]].name);
+        sr_output(buf, true);
+        sr_debug_log("DEMOLITION-OPEN: %d facilities", _demolitionCount);
         return true;
     }
 

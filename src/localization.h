@@ -200,6 +200,7 @@ enum SrStr {
 
     // Popup list navigation
     SR_POPUP_LIST_FMT,      // "%d of %d: %s"
+    SR_POPUP_CONTINUE,      // "Enter to continue"
 
     // Social Engineering
     SR_SOCENG_TITLE,
@@ -335,6 +336,16 @@ enum SrStr {
     SR_SPEC_CENTER,
     SR_SPEC_NO_OTHER_TYPE,
     SR_SPEC_WORKER_NO_TYPE,
+
+    // Facility Demolition (Ctrl+D)
+    SR_DEMOLITION_OPEN,
+    SR_DEMOLITION_ITEM,
+    SR_DEMOLITION_DETAIL,
+    SR_DEMOLITION_CONFIRM,
+    SR_DEMOLITION_DONE,
+    SR_DEMOLITION_BLOCKED,
+    SR_DEMOLITION_EMPTY,
+    SR_DEMOLITION_CANCEL,
 
     // Targeting Mode & Go to Base
     SR_TARGETING_MODE,

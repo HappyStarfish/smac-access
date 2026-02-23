@@ -101,7 +101,7 @@ fmt_units=%d stationed.
 fmt_units_none=Units: None stationed.
 fmt_base_open_v2=Base: %s, Population %d. Building %s, %d of %d, %s. Ctrl+Up/Down: Sections.
 fmt_workers=%d workers
-base_help=Ctrl+Up/Down: Sections. Ctrl+Left/Right: Tabs. Ctrl+I: Repeat. Ctrl+H: Hurry. Ctrl+Shift+P: Change production. Ctrl+Q: Queue. Ctrl+W: Citizens. Escape: Close.
+base_help=Ctrl+Up/Down: Sections. Ctrl+Left/Right: Tabs. Ctrl+I: Repeat. Ctrl+H: Hurry. Ctrl+Shift+P: Change production. Ctrl+Q: Queue. Ctrl+D: Demolish facility. Ctrl+W: Citizens. Escape: Close.
 fmt_turns=%d turns
 fmt_growth_never=no growth
 fmt_faction_credits=%d energy credits
@@ -191,6 +191,7 @@ menu_nav_fmt=%d of %d: %s
 
 # Popup List Navigation
 popup_list_fmt=%d of %d: %s
+popup_continue=Enter to continue.
 
 # Social Engineering
 soceng_title=Social Engineering
@@ -326,6 +327,16 @@ spec_summary=%d workers, %d specialists.
 spec_center=Base center.
 spec_no_other_type=No other specialist types available.
 spec_worker_no_type=Workers have no type. Use Enter to convert.
+
+# Facility Demolition (Ctrl+D)
+demolition_open=Facility demolition. %d facilities. %d of %d: %s
+demolition_item=%d of %d: %s, maintenance %d
+demolition_detail=%s. %s. Cost %d, maintenance %d
+demolition_confirm=Press Delete again to demolish %s
+demolition_done=%s demolished
+demolition_blocked=Cannot: already scrapped one facility this turn
+demolition_empty=No facilities to demolish
+demolition_cancel=Demolition mode closed
 
 # Targeting Mode & Go to Base
 targeting_mode=Target selection. Arrows move cursor, Enter confirms, Escape cancels.
