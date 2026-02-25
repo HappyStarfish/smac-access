@@ -228,6 +228,67 @@ bool sr_silence() {
 }
 
 /*
+Convert Windows-1252 (ANSI) text to UTF-8.
+Game text files and in-memory strings (base names, facility names, etc.)
+use Windows-1252 encoding. Our sr_output() expects UTF-8.
+*/
+void sr_ansi_to_utf8(const char* src, char* dst, int dstsize) {
+    if (!src || !dst || dstsize < 1) return;
+    // First convert ANSI -> wide (UTF-16)
+    int wlen = MultiByteToWideChar(CP_ACP, 0, src, -1, NULL, 0);
+    if (wlen <= 0) {
+        dst[0] = '\0';
+        return;
+    }
+    wchar_t* wbuf = (wchar_t*)alloca(wlen * sizeof(wchar_t));
+    MultiByteToWideChar(CP_ACP, 0, src, -1, wbuf, wlen);
+    // Then convert wide -> UTF-8
+    int ulen = WideCharToMultiByte(CP_UTF8, 0, wbuf, -1, NULL, 0, NULL, NULL);
+    if (ulen <= 0) {
+        dst[0] = '\0';
+        return;
+    }
+    if (ulen > dstsize) {
+        // UTF-8 result too large for buffer. Truncate the wide string
+        // to fit, preserving valid UTF-8 (no broken multi-byte sequences).
+        // Binary search for max wide chars that fit in dstsize.
+        int lo = 0, hi = wlen - 1, best = 0;
+        while (lo <= hi) {
+            int mid = (lo + hi) / 2;
+            int needed = WideCharToMultiByte(CP_UTF8, 0, wbuf, mid, NULL, 0, NULL, NULL);
+            if (needed > 0 && needed <= dstsize - 1) {
+                best = mid;
+                lo = mid + 1;
+            } else {
+                hi = mid - 1;
+            }
+        }
+        if (best > 0) {
+            WideCharToMultiByte(CP_UTF8, 0, wbuf, best, dst, dstsize, NULL, NULL);
+            dst[dstsize - 1] = '\0';
+        } else {
+            dst[0] = '\0';
+        }
+        return;
+    }
+    WideCharToMultiByte(CP_UTF8, 0, wbuf, -1, dst, dstsize, NULL, NULL);
+}
+
+/*
+Convenience wrapper with rotating buffers for use in snprintf.
+Supports up to 8 concurrent game strings per call.
+*/
+const char* sr_game_str(const char* ansi_text) {
+    static char bufs[8][512];
+    static int idx = 0;
+    if (!ansi_text || !ansi_text[0]) return "";
+    char* buf = bufs[idx];
+    idx = (idx + 1) & 7;
+    sr_ansi_to_utf8(ansi_text, buf, 512);
+    return buf;
+}
+
+/*
 Check if a string is known noise that should be filtered out.
 */
 static bool sr_is_junk(const char* text) {
@@ -235,9 +296,11 @@ static bool sr_is_junk(const char* text) {
     if (strncmp(text, "Local ID:", 9) == 0) return true;
     // TURN COMPLETE floods the buffer during AI turns, preventing other announces
     if (strcmp(text, "TURN COMPLETE") == 0) return true;
+    if (strcmp(text, "ZUG BEENDET") == 0) return true;
     // Diplomacy status strings that leak during menu navigation
     if (strncmp(text, "No Contact", 10) == 0) return true;
     if (strncmp(text, "no contact", 10) == 0) return true;
+    if (strncmp(text, "Kein Kontakt", 12) == 0) return true;
     // Filter pure numbers (coordinates, counters)
     bool all_digits = true;
     for (const char* p = text; *p; p++) {
@@ -337,6 +400,14 @@ static void sr_try_tutorial_announce(const char* text) {
     body[pos] = '\0';
     fclose(f);
 
+    // Convert tutorial body from Windows-1252 to UTF-8
+    {
+        char utf8tmp[2048];
+        sr_ansi_to_utf8(body, utf8tmp, sizeof(utf8tmp));
+        strncpy(body, utf8tmp, sizeof(body) - 1);
+        body[sizeof(body) - 1] = '\0';
+    }
+
     if (has_body) {
         strncpy(last_tutorial, text, sizeof(last_tutorial) - 1);
         last_tutorial[sizeof(last_tutorial) - 1] = '\0';
@@ -355,6 +426,12 @@ Deduplicates against entire buffer within the same cycle.
 */
 void sr_record_text(const char* text, int y) {
     if (!text || !text[0]) return;
+
+    // Convert game text from Windows-1252 (ANSI) to UTF-8.
+    // Game engine and language patches use Win-1252; our pipeline uses UTF-8.
+    char utf8buf[1024];
+    sr_ansi_to_utf8(text, utf8buf, sizeof(utf8buf));
+    text = utf8buf;
 
     // During popup display, don't accumulate normal text.
     // But check for tutorial popup captions (nested inside other popups).
@@ -639,7 +716,17 @@ int sr_popup_list_parse(const char* filename, const char* label) {
         char* text = clean;
         while (*text == '_') text++;
 
-        strncpy(sr_popup_list.items[count], text, 255);
+        // Substitute game variables ($TITLE3, $NAME4, $TECH0, $<N:...>, etc.)
+        char subst[512];
+        strncpy(subst, text, sizeof(subst) - 1);
+        subst[sizeof(subst) - 1] = '\0';
+        sr_substitute_game_vars(subst, sizeof(subst));
+        text = subst;
+
+        // Convert from Windows-1252 to UTF-8
+        char utf8tmp[256];
+        sr_ansi_to_utf8(text, utf8tmp, sizeof(utf8tmp));
+        strncpy(sr_popup_list.items[count], utf8tmp, 255);
         sr_popup_list.items[count][255] = '\0';
         count++;
     }
@@ -657,6 +744,136 @@ int sr_popup_list_parse(const char* filename, const char* label) {
         }
     }
     return count;
+}
+
+// ========== Game Variable Substitution ==========
+
+/*
+Substitute game variables in a text buffer. Handles:
+  - $WORD# or $WORD_WITH_UNDERSCORES# → ParseStrBuffer[slot] (string vars)
+  - $NUM# → ParseNumTable[slot] (numeric vars)
+  - $<N:form0:form1:form2:...> → gender/plurality-selected form
+    (uses ParseStrGender[N] + ParseStrPlurality[N] * 3 as index)
+Called from sr_read_popup_text and sr_popup_list_parse.
+*/
+void sr_substitute_game_vars(char* buf, int bufsize) {
+    if (!buf || bufsize < 2) return;
+    char tmp[8192];
+    bool changed = true;
+
+    // Safety: limit iterations to prevent infinite loops
+    int max_iter = 50;
+    while (changed && --max_iter > 0) {
+        changed = false;
+        char* p = buf;
+        while ((p = strchr(p, '$')) != NULL) {
+            char* start = p;
+            p++; // skip $
+
+            // Handle $<N:form0:form1:...> gender/plurality pattern
+            if (*p == '<') {
+                p++; // skip <
+                // Must start with digit (slot number). Skip $<M1:...> etc.
+                // (those are letter-prefixed patterns handled by sr_substitute_vars)
+                if (!(*p >= '0' && *p <= '9')) {
+                    // Skip to closing '>' to avoid matching nested $VARs
+                    char* close = strchr(p, '>');
+                    if (close) p = close + 1; // resume after '>'
+                    continue;
+                }
+                if (*p >= '0' && *p <= '9') {
+                    int slot = 0;
+                    while (*p >= '0' && *p <= '9') {
+                        slot = slot * 10 + (*p - '0');
+                        p++;
+                    }
+                    if (*p == ':') {
+                        // Collect colon-separated forms until '>'
+                        const char* forms[8];
+                        int form_count = 0;
+                        p++; // skip first ':'
+                        forms[0] = p;
+                        form_count = 1;
+                        while (*p && *p != '>' && form_count < 8) {
+                            if (*p == ':') {
+                                forms[form_count++] = p + 1;
+                            }
+                            p++;
+                        }
+                        if (*p == '>') {
+                            p++; // skip '>'
+                            // Calculate form lengths (each form ends at next ':' or '>')
+                            int form_lens[8];
+                            for (int i = 0; i < form_count; i++) {
+                                if (i + 1 < form_count) {
+                                    form_lens[i] = (int)(forms[i + 1] - forms[i]) - 1; // -1 for ':'
+                                } else {
+                                    form_lens[i] = (int)(p - 1 - forms[i]); // -1 for '>'
+                                }
+                            }
+                            // Select form: gender + plurality * 3
+                            int idx = 0;
+                            if (ParseStrGender && ParseStrPlurality
+                                && slot >= 0 && slot < 10) {
+                                idx = ParseStrGender[slot]
+                                    + ParseStrPlurality[slot] * 3;
+                            }
+                            if (idx < 0 || idx >= form_count) idx = 0;
+
+                            int prefix = (int)(start - buf);
+                            snprintf(tmp, sizeof(tmp), "%.*s%.*s%s",
+                                prefix, buf, form_lens[idx], forms[idx], p);
+                            strncpy(buf, tmp, bufsize - 1);
+                            buf[bufsize - 1] = '\0';
+                            changed = true;
+                            break; // restart scan
+                        }
+                    }
+                }
+                // If we didn't match, skip past this $< to avoid infinite loop
+                continue;
+            }
+
+            // Handle $WORD# pattern (uppercase letters + underscores + digit)
+            char* word_start = p;
+            while ((*p >= 'A' && *p <= 'Z') || *p == '_') p++;
+            int word_len = (int)(p - word_start);
+            // Must have at least one letter and end with a digit
+            if (word_len > 0 && *p >= '0' && *p <= '9') {
+                int slot = *p - '0';
+                p++; // skip digit
+                // Also handle two-digit slot
+                if (*p >= '0' && *p <= '9') {
+                    slot = slot * 10 + (*p - '0');
+                    p++;
+                }
+                // Check if this is $NUM# (numeric variable)
+                bool is_num = (word_len == 3
+                    && word_start[0] == 'N'
+                    && word_start[1] == 'U'
+                    && word_start[2] == 'M');
+                if (is_num && slot < 16 && ParseNumTable) {
+                    int prefix = (int)(start - buf);
+                    snprintf(tmp, sizeof(tmp), "%.*s%d%s",
+                        prefix, buf, ParseNumTable[slot], p);
+                    strncpy(buf, tmp, bufsize - 1);
+                    buf[bufsize - 1] = '\0';
+                    changed = true;
+                    break;
+                }
+                if (!is_num && slot < 10 && ParseStrBuffer
+                    && ParseStrBuffer[slot].str[0]) {
+                    int prefix = (int)(start - buf);
+                    snprintf(tmp, sizeof(tmp), "%.*s%s%s",
+                        prefix, buf, ParseStrBuffer[slot].str, p);
+                    strncpy(buf, tmp, bufsize - 1);
+                    buf[bufsize - 1] = '\0';
+                    changed = true;
+                    break; // restart scan
+                }
+            }
+        }
+    }
 }
 
 // ========== Popup Text Capture (popp/popb hooks) ==========
@@ -825,58 +1042,18 @@ bool sr_read_popup_text(const char* filename, const char* label,
     buf[pos] = '\0';
     fclose(f);
 
-    // Substitute game variables ($BASENAME0, $UNITNAME1, $NUM0, etc.)
-    // String vars use ParseStrBuffer, numeric vars ($NUM#) use ParseNumTable
-    if (ParseStrBuffer) {
-        char tmp[2048];
-        bool changed = true;
-        // Iterate until no more substitutions (handles multiple vars)
-        while (changed) {
-            changed = false;
-            char* p = buf;
-            while ((p = strchr(p, '$')) != NULL) {
-                // Check for $WORD# pattern (uppercase letters + single digit)
-                char* start = p;
-                p++; // skip $
-                char* word_start = p;
-                // Skip uppercase letters
-                while (*p >= 'A' && *p <= 'Z') p++;
-                int word_len = (int)(p - word_start);
-                // Must have at least one letter and end with a digit
-                if (word_len > 0 && *p >= '0' && *p <= '9') {
-                    int slot = *p - '0';
-                    p++; // skip digit
-                    // Also handle two-digit slot (e.g. $BASENAME10)
-                    if (*p >= '0' && *p <= '9') {
-                        slot = slot * 10 + (*p - '0');
-                        p++;
-                    }
-                    // Check if this is $NUM# (numeric variable)
-                    bool is_num = (word_len == 3
-                        && word_start[0] == 'N'
-                        && word_start[1] == 'U'
-                        && word_start[2] == 'M');
-                    if (is_num && slot < 16 && ParseNumTable) {
-                        int prefix = (int)(start - buf);
-                        snprintf(tmp, sizeof(tmp), "%.*s%d%s",
-                            prefix, buf, ParseNumTable[slot], p);
-                        strncpy(buf, tmp, bufsize - 1);
-                        buf[bufsize - 1] = '\0';
-                        changed = true;
-                        break;
-                    }
-                    if (!is_num && slot < 8 && ParseStrBuffer[slot].str[0]) {
-                        int prefix = (int)(start - buf);
-                        snprintf(tmp, sizeof(tmp), "%.*s%s%s",
-                            prefix, buf, ParseStrBuffer[slot].str, p);
-                        strncpy(buf, tmp, bufsize - 1);
-                        buf[bufsize - 1] = '\0';
-                        changed = true;
-                        break; // restart scan from beginning
-                    }
-                }
-            }
-        }
+    // Substitute game variables
+    sr_substitute_game_vars(buf, bufsize);
+
+    // Convert the entire buffer from Windows-1252 to UTF-8.
+    // Game text files use Windows-1252; our output pipeline expects UTF-8.
+    // Use large buffer to avoid truncation of long texts (interludes, etc.)
+    {
+        int tmpsize = bufsize + 1024; // UTF-8 can be ~1.5x larger than ANSI
+        char* utf8tmp = (char*)alloca(tmpsize);
+        sr_ansi_to_utf8(buf, utf8tmp, tmpsize);
+        strncpy(buf, utf8tmp, bufsize - 1);
+        buf[bufsize - 1] = '\0';
     }
 
     {
@@ -898,7 +1075,7 @@ static int sr_interlude_id = -1;
 // Shared pre/post boilerplate for popup hook wrappers.
 static void sr_pre_popup(const char* filename, const char* label) {
     if (sr_is_available() && filename && label) {
-        char buf[2048];
+        char buf[8192]; // Large buffer for long texts (interludes can be 3000+ chars)
         bool has_text = sr_read_popup_text(filename, label, buf, sizeof(buf));
 
         // Interlude header popup: read the actual story text instead
@@ -1059,6 +1236,25 @@ static int __cdecl sr_hook_planetfall(int faction_id) {
     sr_popup_active = false;
     sr_clear_text();
     return result;
+}
+
+// ========== Number Input Dialog Hook ==========
+
+// Saved original pop_ask_number function address
+static Fpop_ask_number sr_orig_pop_ask_number = NULL;
+
+/*
+Hook for pop_ask_number: announces that a number input dialog is active
+and what the default value is, so the user knows to type a number.
+*/
+static int __cdecl sr_hook_pop_ask_number(const char* filename, const char* label,
+                                           int value, int a4) {
+    if (sr_is_available()) {
+        char buf[256];
+        snprintf(buf, sizeof(buf), loc(SR_INPUT_NUMBER), value);
+        sr_output(buf, false); // queued after popup text from sr_pre_popup
+    }
+    return sr_orig_pop_ask_number(filename, label, value, a4);
 }
 
 // ========== Inline Hook Implementation ==========
@@ -1586,8 +1782,14 @@ bool sr_install_text_hooks() {
     int popup_hooked = sr_install_popup_hooks(slot);
     hooked += popup_hooked;
 
+    // Hook pop_ask_number via function pointer redirect (no inline hook needed)
+    sr_orig_pop_ask_number = pop_ask_number;
+    pop_ask_number = sr_hook_pop_ask_number;
+    hooked++;
+    sr_hook_log("pop_ask_number redirected to sr_hook_pop_ask_number");
+
     char logbuf[128];
-    snprintf(logbuf, sizeof(logbuf), "sr_install_text_hooks: done (%d of 19 hooked)", hooked);
+    snprintf(logbuf, sizeof(logbuf), "sr_install_text_hooks: done (%d of 20 hooked)", hooked);
     sr_log(logbuf);
     sr_hook_log(logbuf);
     return true;

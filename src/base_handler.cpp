@@ -9,6 +9,15 @@
 #include "screen_reader.h"
 #include "localization.h"
 
+// Helper: convert game production name to UTF-8
+static const char* sr_prod(int item_id) {
+    return sr_game_str(prod_name(item_id));
+}
+// Helper: convert game base name to UTF-8
+static const char* sr_base_name(BASE* b) {
+    return sr_game_str(b->name);
+}
+
 static int _currentSection = BS_Overview;
 static int _lastBaseID = -1;
 static bool _announceInterrupt = true;  // controls sr_output interrupt flag
@@ -112,7 +121,7 @@ static void announce_section_overview() {
 
     char buf[512];
     snprintf(buf, sizeof(buf), loc(SR_FMT_OVERVIEW_V2),
-        base->name, (int)base->x, (int)base->y, (int)base->pop_size,
+        sr_base_name(base), (int)base->x, (int)base->y, (int)base->pop_size,
         workforce,
         base->talent_total, base->drone_total);
     sr_output(buf, _announceInterrupt);
@@ -159,14 +168,14 @@ static void announce_section_production() {
 
     char buf[512];
     int pos = snprintf(buf, sizeof(buf), loc(SR_FMT_PRODUCTION_V2),
-        prod_name(item), accumulated, cost, turns_str);
+        sr_prod(item), accumulated, cost, turns_str);
 
     // Queue items (skip first which is current production)
     if (base->queue_size > 1) {
         pos += snprintf(buf + pos, sizeof(buf) - pos, "%s", loc(SR_FMT_QUEUE));
         for (int i = 1; i < base->queue_size && i < 10; i++) {
             pos += snprintf(buf + pos, sizeof(buf) - pos, " %s,",
-                prod_name(base->queue_items[i]));
+                sr_prod(base->queue_items[i]));
         }
         if (pos > 0 && buf[pos - 1] == ',') {
             buf[pos - 1] = '.';
@@ -215,7 +224,7 @@ static void announce_section_facilities() {
             if (fpos > 0) {
                 fpos += snprintf(fac_list + fpos, sizeof(fac_list) - fpos, ", ");
             }
-            fpos += snprintf(fac_list + fpos, sizeof(fac_list) - fpos, "%s", Facility[i].name);
+            fpos += snprintf(fac_list + fpos, sizeof(fac_list) - fpos, "%s", sr_game_str(Facility[i].name));
             total_maint += Facility[i].maint;
             count++;
             if (fpos >= (int)sizeof(fac_list) - 50) break;
@@ -343,8 +352,8 @@ static void prod_picker_announce_detail() {
     if (item < 0) {
         // Facility or Secret Project
         int fac_id = -item;
-        const char* name = Facility[fac_id].name ? Facility[fac_id].name : "???";
-        const char* effect = Facility[fac_id].effect ? Facility[fac_id].effect : "";
+        const char* name = Facility[fac_id].name ? sr_game_str(Facility[fac_id].name) : "???";
+        const char* effect = Facility[fac_id].effect ? sr_game_str(Facility[fac_id].effect) : "";
 
         if (fac_id >= SP_ID_First) {
             // Secret Project
@@ -359,28 +368,28 @@ static void prod_picker_announce_detail() {
         // Unit
         UNIT* u = &Units[item];
         const char* chassis_name = Chassis[u->chassis_id].offsv1_name
-            ? Chassis[u->chassis_id].offsv1_name : "???";
+            ? sr_game_str(Chassis[u->chassis_id].offsv1_name) : "???";
         const char* weapon_name = Weapon[u->weapon_id].name
-            ? Weapon[u->weapon_id].name : "???";
+            ? sr_game_str(Weapon[u->weapon_id].name) : "???";
         const char* armor_name = Armor[u->armor_id].name
-            ? Armor[u->armor_id].name : "???";
+            ? sr_game_str(Armor[u->armor_id].name) : "???";
         const char* reactor_name = Reactor[u->reactor_id].name
-            ? Reactor[u->reactor_id].name : "???";
+            ? sr_game_str(Reactor[u->reactor_id].name) : "???";
         int atk = Weapon[u->weapon_id].offense_value;
         int def = Armor[u->armor_id].defense_value;
         int move_speed = Chassis[u->chassis_id].speed;
         int hp = 10 * Reactor[u->reactor_id].power;
 
         int pos = snprintf(buf, sizeof(buf), loc(SR_PROD_DETAIL_UNIT),
-            u->name, chassis_name, weapon_name, atk,
+            sr_game_str(u->name), chassis_name, weapon_name, atk,
             armor_name, def, reactor_name, move_speed, hp);
 
         // Append abilities if any
         if (u->ability_flags) {
-            pos += snprintf(buf + pos, sizeof(buf) - pos, " Abilities:");
+            pos += snprintf(buf + pos, sizeof(buf) - pos, "%s", loc(SR_UNIT_ABILITIES));
             for (int i = 0; i < MaxAbilityNum; i++) {
                 if (u->ability_flags & (1u << i)) {
-                    const char* aname = Ability[i].name ? Ability[i].name : "???";
+                    const char* aname = Ability[i].name ? sr_game_str(Ability[i].name) : "???";
                     pos += snprintf(buf + pos, sizeof(buf) - pos, " %s,", aname);
                     if (pos >= (int)sizeof(buf) - 50) break;
                 }
@@ -413,7 +422,7 @@ static void prod_picker_announce_item(bool interrupt = true) {
     char buf[256];
     snprintf(buf, sizeof(buf), loc(SR_PROD_PICKER_ITEM),
         _prodPickerIndex + 1, _prodPickerCount,
-        prod_name(item), cost, turns_str);
+        sr_prod(item), cost, turns_str);
     sr_output(buf, interrupt);
 }
 
@@ -441,11 +450,11 @@ static void queue_announce_item(bool interrupt = true) {
     char buf[256];
     if (_queueIndex == 0) {
         snprintf(buf, sizeof(buf), loc(SR_QUEUE_ITEM_CURRENT),
-            _queueIndex + 1, total, prod_name(item),
+            _queueIndex + 1, total, sr_prod(item),
             base->minerals_accumulated, cost, turns_str);
     } else {
         snprintf(buf, sizeof(buf), loc(SR_QUEUE_ITEM),
-            _queueIndex + 1, total, prod_name(item), cost, turns_str);
+            _queueIndex + 1, total, sr_prod(item), cost, turns_str);
     }
     sr_output(buf, interrupt);
 }
@@ -512,8 +521,8 @@ static void queue_announce_detail() {
 
     if (item < 0) {
         int fac_id = -item;
-        const char* name = Facility[fac_id].name ? Facility[fac_id].name : "???";
-        const char* effect = Facility[fac_id].effect ? Facility[fac_id].effect : "";
+        const char* name = Facility[fac_id].name ? sr_game_str(Facility[fac_id].name) : "???";
+        const char* effect = Facility[fac_id].effect ? sr_game_str(Facility[fac_id].effect) : "";
         if (fac_id >= SP_ID_First) {
             snprintf(buf, sizeof(buf), loc(SR_PROD_DETAIL_PROJECT), name, effect, cost);
         } else {
@@ -523,19 +532,19 @@ static void queue_announce_detail() {
     } else {
         UNIT* u = &Units[item];
         const char* chassis_name = Chassis[u->chassis_id].offsv1_name
-            ? Chassis[u->chassis_id].offsv1_name : "???";
+            ? sr_game_str(Chassis[u->chassis_id].offsv1_name) : "???";
         const char* weapon_name = Weapon[u->weapon_id].name
-            ? Weapon[u->weapon_id].name : "???";
+            ? sr_game_str(Weapon[u->weapon_id].name) : "???";
         const char* armor_name = Armor[u->armor_id].name
-            ? Armor[u->armor_id].name : "???";
+            ? sr_game_str(Armor[u->armor_id].name) : "???";
         const char* reactor_name = Reactor[u->reactor_id].name
-            ? Reactor[u->reactor_id].name : "???";
+            ? sr_game_str(Reactor[u->reactor_id].name) : "???";
         int atk = Weapon[u->weapon_id].offense_value;
         int def = Armor[u->armor_id].defense_value;
         int move_speed = Chassis[u->chassis_id].speed;
         int hp = 10 * Reactor[u->reactor_id].power;
         snprintf(buf, sizeof(buf), loc(SR_PROD_DETAIL_UNIT),
-            u->name, chassis_name, weapon_name, atk,
+            sr_game_str(u->name), chassis_name, weapon_name, atk,
             armor_name, def, reactor_name, move_speed, hp);
     }
     sr_output(buf, true);
@@ -562,7 +571,7 @@ static void demolition_announce_item(bool interrupt = true) {
     char buf[256];
     snprintf(buf, sizeof(buf), loc(SR_DEMOLITION_ITEM),
         _demolitionIndex + 1, _demolitionCount,
-        Facility[fac_id].name, (int)Facility[fac_id].maint);
+        sr_game_str(Facility[fac_id].name), (int)Facility[fac_id].maint);
     sr_output(buf, interrupt);
 }
 
@@ -570,8 +579,8 @@ static void demolition_announce_item(bool interrupt = true) {
 static void demolition_announce_detail() {
     if (_demolitionCount == 0) return;
     int fac_id = _demolitionItems[_demolitionIndex];
-    const char* name = Facility[fac_id].name ? Facility[fac_id].name : "???";
-    const char* effect = Facility[fac_id].effect ? Facility[fac_id].effect : "";
+    const char* name = Facility[fac_id].name ? sr_game_str(Facility[fac_id].name) : "???";
+    const char* effect = Facility[fac_id].effect ? sr_game_str(Facility[fac_id].effect) : "";
     int cost = Facility[fac_id].cost;
     int maint = Facility[fac_id].maint;
     char buf[512];
@@ -591,7 +600,7 @@ static void demolition_execute() {
     }
 
     int fac_id = _demolitionItems[_demolitionIndex];
-    const char* name = Facility[fac_id].name ? Facility[fac_id].name : "???";
+    const char* name = Facility[fac_id].name ? sr_game_str(Facility[fac_id].name) : "???";
 
     // Remove facility using set_fac
     set_fac((FacilityId)fac_id, *CurrentBaseID, false);
@@ -676,8 +685,8 @@ void OnOpen() {
 
     char buf[512];
     snprintf(buf, sizeof(buf), loc(SR_FMT_BASE_OPEN_V2),
-        base->name, (int)base->pop_size,
-        prod_name(item), base->minerals_accumulated, cost, turns_str);
+        sr_base_name(base), (int)base->pop_size,
+        sr_prod(item), base->minerals_accumulated, cost, turns_str);
     sr_output(buf, true);
     sr_debug_log("BASE-OPEN: %s", buf);
 }
@@ -740,9 +749,9 @@ bool Update(UINT msg, WPARAM wParam) {
                         _queueIndex = insert_pos;
                         char buf[256];
                         snprintf(buf, sizeof(buf), loc(SR_QUEUE_ADDED),
-                            prod_name(item), insert_pos + 1);
+                            sr_prod(item), insert_pos + 1);
                         sr_output(buf, true);
-                        sr_debug_log("QUEUE-INSERT: %s at pos %d", prod_name(item), insert_pos);
+                        sr_debug_log("QUEUE-INSERT: %s at pos %d", sr_prod(item), insert_pos);
                     }
                     _prodPickerActive = false;
                     _queueInsertMode = false;
@@ -755,9 +764,9 @@ bool Update(UINT msg, WPARAM wParam) {
                     GraphicWin_redraw(BaseWin);
                     char buf[256];
                     snprintf(buf, sizeof(buf), loc(SR_PROD_PICKER_SELECT),
-                        prod_name(item));
+                        sr_prod(item));
                     sr_output(buf, true);
-                    sr_debug_log("PROD-PICKER: selected %s (id=%d)", prod_name(item), item);
+                    sr_debug_log("PROD-PICKER: selected %s (id=%d)", sr_prod(item), item);
                     _prodPickerActive = false;
                 }
             } else {
@@ -818,7 +827,7 @@ bool Update(UINT msg, WPARAM wParam) {
                 _queueIndex--;
                 char buf[256];
                 snprintf(buf, sizeof(buf), loc(SR_QUEUE_MOVED),
-                    prod_name(item), _queueIndex + 1);
+                    sr_prod(item), _queueIndex + 1);
                 sr_output(buf, true);
             }
             return true;
@@ -835,7 +844,7 @@ bool Update(UINT msg, WPARAM wParam) {
                 _queueIndex++;
                 char buf[256];
                 snprintf(buf, sizeof(buf), loc(SR_QUEUE_MOVED),
-                    prod_name(item), _queueIndex + 1);
+                    sr_prod(item), _queueIndex + 1);
                 sr_output(buf, true);
             }
             return true;
@@ -844,7 +853,7 @@ bool Update(UINT msg, WPARAM wParam) {
             if (_queueIndex == 0) {
                 sr_output(loc(SR_QUEUE_CANNOT_REMOVE_CURRENT), true);
             } else {
-                const char* name = prod_name(base->queue_items[_queueIndex]);
+                const char* name = sr_prod(base->queue_items[_queueIndex]);
                 char buf[256];
                 queue_remove_item(_queueIndex);
                 int new_total = base->queue_size + 1;
@@ -923,7 +932,7 @@ bool Update(UINT msg, WPARAM wParam) {
                     int fac_id = _demolitionItems[_demolitionIndex];
                     char buf[256];
                     snprintf(buf, sizeof(buf), loc(SR_DEMOLITION_CONFIRM),
-                        Facility[fac_id].name);
+                        sr_game_str(Facility[fac_id].name));
                     sr_output(buf, true);
                 } else {
                     _demolitionConfirm = false;
@@ -959,7 +968,7 @@ bool Update(UINT msg, WPARAM wParam) {
 
         if (total <= 1) {
             char buf[256];
-            snprintf(buf, sizeof(buf), loc(SR_QUEUE_OPEN_ONE), prod_name(base->queue_items[0]));
+            snprintf(buf, sizeof(buf), loc(SR_QUEUE_OPEN_ONE), sr_prod(base->queue_items[0]));
             sr_output(buf, true);
         } else {
             char buf[256];
@@ -998,7 +1007,7 @@ bool Update(UINT msg, WPARAM wParam) {
             }
             char cur_buf[256];
             snprintf(cur_buf, sizeof(cur_buf), loc(SR_PROD_PICKER_CURRENT),
-                prod_name(cur_item), base->minerals_accumulated, cur_cost, turns_str);
+                sr_prod(cur_item), base->minerals_accumulated, cur_cost, turns_str);
             sr_output(cur_buf, true);
         } else {
             sr_output(loc(SR_PROD_PICKER_CURRENT_NONE), true);
@@ -1031,7 +1040,7 @@ bool Update(UINT msg, WPARAM wParam) {
         char buf[256];
         snprintf(buf, sizeof(buf), loc(SR_DEMOLITION_OPEN),
             _demolitionCount, 1, _demolitionCount,
-            Facility[_demolitionItems[0]].name);
+            sr_game_str(Facility[_demolitionItems[0]].name));
         sr_output(buf, true);
         sr_debug_log("DEMOLITION-OPEN: %d facilities", _demolitionCount);
         return true;

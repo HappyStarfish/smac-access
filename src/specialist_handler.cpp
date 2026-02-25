@@ -112,7 +112,7 @@ static void announce_slot() {
         int type_id = base->specialist_type(spec_idx);
         const char* name = "???";
         if (type_id >= 0 && type_id < MaxCitizenNum && Citizen[type_id].singular_name) {
-            name = Citizen[type_id].singular_name;
+            name = sr_game_str(Citizen[type_id].singular_name);
         }
 
         char bonus_str[128];
@@ -150,7 +150,7 @@ static void announce_summary() {
         for (int i = 0; i < MaxCitizenNum; i++) {
             if (type_counts[i] > 0 && Citizen[i].singular_name) {
                 pos += snprintf(detail + pos, sizeof(detail) - pos, " %d %s.",
-                    type_counts[i], Citizen[i].singular_name);
+                    type_counts[i], sr_game_str(Citizen[i].singular_name));
             }
         }
     }
@@ -217,7 +217,7 @@ static void convert_to_specialist() {
 
     const char* name = "???";
     if (best_type >= 0 && best_type < MaxCitizenNum && Citizen[best_type].singular_name) {
-        name = Citizen[best_type].singular_name;
+        name = sr_game_str(Citizen[best_type].singular_name);
     }
     char buf[256];
     snprintf(buf, sizeof(buf), loc(SR_SPEC_TO_SPECIALIST), name);
@@ -297,7 +297,7 @@ bool Update(UINT msg, WPARAM wParam) {
                 const char* name = "???";
                 if (new_type >= 0 && new_type < MaxCitizenNum
                     && Citizen[new_type].singular_name) {
-                    name = Citizen[new_type].singular_name;
+                    name = sr_game_str(Citizen[new_type].singular_name);
                 }
                 char buf[256];
                 snprintf(buf, sizeof(buf), loc(SR_SPEC_TYPE_CHANGED), name);

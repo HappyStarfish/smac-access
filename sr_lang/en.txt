@@ -123,6 +123,7 @@ prod_picker_current_none=Currently building: nothing.
 prod_detail_fac=%s. %s. Cost: %d minerals, Maintenance: %d per turn.
 prod_detail_project=%s. %s. Cost: %d minerals. Secret Project.
 prod_detail_unit=%s. %s, %s %d, %s %d, %s, %d moves, %d HP.
+unit_abilities= Abilities:
 
 # Queue Management
 queue_open=Queue: %d items. Up/Down navigate, Shift+Up/Down reorder, Delete remove, Insert add, Escape close.
@@ -188,6 +189,14 @@ menu_entry_fmt=%s, %d entries
 menu_item_fmt=%s, %s
 menu_item_nohk=%s
 menu_nav_fmt=%d of %d: %s
+
+# Popup Menus
+menu_main=Main Menu
+menu_map_menu=Map Menu
+menu_multiplayer=Multiplayer
+menu_scenario_menu=Scenario
+menu_thinker=Thinker Menu
+menu_game_menu=Game Menu
 
 # Popup List Navigation
 popup_list_fmt=%d of %d: %s
@@ -352,3 +361,28 @@ help_go_home=Shift+G: Go to home base
 help_group_goto=J: Group go to
 help_patrol=P: Patrol
 help_artillery=F: Long range fire
+
+# Diplomacy
+diplo_open=Diplomacy with %s
+diplo_closed=Diplomacy ended.
+diplo_help=S or Tab: Relationship summary. Ctrl+F1: Help. Popup options navigate with arrows.
+diplo_summary=%s. %s. %s
+diplo_status_pact=Pact
+diplo_status_treaty=Treaty of Friendship
+diplo_status_truce=Truce
+diplo_status_vendetta=Vendetta
+diplo_status_none=No formal agreement
+diplo_patience=Patience: %s
+diplo_patience_thin=wearing thin
+diplo_patience_wearing=moderate
+diplo_patience_ok=patient
+diplo_surrendered=Has surrendered
+diplo_infiltrator=We have infiltrator
+diplo_netmsg=%s
+diplo_commlink_open=Commlink: %d factions. Up/Down to browse, Enter to contact, Escape to cancel.
+diplo_commlink_item=%d of %d: %s, %s, %d votes
+diplo_commlink_empty=No factions with commlink.
+diplo_commlink_contact=Contacting %s
+
+# Input Dialogs
+input_number=Number input. Default: %d. Type a number and press Enter.

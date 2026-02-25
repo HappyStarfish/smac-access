@@ -173,7 +173,7 @@ static void sr_announce_tile(int x, int y) {
     int base_id = base_at(x, y);
     if (base_id >= 0) {
         pos += snprintf(buf + pos, sizeof(buf) - pos,
-            loc(SR_BASE_AT), Bases[base_id].name);
+            loc(SR_BASE_AT), sr_game_str(Bases[base_id].name));
     }
 
     // Units on this tile
@@ -183,10 +183,10 @@ static void sr_announce_tile(int x, int y) {
             if (Vehs[i].x == x && Vehs[i].y == y) {
                 if (unit_count == 0) {
                     pos += snprintf(buf + pos, sizeof(buf) - pos,
-                        loc(SR_UNIT_AT), Vehs[i].name());
+                        loc(SR_UNIT_AT), sr_game_str(Vehs[i].name()));
                 } else {
                     pos += snprintf(buf + pos, sizeof(buf) - pos,
-                        ", %s", Vehs[i].name());
+                        ", %s", sr_game_str(Vehs[i].name()));
                 }
                 unit_count++;
             }
@@ -414,7 +414,7 @@ void OnTimer(DWORD now, bool on_world_map, GameWinState cur_win, int cur_popup,
                     // Fill in format args for SR_YOUR_TURN
                     char full[320];
                     snprintf(full, sizeof(full), buf,
-                        veh->name(), veh->x, veh->y);
+                        sr_game_str(veh->name()), veh->x, veh->y);
                     sr_debug_log("ANNOUNCE-TURN: %s", full);
                     sr_output(full, true);
                 }
@@ -502,6 +502,10 @@ void OnTimer(DWORD now, bool on_world_map, GameWinState cur_win, int cur_popup,
 bool HandleKey(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     if (!sr_is_available() || !MapWin) return false;
 
+    // When a popup dialog is active (commlink, diplomacy, etc.),
+    // let all keys pass through to the game for popup navigation
+    if (sr_popup_is_active()) return false;
+
     GameWinState cur_win = current_window();
     bool on_world_map = (cur_win == GW_World
         || (cur_win == GW_None && *PopupDialogState >= 2));
@@ -561,8 +565,8 @@ bool HandleKey(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     }
 
     // Arrow keys: exploration + Shift+movement
-    // When targeting mode is active, let arrows pass through to the game
-    if (!sr_targeting_active
+    // When targeting mode or a popup dialog is active, let arrows pass to the game
+    if (!sr_targeting_active && !sr_popup_is_active()
         && *MapAreaX > 0 && *MapAreaY > 0
         && (wParam == VK_UP || wParam == VK_DOWN || wParam == VK_LEFT || wParam == VK_RIGHT
             || wParam == VK_HOME || wParam == VK_PRIOR || wParam == VK_END || wParam == VK_NEXT)
@@ -592,7 +596,7 @@ bool HandleKey(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                         int old_x = veh->x;
                         int old_y = veh->y;
                         sr_debug_log("UNIT-MOVE %s (%d,%d)->(%d,%d) dir=%d",
-                            veh->name(), old_x, old_y, tx, ty, dir);
+                            sr_game_str(veh->name()), old_x, old_y, tx, ty, dir);
                         set_move_to(veh_id, tx, ty);
                         action(veh_id);
                         if (veh_id < *VehCount
@@ -644,7 +648,7 @@ bool HandleKey(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                 set_move_to(veh_id, sr_cursor_x, sr_cursor_y);
                 char buf[256];
                 snprintf(buf, sizeof(buf), loc(SR_UNIT_MOVES_TO),
-                    veh->name(), sr_cursor_x, sr_cursor_y);
+                    sr_game_str(veh->name()), sr_cursor_x, sr_cursor_y);
                 sr_debug_log("GO-TO: %s", buf);
                 sr_output(buf, true);
                 mod_veh_skip(veh_id);
@@ -705,10 +709,10 @@ bool HandleKey(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                 BASE* base = &Bases[home_id];
                 set_move_to(veh_id, base->x, base->y);
                 char buf[256];
-                snprintf(buf, sizeof(buf), loc(SR_GOING_HOME), base->name);
+                snprintf(buf, sizeof(buf), loc(SR_GOING_HOME), sr_game_str(base->name));
                 sr_output(buf, true);
                 sr_debug_log("GO-HOME: %s to %s (%d,%d)",
-                    veh->name(), base->name, base->x, base->y);
+                    sr_game_str(veh->name()), sr_game_str(base->name), base->x, base->y);
                 mod_veh_skip(veh_id);
             } else {
                 sr_output(loc(SR_BASE_LIST_EMPTY), true);
@@ -757,7 +761,7 @@ bool HandleKey(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         {
             BASE* b = &Bases[bases[0].id];
             snprintf(buf, sizeof(buf), loc(SR_BASE_LIST_FMT),
-                1, total, b->name, b->x, b->y, bases[0].dist);
+                1, total, sr_game_str(b->name), b->x, b->y, bases[0].dist);
             sr_output(buf, false);
         }
 
@@ -779,13 +783,13 @@ bool HandleKey(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                         index = (index - 1 + total) % total;
                         BASE* b = &Bases[bases[index].id];
                         snprintf(buf, sizeof(buf), loc(SR_BASE_LIST_FMT),
-                            index + 1, total, b->name, b->x, b->y, bases[index].dist);
+                            index + 1, total, sr_game_str(b->name), b->x, b->y, bases[index].dist);
                         sr_output(buf, true);
                     } else if (k == VK_DOWN) {
                         index = (index + 1) % total;
                         BASE* b = &Bases[bases[index].id];
                         snprintf(buf, sizeof(buf), loc(SR_BASE_LIST_FMT),
-                            index + 1, total, b->name, b->x, b->y, bases[index].dist);
+                            index + 1, total, sr_game_str(b->name), b->x, b->y, bases[index].dist);
                         sr_output(buf, true);
                     }
                 }
@@ -801,10 +805,10 @@ bool HandleKey(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         if (confirmed && index >= 0 && index < total) {
             BASE* b = &Bases[bases[index].id];
             set_move_to(veh_id, b->x, b->y);
-            snprintf(buf, sizeof(buf), loc(SR_GOING_TO_BASE), b->name);
+            snprintf(buf, sizeof(buf), loc(SR_GOING_TO_BASE), sr_game_str(b->name));
             sr_output(buf, true);
             sr_debug_log("GO-TO-BASE: %s to %s (%d,%d)",
-                veh->name(), b->name, b->x, b->y);
+                sr_game_str(veh->name()), sr_game_str(b->name), b->x, b->y);
             mod_veh_skip(veh_id);
         } else {
             sr_output(loc(SR_TARGETING_CANCEL), true);

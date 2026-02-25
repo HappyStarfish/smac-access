@@ -4,6 +4,7 @@
 #include "social_handler.h"
 #include "prefs_handler.h"
 #include "specialist_handler.h"
+#include "diplo_handler.h"
 #include "localization.h"
 #include "world_map_handler.h"
 #include "menu_handler.h"
@@ -618,19 +619,28 @@ static bool sr_build_announce(ItemGetFunc get_item, int count,
 // These are drawn character-by-character and pollute all triggers.
 static bool sr_is_hud_noise(const char* text, bool in_menu_early) {
     if (!text) return true;
-    // Short "Mission Year" = HUD noise. Long = game status → let through.
+    // Short "Mission Year" / "Missionsjahr" = HUD noise. Long = game status → let through.
     if (strncmp(text, "Mission Year", 12) == 0 && strlen(text) < 30) return true;
+    if (strncmp(text, "Missionsjahr", 12) == 0 && strlen(text) < 30) return true;
     if (strncmp(text, "Econ:", 5) == 0) return true;
     if (strncmp(text, "Psych:", 6) == 0) return true;
     if (strncmp(text, "Labs:", 5) == 0) return true;
+    // German HUD labels (from German language patch)
+    if (strncmp(text, "Wirt:", 5) == 0) return true;  // Wirtschaft (Econ)
+    if (strncmp(text, "Psyc:", 5) == 0) return true;  // Psyche
+    if (strncmp(text, "Fors:", 5) == 0) return true;  // Forschung (Labs)
     // Info panel items (redundant with MAP-MOVE tracker)
     if (strncmp(text, "Energy:", 7) == 0) return true;
+    if (strncmp(text, "Energie:", 8) == 0) return true;
     if (strncmp(text, "Unexplored", 10) == 0) return true;
+    if (strncmp(text, "Unerforscht", 11) == 0) return true;
     if (text[0] == '(' && strstr(text, " , ") != NULL) return true;
     if (strncmp(text, "Elev:", 5) == 0) return true;
+    if (strncmp(text, "Altitude:", 9) == 0) return true;
     if (strcmp(text, "ENDANGERED") == 0) return true;
     if (strncmp(text, "(Gov:", 5) == 0) return true;
-    // Terrain descriptors (handled by MAP-MOVE)
+    if (strncmp(text, "(Reg:", 5) == 0) return true;  // Regierung (Gov)
+    // Terrain descriptors (handled by MAP-MOVE) — English and German
     if (strstr(text, "Rolling") != NULL && strlen(text) < 20) return true;
     if (strstr(text, "Flat") != NULL && strlen(text) < 20) return true;
     if (strstr(text, "Rocky") != NULL && strlen(text) < 20) return true;
@@ -638,16 +648,32 @@ static bool sr_is_hud_noise(const char* text, bool in_menu_early) {
     if (strstr(text, "Arid") != NULL && strlen(text) < 15) return true;
     if (strstr(text, "Moist") != NULL && strlen(text) < 15) return true;
     if (strstr(text, "Xenofungus") != NULL) return true;
+    // German terrain descriptors (after ANSI→UTF-8 conversion)
+    if (strstr(text, "Felsig") != NULL && strlen(text) < 20) return true;
+    if (strstr(text, "Flach") != NULL && strlen(text) < 20) return true;
+    if (strstr(text, "Trocken") != NULL && strlen(text) < 20) return true;
+    if (strstr(text, "Feucht") != NULL && strlen(text) < 20) return true;
+    if (strstr(text, "Regnerisch") != NULL && strlen(text) < 20) return true;
+    if (strstr(text, "Xenopilz") != NULL) return true;
+    // Note: "Hügelig" is UTF-8 after conversion, match the UTF-8 bytes
+    if (strstr(text, "H\xc3\xbc""gelig") != NULL && strlen(text) < 20) return true;
     // Economic panel (world map overlay, drawn char-by-char)
     if (strncmp(text, "Commerce", 8) == 0) return true;
     if (strncmp(text, "Gross", 5) == 0) return true;
     if (strncmp(text, "Total Cost", 10) == 0) return true;
     if (strncmp(text, "NET ", 4) == 0) return true;
+    // German economic panel
+    if (strncmp(text, "Handel", 6) == 0) return true;
+    if (strncmp(text, "Brutto", 6) == 0) return true;
+    if (strncmp(text, "Gesamtkosten", 12) == 0) return true;
+    if (strncmp(text, "NETTO", 5) == 0) return true;
     // Partial HUD build-up (character-by-character: "Mis", "Miss", etc.)
     if (strncmp(text, "Mis", 3) == 0 && strlen(text) < 12) return true;
     if (strncmp(text, "Eco", 3) == 0 && strlen(text) < 5) return true;
     if (strncmp(text, "Psy", 3) == 0 && strlen(text) < 6) return true;
     if (strncmp(text, "Lab", 3) == 0 && strlen(text) < 5) return true;
+    if (strncmp(text, "Wir", 3) == 0 && strlen(text) < 5) return true;  // Wirtschaft
+    if (strncmp(text, "For", 3) == 0 && strlen(text) < 5) return true;  // Forschung
     // Menu bar items (top of world map screen)
     if (!in_menu_early) {
         if (strcmp(text, "GAME") == 0) return true;
@@ -657,6 +683,14 @@ static bool sr_is_hud_noise(const char* text, bool in_menu_early) {
         if (strcmp(text, "SCENARIO") == 0) return true;
         if (strcmp(text, "EDIT MAP") == 0) return true;
         if (strcmp(text, "HELP") == 0) return true;
+        // German menu bar items
+        if (strcmp(text, "SPIEL") == 0) return true;
+        if (strcmp(text, "NETZWERK") == 0) return true;
+        if (strcmp(text, "AKTION") == 0) return true;
+        if (strcmp(text, "TERRAFORMING") == 0) return true;
+        if (strcmp(text, "SZENARIO") == 0) return true;
+        if (strcmp(text, "KARTE BEARB.") == 0) return true;
+        if (strcmp(text, "HILFE") == 0) return true;
     }
     return false;
 }
@@ -747,6 +781,9 @@ LRESULT WINAPI ModWinProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         // World map handler: transition, map tracking, targeting, unit change, Trigger 4
         WorldMapHandler::OnTimer(now, on_world_map, cur_win, cur_popup,
             sr_announced, sizeof(sr_announced));
+
+        // Diplomacy handler: detect session open/close
+        DiplomacyHandler::OnTimer();
 
         // --- Key tracking: reset capture on every significant keypress ---
         if (msg == WM_KEYDOWN) {
@@ -1128,7 +1165,7 @@ LRESULT WINAPI ModWinProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                 if (sr_is_available()) {
                     char buf[256];
                     snprintf(buf, sizeof(buf), loc(SR_HURRY_OK),
-                        prod_name(base->item()), cost, f->energy_credits);
+                        sr_game_str(prod_name(base->item())), cost, f->energy_credits);
                     sr_output(buf, true);
                 }
             } else {
@@ -1194,6 +1231,11 @@ LRESULT WINAPI ModWinProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             console_world_generate(ParseNumTable[0]);
         }
 
+    // Screen reader: Diplomacy key handling (S/Tab summary, Ctrl+F1 help)
+    } else if (msg == WM_KEYDOWN && sr_is_available()
+    && DiplomacyHandler::HandleKey(msg, wParam)) {
+        return 0;
+
     // Screen reader: World map key handling (scanner, arrows, targeting, G, E, etc.)
     } else if (msg == WM_KEYDOWN && sr_is_available()
     && WorldMapHandler::HandleKey(hwnd, msg, wParam, lParam)) {
@@ -1204,6 +1246,13 @@ LRESULT WINAPI ModWinProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     && shift_key_down() && sr_is_available()) {
         sr_debug_log("CTRL+SHIFT+R: silence");
         sr_silence();
+
+    // Screen reader: F12 = accessible commlink dialog (intercept before game)
+    } else if (msg == WM_KEYDOWN && wParam == VK_F12 && !ctrl_key_down()
+    && !shift_key_down() && sr_is_available()
+    && current_window() == GW_World && !*GameHalted) {
+        DiplomacyHandler::RunCommlink();
+        return 0;
 
     // Screen reader: Ctrl+F12 = toggle debug logging
     } else if (msg == WM_KEYDOWN && wParam == VK_F12 && ctrl_key_down() && sr_is_available()) {
@@ -2256,7 +2305,7 @@ void __cdecl say_loc(char* dest, int x, int y, int a4, int a5, int a6)
             strncat(dest, label_get(8), 32); // at
             strncat(dest, " ", 2);
         }
-        strncat(dest, Bases[base_id].name, MaxBaseNameLen);
+        strncat(dest, sr_game_str(Bases[base_id].name), MaxBaseNameLen);
         if (a5) {
             strncat(dest, " ", 2);
         }
@@ -2300,6 +2349,16 @@ int __thiscall mod_NetMsg_pop(void* This, const char* label, int delay, int a4, 
         return NetMsg_pop(This, label, delay, a4, a5);
     }
     if (!strcmp(label, "GOTMYPROBE")) {
+        // Screen reader: announce probe team detection
+        if (sr_is_available()) {
+            char buf[2048];
+            const char* file = a5 ? a5 : "script";
+            if (sr_read_popup_text(file, label, buf, sizeof(buf)) && buf[0]) {
+                char msg[2048];
+                snprintf(msg, sizeof(msg), loc(SR_DIPLO_NETMSG), buf);
+                sr_output(msg, true);
+            }
+        }
         return NetMsg_pop(This, label, -1, a4, a5);
     }
     if (!strcmp(label, netmsg_label)
@@ -2311,30 +2370,46 @@ int __thiscall mod_NetMsg_pop(void* This, const char* label, int delay, int a4, 
     strcpy_n(netmsg_label, StrBufLen, label);
     strcpy_n(netmsg_item0, StrBufLen, ParseStrBuffer[0].str);
     strcpy_n(netmsg_item1, StrBufLen, ParseStrBuffer[1].str);
+
+    // Screen reader: announce treaty/war notification text
+    if (sr_is_available()) {
+        char buf[2048];
+        const char* file = a5 ? a5 : "script";
+        if (sr_read_popup_text(file, label, buf, sizeof(buf)) && buf[0]) {
+            char msg[2048];
+            snprintf(msg, sizeof(msg), loc(SR_DIPLO_NETMSG), buf);
+            sr_output(msg, true);
+            sr_debug_log("NETMSG-POP label=%s text=%s\n", label, buf);
+        }
+    }
+
     return NetMsg_pop(This, label, -1, a4, a5);
 }
 
 // Labels that are navigable menus — announce only the menu name, not body.
 // Returns a friendly name for the menu, or NULL if not a menu label.
 static const char* sr_menu_name(const char* label) {
-    static const struct { const char* label; const char* name; } menus[] = {
-        {"TOPMENU",       "Main Menu"},
-        {"MAPMENU",       "Map Menu"},
-        {"MULTIMENU",     "Multiplayer"},
-        {"SCENARIOMENU",  "Scenario"},
-        {"MAINMENU",      "Thinker Menu"},
-        {"GAMEMENU",      "Game Menu"},
-        {"WORLDSIZE",     NULL},  // NULL = read #caption from file
-        {"WORLDLAND",     NULL},
-        {"WORLDTIDES",    NULL},
-        {"WORLDORBIT",    NULL},
-        {"WORLDLIFE",     NULL},
-        {"WORLDCLOUD",    NULL},
-        {"WORLDNATIVE",   NULL},
+    static const struct { const char* label; SrStr str; } named_menus[] = {
+        {"TOPMENU",       SR_MENU_MAIN},
+        {"MAPMENU",       SR_MENU_MAP_MENU},
+        {"MULTIMENU",     SR_MENU_MULTIPLAYER},
+        {"SCENARIOMENU",  SR_MENU_SCENARIO_MENU},
+        {"MAINMENU",      SR_MENU_THINKER},
+        {"GAMEMENU",      SR_MENU_GAME_MENU},
     };
-    for (int i = 0; i < (int)(sizeof(menus) / sizeof(menus[0])); i++) {
-        if (_stricmp(label, menus[i].label) == 0) {
-            return menus[i].name ? menus[i].name : "";
+    for (int i = 0; i < (int)(sizeof(named_menus) / sizeof(named_menus[0])); i++) {
+        if (_stricmp(label, named_menus[i].label) == 0) {
+            return loc(named_menus[i].str);
+        }
+    }
+    // Menus that read #caption from file (return empty string)
+    static const char* caption_menus[] = {
+        "WORLDSIZE", "WORLDLAND", "WORLDTIDES", "WORLDORBIT",
+        "WORLDLIFE", "WORLDCLOUD", "WORLDNATIVE",
+    };
+    for (int i = 0; i < (int)(sizeof(caption_menus) / sizeof(caption_menus[0])); i++) {
+        if (_stricmp(label, caption_menus[i]) == 0) {
+            return "";
         }
     }
     return NULL;  // not a menu

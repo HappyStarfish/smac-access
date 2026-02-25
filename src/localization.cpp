@@ -170,6 +170,7 @@ static const char* sr_defaults[SR_COUNT] = {
     /* SR_PROD_DETAIL_FAC    */ "%s. %s. Cost: %d minerals, Maintenance: %d per turn.",
     /* SR_PROD_DETAIL_PROJECT */ "%s. %s. Cost: %d minerals. Secret Project.",
     /* SR_PROD_DETAIL_UNIT   */ "%s. %s, %s %d, %s %d, %s, %d moves, %d HP.",
+    /* SR_UNIT_ABILITIES     */ " Abilities:",
 
     // Queue Management
     /* SR_QUEUE_OPEN                 */ "Queue: %d items. Up/Down navigate, Shift+Up/Down reorder, Delete remove, Insert add, Escape close.",
@@ -200,6 +201,14 @@ static const char* sr_defaults[SR_COUNT] = {
     /* SR_MENU_ITEM_FMT    */ "%s, %s",
     /* SR_MENU_ITEM_NOHK   */ "%s",
     /* SR_MENU_NAV_FMT     */ "%d of %d: %s",
+    // Popup Menus
+    /* SR_MENU_MAIN         */ "Main Menu",
+    /* SR_MENU_MAP_MENU     */ "Map Menu",
+    /* SR_MENU_MULTIPLAYER  */ "Multiplayer",
+    /* SR_MENU_SCENARIO_MENU*/ "Scenario",
+    /* SR_MENU_THINKER      */ "Thinker Menu",
+    /* SR_MENU_GAME_MENU    */ "Game Menu",
+
     /* SR_POPUP_LIST_FMT   */ "%d of %d: %s",
     /* SR_POPUP_CONTINUE   */ "Enter to continue.",
 
@@ -362,6 +371,30 @@ static const char* sr_defaults[SR_COUNT] = {
     /* SR_HELP_GROUP_GOTO    */ "J: Group go to",
     /* SR_HELP_PATROL        */ "P: Patrol",
     /* SR_HELP_ARTILLERY     */ "F: Long range fire",
+
+    // Diplomacy
+    /* SR_DIPLO_OPEN         */ "Diplomacy with %s",
+    /* SR_DIPLO_CLOSED       */ "Diplomacy ended.",
+    /* SR_DIPLO_HELP         */ "S or Tab: Relationship summary. Ctrl+F1: Help. Popup options navigate with arrows.",
+    /* SR_DIPLO_SUMMARY      */ "%s. %s. %s",
+    /* SR_DIPLO_STATUS_PACT  */ "Pact",
+    /* SR_DIPLO_STATUS_TREATY */ "Treaty of Friendship",
+    /* SR_DIPLO_STATUS_TRUCE */ "Truce",
+    /* SR_DIPLO_STATUS_VENDETTA */ "Vendetta",
+    /* SR_DIPLO_STATUS_NONE  */ "No formal agreement",
+    /* SR_DIPLO_PATIENCE     */ "Patience: %s",
+    /* SR_DIPLO_PATIENCE_THIN */ "wearing thin",
+    /* SR_DIPLO_PATIENCE_WEARING */ "moderate",
+    /* SR_DIPLO_PATIENCE_OK  */ "patient",
+    /* SR_DIPLO_SURRENDERED  */ "Has surrendered",
+    /* SR_DIPLO_INFILTRATOR  */ "We have infiltrator",
+    /* SR_DIPLO_NETMSG       */ "%s",
+    /* SR_DIPLO_COMMLINK_OPEN */ "Commlink: %d factions. Up/Down to browse, Enter to contact, Escape to cancel.",
+    /* SR_DIPLO_COMMLINK_ITEM */ "%d of %d: %s, %s, %d votes",
+    /* SR_DIPLO_COMMLINK_EMPTY */ "No factions with commlink.",
+    /* SR_DIPLO_COMMLINK_CONTACT */ "Contacting %s",
+    // Input dialogs
+    /* SR_INPUT_NUMBER */ "Number input. Default: %d. Type a number and press Enter.",
 };
 
 // Key names matching the enum order (for file parsing)
@@ -406,6 +439,7 @@ static const char* sr_keys[SR_COUNT] = {
     "prod_picker_cancel", "prod_picker_empty",
     "prod_picker_current", "prod_picker_current_none",
     "prod_detail_fac", "prod_detail_project", "prod_detail_unit",
+    "unit_abilities",
     "queue_open", "queue_open_one", "queue_item", "queue_item_current",
     "queue_moved", "queue_removed", "queue_added", "queue_full",
     "queue_cannot_move_current", "queue_cannot_remove_current",
@@ -414,6 +448,8 @@ static const char* sr_keys[SR_COUNT] = {
     "menu_terraform", "menu_scenario", "menu_editmap", "menu_help",
     "menu_closed", "menu_entry_fmt", "menu_item_fmt", "menu_item_nohk",
     "menu_nav_fmt",
+    "menu_main", "menu_map_menu", "menu_multiplayer",
+    "menu_scenario_menu", "menu_thinker", "menu_game_menu",
     "popup_list_fmt", "popup_continue",
     "soceng_title", "soceng_category_fmt", "soceng_model_fmt",
     "soceng_effects", "soceng_no_effect", "soceng_unavailable_tech",
@@ -475,6 +511,16 @@ static const char* sr_keys[SR_COUNT] = {
     "base_list_empty", "going_home", "going_to_base", "no_unit_selected",
     "help_go_to_base", "help_go_home", "help_group_goto", "help_patrol",
     "help_artillery",
+    // Diplomacy
+    "diplo_open", "diplo_closed", "diplo_help", "diplo_summary",
+    "diplo_status_pact", "diplo_status_treaty", "diplo_status_truce",
+    "diplo_status_vendetta", "diplo_status_none",
+    "diplo_patience", "diplo_patience_thin", "diplo_patience_wearing",
+    "diplo_patience_ok", "diplo_surrendered", "diplo_infiltrator",
+    "diplo_netmsg",
+    "diplo_commlink_open", "diplo_commlink_item",
+    "diplo_commlink_empty", "diplo_commlink_contact",
+    "input_number",
 };
 
 // Loaded strings (dynamically allocated, or NULL = use default)
@@ -567,11 +613,45 @@ static void loc_load_file(const char* lang) {
     debug("loc_load_file: loaded %d strings from %s\n", loaded, path);
 }
 
+/*
+Auto-detect game language by checking alphax.txt for German content.
+The German language patch translates comments and labels in this file.
+Returns "de" if German detected, "en" otherwise.
+*/
+static const char* loc_detect_language() {
+    FILE* f = fopen("alphax.txt", "r");
+    if (!f) {
+        debug("loc_detect: alphax.txt not found, defaulting to en\n");
+        return "en";
+    }
+    char line[512];
+    int lines_read = 0;
+    bool found_german = false;
+    // Check first 30 lines for German indicators
+    while (fgets(line, sizeof(line), f) && lines_read < 30) {
+        lines_read++;
+        // German patch header: "Benutzerkonfigurierbare Regeln"
+        if (strstr(line, "Benutzerkonfig") != NULL) { found_german = true; break; }
+        // German patch: "Grundregeln" or "Fortbewegung"
+        if (strstr(line, "GRUNDREGELN") != NULL) { found_german = true; break; }
+        if (strstr(line, "Fortbewegung") != NULL) { found_german = true; break; }
+        // German patch: "Sicherungskopie"
+        if (strstr(line, "Sicherungskopie") != NULL) { found_german = true; break; }
+    }
+    fclose(f);
+    if (found_german) {
+        debug("loc_detect: German game text detected in alphax.txt\n");
+        return "de";
+    }
+    debug("loc_detect: No German detected, defaulting to en\n");
+    return "en";
+}
+
 void loc_init() {
     // Read language setting from thinker.ini
-    char lang[32] = "en";
+    char lang[32] = "auto";
     char val[32];
-    if (GetPrivateProfileStringA("thinker", "sr_language", "en",
+    if (GetPrivateProfileStringA("thinker", "sr_language", "auto",
             val, sizeof(val), ".\\thinker.ini")) {
         // Trim and validate
         char* trimmed = loc_trim(val);
@@ -579,6 +659,13 @@ void loc_init() {
             strncpy(lang, trimmed, sizeof(lang) - 1);
             lang[sizeof(lang) - 1] = '\0';
         }
+    }
+
+    // Auto-detect game language if set to "auto" or empty
+    if (strcmp(lang, "auto") == 0 || lang[0] == '\0') {
+        const char* detected = loc_detect_language();
+        strncpy(lang, detected, sizeof(lang) - 1);
+        lang[sizeof(lang) - 1] = '\0';
     }
 
     debug("loc_init: language=%s\n", lang);

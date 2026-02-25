@@ -1,4 +1,4 @@
-# Deutsche Screenreader-Texte fuer Thinker Accessibility Mod
+# Deutsche Screenreader-Texte für Thinker Accessibility Mod
 
 # Allgemein
 mod_loaded=Thinker Barrierefreiheits-Mod geladen.
@@ -14,12 +14,12 @@ your_turn=Dein Zug. %s bei (%d, %d)
 unit_moves_to=%s bewegt sich nach (%d, %d)
 tab_fmt=Reiter: %s
 tab_resources=Ressourcen
-tab_citizens=Bevoelkerung
+tab_citizens=Bevölkerung
 tab_production=Produktion
 terrain_ocean=Ozean
 terrain_shelf=Schelf
 terrain_rocky=Felsig
-terrain_rolling=Huegelig
+terrain_rolling=Hügelig
 terrain_flat=Flach
 feature_fungus=Pilz
 feature_forest=Wald
@@ -27,11 +27,11 @@ feature_river=Fluss
 feature_farm=Farm
 feature_mine=Mine
 feature_solar=Solarkollektor
-feature_road=Strasse
+feature_road=Straße
 feature_condenser=Kondensator
 feature_borehole=Bohrloch
 feature_bunker=Bunker
-feature_airbase=Luftstuetzpunkt
+feature_airbase=Luftstützpunkt
 feature_sensor=Sensor
 feature_supply_pod=Versorgungskapsel
 feature_monolith=Monolith
@@ -42,7 +42,7 @@ terrain_trench=Tiefsee
 terrain_arid=Trocken
 terrain_moist=Feucht
 terrain_rainy=Regnerisch
-terrain_high=Erhoeht
+terrain_high=Erhöht
 tile_yields=%d Nahrung, %d Mineralien, %d Energie
 tile_owner=Gebiet: %s
 tile_in_radius=Im Basisradius
@@ -67,14 +67,14 @@ more_units= (+%d weitere)
 
 # Basis-Bildschirm
 base_screen=Basis-Bildschirm
-sec_overview=Uebersicht
+sec_overview=Übersicht
 sec_resources=Ressourcen
 sec_production=Produktion
 sec_economy=Wirtschaft
 sec_facilities=Einrichtungen
 sec_status=Status
-fmt_overview=Uebersicht: %s, Bevoelkerung %d. Talente %d, Drohnen %d, Spezialisten %d.
-fmt_resources=Ressourcen: Nahrung %d Ueberschuss (%d Aufnahme), Mineralien %d Ueberschuss (%d Aufnahme), Energie %d Ueberschuss (%d Aufnahme).
+fmt_overview=Übersicht: %s, Bevölkerung %d. Talente %d, Drohnen %d, Spezialisten %d.
+fmt_resources=Ressourcen: Nahrung %d Überschuss (%d Aufnahme), Mineralien %d Überschuss (%d Aufnahme), Energie %d Überschuss (%d Aufnahme).
 fmt_production=Produktion: %s, %d von %d Mineralien.
 fmt_queue= Warteschlange:
 fmt_hurry_cost= Eilkosten: %d Energie.
@@ -88,20 +88,20 @@ fmt_golden_age= Goldenes Zeitalter.
 fmt_eco_damage= Umweltschaden %d%%.
 fmt_governor= Gouverneur aktiv.
 fmt_nerve_staple= Nervenkontrolle %d Runden.
-fmt_base_open=Basis: %s, Bevoelkerung %d. Baut %s, %d von %d.
+fmt_base_open=Basis: %s, Bevölkerung %d. Baut %s, %d von %d.
 
 # Basis-Bildschirm (erweitert)
 sec_units=Einheiten
-fmt_overview_v2=Uebersicht: %s bei (%d, %d), Bevoelkerung %d. %s. Talente %d, Drohnen %d.
-fmt_resources_v2=Ressourcen: Naehrstoffe +%d (%d von %d, %s). Mineralien +%d. Energie +%d.
+fmt_overview_v2=Übersicht: %s bei (%d, %d), Bevölkerung %d. %s. Talente %d, Drohnen %d.
+fmt_resources_v2=Ressourcen: Nährstoffe +%d (%d von %d, %s). Mineralien +%d. Energie +%d.
 fmt_production_v2=Produktion: %s, %d von %d Mineralien, %s.
 fmt_economy_v2=Wirtschaft: %d Wirtschaft, %d Psyche, %d Forschung. %s.
 fmt_facilities_v2=Einrichtungen: %s.
 fmt_units=%d stationiert.
 fmt_units_none=Einheiten: Keine stationiert.
-fmt_base_open_v2=Basis: %s, Bevoelkerung %d. Baut %s, %d von %d, %s. Strg+Hoch/Runter: Sektionen.
+fmt_base_open_v2=Basis: %s, Bevölkerung %d. Baut %s, %d von %d, %s. Strg+Hoch/Runter: Sektionen.
 fmt_workers=%d Arbeiter
-base_help=Strg+Hoch/Runter: Sektionen. Strg+Links/Rechts: Reiter. Strg+I: Wiederholen. Strg+H: Beschleunigen. Strg+Shift+P: Produktion aendern. Strg+Q: Warteschlange. Strg+D: Gebaeude abreissen. Strg+W: Buerger. Escape: Schliessen.
+base_help=Strg+Hoch/Runter: Sektionen. Strg+Links/Rechts: Reiter. Strg+I: Wiederholen. Strg+H: Beschleunigen. Strg+Shift+P: Produktion ändern. Strg+Q: Warteschlange. Strg+D: Gebäude abreißen. Strg+W: Bürger. Escape: Schließen.
 fmt_turns=%d Runden
 fmt_growth_never=kein Wachstum
 fmt_faction_credits=%d Energieguthaben
@@ -109,49 +109,50 @@ fmt_facilities_count=%d gebaut, %d Wartung
 
 # Beschleunigung
 hurry_ok=%s beschleunigt. %d Credits ausgegeben, %d verbleibend.
-hurry_no_credits=Kann nicht beschleunigen: %d Credits noetig, %d vorhanden.
+hurry_no_credits=Kann nicht beschleunigen: %d Credits nötig, %d vorhanden.
 hurry_cannot=Produktion kann nicht beschleunigt werden.
 
 # Produktionsauswahl
-prod_picker_open=Produktion aendern: %d Gegenstaende verfuegbar. Hoch/Runter zum Blaettern, Eingabe zum Auswaehlen, Escape zum Abbrechen.
+prod_picker_open=Produktion ändern: %d Gegenstände verfügbar. Hoch/Runter zum Blättern, Eingabe zum Auswählen, Escape zum Abbrechen.
 prod_picker_item=%d von %d: %s, %d Mineralien, %s
 prod_picker_select=Baut jetzt %s.
-prod_picker_cancel=Produktion unveraendert.
-prod_picker_empty=Keine Gegenstaende zum Bauen verfuegbar.
+prod_picker_cancel=Produktion unverändert.
+prod_picker_empty=Keine Gegenstände zum Bauen verfügbar.
 prod_picker_current=Baut gerade: %s, %d von %d Mineralien, %s.
 prod_picker_current_none=Baut gerade: nichts.
 prod_detail_fac=%s. %s. Kosten: %d Mineralien, Wartung: %d pro Runde.
 prod_detail_project=%s. %s. Kosten: %d Mineralien. Geheimprojekt.
-prod_detail_unit=%s. %s, %s %d, %s %d, %s, %d Zuege, %d HP.
+prod_detail_unit=%s. %s, %s %d, %s %d, %s, %d Züge, %d HP.
+unit_abilities= Fähigkeiten:
 
 # Warteschlangenverwaltung
-queue_open=Warteschlange: %d Eintraege. Hoch/Runter navigieren, Shift+Hoch/Runter umordnen, Entfernen loeschen, Einfuegen hinzufuegen, Escape schliessen.
-queue_open_one=Warteschlange: 1 Eintrag. %s. Einfuegen zum Hinzufuegen, Escape schliessen.
+queue_open=Warteschlange: %d Einträge. Hoch/Runter navigieren, Shift+Hoch/Runter umordnen, Entfernen löschen, Einfügen hinzufügen, Escape schließen.
+queue_open_one=Warteschlange: 1 Eintrag. %s. Einfügen zum Hinzufügen, Escape schließen.
 queue_item=%d von %d: %s, %d Mineralien, %s.
 queue_item_current=%d von %d: %s, %d von %d Mineralien, %s. Aktuelle Produktion.
 queue_moved=%s auf Position %d verschoben.
-queue_removed=%s entfernt. %d Eintraege verbleibend.
-queue_added=%s an Position %d hinzugefuegt.
-queue_full=Nicht moeglich: Warteschlange voll, 10 Eintraege.
+queue_removed=%s entfernt. %d Einträge verbleibend.
+queue_added=%s an Position %d hinzugefügt.
+queue_full=Nicht möglich: Warteschlange voll, 10 Einträge.
 queue_cannot_move_current=Aktuelle Produktion kann nicht verschoben werden.
-queue_cannot_remove_current=Aktuelle Produktion kann nicht entfernt werden. Strg+Shift+P zum Aendern.
+queue_cannot_remove_current=Aktuelle Produktion kann nicht entfernt werden. Strg+Shift+P zum Ändern.
 queue_closed=Warteschlange geschlossen.
 queue_empty=Warteschlange leer.
 
 # Bewegung & Navigation
-movement_points=%d von %d Zuegen
+movement_points=%d von %d Zügen
 cannot_move=Kann sich nicht dorthin bewegen.
 
 # Kontexthilfe (Strg+F1)
 help_header=Befehle:
 help_move=Shift+Pfeile: Bewegen
 help_explore=Pfeile: Erkunden
-help_skip=Leertaste: Einheit ueberspringen
+help_skip=Leertaste: Einheit überspringen
 help_hold=H: Halten
 help_read=Strg+R: Bildschirm vorlesen
 help_goto=Shift+Leertaste: Zum Cursor gehen
-help_build_base=B: Basis gruenden
-help_build_road=R: Strasse bauen
+help_build_base=B: Basis gründen
+help_build_road=R: Straße bauen
 help_build_magtube=R: Magnetschwebebahn bauen
 help_build_farm=F: Farm bauen
 help_build_mine=M: Mine bauen
@@ -160,13 +161,13 @@ help_build_forest=Shift+F: Wald pflanzen
 help_build_sensor=O: Sensor bauen
 help_build_condenser=N: Kondensator bauen
 help_build_borehole=Shift+N: Bohrloch bauen
-help_build_airbase=.: Luftstuetzpunkt bauen
+help_build_airbase=.: Luftstützpunkt bauen
 help_build_bunker=Shift+.: Bunker bauen
 help_remove_fungus=F: Pilz entfernen
 help_automate=Shift+A: Automatisieren
 help_convoy=O: Ressourcen konvoieren
 help_unload=U: Transport entladen
-help_open_base=Eingabe: Basis oeffnen
+help_open_base=Eingabe: Basis öffnen
 help_monolith=Monolith hier: Betreten zum Aufwerten
 help_supply_pod=Versorgungskapsel hier: Darauf bewegen
 help_attack=Shift+Pfeile: Angrenzende angreifen
@@ -178,16 +179,24 @@ menu_game=Spiel: Strg+S Speichern, Strg+L Laden, Strg+Q Beenden
 menu_hq=HQ: E Gesellschaftsform, U Entwurfswerkstatt, F1 Datenbank
 menu_network=Netzwerk: Strg+C Chat, Strg+Eingabe Zug beenden
 menu_map=Karte: F2 Zoom, Strg+Shift+M Zentrieren
-menu_action=Aktion: Leertaste Ueberspringen, H Halten, Shift+A Automatisieren
-menu_terraform=Terraforming: F Farm, M Mine, S Solar, R Strasse
+menu_action=Aktion: Leertaste Überspringen, H Halten, Shift+A Automatisieren
+menu_terraform=Terraforming: F Farm, M Mine, S Solar, R Straße
 menu_scenario=Szenario
 menu_editmap=Karte bearbeiten
 menu_help=Hilfe: F1 Datenbank, Shift+F1 Befehle
-menu_closed=Menue geschlossen.
-menu_entry_fmt=%s, %d Eintraege
+menu_closed=Menü geschlossen.
+menu_entry_fmt=%s, %d Einträge
 menu_item_fmt=%s, %s
 menu_item_nohk=%s
 menu_nav_fmt=%d von %d: %s
+
+# Popup-Menüs
+menu_main=Hauptmenü
+menu_map_menu=Kartenmenü
+menu_multiplayer=Mehrspieler
+menu_scenario_menu=Szenario
+menu_thinker=Thinker-Menü
+menu_game_menu=Spielmenü
 
 # Popup-Listennavigation
 popup_list_fmt=%d von %d: %s
@@ -199,14 +208,14 @@ soceng_category_fmt=Kategorie %d von 4: %s. Aktuell: %s
 soceng_model_fmt=%d von %d: %s
 soceng_effects=Effekte: %s
 soceng_no_effect=Keine Effekte
-soceng_unavailable_tech=Nicht verfuegbar, erfordert %s
-soceng_unavailable_opposition=Nicht verfuegbar, Fraktionswiderstand
-soceng_selected=Gewaehlt: %s
+soceng_unavailable_tech=Nicht verfügbar, erfordert %s
+soceng_unavailable_opposition=Nicht verfügbar, Fraktionswiderstand
+soceng_selected=Gewählt: %s
 soceng_current=Aktuelle Auswahl
-soceng_pending=Ausstehende Aenderung zu %s
+soceng_pending=Ausstehende Änderung zu %s
 soceng_summary_fmt=%s: %s
 soceng_upheaval_cost=Umbruchkosten: %d Energieguthaben
-soceng_help=Hoch/Runter: Kategorien. Links/Rechts: Modell waehlen. Eingabe: Bestaetigen und schliessen. S oder Tab: Zusammenfassung. Strg+I: Wiederholen. Escape: Abbrechen und schliessen.
+soceng_help=Hoch/Runter: Kategorien. Links/Rechts: Modell wählen. Eingabe: Bestätigen und schließen. S oder Tab: Zusammenfassung. Strg+I: Wiederholen. Escape: Abbrechen und schließen.
 soceng_closed=Gesellschaftsform geschlossen.
 
 # Einstellungen
@@ -236,7 +245,7 @@ pref_quick_enemy=Feindliche Fahrzeuge schnell bewegen
 pref_tutorial=Tutorialmeldungen
 pref_mouse_edge_scroll=Maus-Randscrolling
 pref_auto_design=Fahrzeuge automatisch entwerfen
-pref_quick_ally=Verbuendete Fahrzeuge schnell bewegen
+pref_quick_ally=Verbündete Fahrzeuge schnell bewegen
 pref_auto_prune=Veraltete Fahrzeuge automatisch entfernen
 
 # Einstellungen: Warnungen
@@ -250,40 +259,40 @@ pref_warn_golden_age_end=Goldenes Zeitalter beendet
 pref_warn_nutrient_shortage=Nahrungsmangel
 pref_warn_build_out_of_date=Bauauftrag veraltet
 pref_warn_combat_built=Kampfeinheit gebaut
-pref_warn_pop_limit=Bevoelkerungsgrenze erreicht
-pref_warn_delay_transcend=Verzoegerung bei Transzendenz
-pref_warn_built_via_queue=Ueber Gouverneur-Warteschlange gebaut
+pref_warn_pop_limit=Bevölkerungsgrenze erreicht
+pref_warn_delay_transcend=Verzögerung bei Transzendenz
+pref_warn_built_via_queue=Über Gouverneur-Warteschlange gebaut
 pref_warn_starvation=Hungersnot
 pref_warn_mineral_shortage=Mineralienmangel
 pref_warn_energy_shortage=Energiemangel
 pref_warn_random_event=Zufallsereignis
 
 # Einstellungen: Erweitert
-pref_fast_battle=Schnelle Kampfaufloesung
+pref_fast_battle=Schnelle Kampfauflösung
 pref_no_center_orders=Nicht auf Einheit mit Befehlen zentrieren
-pref_pause_after_battle=Pause nach Kaempfen
+pref_pause_after_battle=Pause nach Kämpfen
 pref_zoom_no_recenter=Basiszoom ohne Neuzentrierung
-pref_quick_move_orders=Fahrzeugbefehle schnell ausfuehren
+pref_quick_move_orders=Fahrzeugbefehle schnell ausführen
 pref_quick_move_all=Alle Fahrzeuge schnell bewegen
-pref_right_click_menu=Rechtsklick-Popupmenue
-pref_detail_right_click=Detaillierte Rechtsklick-Menues
-pref_confirm_odds=Chancen vor Angriff bestaetigen
-pref_detail_main_menus=Detaillierte Hauptmenues
+pref_right_click_menu=Rechtsklick-Popupmenü
+pref_detail_right_click=Detaillierte Rechtsklick-Menüs
+pref_confirm_odds=Chancen vor Angriff bestätigen
+pref_detail_main_menus=Detaillierte Hauptmenüs
 pref_radio_single_click=Radioknopf Einzelklick
 
 # Einstellungen: Automatisierung
 pref_former_raise_lower=Former: Terrain anheben und senken
-pref_former_plant_forest=Former: Waelder pflanzen
+pref_former_plant_forest=Former: Wälder pflanzen
 pref_former_build_adv=Former: Erweitert bauen
 pref_former_remove_fungus=Former: Pilz entfernen
 pref_former_build_sensors=Former: Sensoren bauen
-pref_former_build_roads=Former: Strassen und Roehren bauen
+pref_former_build_roads=Former: Straßen und Röhren bauen
 pref_end_move_pact=Zug beenden: Pakt-Fahrzeug entdeckt
 pref_end_move_treaty=Zug beenden: Vertrags-Fahrzeug entdeckt
 pref_end_move_truce=Zug beenden: Waffenstillstands-Fahrzeug entdeckt
 pref_end_move_war=Zug beenden: Kriegs-Fahrzeug entdeckt
 pref_end_move_diff_triad=Zug beenden: Andere Triade
-pref_air_return_home=Luftfahrzeug kehrt zurueck
+pref_air_return_home=Luftfahrzeug kehrt zurück
 pref_wake_on_land=Fahrzeug bei Landung wecken
 pref_always_inspect_monolith=Monolith immer untersuchen
 
@@ -295,7 +304,7 @@ pref_sliding_windows=Gleitende Fenster
 pref_project_movies=Geheimprojekt-Filme
 pref_interludes=Zwischenspiele
 pref_voiceover=Sprachausgabe
-pref_stop_voice_close=Sprache bei Schliessen stoppen
+pref_stop_voice_close=Sprache bei Schließen stoppen
 pref_sliding_scrollbars=Gleitende Bildlaufleisten
 pref_whole_veh_blinks=Ganzes Fahrzeug blinkt
 pref_monuments=Monumente
@@ -307,48 +316,73 @@ pref_fog_of_war=Kriegsnebel
 pref_base_names=Basisnamen
 pref_prod_with_names=Produktion mit Basisnamen
 pref_flat_terrain=Flaches Terrain
-pref_grid_ocean=Gitter fuer Ozeanfelder
+pref_grid_ocean=Gitter für Ozeanfelder
 pref_show_goto_path=Goto-Pfad anzeigen
 
 # Spezialistenverwaltung (Strg+W)
-spec_open=Buerger: %s
-spec_close=Buerger geschlossen.
+spec_open=Bürger: %s
+spec_close=Bürger geschlossen.
 spec_worker=%d von %d: Arbeiter. %s
 spec_specialist=%d von %d: %s. %s
 spec_bonus=+%d Wirtschaft, +%d Psych, +%d Forschung
 spec_to_specialist=Umgewandelt zu %s.
 spec_to_worker=Umgewandelt zu Arbeiter.
-spec_type_changed=Geaendert zu %s.
-spec_cannot_more=Nicht moeglich: Basis zu klein fuer weitere Spezialisten.
-spec_cannot_less=Nicht moeglich: Keine Spezialisten zum Umwandeln.
-spec_cannot_center=Nicht moeglich: Basiszentrum wird immer bearbeitet.
-spec_help=Hoch/Runter: Buerger navigieren. Eingabe: Arbeiter/Spezialist umschalten. Links/Rechts: Spezialistentyp aendern. S: Zusammenfassung. Escape: Schliessen.
+spec_type_changed=Geändert zu %s.
+spec_cannot_more=Nicht möglich: Basis zu klein für weitere Spezialisten.
+spec_cannot_less=Nicht möglich: Keine Spezialisten zum Umwandeln.
+spec_cannot_center=Nicht möglich: Basiszentrum wird immer bearbeitet.
+spec_help=Hoch/Runter: Bürger navigieren. Eingabe: Arbeiter/Spezialist umschalten. Links/Rechts: Spezialistentyp ändern. S: Zusammenfassung. Escape: Schließen.
 spec_summary=%d Arbeiter, %d Spezialisten.
 spec_center=Basiszentrum.
-spec_no_other_type=Keine weiteren Spezialistentypen verfuegbar.
+spec_no_other_type=Keine weiteren Spezialistentypen verfügbar.
 spec_worker_no_type=Arbeiter haben keinen Typ. Eingabe zum Umwandeln.
 
-# Gebaeude abreissen (Strg+D)
-demolition_open=Gebaeude abreissen. %d Gebaeude. %d von %d: %s
+# Gebäude abreißen (Strg+D)
+demolition_open=Gebäude abreißen. %d Gebäude. %d von %d: %s
 demolition_item=%d von %d: %s, Unterhalt %d
 demolition_detail=%s. %s. Kosten %d, Unterhalt %d
-demolition_confirm=Entfernen erneut druecken um %s abzureissen
+demolition_confirm=Entfernen erneut drücken um %s abzureißen
 demolition_done=%s abgerissen
-demolition_blocked=Nicht moeglich: bereits ein Gebaeude diese Runde abgerissen
-demolition_empty=Keine Gebaeude zum Abreissen
+demolition_blocked=Nicht möglich: bereits ein Gebäude diese Runde abgerissen
+demolition_empty=Keine Gebäude zum Abreißen
 demolition_cancel=Abriss-Modus geschlossen
 
 # Zielauswahl & Zur Basis gehen
-targeting_mode=Zielauswahl. Pfeiltasten bewegen Cursor, Eingabe bestaetigt, Escape bricht ab.
+targeting_mode=Zielauswahl. Pfeiltasten bewegen Cursor, Eingabe bestätigt, Escape bricht ab.
 targeting_cancel=Abgebrochen.
-go_to_base=Zur Basis gehen: %d Basen. Hoch/Runter zum Blaettern, Eingabe zum Senden, Escape zum Abbrechen.
+go_to_base=Zur Basis gehen: %d Basen. Hoch/Runter zum Blättern, Eingabe zum Senden, Escape zum Abbrechen.
 base_list_fmt=%d von %d: %s (%d, %d), %d Felder entfernt
-base_list_empty=Keine Basen verfuegbar.
+base_list_empty=Keine Basen verfügbar.
 going_home=Gehe zur Heimatbasis: %s
 going_to_base=Gehe zu %s
-no_unit_selected=Keine Einheit ausgewaehlt.
+no_unit_selected=Keine Einheit ausgewählt.
 help_go_to_base=G: Zur Basis gehen
 help_go_home=Shift+G: Zur Heimatbasis
 help_group_goto=J: Gruppenbewegung
 help_patrol=P: Patrouille
 help_artillery=F: Fernkampf
+
+# Diplomatie
+diplo_open=Diplomatie mit %s
+diplo_closed=Diplomatie beendet.
+diplo_help=S oder Tab: Beziehungszusammenfassung. Strg+F1: Hilfe. Popup-Optionen mit Pfeiltasten navigieren.
+diplo_summary=%s. %s. %s
+diplo_status_pact=Pakt
+diplo_status_treaty=Freundschaftsvertrag
+diplo_status_truce=Waffenstillstand
+diplo_status_vendetta=Vendetta
+diplo_status_none=Keine formelle Vereinbarung
+diplo_patience=Geduld: %s
+diplo_patience_thin=dünn
+diplo_patience_wearing=mäßig
+diplo_patience_ok=geduldig
+diplo_surrendered=Hat kapituliert
+diplo_infiltrator=Wir haben Infiltrator
+diplo_netmsg=%s
+diplo_commlink_open=Kommlink: %d Fraktionen. Hoch/Runter zum Blättern, Eingabe zum Kontaktieren, Escape zum Abbrechen.
+diplo_commlink_item=%d von %d: %s, %s, %d Stimmen
+diplo_commlink_empty=Keine Fraktionen mit Kommlink.
+diplo_commlink_contact=Kontaktiere %s
+
+# Eingabedialoge
+input_number=Zahleneingabe. Vorgabe: %d. Zahl eingeben und Enter drücken.

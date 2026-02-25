@@ -167,6 +167,7 @@ enum SrStr {
     SR_PROD_DETAIL_FAC,
     SR_PROD_DETAIL_PROJECT,
     SR_PROD_DETAIL_UNIT,
+    SR_UNIT_ABILITIES,
 
     // Queue Management
     SR_QUEUE_OPEN,
@@ -197,6 +198,14 @@ enum SrStr {
     SR_MENU_ITEM_FMT,
     SR_MENU_ITEM_NOHK,
     SR_MENU_NAV_FMT,
+
+    // Popup Menus
+    SR_MENU_MAIN,           // "Main Menu"
+    SR_MENU_MAP_MENU,       // "Map Menu"
+    SR_MENU_MULTIPLAYER,    // "Multiplayer"
+    SR_MENU_SCENARIO_MENU,  // "Scenario"
+    SR_MENU_THINKER,        // "Thinker Menu"
+    SR_MENU_GAME_MENU,      // "Game Menu"
 
     // Popup list navigation
     SR_POPUP_LIST_FMT,      // "%d of %d: %s"
@@ -361,6 +370,31 @@ enum SrStr {
     SR_HELP_GROUP_GOTO,
     SR_HELP_PATROL,
     SR_HELP_ARTILLERY,
+
+    // Diplomacy
+    SR_DIPLO_OPEN,
+    SR_DIPLO_CLOSED,
+    SR_DIPLO_HELP,
+    SR_DIPLO_SUMMARY,
+    SR_DIPLO_STATUS_PACT,
+    SR_DIPLO_STATUS_TREATY,
+    SR_DIPLO_STATUS_TRUCE,
+    SR_DIPLO_STATUS_VENDETTA,
+    SR_DIPLO_STATUS_NONE,
+    SR_DIPLO_PATIENCE,
+    SR_DIPLO_PATIENCE_THIN,
+    SR_DIPLO_PATIENCE_WEARING,
+    SR_DIPLO_PATIENCE_OK,
+    SR_DIPLO_SURRENDERED,
+    SR_DIPLO_INFILTRATOR,
+    SR_DIPLO_NETMSG,
+    SR_DIPLO_COMMLINK_OPEN,
+    SR_DIPLO_COMMLINK_ITEM,
+    SR_DIPLO_COMMLINK_EMPTY,
+    SR_DIPLO_COMMLINK_CONTACT,
+
+    // Input dialogs
+    SR_INPUT_NUMBER,
 
     SR_COUNT
 };

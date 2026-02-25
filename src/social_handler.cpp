@@ -106,7 +106,7 @@ static void announce_model() {
         int preq = SocialField[cat].soc_preq_tech[model];
         const char* tech_name_str = "???";
         if (preq >= 0 && Tech) {
-            tech_name_str = Tech[preq].name;
+            tech_name_str = sr_game_str(Tech[preq].name);
             if (!tech_name_str) tech_name_str = "???";
         }
         char unavail[256];

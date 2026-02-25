@@ -93,3 +93,16 @@ bool sr_popup_is_active();
 bool sr_debug_active();
 void sr_debug_toggle();
 void sr_debug_log(const char* fmt, ...);
+
+// Convert Windows-1252 (ANSI) game text to UTF-8.
+// Used for all text originating from the game engine (Buffer_write hooks,
+// game data arrays like Bases[].name, Facility[].name, etc.)
+void sr_ansi_to_utf8(const char* src, char* dst, int dstsize);
+
+// Substitute game variables in a text buffer ($WORD#, $NUM#, $<N:form0:...>).
+void sr_substitute_game_vars(char* buf, int bufsize);
+
+// Convenience wrapper: convert a game string to UTF-8 using rotating buffers.
+// Returns a pointer valid until 8 more calls. Safe to use multiple times
+// in a single snprintf call (up to 8 game strings per call).
+const char* sr_game_str(const char* ansi_text);
