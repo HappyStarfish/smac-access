@@ -93,14 +93,14 @@
 
 ### Announce System (gui.cpp)
 Four triggers in ModWinProc:
-1. **Snapshot**: Fires on draw cycle boundary (>100ms gap). Catches fast transitions and tutorials. Suppressed during arrow nav. Capped at 10 items. HUD filter applied.
+1. **Snapshot**: Fires on draw cycle boundary (>100ms gap). Catches fast transitions and tutorials. Suppressed during arrow nav, on world map (GW_World), and on base screen. Capped at 10 items. HUD filter applied.
 2. **Arrow Nav**: 50ms after arrow keypress (independent of HUD timing). Uses item[1] for navigation, item[0] at boundaries (HUD detection).
 3. **Timer**: 300ms stable. Suppressed on world map (can't stabilize due to HUD). Max 5 new items. HUD filter applied.
-4. **World Map Important**: 500ms poll. WHITELIST approach — only announces:
-   - "ABOUT ..." (tutorial popups)
-   - "...need new orders..." (turn status)
-   - "...Press ENTER..." (action prompts)
-   - Everything else silently ignored. Prevents char-by-char noise.
+4. **World Map Important**: 500ms poll. WHITELIST approach — each item individually checked:
+   - "ABOUT ..." / "ÜBER ..." (tutorial popups)
+   - "...need new orders..." / "...neue Befehle..." (turn status)
+   - "...Press ENTER..." / "...Eingabe dr..." (action prompts)
+   - Everything else silently ignored. Prevents char-by-char noise and map rendering text.
 
 ### HUD Noise Filter (sr_is_hud_noise)
 Filters from triggers 1-3:
@@ -151,6 +151,8 @@ Filters from triggers 1-3:
 - src/prefs_handler.h — PrefsHandler declarations
 - src/specialist_handler.cpp — SpecialistHandler (citizen/specialist management, Ctrl+W)
 - src/specialist_handler.h — SpecialistHandler declarations
+- src/design_handler.cpp — DesignHandler (Design Workshop accessibility, Shift+D)
+- src/design_handler.h — DesignHandler declarations
 - src/localization.h — SrStr enum, loc(), loc_init()
 - src/localization.cpp — English defaults, UTF-8 file loader, key mapping
 - sr_lang/en.txt — English SR strings (~210 strings)
@@ -163,6 +165,7 @@ Filters from triggers 1-3:
 ### Pending Tests
 
 0z. **Specialist management (Ctrl+W)** — PARTIALLY TESTED. Ansagen kommen. Left/Right: Worker sagt "Arbeiter haben keinen Typ", Specialist mit nur 1 Typ sagt "Keine weiteren Typen". Offen: Abgleich mit Quellcode nötig — Nutzer unsicher ob Verhalten spielkonform ist. Nächste Session: OpenSMACX/Thinker Quellcode prüfen für korrektes Specialist-Verhalten.
+0k. **Design Workshop (Shift+D)** — TESTED OK (2026-02-26). Two-level navigation works. Kostenanzeige zeigt Grundkosten (ohne Prototyp-Zuschlag) — ist korrekt, Aufschlag kommt erst beim Bauen.
 0a. **Preferences handler (Ctrl+P)** — NOT YET TESTED.
 0b. **Targeting mode (J, P, F, Ctrl+T)** — NOT YET TESTED.
 0c. **Go to base (G)** — NOT YET TESTED.
@@ -171,8 +174,10 @@ Filters from triggers 1-3:
 0f. **Interlude story text** — TESTED OK (2026-02-23). Full narrative text announced with title. BUT umlauts still broken (see 0h).
 0g. **Diplomacy: F12 Commlink dialog** — TESTED OK (2026-02-25). F12 opens accessible faction list, Enter initiates contact. Working pattern: diplo_second_faction + diplo_lock + diplomacy_caption + communicate(player, fid, 1). Five approaches tested before success (documented in game-api.md). S/Tab summary and DiplomacyHandler open/close detection TESTED OK (2026-02-25). Remaining untested: Ctrl+F1 help during active diplomacy, NetMsg_pop treaty announcements.
 0h. **Interlude umlaut fix** — NOT YET TESTED (2026-02-25). Fixed sr_ansi_to_utf8 fallback (was copying raw ANSI when UTF-8 exceeded buffer). Enlarged popup text buffer to 8192 bytes. User reported "bl ttern" instead of "blättern" in interlude text.
-0i. **Variable substitution fix** — PARTIALLY TESTED (2026-02-25). Fixed: underscores in variable names ($TO_CARRY_OUT_OUR_MISSION6), gender/plurality patterns ($<N:form0:form1:...>), popup list option substitution ($TITLE3, $NAME4, $TECH0). Shared sr_substitute_game_vars() function. User reported variables now resolved in diplomacy greeting text. Popup list options not yet verified.
+0i. **Variable substitution fix** — TESTED (2026-02-26). $<M1:$CHARACTERADJ9> and $<F2:$FOLLOWERADJ5> now resolved. Letter-prefixed $<...> patterns strip wrapper, inner $WORD# resolved next iteration. Diplomacy text confirmed working.
 0j. **Number input dialog (pop_ask_number)** — NOT YET IMPLEMENTED. "Größe des Geschenks?" input field not announced as input, typed digits not read. Needs hook on pop_ask_number (0x627C30).
+0l. **Former terraform announcements** — TESTED OK (2026-02-26). Order given ("Building Forest, 4 turns"), status on unit select ("Building Forest, 2 of 4 turns"), completion ("Forest completed").
+0m. **Governor priorities (Ctrl+G)** — TESTED OK (2026-02-26). Priority selector as first item (Explore/Discover/Build/Conquer/None), Left/Right/Space to cycle.
 0. **Scanner mode** — TESTED OK (2026-02-19).
 1. **Enhanced tile announcements** — TESTED OK (2026-02-19).
 1b. **Social Engineering handler (E key)** — TESTED OK (2026-02-22). Modal loop approach, Enter confirms, Escape cancels.
@@ -216,3 +221,5 @@ Filters from triggers 1-3:
 - **2026-02-22 (session 6)**: gui.cpp refactoring — SR code extraction. Extracted ~1200 lines of screen reader code from gui.cpp (3649→2457 lines) into two new handler files. (1) world_map_handler.h/cpp (937 lines): All world map SR features — exploration cursor, targeting mode, scanner, map position tracking, unit change detection, Trigger 4 worldmap polling, all world map key handlers (arrows, scanner, targeting, G/Shift+G, E, Ctrl+P, Escape, Shift+F1). (2) menu_handler.h/cpp (361 lines): Menu bar navigation (Ctrl+F2), submenu navigation, mcache dialog arrow caching. gui.cpp now serves as thin dispatcher — calls WorldMapHandler::OnTimer() for timer block, WorldMapHandler::HandleKey() and MenuHandler::HandleKey() for key events. Pure mechanical refactoring, no functional changes. CMakeLists.txt auto-detects new files via GLOB. Build clean (0 warnings). DLL copied.
 - **2026-02-25 (session 2)**: Diplomacy accessibility + variable substitution. (1) F12 Commlink: accessible faction list with modal PeekMessage loop (same pattern as Go-to-Base). Five contact approaches tried — communicate(p,f,0) empty, commlink_attempt(f) silent, commlink_attempter(p,f) own popup, finally working: diplo_second_faction + diplo_lock + diplomacy_caption + communicate(p,f,1). TESTED OK. (2) Variable substitution fix: extracted sr_substitute_game_vars() shared function from sr_read_popup_text. Fixed underscores in var names ($TO_CARRY_OUT_OUR_MISSION6). Added $<N:form0:form1:...> gender/plurality pattern (German 6-form: gender + plurality*3). Added substitution to sr_popup_list_parse for dialog options ($TITLE3, $NAME4, $TECH0). (3) DiplomacyHandler: new files diplo_handler.h/cpp. IsActive() via DiploWinState, OnTimer() detects open/close, HandleKey() for S/Tab summary + Ctrl+F1 help. (4) NetMsg_pop SR output for treaty notifications. (5) Documented full diplomacy API in game-api.md. 20 new loc strings (en+de).
 - **2026-02-25**: German language patch support + umlaut fix. (1) ANSI→UTF-8 conversion: Game text (Windows-1252) was passed to sr_output(CP_UTF8) without encoding conversion, causing umlauts to appear as question marks. Added sr_ansi_to_utf8() and sr_game_str() helpers to screen_reader.h/cpp. Applied conversion at all entry points: sr_record_text (13 hooks), sr_read_popup_text (game text files), sr_popup_list_parse (popup options), sr_try_tutorial_announce (tutor.txt body text). Wrapped ~25 game string locations in handlers (Facility[].name/effect, Bases[].name, Vehs[].name(), Chassis/Weapon/Armor/Reactor/Ability/Citizen names, Tech[].name, prod_name()) with sr_game_str(). (2) de.txt umlauts: Replaced all ASCII approximations (oe→ö, ue→ü, ae→ä, ss→ß) in sr_lang/de.txt (~210 strings). (3) HUD filter German support: Added German equivalents for all English HUD noise keywords (Missionsjahr, Energie:, Wirt:, Fors:, terrain descriptors, menu bar items, economic panel). Added German junk filter entries (ZUG BEENDET, Kein Kontakt). (4) Auto language detection: loc_init() now defaults to sr_language=auto. Checks alphax.txt for German content indicators. Automatically loads de.txt for German game installs, en.txt otherwise. Manual override still possible via thinker.ini. TESTED OK — user confirmed umlauts work in tutorials, game text, and mod text.
+- **2026-02-26 (session 2)**: Former terraform accessibility + governor priorities + text filter fixes. (1) Former terraform announcements: polling-based in OnTimer via state tracking (sr_prev_order/sr_prev_order_unit). get_terraform_name() helper uses Terraform[order-4].name/name_sea + is_ocean(). Three announcements: order given ("Building Forest, 4 turns"), status on unit select ("Building Forest, 2 of 4 turns"), completion ("Forest completed"). movement_turns counts down from rate. 3 new loc strings (en+de). TESTED OK. (2) Governor priorities: Added priority selector (Explore/Discover/Build/Conquer/None) as first item in Ctrl+G handler. Left/Right/Space cycles priority (radio-button style, mutually exclusive). Priority bits now saved on confirm. Summary includes priority. 6 new loc strings (en+de). TESTED OK. (3) Variable substitution fix: $<M1:$CHARACTERADJ9> and $<F2:$FOLLOWERADJ5> patterns now resolved — letter-prefixed $<...> strips wrapper, inner $WORD# resolved next iteration. (4) Worldmap text filter: Removed has_about flag that made ALL captured items important. Each item now individually checked against whitelist. Added German patterns (ÜBER, neue Befehle, Eingabe). (5) Snapshot suppression on world map: Added GW_World check to gui.cpp snapshot discard — worldmap text (landmarks, info panel) no longer announced via snapshots. Trigger 4 whitelist handles important messages. Fixed "Martialische Luft / Sunny Mesa" noise.
+- **2026-02-26**: Design Workshop accessibility handler (Shift+D). New files: design_handler.h/cpp. Same modal loop pattern as SocialEngHandler. Two-level navigation: Level 1 = prototype list (default units with tech + custom units), Up/Down navigate, Enter edit, N new, Delete retire (two-press confirm), Escape close. Level 2 = component editor with 6 categories (Chassis/Weapon/Armor/Reactor/Ability1/Ability2), Left/Right cycles categories, Up/Down cycles tech-filtered options, S summary, Enter saves via mod_make_proto+mod_name_proto, Escape cancels back to list. Ability compatibility filtering via AFLAG_* flags (triad, combat/terraform/probe checks). Cost calculated via mod_proto_cost. Editing default units creates a copy in faction's custom slot. 26 new loc strings (en+de). Wired via Shift+D in world_map_handler.cpp, added to modal active check in gui.cpp. Build OK, deployed, awaiting testing.

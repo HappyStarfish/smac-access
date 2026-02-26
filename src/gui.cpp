@@ -4,7 +4,9 @@
 #include "social_handler.h"
 #include "prefs_handler.h"
 #include "specialist_handler.h"
+#include "design_handler.h"
 #include "diplo_handler.h"
+#include "governor_handler.h"
 #include "localization.h"
 #include "world_map_handler.h"
 #include "menu_handler.h"
@@ -640,6 +642,7 @@ static bool sr_is_hud_noise(const char* text, bool in_menu_early) {
     if (strcmp(text, "ENDANGERED") == 0) return true;
     if (strncmp(text, "(Gov:", 5) == 0) return true;
     if (strncmp(text, "(Reg:", 5) == 0) return true;  // Regierung (Gov)
+    if (strncmp(text, "(Gouvern.:", 10) == 0) return true;  // Governor status in German HUD
     // Terrain descriptors (handled by MAP-MOVE) — English and German
     if (strstr(text, "Rolling") != NULL && strlen(text) < 20) return true;
     if (strstr(text, "Flat") != NULL && strlen(text) < 20) return true;
@@ -667,6 +670,18 @@ static bool sr_is_hud_noise(const char* text, bool in_menu_early) {
     if (strncmp(text, "Brutto", 6) == 0) return true;
     if (strncmp(text, "Gesamtkosten", 12) == 0) return true;
     if (strncmp(text, "NETTO", 5) == 0) return true;
+    // German base screen labels
+    if (strcmp(text, "GOUVERNEUR") == 0) return true;
+    if (strcmp(text, "RESSOURCEN") == 0) return true;
+    if (strcmp(text, "ENERGIE VERTEILUNG") == 0) return true;
+    if (strncmp(text, "RUNDEN:", 7) == 0 && strlen(text) < 15) return true;
+    // German base screen energy panel fragments
+    if (strcmp(text, "WIRTSCHAFT") == 0) return true;
+    if (strncmp(text, "ENERGIE  +", 10) == 0) return true;
+    if (strncmp(text, "BONUS =", 7) == 0) return true;
+    // German social engineering status values in HUD (short strings)
+    if (strcmp(text, "Daten DeZentral") == 0) return true;
+    if (strcmp(text, "Gruppendominanz") == 0) return true;
     // Partial HUD build-up (character-by-character: "Mis", "Miss", etc.)
     if (strncmp(text, "Mis", 3) == 0 && strlen(text) < 12) return true;
     if (strncmp(text, "Eco", 3) == 0 && strlen(text) < 5) return true;
@@ -769,6 +784,19 @@ LRESULT WINAPI ModWinProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             sr_prev_popup = cur_popup;
         }
 
+        // --- Base change detection (Left/Right cycles bases) ---
+        static int sr_prev_base_id = -1;
+        if (cur_win == GW_Base && *CurrentBaseID != sr_prev_base_id) {
+            if (sr_prev_base_id >= 0) {
+                // Base changed while already in base screen (not initial open)
+                BaseScreenHandler::OnOpen(false);  // no help on base switch
+                sr_debug_log("BASE-CHANGE: %d -> %d", sr_prev_base_id, *CurrentBaseID);
+            }
+            sr_prev_base_id = *CurrentBaseID;
+        } else if (cur_win != GW_Base) {
+            sr_prev_base_id = -1;
+        }
+
         // --- World map state ---
         bool on_world_map = MapWin &&
             (cur_win == GW_World || (cur_win == GW_None && cur_popup >= 2));
@@ -847,7 +875,10 @@ LRESULT WINAPI ModWinProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         // Skip all announce triggers while a modal handler is active
         bool sr_modal_active = SocialEngHandler::IsActive()
             || PrefsHandler::IsActive()
-            || SpecialistHandler::IsActive();
+            || SpecialistHandler::IsActive()
+            || DesignHandler::IsActive()
+            || GovernorHandler::IsActive()
+            || sr_is_number_input_active();
         if (sr_modal_active) {
             sr_snapshot_consume();
         } else if (sr_snapshot_ready()) {
@@ -858,6 +889,11 @@ LRESULT WINAPI ModWinProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                 sr_debug_log("SNAP-DISCARD (tutorial recent)");
             } else if (in_menu) {
                 sr_debug_log("SNAP-DISCARD (menu context)");
+            } else if (cur_win == GW_Base) {
+                sr_debug_log("SNAP-DISCARD (base screen)");
+            } else if (cur_win == GW_World) {
+                // World map text (landmarks, info panel) handled by Trigger 4 whitelist
+                sr_debug_log("SNAP-DISCARD (world map)");
             } else if (sr_arrow_active) {
                 sr_debug_log("SNAP-DISCARD (arrow)");
             } else {
@@ -873,7 +909,7 @@ LRESULT WINAPI ModWinProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                         strncpy(sr_announced, all, sizeof(sr_announced) - 1);
                         sr_announced[sizeof(sr_announced) - 1] = '\0';
                         sr_debug_log("ANNOUNCE-SNAP(%d): %s", sn, buf);
-                        sr_output(buf, true);
+                        sr_output(buf, false);
                     } else {
                         sr_debug_log("SETTLE-SNAP(%d)", sn);
                     }
@@ -962,10 +998,11 @@ LRESULT WINAPI ModWinProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         }
 
         // --- Trigger 3: Timer (items stable for delay ms) ---
-        // Suppress on world map (HUD noise) and in menus (arrow nav handles it).
+        // Suppress on world map (HUD noise), in menus (arrow nav handles it),
+        // and in base screen (BaseScreenHandler provides structured info).
         if (sr_stable_since > 0 && (now - sr_stable_since) > 300
             && sr_item_count() > 0 && !on_world_map && !sr_arrow_active
-            && !in_menu && !sr_modal_active) {
+            && !in_menu && !sr_modal_active && cur_win != GW_Base) {
             int count = sr_item_count();
             char buf[2048], all[2048];
             if (sr_build_announce(sr_item_get, count, sr_announced,
@@ -973,7 +1010,7 @@ LRESULT WINAPI ModWinProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                 strncpy(sr_announced, all, sizeof(sr_announced) - 1);
                 sr_announced[sizeof(sr_announced) - 1] = '\0';
                 sr_debug_log("ANNOUNCE-TIMER(%d): %s", count, buf);
-                sr_output(buf, true);
+                sr_output(buf, false);
             } else {
                 sr_debug_log("SETTLE-TIMER(%d)", count);
             }
@@ -983,6 +1020,30 @@ LRESULT WINAPI ModWinProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         // Trigger 4 (worldmap polling) handled by WorldMapHandler::OnTimer above
     }
     // === End screen reader announce system ===
+
+    // Consume WM_CHAR following a consumed Space/key WM_KEYDOWN
+    // (prevents game from seeing the space character and skipping units)
+    static bool sr_consumed_key_char = false;
+    if (msg == WM_CHAR && sr_consumed_key_char) {
+        sr_consumed_key_char = false;
+        return 0;
+    }
+    if (msg == WM_KEYDOWN) {
+        sr_consumed_key_char = false;
+    }
+
+    // Screen reader: echo typed characters in game-native popup text inputs
+    // (base naming, save game, etc.) — does NOT consume the message
+    if (msg == WM_CHAR && sr_is_available() && sr_popup_is_active()
+        && !sr_is_number_input_active()
+        && !BaseScreenHandler::IsRenameActive()) {
+        char ch = (char)wParam;
+        if (ch >= 32 && ch <= 126) {
+            char letter[4];
+            snprintf(letter, sizeof(letter), "%c", ch);
+            sr_output(letter, true);
+        }
+    }
 
     if (msg == WM_ACTIVATEAPP && conf.auto_minimise && !conf.reduced_mode) {
         if (!LOWORD(wParam)) {
@@ -1052,22 +1113,39 @@ LRESULT WINAPI ModWinProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             return 0;
         }
 
+    // Screen reader: Number input modal intercepts all keys when active
+    } else if ((msg == WM_KEYDOWN || msg == WM_CHAR) && sr_is_available()
+    && sr_is_number_input_active()) {
+        sr_number_input_update(msg, wParam);
+        return 0;
+
     // Screen reader: Modal handlers (SocialEng, Prefs, Specialist) intercept ALL
     // messages when active. WM_CHAR must also be consumed to prevent the game's
     // WinProc from seeing translated keypresses inside our modal loop.
     } else if ((msg == WM_KEYDOWN || msg == WM_CHAR) && sr_is_available()
     && (SocialEngHandler::IsActive() || PrefsHandler::IsActive()
-        || SpecialistHandler::IsActive())) {
+        || SpecialistHandler::IsActive() || DesignHandler::IsActive()
+        || GovernorHandler::IsActive())) {
         if (msg == WM_KEYDOWN) {
             if (SocialEngHandler::IsActive()) {
                 SocialEngHandler::Update(msg, wParam);
             } else if (PrefsHandler::IsActive()) {
                 PrefsHandler::Update(msg, wParam);
+            } else if (DesignHandler::IsActive()) {
+                DesignHandler::Update(msg, wParam);
+            } else if (GovernorHandler::IsActive()) {
+                GovernorHandler::Update(msg, wParam);
             } else {
                 SpecialistHandler::Update(msg, wParam);
             }
         }
         return 0; // consume WM_CHAR and unhandled WM_KEYDOWN
+
+    // Screen reader: rename mode intercepts WM_KEYDOWN + WM_CHAR
+    } else if ((msg == WM_KEYDOWN || msg == WM_CHAR) && sr_is_available()
+    && current_window() == GW_Base
+    && BaseScreenHandler::IsRenameActive()) {
+        if (BaseScreenHandler::Update(msg, wParam)) return 0;
 
     // Screen reader: production picker intercepts ALL keys when active (must be first)
     } else if (msg == WM_KEYDOWN && sr_is_available()
@@ -1101,6 +1179,22 @@ LRESULT WINAPI ModWinProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     } else if (msg == WM_KEYDOWN && wParam == 'W' && ctrl_key_down()
     && sr_is_available() && current_window() == GW_Base) {
         SpecialistHandler::RunModal();
+        return 0;
+
+    // Screen reader: Ctrl+N = nerve staple
+    } else if (msg == WM_KEYDOWN && wParam == 'N' && ctrl_key_down()
+    && sr_is_available() && current_window() == GW_Base) {
+        if (BaseScreenHandler::Update(msg, wParam)) return 0;
+
+    // Screen reader: F2 = rename base
+    } else if (msg == WM_KEYDOWN && wParam == VK_F2
+    && sr_is_available() && current_window() == GW_Base) {
+        if (BaseScreenHandler::Update(msg, wParam)) return 0;
+
+    // Screen reader: Ctrl+G = governor configuration
+    } else if (msg == WM_KEYDOWN && wParam == 'G' && ctrl_key_down()
+    && sr_is_available() && current_window() == GW_Base) {
+        GovernorHandler::RunModal();
         return 0;
 
     } else if (msg == WM_KEYDOWN && (wParam == VK_UP || wParam == VK_DOWN)
@@ -1239,6 +1333,7 @@ LRESULT WINAPI ModWinProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     // Screen reader: World map key handling (scanner, arrows, targeting, G, E, etc.)
     } else if (msg == WM_KEYDOWN && sr_is_available()
     && WorldMapHandler::HandleKey(hwnd, msg, wParam, lParam)) {
+        sr_consumed_key_char = true;
         return 0;
 
     // Screen reader: Ctrl+Shift+R = silence speech

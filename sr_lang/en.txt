@@ -99,9 +99,9 @@ fmt_economy_v2=Economy: %d economy, %d psych, %d labs. %s.
 fmt_facilities_v2=Facilities: %s.
 fmt_units=%d stationed.
 fmt_units_none=Units: None stationed.
-fmt_base_open_v2=Base: %s, Population %d. Building %s, %d of %d, %s. Ctrl+Up/Down: Sections.
+fmt_base_open_v2=Base: %s, Population %d. Building %s, %d of %d, %s. Ctrl+F1: Help.
 fmt_workers=%d workers
-base_help=Ctrl+Up/Down: Sections. Ctrl+Left/Right: Tabs. Ctrl+I: Repeat. Ctrl+H: Hurry. Ctrl+Shift+P: Change production. Ctrl+Q: Queue. Ctrl+D: Demolish facility. Ctrl+W: Citizens. Escape: Close.
+base_help=Left/Right: Previous/Next base. Ctrl+Up/Down: Sections. Ctrl+Left/Right: Tabs. Ctrl+I: Repeat. Ctrl+H: Hurry. Ctrl+Shift+P: Change production. Ctrl+Q: Queue. Ctrl+D: Demolish. Ctrl+W: Citizens. Ctrl+G: Governor. Ctrl+N: Nerve staple. F2: Rename. Ctrl+F1: Help. Escape: Close.
 fmt_turns=%d turns
 fmt_growth_never=no growth
 fmt_faction_credits=%d energy credits
@@ -385,4 +385,72 @@ diplo_commlink_empty=No factions with commlink.
 diplo_commlink_contact=Contacting %s
 
 # Input Dialogs
-input_number=Number input. Default: %d. Type a number and press Enter.
+input_number=Number input. Default: %d. Type digits, Enter to confirm, Escape for default.
+input_number_empty=Empty
+input_number_done=Entered %d.
+
+# Cursor / Numpad
+cursor_to_unit=Cursor at unit.
+
+# Turn Info
+new_turn=Turn %d, Year %d M.Y.
+unit_skipped=Skipped. Next unit: %s
+
+# Design Workshop
+design_proto_list=Unit designs: %d prototypes.
+design_proto_fmt=%d of %d: %s, Attack %d Defense %d Speed %d, %d minerals
+design_category=%s: %s
+design_cat_chassis=Chassis
+design_cat_weapon=Weapon
+design_cat_armor=Armor
+design_cat_reactor=Reactor
+design_chassis_fmt=%s, Speed %d, %s
+design_weapon_fmt=%s, Attack %d
+design_armor_fmt=%s, Defense %d
+design_reactor_fmt=%s, Level %d
+design_ability_fmt=Ability %d: %s
+design_ability_none=None
+design_cost=Total cost: %d minerals
+design_saved=Design saved: %s
+design_cancelled=Design cancelled.
+design_new=New unit design.
+design_retired=%s retired.
+design_retire_confirm=Press Delete again to retire %s.
+design_help=Up/Down: browse. Enter: edit. N: new. Delete: retire. Escape: close.
+design_edit_help=Left/Right: category. Up/Down: option. Enter: save. S: summary. Escape: cancel.
+design_triad_land=Land
+design_triad_sea=Sea
+design_triad_air=Air
+design_equipment=Equipment: %s
+
+# Terraform Status
+terraform_order=Building %s, %d turns
+terraform_status=Building %s, %d of %d turns
+terraform_complete=%s completed
+
+# Nerve Staple (Ctrl+N)
+nerve_staple_confirm=Press Ctrl+N again to nerve staple %s.
+nerve_staple_done=Nerve stapled %s. %d turns.
+nerve_staple_cannot=Cannot: nerve staple not allowed.
+
+# Base Rename (F2)
+rename_open=Rename base: %s. Type new name, Enter to confirm, Escape to cancel.
+rename_char_fmt=%c
+rename_done=Base renamed to %s.
+rename_cancel=Rename cancelled.
+
+# Governor Configuration (Ctrl+G)
+gov_title=Governor configuration. %d options.
+gov_option_fmt=%d of %d: %s, %s
+gov_on=on
+gov_off=off
+gov_help=Up/Down: Options. Space: Toggle. Left/Right: Change priority. S: Summary. Enter: Save. Escape: Cancel.
+gov_summary_fmt=Governor: %d of %d enabled.
+gov_saved=Governor settings saved.
+gov_cancelled=Governor settings cancelled.
+gov_priority_fmt=Priority: %s. Left/Right to change.
+gov_priority_none=None
+gov_priority_explore=Explore
+gov_priority_discover=Discover
+gov_priority_build=Build
+gov_priority_conquer=Conquer

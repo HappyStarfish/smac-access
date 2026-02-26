@@ -65,10 +65,41 @@ From `menu.txt` in game directory. Format: `#CATEGORY` followed by items with `|
 - Patrol (P)
 
 ### Terraform Menu (#TERRAFORM)
-- Farm+Solar+Road (F,S,R combinations)
-- Road (R), Tube (U)
-- Automatic improvements (Shift+A)
-- Fungus Removal (F)
+
+**Former terraform hotkeys (all game-native):**
+- F: Build farm (on flat/rolling) / Remove fungus (on fungus)
+- f (lowercase via Shift+F): Plant forest
+- M: Build mine
+- S: Build solar collector
+- R: Build road
+- U: Build magtube (requires road)
+- N: Build condenser
+- Shift+N (B): Drill thermal borehole
+- O: Build sensor array
+- . (period): Build airbase
+- K: Build bunker
+- E: Build echelon mirror
+- Q: Drill to aquifer
+- Shift+A: Automatic improvements
+- ]: Raise terrain
+- [: Lower terrain
+
+**ORDER enum values (engine_veh.h):**
+- ORDER_FARM=4, ORDER_SOIL_ENRICHER=5, ORDER_MINE=6, ORDER_SOLAR_COLLECTOR=7
+- ORDER_PLANT_FOREST=8, ORDER_ROAD=9, ORDER_MAGTUBE=10
+- ORDER_BUNKER=11, ORDER_AIRBASE=12, ORDER_SENSOR_ARRAY=13
+- ORDER_REMOVE_FUNGUS=14, ORDER_PLANT_FUNGUS=15, ORDER_CONDENSER=16
+- ORDER_ECHELON_MIRROR=17, ORDER_THERMAL_BOREHOLE=18, ORDER_DRILL_AQUIFER=19
+- ORDER_TERRAFORM_UP=20, ORDER_TERRAFORM_DOWN=21, ORDER_TERRAFORM_LEVEL=22
+
+**Game function:** `action_terraform` at 0x4C9B00 (fp_3int)
+
+**Accessibility status — NOT YET ACCESSIBLE:**
+- Context help (Shift+F1) lists available terraform options per tile — DONE
+- No announcement when terraform order is given (e.g. "Building forest, 4 turns")
+- No announcement of current Former order on unit selection
+- No announcement when terraform completes
+- Turn count available via `veh->order >= ORDER_FARM && veh->order < ORDER_MOVE_TO`
 
 ### Help Menu (#HELP)
 - Index, Concepts, Technologies, Facilities
@@ -693,3 +724,120 @@ When an AI faction contacts the player, the game calls `communicate(ai, player, 
 - `DiplomacyHandler::HandleKey()` provides S/Tab (relationship summary) and Ctrl+F1 (help) during active sessions
 - Treaty flags: `DIPLO_PACT`, `DIPLO_TREATY`, `DIPLO_TRUCE`, `DIPLO_VENDETTA`, `DIPLO_COMMLINK`, `DIPLO_HAVE_SURRENDERED`, `DIPLO_HAVE_INFILTRATOR`
 - `Factions[other].diplo_patience[player]` — AI patience (int8_t: <=0 thin, <=3 moderate, >3 patient)
+
+---
+
+## Missing Screens — Accessibility TODO
+
+### Tier 1 — High Priority (Gameplay-Critical)
+
+**Unit Design Workshop (Shift+D)**
+- Game window: `DesignWin`, state `GW_Design` (detected by `current_window()`)
+- Opens full unit customization UI: chassis, weapon, armor, reactor, abilities
+- Key game structures: `UNIT` (engine_types.h), `Units[]` array, `MaxProtoNum`
+- Functions: prototype creation/modification in design workshop code
+- Already announced as "Design Workshop" on screen transition
+- Needs: full keyboard navigation of all component pickers
+
+**F-Key Status Screens (F1-F10)**
+- F1: Datalinks — tech/game database. Window: `DatalinkWin`
+- F2: Laboratories Status — research overview
+- F3: Energy Banks — energy credit allocation
+- F4: Base Operations Status — all bases overview. Window: `StatusWin`
+- F5: Secret Project Data — project progress by faction
+- F6: Orbital/Space Status — satellites, orbital units
+- F7: Military Command Nexus — military overview
+- F8: Alpha Centauri Score — faction rankings. Function: `compute_score`
+- F9: View Monuments — historical records. Window: `MonuWin`
+- F10: Hall of Fame — completed game records. Window: `FameWin`
+- All open via popup system; most are read-only info screens
+- Pattern: intercept F-key, read game data directly, announce via SR
+
+**Council Vote**
+- Window: `CouncilWin`
+- UN parliament decisions (planetary governor election, etc.)
+- Needs: navigable faction list, vote choice selection
+
+### Tier 2 — Medium Priority
+
+**Battle Reports**
+- Window: `ReportWin`
+- Combat results display. Function: `BattleWin_battle_report`
+- Currently combat outcomes not announced
+
+**Tech Trade Dialog**
+- Part of diplomacy system, uses popup hooks
+- Needs dedicated picker for tech selection during trade
+
+### Tier 3 — Low Priority
+
+**Multiplayer Screens**
+- Windows: `MultiWin`, `NetWin`, `NetTechWin`, `MessageWin`
+- Lobby, chat, faction selection
+
+**Scenario/Editor Screens**
+- Windows: `BaseMapWin`, `PlanWin`
+- Map editing, automation planning
+
+### Accessibility Keys Added by Mod (World Map)
+
+- Arrows: explore (virtual cursor)
+- Shift+Arrows: move unit
+- Numpad 1-9: move unit (game-native, now with SR announcement)
+- Ctrl+Space: jump cursor to selected unit
+- Shift+Space: send unit to cursor position
+- Space: skip unit (with "Skipped. Next unit: X" announcement)
+- G: go to base (navigable list)
+- Shift+G: go to home base
+- Ctrl+Left/Right: scanner jump
+- Ctrl+PgUp/PgDn: scanner filter change
+- Shift+F1: context help
+- Turn change: automatic "Turn X, Year Y M.Y." announcement
+
+---
+
+## Game Concepts — Monoliths
+
+Monoliths are special map features (tile item `BIT_MONOLITH`).
+
+**What they do:**
+- A unit that moves onto a monolith tile gets **upgraded for free**: weapon, armor, and speed each go up to the next level (if below max)
+- Equivalent to a free "upgrade" that would normally cost energy credits
+- Each unit can only benefit once from a monolith
+- The monolith remains on the map after use (other units can still use it)
+- Monoliths also provide a small resource bonus to the tile: +2 nutrients, +2 minerals, +2 energy
+
+**Where they appear:**
+- Randomly placed during map generation
+- Cannot be built by formers
+- Fairly rare — finding one is valuable, especially early game
+
+**Gameplay significance:**
+- Early game: upgrading a Scout Patrol to a better weapon/armor makes it much stronger
+- The `pref_always_inspect_monolith` preference controls whether units auto-use monoliths
+- Our scanner filter 7 (Supply Pods / Monoliths) helps find them
+- Context help (Shift+F1) shows "Monolith here: enter to upgrade" when on a monolith tile
+
+**Popup accessibility — NEEDS TESTING:**
+- `mod_monolith()` uses `popp()` for interactive dialogs (MONOLITH, SEEMONOLITH) — should be captured by existing popup hooks
+- `NetMsg_pop()` used for auto-dismiss messages (MONOLITHHEAL, MONOLITHNO, MONOLITH0/1) — positive timeout (5000) = auto-close, may be silent
+- $TECH0 variable in tutorial popup about forest planting (#TOURFOREST or similar) may not be substituted — ParseStrBuffer may not be populated when tutorial fires
+
+## HUD Noise Filter — Known Remaining Issues
+
+**Base names in world map HUD snapshots:** During turn transitions, the world map HUD status bar
+renders faction base names (e.g. "Sunny Mesa", "Eurytion Bay"). These appear in ANNOUNCE-SNAP
+with 7-9 items (below the >10 suppression cap). In English, they are often deduped against
+sr_announced buffer content. In German, dedup works less reliably because BaseScreenHandler
+uses loc() strings that differ from the game's rendered HUD text. Filtering base names is risky
+since they are relevant in popups and other contexts.
+
+**Unit names in base screen HUD:** Unit type names (e.g. "SCOUT-PATROUILLE") appear as button
+labels in the base screen and leak through ANNOUNCE-TIMER. Cannot be filtered generically since
+unit names are relevant in many contexts (turn announcements, tile info, popups).
+
+**Social engineering status values:** The world map HUD renders the current SE model names
+(e.g. "Daten DeZentral", "Gruppendominanz"). Only these two have been added to the filter so far.
+Other SE values (Demokratie, Polizeiherrschaft, Fundamentalismus, Freie Marktwirtschaft, etc.)
+may also leak. A systematic approach (e.g. matching all SE model names from alphax.txt) could
+be needed if more appear.

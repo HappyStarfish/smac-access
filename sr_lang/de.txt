@@ -99,9 +99,9 @@ fmt_economy_v2=Wirtschaft: %d Wirtschaft, %d Psyche, %d Forschung. %s.
 fmt_facilities_v2=Einrichtungen: %s.
 fmt_units=%d stationiert.
 fmt_units_none=Einheiten: Keine stationiert.
-fmt_base_open_v2=Basis: %s, Bevölkerung %d. Baut %s, %d von %d, %s. Strg+Hoch/Runter: Sektionen.
+fmt_base_open_v2=Basis: %s, Bevölkerung %d. Baut %s, %d von %d, %s. Strg+F1: Hilfe.
 fmt_workers=%d Arbeiter
-base_help=Strg+Hoch/Runter: Sektionen. Strg+Links/Rechts: Reiter. Strg+I: Wiederholen. Strg+H: Beschleunigen. Strg+Shift+P: Produktion ändern. Strg+Q: Warteschlange. Strg+D: Gebäude abreißen. Strg+W: Bürger. Escape: Schließen.
+base_help=Links/Rechts: Vorherige/Nächste Basis. Strg+Hoch/Runter: Sektionen. Strg+Links/Rechts: Reiter. Strg+I: Wiederholen. Strg+H: Beschleunigen. Strg+Shift+P: Produktion ändern. Strg+Q: Warteschlange. Strg+D: Abreißen. Strg+W: Bürger. Strg+G: Gouverneur. Strg+N: Nervenklammer. F2: Umbenennen. Strg+F1: Hilfe. Escape: Schließen.
 fmt_turns=%d Runden
 fmt_growth_never=kein Wachstum
 fmt_faction_credits=%d Energieguthaben
@@ -385,4 +385,72 @@ diplo_commlink_empty=Keine Fraktionen mit Kommlink.
 diplo_commlink_contact=Kontaktiere %s
 
 # Eingabedialoge
-input_number=Zahleneingabe. Vorgabe: %d. Zahl eingeben und Enter drücken.
+input_number=Zahleneingabe. Vorgabe: %d. Ziffern eingeben, Enter bestätigt, Escape für Vorgabe.
+input_number_empty=Leer
+input_number_done=%d eingegeben.
+
+# Cursor / Numpad
+cursor_to_unit=Cursor bei Einheit.
+
+# Zuginformation
+new_turn=Zug %d, Jahr %d M.Y.
+unit_skipped=Übersprungen. Nächste Einheit: %s
+
+# Entwurfswerkstatt
+design_proto_list=Einheitenentwürfe: %d Prototypen.
+design_proto_fmt=%d von %d: %s, Angriff %d Verteidigung %d Tempo %d, %d Mineralien
+design_category=%s: %s
+design_cat_chassis=Fahrgestell
+design_cat_weapon=Waffe
+design_cat_armor=Panzerung
+design_cat_reactor=Reaktor
+design_chassis_fmt=%s, Tempo %d, %s
+design_weapon_fmt=%s, Angriff %d
+design_armor_fmt=%s, Verteidigung %d
+design_reactor_fmt=%s, Stufe %d
+design_ability_fmt=Fähigkeit %d: %s
+design_ability_none=Keine
+design_cost=Gesamtkosten: %d Mineralien
+design_saved=Entwurf gespeichert: %s
+design_cancelled=Entwurf abgebrochen.
+design_new=Neuer Einheitenentwurf.
+design_retired=%s ausgemustert.
+design_retire_confirm=Erneut Entf drücken um %s auszumustern.
+design_help=Auf/Ab: durchsuchen. Enter: bearbeiten. N: neu. Entf: ausmustern. Escape: schließen.
+design_edit_help=Links/Rechts: Kategorie. Auf/Ab: Option. Enter: speichern. S: Übersicht. Escape: abbrechen.
+design_triad_land=Land
+design_triad_sea=See
+design_triad_air=Luft
+design_equipment=Ausrüstung: %s
+
+# Terraform-Status
+terraform_order=%s wird gebaut, %d Runden
+terraform_status=%s wird gebaut, %d von %d Runden
+terraform_complete=%s fertiggestellt
+
+# Nervenklammer (Strg+N)
+nerve_staple_confirm=Erneut Strg+N drücken um %s zu klammern.
+nerve_staple_done=%s geklammert. %d Runden.
+nerve_staple_cannot=Nicht möglich: Nervenklammer nicht erlaubt.
+
+# Basis umbenennen (F2)
+rename_open=Basis umbenennen: %s. Neuen Namen eingeben, Enter bestätigt, Escape bricht ab.
+rename_char_fmt=%c
+rename_done=Basis umbenannt zu %s.
+rename_cancel=Umbenennung abgebrochen.
+
+# Gouverneur-Konfiguration (Strg+G)
+gov_title=Gouverneur-Konfiguration. %d Optionen.
+gov_option_fmt=%d von %d: %s, %s
+gov_on=an
+gov_off=aus
+gov_help=Auf/Ab: Optionen. Leertaste: Umschalten. Links/Rechts: Priorität ändern. S: Übersicht. Enter: Speichern. Escape: Abbrechen.
+gov_summary_fmt=Gouverneur: %d von %d aktiviert.
+gov_saved=Gouverneur-Einstellungen gespeichert.
+gov_cancelled=Gouverneur-Einstellungen abgebrochen.
+gov_priority_fmt=Priorität: %s. Links/Rechts zum Ändern.
+gov_priority_none=Keine
+gov_priority_explore=Erkunden
+gov_priority_discover=Entdecken
+gov_priority_build=Bauen
+gov_priority_conquer=Kämpfen

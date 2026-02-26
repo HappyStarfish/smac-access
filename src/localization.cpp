@@ -111,9 +111,9 @@ static const char* sr_defaults[SR_COUNT] = {
     /* SR_FMT_FACILITIES_V2  */ "Facilities: %s.",
     /* SR_FMT_UNITS          */ "Units: %d stationed.",
     /* SR_FMT_UNITS_NONE     */ "Units: None stationed.",
-    /* SR_FMT_BASE_OPEN_V2   */ "Base: %s, Population %d. Building %s, %d of %d, %s. Ctrl+Up/Down: Sections.",
+    /* SR_FMT_BASE_OPEN_V2   */ "Base: %s, Population %d. Building %s, %d of %d, %s. Ctrl+F1: Help.",
     /* SR_FMT_WORKERS        */ "%d workers",
-    /* SR_BASE_HELP          */ "Ctrl+Up/Down: Sections. Ctrl+Left/Right: Tabs. Ctrl+I: Repeat. Ctrl+H: Hurry. Ctrl+Shift+P: Change production. Ctrl+Q: Queue. Ctrl+D: Demolish facility. Ctrl+W: Citizens. Escape: Close.",
+    /* SR_BASE_HELP          */ "Left/Right: Previous/Next base. Ctrl+Up/Down: Sections. Ctrl+Left/Right: Tabs. Ctrl+I: Repeat. Ctrl+H: Hurry. Ctrl+Shift+P: Change production. Ctrl+Q: Queue. Ctrl+D: Demolish. Ctrl+W: Citizens. Ctrl+G: Governor. Ctrl+N: Nerve staple. F2: Rename. Ctrl+F1: Help. Escape: Close.",
     /* SR_FMT_TURNS          */ "%d turns",
     /* SR_FMT_GROWTH_NEVER   */ "no growth",
     /* SR_FMT_FACTION_CREDITS */ "%d energy credits",
@@ -393,8 +393,76 @@ static const char* sr_defaults[SR_COUNT] = {
     /* SR_DIPLO_COMMLINK_ITEM */ "%d of %d: %s, %s, %d votes",
     /* SR_DIPLO_COMMLINK_EMPTY */ "No factions with commlink.",
     /* SR_DIPLO_COMMLINK_CONTACT */ "Contacting %s",
+    // Cursor / Numpad
+    /* SR_CURSOR_TO_UNIT    */ "Cursor at unit.",
+
+    // Turn Info
+    /* SR_NEW_TURN          */ "Turn %d, Year %d M.Y.",
+    /* SR_UNIT_SKIPPED      */ "Skipped. Next unit: %s",
+
     // Input dialogs
-    /* SR_INPUT_NUMBER */ "Number input. Default: %d. Type a number and press Enter.",
+    /* SR_INPUT_NUMBER       */ "Number input. Default: %d. Type digits, Enter to confirm, Escape for default.",
+    /* SR_INPUT_NUMBER_EMPTY */ "Empty",
+    /* SR_INPUT_NUMBER_DONE  */ "Entered %d.",
+
+    // Design Workshop
+    /* SR_DESIGN_PROTO_LIST    */ "Unit designs: %d prototypes.",
+    /* SR_DESIGN_PROTO_FMT     */ "%d of %d: %s, Attack %d Defense %d Speed %d, %d minerals",
+    /* SR_DESIGN_CATEGORY      */ "%s: %s",
+    /* SR_DESIGN_CAT_CHASSIS   */ "Chassis",
+    /* SR_DESIGN_CAT_WEAPON    */ "Weapon",
+    /* SR_DESIGN_CAT_ARMOR     */ "Armor",
+    /* SR_DESIGN_CAT_REACTOR   */ "Reactor",
+    /* SR_DESIGN_CHASSIS_FMT   */ "%s, Speed %d, %s",
+    /* SR_DESIGN_WEAPON_FMT    */ "%s, Attack %d",
+    /* SR_DESIGN_ARMOR_FMT     */ "%s, Defense %d",
+    /* SR_DESIGN_REACTOR_FMT   */ "%s, Level %d",
+    /* SR_DESIGN_ABILITY_FMT   */ "Ability %d: %s",
+    /* SR_DESIGN_ABILITY_NONE  */ "None",
+    /* SR_DESIGN_COST          */ "Total cost: %d minerals",
+    /* SR_DESIGN_SAVED         */ "Design saved: %s",
+    /* SR_DESIGN_CANCELLED     */ "Design cancelled.",
+    /* SR_DESIGN_NEW           */ "New unit design.",
+    /* SR_DESIGN_RETIRED       */ "%s retired.",
+    /* SR_DESIGN_RETIRE_CONFIRM */ "Press Delete again to retire %s.",
+    /* SR_DESIGN_HELP          */ "Up/Down: browse. Enter: edit. N: new. Delete: retire. Escape: close.",
+    /* SR_DESIGN_EDIT_HELP     */ "Left/Right: category. Up/Down: option. Enter: save. S: summary. Escape: cancel.",
+    /* SR_DESIGN_TRIAD_LAND    */ "Land",
+    /* SR_DESIGN_TRIAD_SEA     */ "Sea",
+    /* SR_DESIGN_TRIAD_AIR     */ "Air",
+    /* SR_DESIGN_EQUIPMENT     */ "Equipment: %s",
+
+    // Terraform Status
+    /* SR_TERRAFORM_ORDER      */ "Building %s, %d turns",
+    /* SR_TERRAFORM_STATUS     */ "Building %s, %d of %d turns",
+    /* SR_TERRAFORM_COMPLETE   */ "%s completed",
+
+    // Nerve Staple (Ctrl+N)
+    /* SR_NERVE_STAPLE_CONFIRM */ "Press Ctrl+N again to nerve staple %s.",
+    /* SR_NERVE_STAPLE_DONE    */ "Nerve stapled %s. %d turns.",
+    /* SR_NERVE_STAPLE_CANNOT  */ "Cannot: nerve staple not allowed.",
+
+    // Base Rename (F2)
+    /* SR_RENAME_OPEN          */ "Rename base: %s. Type new name, Enter to confirm, Escape to cancel.",
+    /* SR_RENAME_CHAR_FMT      */ "%c",
+    /* SR_RENAME_DONE          */ "Base renamed to %s.",
+    /* SR_RENAME_CANCEL        */ "Rename cancelled.",
+
+    // Governor Configuration (Ctrl+G)
+    /* SR_GOV_TITLE            */ "Governor configuration. %d options.",
+    /* SR_GOV_OPTION_FMT       */ "%d of %d: %s, %s",
+    /* SR_GOV_ON               */ "on",
+    /* SR_GOV_OFF              */ "off",
+    /* SR_GOV_HELP             */ "Up/Down: Options. Space: Toggle. Left/Right: Change priority. S: Summary. Enter: Save. Escape: Cancel.",
+    /* SR_GOV_SUMMARY_FMT      */ "Governor: %d of %d enabled.",
+    /* SR_GOV_SAVED            */ "Governor settings saved.",
+    /* SR_GOV_CANCELLED        */ "Governor settings cancelled.",
+    /* SR_GOV_PRIORITY_FMT     */ "Priority: %s. Left/Right to change.",
+    /* SR_GOV_PRIORITY_NONE    */ "None",
+    /* SR_GOV_PRIORITY_EXPLORE */ "Explore",
+    /* SR_GOV_PRIORITY_DISCOVER*/ "Discover",
+    /* SR_GOV_PRIORITY_BUILD   */ "Build",
+    /* SR_GOV_PRIORITY_CONQUER */ "Conquer",
 };
 
 // Key names matching the enum order (for file parsing)
@@ -520,7 +588,34 @@ static const char* sr_keys[SR_COUNT] = {
     "diplo_netmsg",
     "diplo_commlink_open", "diplo_commlink_item",
     "diplo_commlink_empty", "diplo_commlink_contact",
-    "input_number",
+    // Cursor / Numpad
+    "cursor_to_unit",
+    // Turn Info
+    "new_turn",
+    "unit_skipped",
+    "input_number", "input_number_empty", "input_number_done",
+    // Design Workshop
+    "design_proto_list", "design_proto_fmt", "design_category",
+    "design_cat_chassis", "design_cat_weapon", "design_cat_armor",
+    "design_cat_reactor",
+    "design_chassis_fmt", "design_weapon_fmt", "design_armor_fmt",
+    "design_reactor_fmt", "design_ability_fmt", "design_ability_none",
+    "design_cost", "design_saved", "design_cancelled",
+    "design_new", "design_retired", "design_retire_confirm",
+    "design_help", "design_edit_help",
+    "design_triad_land", "design_triad_sea", "design_triad_air",
+    "design_equipment",
+    // Terraform Status
+    "terraform_order", "terraform_status", "terraform_complete",
+    // Nerve Staple
+    "nerve_staple_confirm", "nerve_staple_done", "nerve_staple_cannot",
+    // Base Rename
+    "rename_open", "rename_char_fmt", "rename_done", "rename_cancel",
+    // Governor Configuration
+    "gov_title", "gov_option_fmt", "gov_on", "gov_off",
+    "gov_help", "gov_summary_fmt", "gov_saved", "gov_cancelled",
+    "gov_priority_fmt", "gov_priority_none", "gov_priority_explore",
+    "gov_priority_discover", "gov_priority_build", "gov_priority_conquer",
 };
 
 // Loaded strings (dynamically allocated, or NULL = use default)

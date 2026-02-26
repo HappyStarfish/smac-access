@@ -89,6 +89,10 @@ extern DWORD sr_tutorial_announce_time;
 // Check if a popup hook is currently active (blocks duplicate announcements)
 bool sr_popup_is_active();
 
+// Number input modal: check if active, process keys from ModWinProc
+bool sr_is_number_input_active();
+void sr_number_input_update(UINT msg, WPARAM wParam);
+
 // Debug logging (Ctrl+F12 toggle at runtime)
 bool sr_debug_active();
 void sr_debug_toggle();

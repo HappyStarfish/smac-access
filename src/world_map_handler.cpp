@@ -4,6 +4,7 @@
 #include "gui.h"
 #include "screen_reader.h"
 #include "localization.h"
+#include "design_handler.h"
 #include "social_handler.h"
 #include "prefs_handler.h"
 #include "specialist_handler.h"
@@ -36,6 +37,16 @@ static bool sr_prev_on_world_map = false;
 // Unit change detection
 static int sr_prev_unit = -1;
 
+// Turn change detection
+static int sr_prev_turn = -1;
+
+// Skip detection: set when Space is pressed, cleared on unit change
+static bool sr_unit_skipped = false;
+
+// Terraform order tracking
+static uint8_t sr_prev_order = 0;       // previous order of current unit
+static int sr_prev_order_unit = -1;     // which unit sr_prev_order belongs to
+
 // Trigger 4: worldmap poll timer
 static DWORD sr_worldmap_poll_time = 0;
 
@@ -51,6 +62,22 @@ static const SrStr sr_scan_filter_names[SR_SCAN_FILTER_COUNT] = {
 
 
 // --- Helper functions ---
+
+/// Get the localized terraform name for a vehicle's current order.
+/// Returns NULL if the vehicle is not performing a terraform action.
+static const char* get_terraform_name(VEH* veh) {
+    if (veh->order < ORDER_FARM || veh->order >= ORDER_MOVE_TO) {
+        return NULL;
+    }
+    int idx = veh->order - ORDER_FARM;
+    MAP* sq = mapsq(veh->x, veh->y);
+    if (!sq) return NULL;
+    const char* raw = is_ocean(sq)
+        ? Terraform[idx].name_sea
+        : Terraform[idx].name;
+    if (!raw || !raw[0]) return NULL;
+    return sr_game_str(raw);
+}
 
 /// Announce tile info at given coordinates via screen reader.
 /// Reusable for both MAP-MOVE tracking and virtual exploration cursor.
@@ -385,12 +412,25 @@ void OnTimer(DWORD now, bool on_world_map, GameWinState cur_win, int cur_popup,
         }
     }
 
+    // Turn change detection: announce new turn with year (queued)
+    if (on_world_map) {
+        int cur_turn = *CurrentTurn;
+        if (cur_turn != sr_prev_turn) {
+            sr_prev_turn = cur_turn;
+            char turn_buf[128];
+            snprintf(turn_buf, sizeof(turn_buf),
+                loc(SR_NEW_TURN), cur_turn, *CurrentMissionYear);
+            sr_debug_log("NEW-TURN: %s", turn_buf);
+            sr_output(turn_buf, false);
+        }
+    }
+
     // Player turn / unit selection detection
     if (on_world_map && MapWin && Vehs && *VehCount > 0) {
         int cur_unit = MapWin->iUnit;
         if (cur_unit != sr_prev_unit) {
-            sr_debug_log("UNIT-CHANGE: prev=%d cur=%d VehCount=%d",
-                sr_prev_unit, cur_unit, *VehCount);
+            sr_debug_log("UNIT-CHANGE: prev=%d cur=%d VehCount=%d skipped=%d",
+                sr_prev_unit, cur_unit, *VehCount, (int)sr_unit_skipped);
             if (cur_unit >= 0 && cur_unit < *VehCount) {
                 VEH* veh = &Vehs[cur_unit];
                 sr_debug_log("UNIT-CHECK: faction=%d owner=%d unit_id=%d",
@@ -401,28 +441,114 @@ void OnTimer(DWORD now, bool on_world_map, GameWinState cur_win, int cur_popup,
                     // Update cursor to new unit position
                     sr_cursor_x = veh->x;
                     sr_cursor_y = veh->y;
-                    int total_speed = veh_speed(cur_unit, 0);
-                    int remaining = max(0, total_speed - (int)veh->moves_spent);
-                    int disp_rem = remaining / Rules->move_rate_roads;
-                    int disp_tot = total_speed / Rules->move_rate_roads;
-                    char buf[256];
-                    char move_buf[64];
-                    snprintf(move_buf, sizeof(move_buf),
-                        loc(SR_MOVEMENT_POINTS), disp_rem, disp_tot);
-                    snprintf(buf, sizeof(buf), "%s. %s",
-                        loc(SR_YOUR_TURN), move_buf);
-                    // Fill in format args for SR_YOUR_TURN
-                    char full[320];
-                    snprintf(full, sizeof(full), buf,
-                        sr_game_str(veh->name()), veh->x, veh->y);
-                    sr_debug_log("ANNOUNCE-TURN: %s", full);
-                    sr_output(full, true);
+
+                    if (sr_unit_skipped) {
+                        // Skip feedback: "Skipped. Next unit: [name]"
+                        char skip_buf[256];
+                        snprintf(skip_buf, sizeof(skip_buf),
+                            loc(SR_UNIT_SKIPPED), sr_game_str(veh->name()));
+                        sr_debug_log("UNIT-SKIP: %s", skip_buf);
+                        sr_output(skip_buf, true);
+                        // Queue position and movement info
+                        int total_speed = veh_speed(cur_unit, 0);
+                        int remaining = max(0, total_speed - (int)veh->moves_spent);
+                        int disp_rem = remaining / Rules->move_rate_roads;
+                        int disp_tot = total_speed / Rules->move_rate_roads;
+                        char pos_buf[128];
+                        snprintf(pos_buf, sizeof(pos_buf), "(%d, %d). ",
+                            veh->x, veh->y);
+                        char move_buf[64];
+                        snprintf(move_buf, sizeof(move_buf),
+                            loc(SR_MOVEMENT_POINTS), disp_rem, disp_tot);
+                        char detail[192];
+                        snprintf(detail, sizeof(detail), "%s%s", pos_buf, move_buf);
+                        sr_output(detail, false);
+                        // Terraform status for formers
+                        const char* tf_name = get_terraform_name(veh);
+                        if (tf_name) {
+                            int rate = Terraform[veh->order - ORDER_FARM].rate;
+                            int done = rate - (int)veh->movement_turns;
+                            char tf_buf[128];
+                            snprintf(tf_buf, sizeof(tf_buf),
+                                loc(SR_TERRAFORM_STATUS), tf_name, done, rate);
+                            sr_output(tf_buf, false);
+                        }
+                    } else {
+                        // Normal turn announcement
+                        int total_speed = veh_speed(cur_unit, 0);
+                        int remaining = max(0, total_speed - (int)veh->moves_spent);
+                        int disp_rem = remaining / Rules->move_rate_roads;
+                        int disp_tot = total_speed / Rules->move_rate_roads;
+                        char buf[256];
+                        char move_buf[64];
+                        snprintf(move_buf, sizeof(move_buf),
+                            loc(SR_MOVEMENT_POINTS), disp_rem, disp_tot);
+                        snprintf(buf, sizeof(buf), "%s. %s",
+                            loc(SR_YOUR_TURN), move_buf);
+                        char full[320];
+                        snprintf(full, sizeof(full), buf,
+                            sr_game_str(veh->name()), veh->x, veh->y);
+                        sr_debug_log("ANNOUNCE-TURN: %s", full);
+                        sr_output(full, false);
+                        // Terraform status for formers
+                        const char* tf_name = get_terraform_name(veh);
+                        if (tf_name) {
+                            int rate = Terraform[veh->order - ORDER_FARM].rate;
+                            int done = rate - (int)veh->movement_turns;
+                            char tf_buf[128];
+                            snprintf(tf_buf, sizeof(tf_buf),
+                                loc(SR_TERRAFORM_STATUS), tf_name, done, rate);
+                            sr_output(tf_buf, false);
+                        }
+                    }
                 }
             }
+            // Reset terraform tracking on unit change
+            sr_prev_order = (cur_unit >= 0 && cur_unit < *VehCount)
+                ? Vehs[cur_unit].order : 0;
+            sr_prev_order_unit = cur_unit;
             sr_prev_unit = cur_unit;
+            sr_unit_skipped = false;
+        }
+        // Terraform order change detection (same unit, order changed)
+        if (cur_unit >= 0 && cur_unit < *VehCount
+            && cur_unit == sr_prev_order_unit) {
+            VEH* veh = &Vehs[cur_unit];
+            uint8_t cur_order = veh->order;
+            bool prev_is_tf = (sr_prev_order >= ORDER_FARM && sr_prev_order < ORDER_MOVE_TO);
+            bool cur_is_tf = (cur_order >= ORDER_FARM && cur_order < ORDER_MOVE_TO);
+
+            if (!prev_is_tf && cur_is_tf) {
+                // Terraform order just given
+                const char* tf_name = get_terraform_name(veh);
+                if (tf_name) {
+                    int rate = Terraform[cur_order - ORDER_FARM].rate;
+                    char tf_buf[128];
+                    snprintf(tf_buf, sizeof(tf_buf),
+                        loc(SR_TERRAFORM_ORDER), tf_name, rate);
+                    sr_debug_log("TERRAFORM-ORDER: %s", tf_buf);
+                    sr_output(tf_buf, true);
+                }
+            } else if (prev_is_tf && !cur_is_tf) {
+                // Terraform just completed
+                int prev_idx = sr_prev_order - ORDER_FARM;
+                MAP* sq = mapsq(veh->x, veh->y);
+                const char* raw = (sq && is_ocean(sq))
+                    ? Terraform[prev_idx].name_sea
+                    : Terraform[prev_idx].name;
+                if (raw && raw[0]) {
+                    char tf_buf[128];
+                    snprintf(tf_buf, sizeof(tf_buf),
+                        loc(SR_TERRAFORM_COMPLETE), sr_game_str(raw));
+                    sr_debug_log("TERRAFORM-DONE: %s", tf_buf);
+                    sr_output(tf_buf, true);
+                }
+            }
+            sr_prev_order = cur_order;
         }
     } else {
         sr_prev_unit = -1;
+        sr_prev_order_unit = -1;
     }
 
     // Trigger 4: World map important message announce
@@ -442,27 +568,22 @@ void OnTimer(DWORD now, bool on_world_map, GameWinState cur_win, int cur_popup,
             sr_worldmap_poll_time = now;
             int count = sr_item_count();
             if (count > 0) {
-                // First pass: check if a tutorial popup is open
-                bool has_about = false;
-                for (int i = 0; i < count; i++) {
-                    const char* it = sr_item_get(i);
-                    if (it && strncmp(it, "ABOUT ", 6) == 0) {
-                        has_about = true;
-                        break;
-                    }
-                }
                 char buf[2048];
                 int pos = 0;
                 bool has_new = false;
                 for (int i = 0; i < count; i++) {
                     const char* it = sr_item_get(i);
                     if (!it || strlen(it) < 3) continue;
-                    // Whitelist: only important messages
+                    // Whitelist: only individually important messages
                     bool important = false;
+                    // English patterns
                     if (strncmp(it, "ABOUT ", 6) == 0) important = true;
                     if (strstr(it, "need new orders") != NULL) important = true;
                     if (strstr(it, "Press ENTER") != NULL) important = true;
-                    if (has_about) important = true;
+                    // German patterns
+                    if (strncmp(it, "\xc3\x9c" "BER ", 6) == 0) important = true; // "ÜBER "
+                    if (strstr(it, "neue Befehle") != NULL) important = true;
+                    if (strstr(it, "Eingabe dr") != NULL) important = true; // "Eingabe drücken"
                     if (!important) continue;
                     if (strstr(sr_announced, it) != NULL) continue;
                     has_new = true;
@@ -633,6 +754,66 @@ bool HandleKey(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                 sr_announce_tile(sr_cursor_x, sr_cursor_y);
             } else {
                 sr_output(loc(SR_MAP_EDGE), true);
+            }
+        }
+        return true;
+    }
+
+    // Space without modifier = skip unit (let game handle, but set flag for announcement)
+    if (wParam == VK_SPACE && !ctrl_key_down() && !shift_key_down() && !alt_key_down()) {
+        sr_unit_skipped = true;
+        sr_debug_log("SPACE-SKIP: flag set");
+        return false; // let game handle the skip
+    }
+
+    // Ctrl+Space = jump exploration cursor back to selected unit
+    if (wParam == VK_SPACE && ctrl_key_down() && !shift_key_down() && !alt_key_down()) {
+        int veh_id = MapWin->iUnit;
+        if (veh_id >= 0 && Vehs && *VehCount > 0 && veh_id < *VehCount) {
+            VEH* veh = &Vehs[veh_id];
+            sr_cursor_x = veh->x;
+            sr_cursor_y = veh->y;
+            sr_output(loc(SR_CURSOR_TO_UNIT), true);
+            sr_announce_tile(sr_cursor_x, sr_cursor_y);
+            sr_debug_log("CURSOR-TO-UNIT (%d,%d)", sr_cursor_x, sr_cursor_y);
+        } else {
+            sr_output(loc(SR_NO_UNIT_SELECTED), true);
+        }
+        return true;
+    }
+
+    // Numpad movement: let game handle it, then announce result
+    if (!ctrl_key_down() && !shift_key_down() && !alt_key_down()
+        && !sr_targeting_active
+        && (wParam == VK_NUMPAD1 || wParam == VK_NUMPAD2 || wParam == VK_NUMPAD3
+            || wParam == VK_NUMPAD4 || wParam == VK_NUMPAD6
+            || wParam == VK_NUMPAD7 || wParam == VK_NUMPAD8 || wParam == VK_NUMPAD9)) {
+        int veh_id = MapWin->iUnit;
+        int old_x = -1, old_y = -1;
+        if (veh_id >= 0 && Vehs && *VehCount > 0 && veh_id < *VehCount) {
+            old_x = Vehs[veh_id].x;
+            old_y = Vehs[veh_id].y;
+        }
+        // Pass to game for actual movement
+        WinProc(hwnd, msg, wParam, lParam);
+        // Re-read unit state (veh_id may have changed after action)
+        veh_id = MapWin->iUnit;
+        if (veh_id >= 0 && Vehs && *VehCount > 0 && veh_id < *VehCount) {
+            VEH* veh = &Vehs[veh_id];
+            if (veh->x != old_x || veh->y != old_y) {
+                sr_cursor_x = veh->x;
+                sr_cursor_y = veh->y;
+                sr_announce_tile(sr_cursor_x, sr_cursor_y);
+                int total_speed = veh_speed(veh_id, 0);
+                int remaining = max(0, total_speed - (int)veh->moves_spent);
+                int disp_rem = remaining / Rules->move_rate_roads;
+                int disp_tot = total_speed / Rules->move_rate_roads;
+                char move_buf[64];
+                snprintf(move_buf, sizeof(move_buf),
+                    loc(SR_MOVEMENT_POINTS), disp_rem, disp_tot);
+                sr_output(move_buf, false);
+            } else {
+                sr_output(loc(SR_CANNOT_MOVE), true);
             }
         }
         return true;
@@ -827,6 +1008,13 @@ bool HandleKey(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     if (wParam == 'P' && ctrl_key_down() && !alt_key_down()
         && !*GameHalted && cur_win == GW_World) {
         PrefsHandler::RunModal();
+        return true;
+    }
+
+    // Shift+D → open Design Workshop handler
+    if (wParam == 'D' && shift_key_down() && !ctrl_key_down() && !alt_key_down()
+        && !*GameHalted && cur_win == GW_World) {
+        DesignHandler::RunModal();
         return true;
     }
 

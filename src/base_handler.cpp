@@ -40,6 +40,15 @@ static int _demolitionCount = 0;
 static int _demolitionItems[65]; // FacilityId values of built facilities
 static bool _demolitionConfirm = false; // Awaiting second Delete press
 
+// Nerve staple state
+static bool _nerveStapleConfirm = false;
+
+// Base rename state
+static bool _renameActive = false;
+static char _renameBuf[25] = {};    // working buffer
+static char _renameOriginal[25] = {}; // backup for cancel
+static int _renameLen = 0;
+
 static const SrStr section_str_ids[] = {
     SR_SEC_OVERVIEW,
     SR_SEC_RESOURCES,
@@ -652,6 +661,10 @@ bool IsDemolitionActive() {
     return _demolitionActive;
 }
 
+bool IsRenameActive() {
+    return _renameActive;
+}
+
 bool IsActive() {
     if (!*GameHalted) {
         int state = Win_get_key_window();
@@ -662,9 +675,11 @@ bool IsActive() {
     return false;
 }
 
-void OnOpen() {
+void OnOpen(bool announce_help) {
     _currentSection = BS_Overview;
     _lastBaseID = *CurrentBaseID;
+    _nerveStapleConfirm = false;
+    _renameActive = false;
 
     if (!valid_base()) {
         sr_output(loc(SR_BASE_SCREEN), true);
@@ -688,6 +703,9 @@ void OnOpen() {
         sr_base_name(base), (int)base->pop_size,
         sr_prod(item), base->minerals_accumulated, cost, turns_str);
     sr_output(buf, true);
+    if (announce_help) {
+        sr_output(loc(SR_BASE_HELP), false);  // queue help on first open only
+    }
     sr_debug_log("BASE-OPEN: %s", buf);
 }
 
@@ -698,6 +716,8 @@ void OnClose() {
     _queueInsertMode = false;
     _demolitionActive = false;
     _demolitionConfirm = false;
+    _nerveStapleConfirm = false;
+    _renameActive = false;
     sr_debug_log("BASE-CLOSE");
 }
 
@@ -721,6 +741,80 @@ const char* GetHelpText() {
 }
 
 bool Update(UINT msg, WPARAM wParam) {
+    // Rename mode: handle both WM_KEYDOWN and WM_CHAR
+    if (_renameActive) {
+        if (msg == WM_KEYDOWN) {
+            if (wParam == VK_RETURN) {
+                // Confirm rename
+                if (!valid_base()) { _renameActive = false; return true; }
+                BASE* base = &Bases[*CurrentBaseID];
+                _renameBuf[_renameLen] = '\0';
+                if (_renameLen > 0) {
+                    strncpy(base->name, _renameBuf, 24);
+                    base->name[24] = '\0';
+                    GraphicWin_redraw(BaseWin);
+                    char buf[128];
+                    snprintf(buf, sizeof(buf), loc(SR_RENAME_DONE), sr_game_str(base->name));
+                    sr_output(buf, true);
+                    sr_debug_log("RENAME: %s", base->name);
+                } else {
+                    // Empty name: restore original
+                    strncpy(base->name, _renameOriginal, 24);
+                    base->name[24] = '\0';
+                    sr_output(loc(SR_RENAME_CANCEL), true);
+                }
+                _renameActive = false;
+                return true;
+            }
+            if (wParam == VK_ESCAPE) {
+                // Cancel rename, restore original
+                if (valid_base()) {
+                    BASE* base = &Bases[*CurrentBaseID];
+                    strncpy(base->name, _renameOriginal, 24);
+                    base->name[24] = '\0';
+                }
+                _renameActive = false;
+                sr_output(loc(SR_RENAME_CANCEL), true);
+                return true;
+            }
+            if (wParam == VK_BACK) {
+                if (_renameLen > 0) {
+                    _renameLen--;
+                    _renameBuf[_renameLen] = '\0';
+                    if (_renameLen > 0) {
+                        sr_output(_renameBuf, true);
+                    } else {
+                        sr_output(loc(SR_RENAME_CANCEL), true); // "empty" feedback
+                    }
+                }
+                return true;
+            }
+            if (wParam == 'R' && ctrl_key_down()) {
+                // Read current name buffer
+                if (_renameLen > 0) {
+                    sr_output(_renameBuf, true);
+                } else {
+                    sr_output(loc(SR_RENAME_CANCEL), true);
+                }
+                return true;
+            }
+            return true; // consume all other keydown in rename mode
+        }
+        if (msg == WM_CHAR) {
+            char ch = (char)wParam;
+            // Accept printable ASCII chars (space through tilde)
+            if (ch >= 32 && ch <= 126 && _renameLen < 24) {
+                _renameBuf[_renameLen++] = ch;
+                _renameBuf[_renameLen] = '\0';
+                char letter[4];
+                snprintf(letter, sizeof(letter), loc(SR_RENAME_CHAR_FMT), ch);
+                sr_output(letter, true);
+            }
+            return true; // consume all WM_CHAR in rename mode
+        }
+        return false;
+    }
+
     if (msg != WM_KEYDOWN) return false;
 
     // Production picker active: intercept navigation keys
@@ -1043,6 +1137,56 @@ bool Update(UINT msg, WPARAM wParam) {
             sr_game_str(Facility[_demolitionItems[0]].name));
         sr_output(buf, true);
         sr_debug_log("DEMOLITION-OPEN: %d facilities", _demolitionCount);
+        return true;
+    }
+
+    // Ctrl+N: nerve staple
+    if (wParam == 'N' && ctrl_key_down()) {
+        if (!valid_base()) return true;
+        BASE* base = &Bases[*CurrentBaseID];
+        if (base->faction_id != MapWin->cOwner) return true;
+
+        if (!can_staple(*CurrentBaseID)) {
+            sr_output(loc(SR_NERVE_STAPLE_CANNOT), true);
+            _nerveStapleConfirm = false;
+            return true;
+        }
+
+        if (!_nerveStapleConfirm) {
+            _nerveStapleConfirm = true;
+            char buf[256];
+            snprintf(buf, sizeof(buf), loc(SR_NERVE_STAPLE_CONFIRM), sr_base_name(base));
+            sr_output(buf, true);
+        } else {
+            _nerveStapleConfirm = false;
+            BaseWin_action_staple(*CurrentBaseID);
+            // Re-read the base after action
+            base = &Bases[*CurrentBaseID];
+            char buf[256];
+            snprintf(buf, sizeof(buf), loc(SR_NERVE_STAPLE_DONE),
+                sr_base_name(base), (int)base->nerve_staple_turns_left);
+            sr_output(buf, true);
+            sr_debug_log("NERVE-STAPLE: %s, %d turns", base->name, (int)base->nerve_staple_turns_left);
+        }
+        return true;
+    }
+
+    // F2: rename base
+    if (wParam == VK_F2) {
+        if (!valid_base()) return true;
+        BASE* base = &Bases[*CurrentBaseID];
+        if (base->faction_id != MapWin->cOwner) return true;
+
+        _renameActive = true;
+        _renameLen = 0;
+        _renameBuf[0] = '\0';
+        strncpy(_renameOriginal, base->name, 24);
+        _renameOriginal[24] = '\0';
+
+        char buf[256];
+        snprintf(buf, sizeof(buf), loc(SR_RENAME_OPEN), sr_base_name(base));
+        sr_output(buf, true);
+        sr_debug_log("RENAME-OPEN: %s", base->name);
         return true;
     }
 

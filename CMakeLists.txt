@@ -88,3 +88,14 @@ target_link_options(thinker PRIVATE
 )
 set_target_properties(thinker PROPERTIES PREFIX "" SUFFIX ".exe")
 target_link_libraries(thinker PRIVATE thinkerlib user32)
+
+# ---------- Deploy to game directory ----------
+set(GAME_DIR "C:/Program Files (x86)/Sid Meier's Alpha Centauri Planetary Pack")
+
+add_custom_target(deploy
+    COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:thinkerlib> "${GAME_DIR}/thinker.dll"
+    COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:thinker> "${GAME_DIR}/thinker.exe"
+    COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_SOURCE_DIR}/sr_lang" "${GAME_DIR}/sr_lang"
+    DEPENDS thinkerlib thinker
+    COMMENT "Deploying thinker.dll, thinker.exe and sr_lang/ to game directory"
+)

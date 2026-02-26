@@ -6,7 +6,9 @@
 #include "main.h"
 #include "screen_reader.h"
 #include "localization.h"
+#include "modal_utils.h"
 #include <stdarg.h>
+#include <stdlib.h>
 
 // Tolk function pointer types
 typedef void    (__cdecl *FTolk_Load)();
@@ -297,6 +299,7 @@ static bool sr_is_junk(const char* text) {
     // TURN COMPLETE floods the buffer during AI turns, preventing other announces
     if (strcmp(text, "TURN COMPLETE") == 0) return true;
     if (strcmp(text, "ZUG BEENDET") == 0) return true;
+    if (strcmp(text, "RUNDE BEENDET") == 0) return true;
     // Diplomacy status strings that leak during menu navigation
     if (strncmp(text, "No Contact", 10) == 0) return true;
     if (strncmp(text, "no contact", 10) == 0) return true;
@@ -773,12 +776,23 @@ void sr_substitute_game_vars(char* buf, int bufsize) {
             // Handle $<N:form0:form1:...> gender/plurality pattern
             if (*p == '<') {
                 p++; // skip <
-                // Must start with digit (slot number). Skip $<M1:...> etc.
-                // (those are letter-prefixed patterns handled by sr_substitute_vars)
+                // Letter-prefixed patterns like $<M1:content> or $<F2:content>
+                // Strip the wrapper, keep content (inner $VARs resolved next iteration)
                 if (!(*p >= '0' && *p <= '9')) {
-                    // Skip to closing '>' to avoid matching nested $VARs
+                    char* colon = strchr(p, ':');
                     char* close = strchr(p, '>');
-                    if (close) p = close + 1; // resume after '>'
+                    if (colon && close && colon < close) {
+                        // Extract content between ':' and '>'
+                        int prefix = (int)(start - buf);
+                        int content_len = (int)(close - colon - 1);
+                        snprintf(tmp, sizeof(tmp), "%.*s%.*s%s",
+                            prefix, buf, content_len, colon + 1, close + 1);
+                        strncpy(buf, tmp, bufsize - 1);
+                        buf[bufsize - 1] = '\0';
+                        changed = true;
+                        break; // restart scan
+                    }
+                    if (close) p = close + 1;
                     continue;
                 }
                 if (*p >= '0' && *p <= '9') {
@@ -1243,18 +1257,103 @@ static int __cdecl sr_hook_planetfall(int faction_id) {
 // Saved original pop_ask_number function address
 static Fpop_ask_number sr_orig_pop_ask_number = NULL;
 
+// Number input modal state
+static bool sr_number_input_active = false;
+static bool sr_number_input_close = false;
+static bool sr_number_input_confirmed = false;
+static char sr_number_buf[12] = {};  // up to 11 digits + NUL
+static int sr_number_len = 0;
+static int sr_number_default = 0;
+
+bool sr_is_number_input_active() { return sr_number_input_active; }
+
+// Process keys during modal number input (called from ModWinProc)
+void sr_number_input_update(UINT msg, WPARAM wParam) {
+    if (msg == WM_KEYDOWN) {
+        if (wParam == VK_RETURN) {
+            sr_number_input_confirmed = true;
+            sr_number_input_close = true;
+            if (sr_number_len > 0) {
+                char buf[64];
+                snprintf(buf, sizeof(buf), loc(SR_INPUT_NUMBER_DONE), atoi(sr_number_buf));
+                sr_output(buf, true);
+            }
+            return;
+        }
+        if (wParam == VK_ESCAPE) {
+            sr_number_input_confirmed = false;
+            sr_number_input_close = true;
+            return;
+        }
+        if (wParam == VK_BACK) {
+            if (sr_number_len > 0) {
+                sr_number_len--;
+                sr_number_buf[sr_number_len] = '\0';
+                if (sr_number_len > 0) {
+                    sr_output(sr_number_buf, true);
+                } else {
+                    sr_output(loc(SR_INPUT_NUMBER_EMPTY), true);
+                }
+            }
+            return;
+        }
+        if (wParam == 'R' && ctrl_key_down()) {
+            if (sr_number_len > 0) {
+                sr_output(sr_number_buf, true);
+            } else {
+                sr_output(loc(SR_INPUT_NUMBER_EMPTY), true);
+            }
+            return;
+        }
+    }
+    if (msg == WM_CHAR) {
+        char ch = (char)wParam;
+        if (ch >= '0' && ch <= '9' && sr_number_len < 11) {
+            sr_number_buf[sr_number_len++] = ch;
+            sr_number_buf[sr_number_len] = '\0';
+            char digit[4];
+            snprintf(digit, sizeof(digit), "%c", ch);
+            sr_output(digit, true);
+        }
+    }
+}
+
 /*
-Hook for pop_ask_number: announces that a number input dialog is active
-and what the default value is, so the user knows to type a number.
+Hook for pop_ask_number: runs our own modal loop with digit echo
+instead of the game's native dialog. Returns 0 for OK (value in
+ParseNumTable[0]) or non-zero for cancel.
 */
 static int __cdecl sr_hook_pop_ask_number(const char* filename, const char* label,
                                            int value, int a4) {
-    if (sr_is_available()) {
-        char buf[256];
-        snprintf(buf, sizeof(buf), loc(SR_INPUT_NUMBER), value);
-        sr_output(buf, false); // queued after popup text from sr_pre_popup
+    if (!sr_is_available()) {
+        return sr_orig_pop_ask_number(filename, label, value, a4);
     }
-    return sr_orig_pop_ask_number(filename, label, value, a4);
+
+    // Announce the number input prompt
+    char buf[256];
+    snprintf(buf, sizeof(buf), loc(SR_INPUT_NUMBER), value);
+    sr_output(buf, true);
+
+    // Initialize modal state
+    sr_number_default = value;
+    sr_number_len = 0;
+    sr_number_buf[0] = '\0';
+    sr_number_input_confirmed = false;
+    sr_number_input_close = false;
+    sr_number_input_active = true;
+
+    // Run modal pump (keys dispatched through ModWinProc -> sr_number_input_update)
+    sr_run_modal_pump(&sr_number_input_close);
+
+    sr_number_input_active = false;
+
+    if (sr_number_input_confirmed && sr_number_len > 0) {
+        ParseNumTable[0] = atoi(sr_number_buf);
+        return 0; // OK
+    }
+    // Cancel or empty: return default via ParseNumTable, signal cancel
+    ParseNumTable[0] = sr_number_default;
+    return -1; // cancel
 }
 
 // ========== Inline Hook Implementation ==========
