@@ -1,5 +1,6 @@
 
 #include "veh_combat.h"
+#include "message_handler.h"
 
 
 static void reset_veh_draw() {
@@ -8,6 +9,7 @@ static void reset_veh_draw() {
 }
 
 static int net_pop(const char* label, const char* filename) {
+    MessageHandler::OnMessage(label, 0);
     return NetMsg_pop(NetMsg, label, 5000, 0, filename);
 }
 
@@ -1392,6 +1394,7 @@ int __cdecl mod_battle_fight_2(int veh_id_atk, int offset, int tx, int ty, int t
                 parse_says(2, m_atk->noun_faction, -1, -1);
             }
             if (faction_id_def == player_id) {
+                MessageHandler::OnMessage("SURPRISE", 0);
                 NetMsg_pop(NetMsg, "SURPRISE", -5000, 0, 0);
             } else if (*PbemActive) {
                 POP2("SURPRISE", 0, -1 - faction_id_def);
@@ -2277,16 +2280,19 @@ END_BATTLE:
     case 1:
         parse_says(0, m_atk->adj_name_faction, -1, -1);
         parse_says(1, parse_set(faction_id_def), -1, -1);
+        MessageHandler::OnMessage("VENDETTAREPORT", 0);
         NetMsg_pop2("VENDETTAREPORT", 0);
         break;
     case 2:
         parse_says(0, m_atk->adj_name_faction, -1, -1);
         parse_says(1, parse_set(faction_id_def), -1, -1);
+        MessageHandler::OnMessage("PACTATTACKED", 0);
         NetMsg_pop2("PACTATTACKED", 0);
         break;
     case 3:
         parse_says(0, parse_set(faction_id_atk), -1, -1);
         parse_says(1, parse_set(faction_id_def), -1, -1);
+        MessageHandler::OnMessage("PACTATTACKING", 0);
         NetMsg_pop2("PACTATTACKING", 0);
         break;
     }

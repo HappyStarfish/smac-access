@@ -1,5 +1,11 @@
 
 #include "base.h"
+#include "message_handler.h"
+
+static int sr_NetMsg_pop(void* This, const char* label, int delay, int a4, const char* a5) {
+    MessageHandler::OnMessage(label, 0);
+    return NetMsg_pop(This, label, delay, a4, a5);
+}
 
 static bool delay_base_riot = false;
 static bool base_yield_active = false;
@@ -75,7 +81,7 @@ static void find_relocate_base(int faction_id) {
             draw_tile(b->x, b->y, 2);
             parse_says(1, Bases[best_id].name, -1, -1);
             parse_says(2, parse_set(faction_id), -1, -1);
-            NetMsg_pop(NetMsg, "ESCAPED", 5000, 0, 0);
+            sr_NetMsg_pop(NetMsg, "ESCAPED", 5000, 0, 0);
         }
     }
 }

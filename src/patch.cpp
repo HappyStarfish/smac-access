@@ -2,6 +2,7 @@
 #include "patch.h"
 #include "patchdata.h"
 #include "patchveh.h"
+#include "message_handler.h"
 #include <mutex>
 
 static std::mutex FileLock;
@@ -60,10 +61,12 @@ int __cdecl skip_action_destroy(int id) {
 Change FORESTGROWS / KELPGROWS / PRODUCE popups into delayed notification items on the message log.
 */
 int __cdecl alien_fauna_pop2(const char* label, const char* imagefile, int UNUSED(a3)) {
+    MessageHandler::OnMessage(label, 0);
     return NetMsg_pop(NetMsg, label, 5000, 0, imagefile);
 }
 
 int __cdecl base_production_popp(const char* textfile, const char* label, int a3, const char* imagefile, int a5) {
+    MessageHandler::OnMessage(label, 0);
     int item_id = (*CurrentBase ? (*CurrentBase)->item() : 0);
     if (item_id == -FAC_SKY_HYDRO_LAB
     || item_id == -FAC_ORBITAL_POWER_TRANS

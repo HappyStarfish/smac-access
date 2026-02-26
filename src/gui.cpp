@@ -1380,6 +1380,14 @@ LRESULT WINAPI ModWinProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         sr_consumed_key_char = true;
         return 0;
 
+    // Screen reader: Ctrl+M = open message log browser
+    } else if (msg == WM_KEYDOWN && wParam == 'M' && ctrl_key_down()
+    && !shift_key_down() && sr_is_available()
+    && (current_window() == GW_World || current_window() == GW_None)
+    && !*GameHalted) {
+        MessageHandler::OpenBrowser();
+        return 0;
+
     // Screen reader: Ctrl+Shift+R = silence speech
     } else if (msg == WM_KEYDOWN && wParam == 'R' && ctrl_key_down()
     && shift_key_down() && sr_is_available()) {
@@ -2484,20 +2492,15 @@ void __cdecl reset_netmsg_status()
 
 int __thiscall mod_NetMsg_pop(void* This, const char* label, int delay, int a4, const char* a5)
 {
+    // Capture all messages into the SR message log
+    if (sr_is_available() && label) {
+        MessageHandler::OnMessage(label, a5);
+    }
+
     if (!conf.foreign_treaty_popup) {
         return NetMsg_pop(This, label, delay, a4, a5);
     }
     if (!strcmp(label, "GOTMYPROBE")) {
-        // Screen reader: announce probe team detection
-        if (sr_is_available()) {
-            char buf[2048];
-            const char* file = a5 ? a5 : "script";
-            if (sr_read_popup_text(file, label, buf, sizeof(buf)) && buf[0]) {
-                char msg[2048];
-                snprintf(msg, sizeof(msg), loc(SR_DIPLO_NETMSG), buf);
-                sr_output(msg, true);
-            }
-        }
         return NetMsg_pop(This, label, -1, a4, a5);
     }
     if (!strcmp(label, netmsg_label)
@@ -2509,18 +2512,6 @@ int __thiscall mod_NetMsg_pop(void* This, const char* label, int delay, int a4, 
     strcpy_n(netmsg_label, StrBufLen, label);
     strcpy_n(netmsg_item0, StrBufLen, ParseStrBuffer[0].str);
     strcpy_n(netmsg_item1, StrBufLen, ParseStrBuffer[1].str);
-
-    // Screen reader: announce treaty/war notification text
-    if (sr_is_available()) {
-        char buf[2048];
-        const char* file = a5 ? a5 : "script";
-        if (sr_read_popup_text(file, label, buf, sizeof(buf)) && buf[0]) {
-            char msg[2048];
-            snprintf(msg, sizeof(msg), loc(SR_DIPLO_NETMSG), buf);
-            sr_output(msg, true);
-            sr_debug_log("NETMSG-POP label=%s text=%s\n", label, buf);
-        }
-    }
 
     return NetMsg_pop(This, label, -1, a4, a5);
 }
@@ -2625,6 +2616,7 @@ int __cdecl mod_action_arty(int veh_id, int x, int y)
     }
     if (veh->faction_id == *CurrentPlayerFaction) {
         if (!veh_ready(veh_id)) {
+            MessageHandler::OnMessage("UNITMOVED", 0);
             return NetMsg_pop(NetMsg, "UNITMOVED", 5000, 0, 0);
         }
     }
@@ -2644,6 +2636,7 @@ int __cdecl mod_action_arty(int veh_id, int x, int y)
             return action_destroy(veh_id, 0, x, y);
         }
     } else {
+        MessageHandler::OnMessage("OUTOFRANGE", 0);
         return NetMsg_pop(NetMsg, "OUTOFRANGE", 5000, 0, 0);
     }
     return 0;

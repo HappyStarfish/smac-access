@@ -1,6 +1,11 @@
 
 #include "tech.h"
+#include "message_handler.h"
 
+static int sr_NetMsg_pop(void* This, const char* label, int delay, int a4, const char* a5) {
+    MessageHandler::OnMessage(label, 0);
+    return NetMsg_pop(This, label, delay, a4, a5);
+}
 
 static bool revised_tech_cost() {
     // Not supported during multiplayer
@@ -215,7 +220,7 @@ int __cdecl mod_tech_selection(int faction_id) {
                 parse_says(0, &MFactions[faction_id].title_leader[0], -1, -1);
                 parse_says(1, &MFactions[faction_id].name_leader[0], -1, -1);
                 // Note that this script label does not display title/name by default
-                NetMsg_pop(NetMsg, "PICKINGTECH", 0, 0, 0);
+                sr_NetMsg_pop(NetMsg, "PICKINGTECH", 0, 0, 0);
             }
         }
         NetMsg_close(NetMsg);

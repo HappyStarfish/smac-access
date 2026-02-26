@@ -66,6 +66,7 @@
   - Ctrl+PgUp: Previous filter category
   - Ctrl+PgDn: Next filter category
   - 10 filters: All, Own Bases, Enemy Bases, Enemy Units, Own Units, Own Formers, Fungus, Pods/Monoliths, Improvements, Terrain/Nature
+- **Ctrl+M: Message log browser** (world map only, browse/jump to message locations)
 - **World Map — Menu Bar (Alt key):**
   - Alt: Open menu bar, announce first menu (Game)
   - Alt+Left/Right: Navigate between menus (with shortcut summaries)
@@ -153,14 +154,26 @@ Filters from triggers 1-3:
 - src/specialist_handler.h — SpecialistHandler declarations
 - src/design_handler.cpp — DesignHandler (Design Workshop accessibility, Shift+D)
 - src/design_handler.h — DesignHandler declarations
+- src/message_handler.cpp — MessageHandler (message log, Ctrl+M browser, ring buffer)
+- src/message_handler.h — MessageHandler namespace declarations
 - src/localization.h — SrStr enum, loc(), loc_init()
 - src/localization.cpp — English defaults, UTF-8 file loader, key mapping
-- sr_lang/en.txt — English SR strings (~210 strings)
-- sr_lang/de.txt — German SR strings (~210 strings)
+- sr_lang/en.txt — English SR strings (~220 strings)
+- sr_lang/de.txt — German SR strings (~220 strings)
 - docs/keybindings.md — Complete SMAC keybindings reference
 - docs/game-api.md — Game API documentation
 
 ## Notes for Next Session
+
+### NEW: Message Handler (Ctrl+M) — needs testing
+- **Ctrl+M on world map**: Opens modal message log browser with all captured messages
+- **Auto-announce**: All NetMsg_pop calls now captured and announced via SR (queued, non-interrupting)
+- **Browser controls**: Up/Down browse, Enter jump to location (sets SR cursor + centers map), S summary, Home/End first/last, Ctrl+F1 help, Escape close
+- **Ring buffer**: 50 messages with text, coordinates, turn number
+- **Coverage**: veh.cpp (monoliths, goody huts), faction.cpp (spy, atrocity, vendetta), base.cpp (escaped), tech.cpp (picking tech), patch.cpp (forest/kelp grows, production), veh_combat.cpp (surprise, vendetta/pact reports), gui.cpp (diplomacy via mod_NetMsg_pop, unit moved, out of range)
+- **New files**: message_handler.h, message_handler.cpp
+- **9 new loc strings** (en+de): msg_open, msg_item, msg_item_loc, msg_empty, msg_closed, msg_no_location, msg_summary, msg_help, msg_notification
+- **WorldMapHandler::SetCursor()**: New function to set SR cursor, center map, and announce tile — used by message browser Enter
 
 ### TODO: V key stack cycling (announce unit switch)
 - V cycles through units in the same tile stack — important for managing stacked units
@@ -172,6 +185,7 @@ Filters from triggers 1-3:
 
 ### Pending Tests
 
+0n. **Message Handler (Ctrl+M)** — NEW. Test: (1) Start new turn → production/terraforming messages should auto-announce. (2) Ctrl+M → "Message log, X messages" + newest message. (3) Up/Down browse. (4) Enter on message with coords → map jumps, tile announced. (5) Escape → "closed". (6) S → summary.
 0z. **Specialist management (Ctrl+W)** — TESTED OK (2026-02-26). All announcements working correctly.
 0k. **Design Workshop (Shift+D)** — TESTED OK (2026-02-26). Two-level navigation works. Kostenanzeige zeigt Grundkosten (ohne Prototyp-Zuschlag) — ist korrekt, Aufschlag kommt erst beim Bauen.
 0a. **Preferences handler (Ctrl+P)** — TESTED OK (2026-02-26).
@@ -235,4 +249,5 @@ Filters from triggers 1-3:
 - **2026-02-26 (session 4)**: Text input accessibility + variable substitution expansion. (1) Modal number input: Replaced sr_hook_pop_ask_number with own modal loop. Digits 0-9 echoed, Backspace removes+announces, Ctrl+R reads buffer, Enter confirms (ParseNumTable[0]), Escape returns default. (2) Popup text input echo: Game-native text inputs (base naming at founding, save filenames) now echo typed characters. Shadow buffer tracks input for Ctrl+R readback and Backspace feedback. Detection via sr_popup_is_active() || WinModalState. Non-consuming (message passes to game). (3) Base rename umlaut fix: Expanded char filter from ASCII 32-126 to all printable (>=32, !=127). Added sr_ansi_to_utf8 conversion for character echo and sr_game_str() for buffer readback. (4) Variable substitution: Added $TECH# (Tech[ParseNumTable[slot]].name), $ABIL# (Ability[].name), $TERRAFORM# (Order[].order). Added sr_substitute_game_vars call to sr_try_tutorial_announce (was missing — $TECH0 appeared raw in tutorial text). 2 new loc strings (SR_INPUT_NUMBER_EMPTY, SR_INPUT_NUMBER_DONE) + 1 updated (SR_INPUT_NUMBER). TESTED — popup echo + umlauts OK, $TECH resolved OK.
 - **2026-02-26 (session 5)**: Extended base open announcement. OnOpen() now builds announcement piece by piece instead of single format string. Order: (1) Special states first if present (drone riots, golden age, eco damage, nerve staple) — reuses existing loc strings. (2) Base name + population (new SR_FMT_BASE_OPEN_NAME). (3) Resources: nutrient surplus with growth turns, mineral surplus, energy surplus (new SR_FMT_BASE_OPEN_RESOURCES). (4) Mood: talents + drones, only if >0 (new SR_FMT_BASE_OPEN_MOOD). (5) Production with turns (new SR_FMT_BASE_OPEN_PROD). (6) Help hint on first open (unchanged). 4 new loc strings (en+de). TESTED OK by user.
 - **2026-02-26 (session 6)**: Social Engineering handler extended + V key investigation. (1) SE total effects (G key): social_calc() with pending categories computes combined effects from all 4 models. Announces non-zero effects. (2) Energy allocation mode (W key): sub-mode with Up/Down slider select (Economy/Psych/Labs), Left/Right adjust in 10% steps, writes SE_alloc_psych/SE_alloc_labs directly. W toggles back to category mode. (3) Research/economy info (I key without Ctrl): announces current research, labs progress, estimated turns, energy credits, surplus. (4) Enhanced summary (S/Tab): now includes total effects + allocation + upheaval cost. 9 new loc strings (en+de). Updated help text. (5) V key stack cycling: WM_KEYDOWN arrives in HandleKey (confirmed via SR log), but WinProc call recurses into ModWinProc — game never processes V. TODO for next session: use return false + poll detection approach.
+- **2026-02-26 (session 8)**: Message Handler (Ctrl+M). New files: message_handler.h/cpp. Ring buffer (50 messages) captures all NetMsg_pop calls with resolved text, coordinates, base_id, turn. Auto-announce on new message (queued, non-interrupting). Ctrl+M opens modal browser: Up/Down browse, Enter jumps to location (WorldMapHandler::SetCursor), S summary, Home/End first/last, Ctrl+F1 help, Escape close. Coverage: veh.cpp (~30 goody hut/monolith calls), faction.cpp (8 spy/atrocity calls), base.cpp (1), tech.cpp (1), patch.cpp (2 wrappers), veh_combat.cpp (4 combat reports), gui.cpp (diplomacy + 2 artillery messages). Used sr_NetMsg_pop() wrapper pattern in veh/faction/base/tech to avoid 30+ individual edits. WorldMapHandler::SetCursor() added — sets SR cursor, centers map, announces tile. 9 new loc strings (en+de). Build OK, deployed.
 - **2026-02-26**: Design Workshop accessibility handler (Shift+D). New files: design_handler.h/cpp. Same modal loop pattern as SocialEngHandler. Two-level navigation: Level 1 = prototype list (default units with tech + custom units), Up/Down navigate, Enter edit, N new, Delete retire (two-press confirm), Escape close. Level 2 = component editor with 6 categories (Chassis/Weapon/Armor/Reactor/Ability1/Ability2), Left/Right cycles categories, Up/Down cycles tech-filtered options, S summary, Enter saves via mod_make_proto+mod_name_proto, Escape cancels back to list. Ability compatibility filtering via AFLAG_* flags (triad, combat/terraform/probe checks). Cost calculated via mod_proto_cost. Editing default units creates a copy in faction's custom slot. 26 new loc strings (en+de). Wired via Shift+D in world_map_handler.cpp, added to modal active check in gui.cpp. Build OK, deployed, awaiting testing.

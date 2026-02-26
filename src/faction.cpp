@@ -1,6 +1,11 @@
 
 #include "faction.h"
+#include "message_handler.h"
 
+static int sr_NetMsg_pop(void* This, const char* label, int delay, int a4, const char* a5) {
+    MessageHandler::OnMessage(label, 0);
+    return NetMsg_pop(This, label, delay, a4, a5);
+}
 
 bool has_chassis(int faction_id, VehChassis chs) {
     return has_tech(Chassis[chs].preq_tech, faction_id);
@@ -343,7 +348,7 @@ void __cdecl set_treaty(int faction_id_1, int faction_id_2, uint32_t status, boo
                 if (faction_id_1 == MapWin->cOwner) {
                     ParseNumTable[0] = turns;
                     parse_says(0, parse_set(faction_id_2), -1, -1);
-                    NetMsg_pop(NetMsg, "SPYRENEW", 5000, 0, 0);
+                    sr_NetMsg_pop(NetMsg, "SPYRENEW", 5000, 0, 0);
                 }
             }
         } else {
@@ -397,7 +402,7 @@ void __cdecl atrocity(int faction_id, int faction_id_tgt, int skip_init_check, i
     if (un_charter()) {
         if (*SunspotDuration > 0) {
             if (faction_id == *CurrentPlayerFaction) {
-                NetMsg_pop(NetMsg, "ATROCITYSPOTS", 5000, 0, 0);
+                sr_NetMsg_pop(NetMsg, "ATROCITYSPOTS", 5000, 0, 0);
             }
         } else if (!*ExpansionEnabled || skip_human_check || (!is_alien(faction_id) && !is_alien(faction_id_tgt))) {
             for (int i = 1; i < MaxPlayerNum; i++) {
@@ -462,11 +467,11 @@ void __cdecl atrocity(int faction_id, int faction_id_tgt, int skip_init_check, i
                 parse_num(0, turns);
                 if (!is_alien(faction_id)) {
                     if (faction_id == *CurrentPlayerFaction) {
-                        NetMsg_pop(NetMsg, "ATROCITY2", 5000, 0, 0);
+                        sr_NetMsg_pop(NetMsg, "ATROCITY2", 5000, 0, 0);
                     } else if (faction_id_tgt == faction_id) {
-                        NetMsg_pop(NetMsg, "ATROCITY1", 5000, 0, 0);
+                        sr_NetMsg_pop(NetMsg, "ATROCITY1", 5000, 0, 0);
                     } else {
-                        NetMsg_pop(NetMsg, "ATROCITY", 5000, 0, 0);
+                        sr_NetMsg_pop(NetMsg, "ATROCITY", 5000, 0, 0);
                     }
                 }
                 plr->sanction_turns += turns;
@@ -578,7 +583,7 @@ void __cdecl double_cross(int faction_id_atk, int faction_id_def, int faction_id
                 *plurality_default = m_atk->is_noun_plural;
                 *gender_default = m_atk->noun_gender;
                 parse_says(2, m_atk->noun_faction, -1, -1);
-                NetMsg_pop(NetMsg, "VENDETTAWARNING", 5000, 0, 0);
+                sr_NetMsg_pop(NetMsg, "VENDETTAWARNING", 5000, 0, 0);
             }
         } else {
             MFaction* m_other = &MFactions[faction_id_other];
@@ -596,7 +601,7 @@ void __cdecl double_cross(int faction_id_atk, int faction_id_def, int faction_id
             *plurality_default = m_atk->is_noun_plural;
             *gender_default = m_atk->noun_gender;
             parse_says(5, m_atk->noun_faction, -1, -1);
-            NetMsg_pop(NetMsg, "INCITED", 5000, 0, 0);
+            sr_NetMsg_pop(NetMsg, "INCITED", 5000, 0, 0);
         }
     }
     plr_def->loan_balance[faction_id_atk] = 0;
@@ -726,7 +731,7 @@ int __cdecl steal_tech(int faction_id, int faction_id_tgt, int is_steal) {
             StrBuffer[0] = '\0';
             say_tech(StrBuffer, tech_id, 0);
             parse_says(1, StrBuffer, -1, -1);
-            NetMsg_pop(NetMsg, "STOLETECH", 5000, 0, 0);
+            sr_NetMsg_pop(NetMsg, "STOLETECH", 5000, 0, 0);
         }
         tech_achieved(faction_id, tech_id, faction_id_tgt, 0);
         if (!is_human(faction_id) && tech_id != 9999) {

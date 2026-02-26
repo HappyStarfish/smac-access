@@ -1,6 +1,12 @@
 
 #include "veh.h"
+#include "message_handler.h"
 
+// Wrapper: capture message for SR log, then show popup
+static int sr_NetMsg_pop(void* This, const char* label, int delay, int a4, const char* a5) {
+    MessageHandler::OnMessage(label, 0);
+    return NetMsg_pop(This, label, delay, a4, a5);
+}
 
 int __cdecl can_arty(int unit_id, bool allow_sea_arty) {
     assert(unit_id >= 0 && unit_id < MaxProtoNum);
@@ -492,13 +498,13 @@ void __cdecl mod_monolith(int veh_id) {
             if (!is_player) {
                 return;
             }
-            NetMsg_pop(NetMsg, "MONOLITHHEAL", 5000, 0, "monolith_sm.pcx");
+            sr_NetMsg_pop(NetMsg, "MONOLITHHEAL", 5000, 0, "monolith_sm.pcx");
             *GameState |= STATE_UNK_4;
         } else if (!(veh->state & VSTATE_MONOLITH_UPGRADED)) {
             veh->state |= VSTATE_MONOLITH_UPGRADED;
             if (is_player && !*MultiplayerActive
             && !(*GameMorePreferences & MPREF_AUTO_ALWAYS_INSPECT_MONOLITH)) {
-                NetMsg_pop(NetMsg, "SEEMONOLITH", -5000, 0, "monolith_sm.pcx");
+                sr_NetMsg_pop(NetMsg, "SEEMONOLITH", -5000, 0, "monolith_sm.pcx");
                 *GameState |= STATE_UNK_4;
             }
         }
@@ -548,9 +554,9 @@ void __cdecl mod_monolith(int veh_id) {
                     return;
                 }
                 if (*GameMorePreferences & MPREF_AUTO_ALWAYS_INSPECT_MONOLITH) {
-                    NetMsg_pop(NetMsg, "MONOLITHHEAL", 5000, 0, "monolith_sm.pcx");
+                    sr_NetMsg_pop(NetMsg, "MONOLITHHEAL", 5000, 0, "monolith_sm.pcx");
                 } else {
-                    NetMsg_pop(NetMsg, "MONOLITHHEAL", -5000, 0, "monolith_sm.pcx");
+                    sr_NetMsg_pop(NetMsg, "MONOLITHHEAL", -5000, 0, "monolith_sm.pcx");
                 }
                 *GameState |= STATE_UNK_4;
                 return;
@@ -559,9 +565,9 @@ void __cdecl mod_monolith(int veh_id) {
         if (veh->state & VSTATE_MONOLITH_UPGRADED || mod_morale_veh(veh_id, 1, 0) >= 6) {
             if (is_player) {
                 if (*GameMorePreferences & MPREF_AUTO_ALWAYS_INSPECT_MONOLITH) {
-                    NetMsg_pop(NetMsg, "MONOLITHNO", 5000, 0, "monolith_sm.pcx");
+                    sr_NetMsg_pop(NetMsg, "MONOLITHNO", 5000, 0, "monolith_sm.pcx");
                 } else {
-                    NetMsg_pop(NetMsg, "MONOLITHNO", -5000, 0, "monolith_sm.pcx");
+                    sr_NetMsg_pop(NetMsg, "MONOLITHNO", -5000, 0, "monolith_sm.pcx");
                 }
             }
         } else {
@@ -592,9 +598,9 @@ void __cdecl mod_monolith(int veh_id) {
                 StrBuffer[0] = '\0';
                 snprintf(StrBuffer, StrBufLen, "MONOLITH%d", rnd_val != 0);
                 if (*GameMorePreferences & MPREF_AUTO_ALWAYS_INSPECT_MONOLITH) {
-                    NetMsg_pop(NetMsg, StrBuffer, 5000, 0, "monolith_sm.pcx");
+                    sr_NetMsg_pop(NetMsg, StrBuffer, 5000, 0, "monolith_sm.pcx");
                 } else {
-                    NetMsg_pop(NetMsg, StrBuffer, -5000, 0, "monolith_sm.pcx");
+                    sr_NetMsg_pop(NetMsg, StrBuffer, -5000, 0, "monolith_sm.pcx");
                 }
                 *GameState |= STATE_UNK_4;
             }
@@ -662,7 +668,7 @@ GOODY_START:
     if (veh->plan() == PLAN_ARTIFACT) {
         if (!goody_rand(3) && !(veh->flags & VFLAG_IS_OBJECTIVE)) {
             if (is_player) {
-                NetMsg_pop(NetMsg, is_sea ? "GOODYWHIRLPOOL" : "GOODYVANISH", 5000, 0, 0);
+                sr_NetMsg_pop(NetMsg, is_sea ? "GOODYWHIRLPOOL" : "GOODYVANISH", 5000, 0, 0);
             }
             kill(veh_id);
             return 1; // Special return value
@@ -676,7 +682,7 @@ GOODY_START:
         if (is_player) {
             parse_num(0, credits);
             FX_play(Sounds, 22);
-            NetMsg_pop(NetMsg, is_sea ? "GOODYHYDROGEN" : "GOODYURANIUM", -5000, 0, is_sea ? 0 : "supply_sm.pcx");
+            sr_NetMsg_pop(NetMsg, is_sea ? "GOODYHYDROGEN" : "GOODYURANIUM", -5000, 0, is_sea ? 0 : "supply_sm.pcx");
             FX_fade(Sounds, 22);
         }
         return 0;
@@ -691,7 +697,7 @@ GOODY_START:
         }
         if (is_player) {
             FX_play(Sounds, 38);
-            NetMsg_pop(NetMsg, "GOODYRIVER", 5000, 0, "supply_sm.pcx");
+            sr_NetMsg_pop(NetMsg, "GOODYRIVER", 5000, 0, "supply_sm.pcx");
         }
         bit_set(x, y, BIT_RIVER_SRC, 1);
         world_climate();
@@ -706,7 +712,7 @@ GOODY_START:
             }
             if (is_player) {
                 FX_play(Sounds, 22);
-                NetMsg_pop(NetMsg, is_sea ? "GOODYSONAR" : "GOODYVIEW", 5000, 0, "supply_sm.pcx");
+                sr_NetMsg_pop(NetMsg, is_sea ? "GOODYSONAR" : "GOODYVIEW", 5000, 0, "supply_sm.pcx");
                 FX_fade(Sounds, 22);
                 draw_map(1);
             }
@@ -743,7 +749,7 @@ GOODY_START:
         world_climate();
         draw_map(1);
         if (is_player) {
-            NetMsg_pop(NetMsg, "GOODYQUAKE", -5000, 0, "quake_sm.pcx");
+            sr_NetMsg_pop(NetMsg, "GOODYQUAKE", -5000, 0, "quake_sm.pcx");
             if (!tut_check(2048)) {
                 return 0;
             }
@@ -796,7 +802,7 @@ GOODY_START:
             }
         }
         if (is_player) {
-            NetMsg_pop(NetMsg, is_sea ? "GOODYWAVE" : "GOODYGATE", -5000, 0, is_sea ? 0 : "stars_sm.pcx");
+            sr_NetMsg_pop(NetMsg, is_sea ? "GOODYWAVE" : "GOODYGATE", -5000, 0, is_sea ? 0 : "stars_sm.pcx");
         }
         veh->moves_spent = 0;
         veh->order = 0;
@@ -842,7 +848,7 @@ GOODY_START:
                 Bases[fc_base_id].minerals_accumulated = prod_cost;
                 if (is_player) {
                     parse_says(1, &Bases[fc_base_id].name[0], -1, -1);
-                    NetMsg_pop(NetMsg, "GOODYBUILD", -5000, 0, "indbm_sm.pcx");
+                    sr_NetMsg_pop(NetMsg, "GOODYBUILD", -5000, 0, "indbm_sm.pcx");
                 }
                 return 0;
             }
@@ -879,7 +885,7 @@ GOODY_START:
                             mod_veh_skip(spawn_id);
                             draw_tile(x, y, 2);
                             if (is_player) {
-                                NetMsg_pop(NetMsg, "GOODYARTIFACT", -5000, 0, "art_dis_sm.pcx");
+                                sr_NetMsg_pop(NetMsg, "GOODYARTIFACT", -5000, 0, "art_dis_sm.pcx");
                                 FX_fade(Sounds, 27);
                             }
                         }
@@ -910,7 +916,7 @@ GOODY_START:
         val2 = goody_rand(2) && *ExpansionEnabled;
         if (is_player) {
             FX_play(Sounds, 9);
-            NetMsg_pop(NetMsg, "GOODYFUNGUS", -5000, 0, "fung_sm.pcx");
+            sr_NetMsg_pop(NetMsg, "GOODYFUNGUS", -5000, 0, "fung_sm.pcx");
         }
         site_radius(x, y);
         for (auto& m : iterate_tiles(x, y, 0, 9)) {
@@ -1005,9 +1011,9 @@ GOODY_START:
             if (is_player) {
                 parse_says(0, &Units[alt_unit_id].name[0], -1, -1);
                 if (is_battle_ogre(alt_unit_id)) {
-                    NetMsg_pop(NetMsg, "OGREPOD", is_sea ? 5000 : -5000, 0, "ogre_sm.pcx");
+                    sr_NetMsg_pop(NetMsg, "OGREPOD", is_sea ? 5000 : -5000, 0, "ogre_sm.pcx");
                 } else {
-                    NetMsg_pop(NetMsg, "GOODYPOD", is_sea ? 5000 : -5000, 0, "supply_sm.pcx");
+                    sr_NetMsg_pop(NetMsg, "GOODYPOD", is_sea ? 5000 : -5000, 0, "supply_sm.pcx");
                 }
             }
             return 0;
@@ -1031,7 +1037,7 @@ GOODY_START:
                     *gender_default = m->noun_gender;
                     *plurality_default = m->is_noun_plural;
                     parse_says(2, m->noun_faction, -1, -1);
-                    NetMsg_pop(NetMsg, "GOODYCOMM", is_sea ? 5000 : -5000, 0, "supply_sm.pcx");
+                    sr_NetMsg_pop(NetMsg, "GOODYCOMM", is_sea ? 5000 : -5000, 0, "supply_sm.pcx");
                 }
                 return 0;
             }
@@ -1075,7 +1081,7 @@ GOODY_START:
                                 } else {
                                     strncpy(StrBuffer, "GOODYDATA", StrBufLen);
                                 }
-                                NetMsg_pop(NetMsg, StrBuffer, is_sea ? 5000 : -5000, 0, "supply_sm.pcx");
+                                sr_NetMsg_pop(NetMsg, StrBuffer, is_sea ? 5000 : -5000, 0, "supply_sm.pcx");
                             }
                             tech_achieved(faction_id, tech_id, 0, 0);
                             if (landing_site_pod) {
@@ -1165,15 +1171,15 @@ GOODY_START:
             }
             if (is_player) {
                 if (is_sea) {
-                    NetMsg_pop(NetMsg, "GOODYKELP", -5000, 0, "kelp_sm.pcx");
+                    sr_NetMsg_pop(NetMsg, "GOODYKELP", -5000, 0, "kelp_sm.pcx");
                 } else if (choice == 0) {
-                    NetMsg_pop(NetMsg, "GOODYFOREST", -5000, 0, "forgr_sm.pcx");
+                    sr_NetMsg_pop(NetMsg, "GOODYFOREST", -5000, 0, "forgr_sm.pcx");
                 } else if (choice == 1) {
-                    NetMsg_pop(NetMsg, "GOODYFARM", -5000, 0, "forgr_sm.pcx");
+                    sr_NetMsg_pop(NetMsg, "GOODYFARM", -5000, 0, "forgr_sm.pcx");
                 } else if (choice == 2) {
-                    NetMsg_pop(NetMsg, "GOODYMINE", -5000, 0, "supply_sm.pcx");
+                    sr_NetMsg_pop(NetMsg, "GOODYMINE", -5000, 0, "supply_sm.pcx");
                 } else if (choice == 3) {
-                    NetMsg_pop(NetMsg, "GOODYSOLAR", -5000, 0, "supply_sm.pcx");
+                    sr_NetMsg_pop(NetMsg, "GOODYSOLAR", -5000, 0, "supply_sm.pcx");
                 }
             }
             return 0;
@@ -1267,11 +1273,11 @@ GOODY_START:
         if (is_player) {
             FX_play(Sounds, 17);
             if (is_sea) {
-                NetMsg_pop(NetMsg, "GOODYISLE", -5000, 0, "isle_sm.pcx");
+                sr_NetMsg_pop(NetMsg, "GOODYISLE", -5000, 0, "isle_sm.pcx");
             } else if (is_spore_launcher) {
-                NetMsg_pop(NetMsg, "GOODYWORMS", -5000, 0, "sporlnch_sm.pcx");
+                sr_NetMsg_pop(NetMsg, "GOODYWORMS", -5000, 0, "sporlnch_sm.pcx");
             } else {
-                NetMsg_pop(NetMsg, "GOODYWORMS", -5000, 0, "mindworm_sm.pcx");
+                sr_NetMsg_pop(NetMsg, "GOODYWORMS", -5000, 0, "mindworm_sm.pcx");
             }
             FX_fade(Sounds, 17);
         }
@@ -1315,7 +1321,7 @@ GOODY_START:
             Vehs[clone_id].damage_taken = veh->damage_taken;
             if (is_player) {
                 parse_says(0, veh->name(), -1, -1);
-                NetMsg_pop(NetMsg, "GOODYCLONE", -5000, 0, "clone_sm.pcx");
+                sr_NetMsg_pop(NetMsg, "GOODYCLONE", -5000, 0, "clone_sm.pcx");
             }
             return 0;
         }
@@ -1361,7 +1367,7 @@ GOODY_NEXT:
                         wave_it(41);
                     }
                     parse_says(0, label_get(91 + bonus_val), -1, -1);
-                    NetMsg_pop(NetMsg, "GOODYRESOURCE", 5000, 0, "supply_sm.pcx");
+                    sr_NetMsg_pop(NetMsg, "GOODYRESOURCE", 5000, 0, "supply_sm.pcx");
                 }
                 draw_tile(x, y, 2);
                 if (!goody_rand(3) || event_flag) {
@@ -1386,7 +1392,7 @@ int __cdecl mod_study_artifact(int veh_id) {
             if (!(base->state_flags & BSTATE_ARTIFACT_ALREADY_LINKED)
             && faction_id == *CurrentPlayerFaction) {
                 parse_says(0, base->name, -1, -1);
-                NetMsg_pop(NetMsg, "ALREADYARTIFACT", -5000, 0, "art_dis_sm.pcx");
+                sr_NetMsg_pop(NetMsg, "ALREADYARTIFACT", -5000, 0, "art_dis_sm.pcx");
                 base->state_flags |= BSTATE_ARTIFACT_ALREADY_LINKED;
             }
             return 0;
