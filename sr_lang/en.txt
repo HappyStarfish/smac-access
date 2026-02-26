@@ -197,6 +197,11 @@ menu_multiplayer=Multiplayer
 menu_scenario_menu=Scenario
 menu_thinker=Thinker Menu
 menu_game_menu=Game Menu
+menu_file_select=File Selection
+file_load_game=Load Game
+file_folder=Folder
+file_item_fmt=%d of %d: %s, %s
+file_parent_dir=Parent directory
 
 # Popup List Navigation
 popup_list_fmt=%d of %d: %s
@@ -215,7 +220,7 @@ soceng_current=Current selection
 soceng_pending=Pending change to %s
 soceng_summary_fmt=%s: %s
 soceng_upheaval_cost=Upheaval cost: %d energy credits
-soceng_help=Up/Down: Categories. Left/Right: Choose model. Enter: Confirm and close. S or Tab: Summary. Ctrl+I: Repeat. Escape: Cancel and close.
+soceng_help=Up/Down: Categories. Left/Right: Models. G: Total effects. W: Energy allocation mode. I: Research info. S or Tab: Summary. Ctrl+I: Repeat. Enter: Confirm. Escape: Cancel.
 soceng_closed=Social Engineering closed.
 
 # Preferences
@@ -439,6 +444,12 @@ rename_char_fmt=%c
 rename_done=Base renamed to %s.
 rename_cancel=Rename cancelled.
 
+# Base Open (extended announcement)
+fmt_base_open_name=Base: %s, Population %d.
+fmt_base_open_resources=Nutrients %+d, %s. Minerals %+d. Energy %+d.
+fmt_base_open_mood=Talents %d, Drones %d.
+fmt_base_open_prod=Building %s, %d of %d, %s.
+
 # Governor Configuration (Ctrl+G)
 gov_title=Governor configuration. %d options.
 gov_option_fmt=%d of %d: %s, %s
@@ -454,3 +465,25 @@ gov_priority_explore=Explore
 gov_priority_discover=Discover
 gov_priority_build=Build
 gov_priority_conquer=Conquer
+
+# Social Engineering (extended)
+soceng_total_effects=Total effects: %s
+soceng_no_total_effect=No total effects
+soceng_alloc_fmt=Energy allocation: Economy %d%%, Psych %d%%, Labs %d%%
+soceng_alloc_mode=Energy allocation mode. Up/Down: select slider. Left/Right: adjust.
+soceng_alloc_slider=%s: %d%%
+soceng_info_fmt=Researching %s. %d of %d labs, %d turns. Energy: %d credits, %+d per turn
+soceng_alloc_econ=Economy
+soceng_alloc_psych=Psych
+soceng_alloc_labs=Labs
+
+# Message Log (Ctrl+M)
+msg_open=Message log. %d messages.
+msg_item=%d of %d: %s
+msg_item_loc=%d of %d: %s (%d, %d)
+msg_empty=No messages.
+msg_closed=Message log closed.
+msg_no_location=No location for this message.
+msg_summary=%d messages. Turn %d.
+msg_help=Up/Down: Browse. Enter: Jump to location. S: Summary. Escape: Close.
+msg_notification=Message: %s

@@ -93,6 +93,12 @@ bool sr_popup_is_active();
 bool sr_is_number_input_active();
 void sr_number_input_update(UINT msg, WPARAM wParam);
 
+// File browser: load/save dialog accessibility
+bool sr_file_browser_active();
+void sr_file_browser_on_enter();   // called when Enter pressed in file browser
+void sr_file_browser_rebuild();    // rebuild list for current directory
+void sr_fb_announce_current();     // announce current file browser item
+
 // Debug logging (Ctrl+F12 toggle at runtime)
 bool sr_debug_active();
 void sr_debug_toggle();

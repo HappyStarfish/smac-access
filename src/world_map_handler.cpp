@@ -341,6 +341,15 @@ int GetCursorX() { return sr_cursor_x; }
 int GetCursorY() { return sr_cursor_y; }
 bool IsTargetingActive() { return sr_targeting_active; }
 
+void SetCursor(int x, int y) {
+    sr_cursor_x = x;
+    sr_cursor_y = y;
+    if (MapWin) {
+        MapWin_set_center(MapWin, x, y, 1);
+    }
+    sr_announce_tile(x, y);
+}
+
 void SetCursorToUnit() {
     if (MapWin && MapWin->iUnit >= 0 && Vehs && *VehCount > 0
         && MapWin->iUnit < *VehCount) {
@@ -765,6 +774,12 @@ bool HandleKey(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         sr_debug_log("SPACE-SKIP: flag set");
         return false; // let game handle the skip
     }
+
+    // TODO: V = cycle through units in stack
+    // Problem: WinProc call recurses into ModWinProc, so V never reaches the game.
+    // Solution: use return false approach (like Space/skip) and detect unit change
+    // in OnTimer poll. Needs: track previous unit, announce on change when V was pressed.
+    // See debug: V-KEY-RECEIVED confirms WM_KEYDOWN arrives, but iUnit doesn't change.
 
     // Ctrl+Space = jump exploration cursor back to selected unit
     if (wParam == VK_SPACE && ctrl_key_down() && !shift_key_down() && !alt_key_down()) {

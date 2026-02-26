@@ -197,6 +197,11 @@ menu_multiplayer=Mehrspieler
 menu_scenario_menu=Szenario
 menu_thinker=Thinker-Menü
 menu_game_menu=Spielmenü
+menu_file_select=Dateiauswahl
+file_load_game=Spiel laden
+file_folder=Ordner
+file_item_fmt=%d von %d: %s, %s
+file_parent_dir=Übergeordneter Ordner
 
 # Popup-Listennavigation
 popup_list_fmt=%d von %d: %s
@@ -215,7 +220,7 @@ soceng_current=Aktuelle Auswahl
 soceng_pending=Ausstehende Änderung zu %s
 soceng_summary_fmt=%s: %s
 soceng_upheaval_cost=Umbruchkosten: %d Energieguthaben
-soceng_help=Hoch/Runter: Kategorien. Links/Rechts: Modell wählen. Eingabe: Bestätigen und schließen. S oder Tab: Zusammenfassung. Strg+I: Wiederholen. Escape: Abbrechen und schließen.
+soceng_help=Hoch/Runter: Kategorien. Links/Rechts: Modelle. G: Gesamteffekte. W: Energieverteilung. I: Forschungsinfo. S oder Tab: Zusammenfassung. Strg+I: Wiederholen. Eingabe: Bestätigen. Escape: Abbrechen.
 soceng_closed=Gesellschaftsform geschlossen.
 
 # Einstellungen
@@ -439,6 +444,12 @@ rename_char_fmt=%c
 rename_done=Basis umbenannt zu %s.
 rename_cancel=Umbenennung abgebrochen.
 
+# Basis-Öffnung (erweiterte Ansage)
+fmt_base_open_name=Basis: %s, Bevölkerung %d.
+fmt_base_open_resources=Nährstoffe %+d, %s. Mineralien %+d. Energie %+d.
+fmt_base_open_mood=Talente %d, Drohnen %d.
+fmt_base_open_prod=Baut %s, %d von %d, %s.
+
 # Gouverneur-Konfiguration (Strg+G)
 gov_title=Gouverneur-Konfiguration. %d Optionen.
 gov_option_fmt=%d von %d: %s, %s
@@ -454,3 +465,25 @@ gov_priority_explore=Erkunden
 gov_priority_discover=Entdecken
 gov_priority_build=Bauen
 gov_priority_conquer=Kämpfen
+
+# Gesellschaftsform (erweitert)
+soceng_total_effects=Gesamteffekte: %s
+soceng_no_total_effect=Keine Gesamteffekte
+soceng_alloc_fmt=Energieverteilung: Wirtschaft %d%%, Psycho %d%%, Labor %d%%
+soceng_alloc_mode=Energieverteilungs-Modus. Hoch/Runter: Regler wählen. Links/Rechts: Anpassen.
+soceng_alloc_slider=%s: %d%%
+soceng_info_fmt=Forschung: %s. %d von %d Labor, %d Runden. Energie: %d Guthaben, %+d pro Runde
+soceng_alloc_econ=Wirtschaft
+soceng_alloc_psych=Psycho
+soceng_alloc_labs=Labor
+
+# Nachrichtenprotokoll (Strg+M)
+msg_open=Nachrichtenprotokoll. %d Nachrichten.
+msg_item=%d von %d: %s
+msg_item_loc=%d von %d: %s (%d, %d)
+msg_empty=Keine Nachrichten.
+msg_closed=Nachrichtenprotokoll geschlossen.
+msg_no_location=Kein Ort für diese Nachricht.
+msg_summary=%d Nachrichten. Runde %d.
+msg_help=Hoch/Runter: Blättern. Eingabe: Zum Ort springen. S: Zusammenfassung. Escape: Schließen.
+msg_notification=Nachricht: %s

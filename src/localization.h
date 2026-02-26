@@ -206,6 +206,11 @@ enum SrStr {
     SR_MENU_SCENARIO_MENU,  // "Scenario"
     SR_MENU_THINKER,        // "Thinker Menu"
     SR_MENU_GAME_MENU,      // "Game Menu"
+    SR_MENU_FILE_SELECT,    // "File Selection" (Load/Save file picker)
+    SR_FILE_LOAD_GAME,      // "Load Game"
+    SR_FILE_FOLDER,         // "Folder"
+    SR_FILE_ITEM_FMT,       // "%d of %d: %s, %s"  (pos, total, name, type)
+    SR_FILE_PARENT_DIR,     // "Parent directory"
 
     // Popup list navigation
     SR_POPUP_LIST_FMT,      // "%d of %d: %s"
@@ -448,6 +453,12 @@ enum SrStr {
     SR_RENAME_DONE,
     SR_RENAME_CANCEL,
 
+    // Base Open (extended announcement)
+    SR_FMT_BASE_OPEN_NAME,
+    SR_FMT_BASE_OPEN_RESOURCES,
+    SR_FMT_BASE_OPEN_MOOD,
+    SR_FMT_BASE_OPEN_PROD,
+
     // Governor Configuration (Ctrl+G)
     SR_GOV_TITLE,
     SR_GOV_OPTION_FMT,
@@ -463,6 +474,28 @@ enum SrStr {
     SR_GOV_PRIORITY_DISCOVER,
     SR_GOV_PRIORITY_BUILD,
     SR_GOV_PRIORITY_CONQUER,
+
+    // Social Engineering (extended)
+    SR_SOCENG_TOTAL_EFFECTS,
+    SR_SOCENG_NO_TOTAL_EFFECT,
+    SR_SOCENG_ALLOC_FMT,
+    SR_SOCENG_ALLOC_MODE,
+    SR_SOCENG_ALLOC_SLIDER,
+    SR_SOCENG_INFO_FMT,
+    SR_SOCENG_ALLOC_ECON,
+    SR_SOCENG_ALLOC_PSYCH,
+    SR_SOCENG_ALLOC_LABS,
+
+    // Message Log (Ctrl+M)
+    SR_MSG_OPEN,
+    SR_MSG_ITEM,
+    SR_MSG_ITEM_LOC,
+    SR_MSG_EMPTY,
+    SR_MSG_CLOSED,
+    SR_MSG_NO_LOCATION,
+    SR_MSG_SUMMARY,
+    SR_MSG_HELP,
+    SR_MSG_NOTIFICATION,
 
     SR_COUNT
 };

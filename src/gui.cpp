@@ -7,6 +7,7 @@
 #include "design_handler.h"
 #include "diplo_handler.h"
 #include "governor_handler.h"
+#include "message_handler.h"
 #include "localization.h"
 #include "world_map_handler.h"
 #include "menu_handler.h"
@@ -820,6 +821,7 @@ LRESULT WINAPI ModWinProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                 (int)current_window());
 
             // Popup list navigation (research priorities, etc.)
+            // NOT used for file browser — game text capture handles that.
             if ((wParam == VK_UP || wParam == VK_DOWN)
                 && sr_popup_list.active && sr_popup_list.count > 0) {
                 if (wParam == VK_DOWN) {
@@ -878,6 +880,7 @@ LRESULT WINAPI ModWinProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             || SpecialistHandler::IsActive()
             || DesignHandler::IsActive()
             || GovernorHandler::IsActive()
+            || MessageHandler::IsActive()
             || sr_is_number_input_active();
         if (sr_modal_active) {
             sr_snapshot_consume();
@@ -1033,15 +1036,56 @@ LRESULT WINAPI ModWinProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     }
 
     // Screen reader: echo typed characters in game-native popup text inputs
-    // (base naming, save game, etc.) — does NOT consume the message
-    if (msg == WM_CHAR && sr_is_available() && sr_popup_is_active()
-        && !sr_is_number_input_active()
-        && !BaseScreenHandler::IsRenameActive()) {
-        char ch = (char)wParam;
-        if (ch >= 32 && ch <= 126) {
-            char letter[4];
-            snprintf(letter, sizeof(letter), "%c", ch);
-            sr_output(letter, true);
+    // (base naming, save game, etc.) — does NOT consume the message.
+    // Shadow buffer tracks input for Ctrl+R readback and Backspace feedback.
+    static char sr_popup_input_buf[128] = {};
+    static int sr_popup_input_len = 0;
+    static bool sr_popup_input_was_active = false;
+    {
+        bool in_popup_input = sr_is_available()
+            && !sr_is_number_input_active()
+            && !BaseScreenHandler::IsRenameActive()
+            && (sr_popup_is_active() || *WinModalState != 0);
+
+        // Clear shadow buffer when popup input state ends
+        if (sr_popup_input_was_active && !in_popup_input) {
+            sr_popup_input_len = 0;
+            sr_popup_input_buf[0] = '\0';
+        }
+        sr_popup_input_was_active = in_popup_input;
+
+        if (in_popup_input) {
+            if (msg == WM_CHAR) {
+                unsigned char ch = (unsigned char)wParam;
+                if (ch >= 32 && ch != 127) {
+                    // Track in shadow buffer
+                    if (sr_popup_input_len < (int)sizeof(sr_popup_input_buf) - 1) {
+                        sr_popup_input_buf[sr_popup_input_len++] = (char)ch;
+                        sr_popup_input_buf[sr_popup_input_len] = '\0';
+                    }
+                    // Echo: convert Windows-1252 to UTF-8 for speech
+                    char ansi[2] = { (char)ch, '\0' };
+                    char utf8[8];
+                    sr_ansi_to_utf8(ansi, utf8, sizeof(utf8));
+                    sr_output(utf8, true);
+                }
+            } else if (msg == WM_KEYDOWN && wParam == VK_BACK) {
+                if (sr_popup_input_len > 0) {
+                    sr_popup_input_len--;
+                    sr_popup_input_buf[sr_popup_input_len] = '\0';
+                    if (sr_popup_input_len > 0) {
+                        sr_output(sr_game_str(sr_popup_input_buf), true);
+                    } else {
+                        sr_output(loc(SR_INPUT_NUMBER_EMPTY), true);
+                    }
+                }
+            } else if (msg == WM_KEYDOWN && wParam == 'R' && ctrl_key_down()) {
+                if (sr_popup_input_len > 0) {
+                    sr_output(sr_game_str(sr_popup_input_buf), true);
+                } else {
+                    sr_output(loc(SR_INPUT_NUMBER_EMPTY), true);
+                }
+            }
         }
     }
 
@@ -2513,6 +2557,15 @@ static const char* sr_menu_name(const char* label) {
 int __thiscall mod_BasePop_start(
 void* This, const char* filename, const char* label, int a4, int a5, int a6, int a7)
 {
+    if (filename && label) {
+        sr_debug_log("BASEPOP file=%s label=%s popup_active=%d",
+            filename, label, sr_popup_is_active());
+    }
+    // Clear stale popup list from previous BasePop_start dialog.
+    // Only when not inside a popp/popb wrapper (which handles its own list).
+    if (!sr_popup_is_active()) {
+        sr_popup_list_clear();
+    }
     if (!sr_popup_is_active() && sr_is_available() && filename && label) {
         const char* menu = sr_menu_name(label);
         if (menu) {
@@ -2536,6 +2589,8 @@ void* This, const char* filename, const char* label, int a4, int a5, int a6, int
             if (sr_read_popup_text(filename, label, buf, sizeof(buf))) {
                 sr_output(buf, true);
             }
+            // Parse popup list for dialogs that bypass popp/popb
+            sr_popup_list_parse(filename, label);
         }
     }
     if (movedlabels.count(label)) {

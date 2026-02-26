@@ -24,4 +24,7 @@ void SetCursorToUnit();
 /// Check if targeting mode is currently active.
 bool IsTargetingActive();
 
+/// Set SR cursor to given coordinates, center map, and announce tile.
+void SetCursor(int x, int y);
+
 }

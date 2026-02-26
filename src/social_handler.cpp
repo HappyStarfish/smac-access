@@ -3,6 +3,13 @@
  * Replaces the game's SE dialog with a keyboard-navigable, screen-reader
  * accessible modal loop. Reads SE data directly from game memory and
  * announces current settings and effects via screen reader.
+ *
+ * Features:
+ * - Category/model navigation (Up/Down, Left/Right)
+ * - Total combined effects (G key)
+ * - Energy allocation mode (W key) with slider adjustment
+ * - Research/economy info (I key)
+ * - Enhanced summary (S/Tab) with total effects and allocation
  */
 
 #include "social_handler.h"
@@ -19,11 +26,18 @@ static bool _wantClose = false;
 static bool _confirmed = false;
 static int _currentCat = 0;   // 0-3: Politics, Economics, Values, Future
 static int _currentModel = 0; // 0-3: model within current category
+static int _mode = 0;         // 0: categories/models, 1: energy allocation
+static int _allocSlider = 0;  // 0: Economy, 1: Psych, 2: Labs
 
 // Effect names matching CSocialEffect field order
 static const char* effect_names[] = {
     "Economy", "Efficiency", "Support", "Talent", "Morale",
     "Police", "Growth", "Planet", "Probe", "Industry", "Research"
+};
+
+// Slider name lookup
+static SrStr slider_names[] = {
+    SR_SOCENG_ALLOC_ECON, SR_SOCENG_ALLOC_PSYCH, SR_SOCENG_ALLOC_LABS
 };
 
 static int get_faction_id() {
@@ -60,6 +74,144 @@ static void build_effects_string(int cat, int model, char* buf, int bufsize) {
     } else {
         snprintf(buf, bufsize, loc(SR_SOCENG_EFFECTS), tmp);
     }
+}
+
+// Build total combined effects string from all 4 pending categories
+static void build_total_effects_string(char* buf, int bufsize) {
+    int faction_id = get_faction_id();
+    Faction* f = &Factions[faction_id];
+
+    CSocialCategory pending;
+    pending.politics = (&f->SE_Politics_pending)[0];
+    pending.economics = (&f->SE_Politics_pending)[1];
+    pending.values = (&f->SE_Politics_pending)[2];
+    pending.future = (&f->SE_Politics_pending)[3];
+
+    CSocialEffect total;
+    social_calc(&pending, &total, faction_id, 0, 1);
+
+    int* vals = &total.economy;
+    char tmp[512] = "";
+    int pos = 0;
+    bool any = false;
+
+    for (int i = 0; i < MaxSocialEffectNum; i++) {
+        if (vals[i] != 0) {
+            if (any) {
+                pos += snprintf(tmp + pos, sizeof(tmp) - pos, ", ");
+            }
+            pos += snprintf(tmp + pos, sizeof(tmp) - pos, "%s %+d",
+                effect_names[i], vals[i]);
+            any = true;
+        }
+    }
+
+    if (!any) {
+        snprintf(buf, bufsize, "%s", loc(SR_SOCENG_NO_TOTAL_EFFECT));
+    } else {
+        snprintf(buf, bufsize, loc(SR_SOCENG_TOTAL_EFFECTS), tmp);
+    }
+}
+
+// Announce total combined effects (G key)
+static void announce_total_effects() {
+    char buf[512];
+    build_total_effects_string(buf, sizeof(buf));
+    sr_output(buf, true);
+}
+
+// Build energy allocation string
+static void build_alloc_string(char* buf, int bufsize) {
+    Faction* f = &Factions[get_faction_id()];
+    int psych = f->SE_alloc_psych * 10;
+    int labs = f->SE_alloc_labs * 10;
+    int econ = 100 - psych - labs;
+    snprintf(buf, bufsize, loc(SR_SOCENG_ALLOC_FMT), econ, psych, labs);
+}
+
+// Announce energy allocation (current slider in alloc mode)
+static void announce_alloc_slider() {
+    Faction* f = &Factions[get_faction_id()];
+    int psych = f->SE_alloc_psych * 10;
+    int labs = f->SE_alloc_labs * 10;
+    int econ = 100 - psych - labs;
+
+    int val;
+    switch (_allocSlider) {
+    case 0: val = econ; break;
+    case 1: val = psych; break;
+    case 2: val = labs; break;
+    default: val = 0; break;
+    }
+
+    char buf[128];
+    snprintf(buf, sizeof(buf), loc(SR_SOCENG_ALLOC_SLIDER),
+        loc(slider_names[_allocSlider]), val);
+    sr_output(buf, true);
+}
+
+// Adjust allocation slider value by delta (in tenths, +1 or -1)
+static void adjust_alloc(int delta) {
+    Faction* f = &Factions[get_faction_id()];
+    int psych = f->SE_alloc_psych;
+    int labs = f->SE_alloc_labs;
+    int econ = 10 - psych - labs;
+
+    switch (_allocSlider) {
+    case 0: // Economy
+        econ += delta;
+        if (econ < 0 || econ > 10) return;
+        // Reduce from the other two to compensate
+        if (delta > 0) {
+            // Increasing economy: take from labs first, then psych
+            if (labs > 0) labs--;
+            else if (psych > 0) psych--;
+            else return;
+        } else {
+            // Decreasing economy: give to labs
+            labs++;
+        }
+        break;
+    case 1: // Psych
+        psych += delta;
+        if (psych < 0 || psych > 10) return;
+        if (psych + labs > 10) return;
+        break;
+    case 2: // Labs
+        labs += delta;
+        if (labs < 0 || labs > 10) return;
+        if (psych + labs > 10) return;
+        break;
+    }
+
+    f->SE_alloc_psych = psych;
+    f->SE_alloc_labs = labs;
+    announce_alloc_slider();
+}
+
+// Announce research and economy info (I key)
+static void announce_info() {
+    int faction_id = get_faction_id();
+    Faction* f = &Factions[faction_id];
+
+    const char* research_name = "???";
+    if (f->tech_research_id >= 0 && Tech) {
+        research_name = sr_game_str(Tech[f->tech_research_id].name);
+        if (!research_name) research_name = "???";
+    }
+
+    int labs = f->labs_total;
+    int cost = f->tech_cost;
+    int accumulated = f->tech_accumulated;
+    int remaining = cost - accumulated;
+    int turns = (labs > 0) ? ((remaining + labs - 1) / labs) : 9999;
+    if (turns < 1) turns = 1;
+
+    char buf[512];
+    snprintf(buf, sizeof(buf), loc(SR_SOCENG_INFO_FMT),
+        research_name, accumulated, cost, turns,
+        f->energy_credits, f->energy_surplus_total);
+    sr_output(buf, true);
 }
 
 // Check why a model is unavailable: 0=available, 1=no tech, 2=opposition
@@ -152,11 +304,11 @@ static void announce_category() {
     sr_output(buf, true);
 }
 
-// Announce full SE summary (all 4 categories)
+// Announce full SE summary (all 4 categories + total effects + allocation)
 static void announce_summary() {
     int faction_id = get_faction_id();
     Faction* f = &Factions[faction_id];
-    char buf[1024] = "";
+    char buf[2048] = "";
     int pos = 0;
 
     pos += snprintf(buf + pos, sizeof(buf) - pos, "%s. ", loc(SR_SOCENG_TITLE));
@@ -176,9 +328,19 @@ static void announce_summary() {
         if (cat < MaxSocialCatNum - 1) {
             pos += snprintf(buf + pos, sizeof(buf) - pos, ", ");
         } else {
-            pos += snprintf(buf + pos, sizeof(buf) - pos, ".");
+            pos += snprintf(buf + pos, sizeof(buf) - pos, ". ");
         }
     }
+
+    // Total combined effects
+    char effects_buf[512];
+    build_total_effects_string(effects_buf, sizeof(effects_buf));
+    pos += snprintf(buf + pos, sizeof(buf) - pos, "%s. ", effects_buf);
+
+    // Energy allocation
+    char alloc_buf[256];
+    build_alloc_string(alloc_buf, sizeof(alloc_buf));
+    pos += snprintf(buf + pos, sizeof(buf) - pos, "%s.", alloc_buf);
 
     // Calculate upheaval cost
     CSocialCategory pending;
@@ -191,7 +353,6 @@ static void announce_summary() {
         char cost_str[128];
         snprintf(cost_str, sizeof(cost_str), " %s",
             loc(SR_SOCENG_UPHEAVAL_COST));
-        // Format the cost into the string
         char cost_buf[128];
         snprintf(cost_buf, sizeof(cost_buf), cost_str, cost);
         strncat(buf, cost_buf, sizeof(buf) - strlen(buf) - 1);
@@ -209,6 +370,88 @@ static void select_if_available() {
     }
 }
 
+// Handle keys in allocation mode (mode 1)
+static bool update_alloc_mode(WPARAM wParam, bool ctrl) {
+    switch (wParam) {
+    case VK_UP:
+        if (ctrl) return false;
+        _allocSlider = (_allocSlider + 2) % 3; // wrap backwards
+        announce_alloc_slider();
+        return true;
+
+    case VK_DOWN:
+        if (ctrl) return false;
+        _allocSlider = (_allocSlider + 1) % 3;
+        announce_alloc_slider();
+        return true;
+
+    case VK_LEFT:
+        if (ctrl) return false;
+        adjust_alloc(-1);
+        return true;
+
+    case VK_RIGHT:
+        if (ctrl) return false;
+        adjust_alloc(1);
+        return true;
+
+    case 'W':
+        // W: back to category mode
+        if (!ctrl) {
+            _mode = 0;
+            announce_category();
+            return true;
+        }
+        return false;
+
+    case VK_RETURN:
+        _wantClose = true;
+        _confirmed = true;
+        return true;
+
+    case VK_ESCAPE:
+        _wantClose = true;
+        _confirmed = false;
+        return true;
+
+    case 'S':
+        if (!ctrl) {
+            announce_summary();
+            return true;
+        }
+        return false;
+
+    case VK_TAB:
+        announce_summary();
+        return true;
+
+    case 'G':
+        if (!ctrl) {
+            announce_total_effects();
+            return true;
+        }
+        return false;
+
+    case 'I':
+        if (ctrl) {
+            announce_alloc_slider();
+            return true;
+        }
+        announce_info();
+        return true;
+
+    case VK_F1:
+        if (ctrl) {
+            sr_output(loc(SR_SOCENG_HELP), true);
+            return true;
+        }
+        return false;
+
+    default:
+        return false;
+    }
+}
+
 bool IsActive() {
     return _active;
 }
@@ -217,6 +460,11 @@ bool Update(UINT msg, WPARAM wParam) {
     if (msg != WM_KEYDOWN) return false;
 
     bool ctrl = ctrl_key_down();
+
+    // Delegate to allocation mode handler if active
+    if (_mode == 1) {
+        return update_alloc_mode(wParam, ctrl);
+    }
 
     switch (wParam) {
     case VK_UP:
@@ -258,9 +506,29 @@ bool Update(UINT msg, WPARAM wParam) {
         return true;
 
     case 'I':
-        // Ctrl+I: repeat current item
         if (ctrl) {
+            // Ctrl+I: repeat current item
             announce_model();
+            return true;
+        }
+        // I: research/economy info
+        announce_info();
+        return true;
+
+    case 'G':
+        // G: total combined effects
+        if (!ctrl) {
+            announce_total_effects();
+            return true;
+        }
+        return false;
+
+    case 'W':
+        // W: switch to energy allocation mode
+        if (!ctrl) {
+            _mode = 1;
+            _allocSlider = 0;
+            sr_output(loc(SR_SOCENG_ALLOC_MODE), true);
             return true;
         }
         return false;
@@ -311,6 +579,8 @@ void RunModal() {
     _active = true;
     _wantClose = false;
     _confirmed = false;
+    _mode = 0;
+    _allocSlider = 0;
     _currentCat = 0;
     _currentModel = get_current_model(0);
     if (_currentModel < 0) _currentModel = 0;

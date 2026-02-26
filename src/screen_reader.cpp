@@ -403,6 +403,9 @@ static void sr_try_tutorial_announce(const char* text) {
     body[pos] = '\0';
     fclose(f);
 
+    // Substitute game variables ($TECH0, $NUM0, etc.) before UTF-8 conversion
+    sr_substitute_game_vars(body, sizeof(body));
+
     // Convert tutorial body from Windows-1252 to UTF-8
     {
         char utf8tmp[2048];
@@ -875,7 +878,62 @@ void sr_substitute_game_vars(char* buf, int bufsize) {
                     changed = true;
                     break;
                 }
-                if (!is_num && slot < 10 && ParseStrBuffer
+                // Check if this is $TECH# (technology name via ParseNumTable index)
+                bool is_tech = (word_len == 4
+                    && word_start[0] == 'T'
+                    && word_start[1] == 'E'
+                    && word_start[2] == 'C'
+                    && word_start[3] == 'H');
+                if (is_tech && slot < 16 && ParseNumTable && Tech) {
+                    int tech_id = ParseNumTable[slot];
+                    if (tech_id >= 0 && tech_id < MaxTechnologyNum
+                        && Tech[tech_id].name) {
+                        int prefix = (int)(start - buf);
+                        snprintf(tmp, sizeof(tmp), "%.*s%s%s",
+                            prefix, buf, Tech[tech_id].name, p);
+                        strncpy(buf, tmp, bufsize - 1);
+                        buf[bufsize - 1] = '\0';
+                        changed = true;
+                        break;
+                    }
+                }
+                // Check if this is $ABIL# (ability name via ParseNumTable index)
+                bool is_abil = (word_len == 4
+                    && word_start[0] == 'A'
+                    && word_start[1] == 'B'
+                    && word_start[2] == 'I'
+                    && word_start[3] == 'L');
+                if (is_abil && slot < 16 && ParseNumTable && Ability) {
+                    int abil_id = ParseNumTable[slot];
+                    if (abil_id >= 0 && abil_id < MaxAbilityNum
+                        && Ability[abil_id].name) {
+                        int prefix = (int)(start - buf);
+                        snprintf(tmp, sizeof(tmp), "%.*s%s%s",
+                            prefix, buf, Ability[abil_id].name, p);
+                        strncpy(buf, tmp, bufsize - 1);
+                        buf[bufsize - 1] = '\0';
+                        changed = true;
+                        break;
+                    }
+                }
+                // Check if this is $TERRAFORM# (terraform order name via ParseNumTable)
+                bool is_terraform = (word_len == 9
+                    && strncmp(word_start, "TERRAFORM", 9) == 0);
+                if (is_terraform && slot < 16 && ParseNumTable && Order) {
+                    int order_id = ParseNumTable[slot];
+                    if (order_id >= 0 && order_id < MaxOrderNum
+                        && Order[order_id].order) {
+                        int prefix = (int)(start - buf);
+                        snprintf(tmp, sizeof(tmp), "%.*s%s%s",
+                            prefix, buf, Order[order_id].order, p);
+                        strncpy(buf, tmp, bufsize - 1);
+                        buf[bufsize - 1] = '\0';
+                        changed = true;
+                        break;
+                    }
+                }
+                bool is_special = is_tech || is_abil || is_terraform;
+                if (!is_special && !is_num && slot < 10 && ParseStrBuffer
                     && ParseStrBuffer[slot].str[0]) {
                     int prefix = (int)(start - buf);
                     snprintf(tmp, sizeof(tmp), "%.*s%s%s",
@@ -1088,6 +1146,8 @@ static int sr_interlude_id = -1;
 
 // Shared pre/post boilerplate for popup hook wrappers.
 static void sr_pre_popup(const char* filename, const char* label) {
+    sr_debug_log("PRE-POPUP file=%s label=%s", filename ? filename : "NULL",
+        label ? label : "NULL");
     if (sr_is_available() && filename && label) {
         char buf[8192]; // Large buffer for long texts (interludes can be 3000+ chars)
         bool has_text = sr_read_popup_text(filename, label, buf, sizeof(buf));
@@ -1249,6 +1309,168 @@ static int __cdecl sr_hook_planetfall(int faction_id) {
     int result = sr_orig_planetfall(faction_id);
     sr_popup_active = false;
     sr_clear_text();
+    return result;
+}
+
+// ========== File Browser (Load/Save Dialog) ==========
+
+static fp_2int sr_orig_load_game = NULL;
+static bool sr_fb_active = false;
+static char sr_fb_path[260] = {};  // current directory path
+
+// Scan directory and populate sr_popup_list with entries.
+// Directories are marked with a trailing \x01 byte in items[] for type detection.
+static void sr_fb_scan_dir() {
+    sr_popup_list_clear();
+    int count = 0;
+
+    // Add ".." entry unless at saves root
+    if (strlen(sr_fb_path) > 6) { // longer than "saves" or "saves/"
+        strncpy(sr_popup_list.items[count], "..\x01", 255);
+        count++;
+    }
+
+    // Scan directory: first directories, then files
+    char pattern[300];
+    snprintf(pattern, sizeof(pattern), "%s\\*", sr_fb_path);
+
+    WIN32_FIND_DATAA fd;
+    HANDLE hFind = FindFirstFileA(pattern, &fd);
+    if (hFind == INVALID_HANDLE_VALUE) {
+        sr_debug_log("FB-SCAN: FindFirstFile failed for %s", pattern);
+        sr_popup_list.count = count;
+        sr_popup_list.active = (count > 0);
+        return;
+    }
+
+    // Pass 1: directories
+    do {
+        if (count >= SR_POPUP_LIST_MAX) break;
+        if (!(fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) continue;
+        if (strcmp(fd.cFileName, ".") == 0 || strcmp(fd.cFileName, "..") == 0) continue;
+        // Store with \x01 marker = directory
+        snprintf(sr_popup_list.items[count], 255, "%s\x01", fd.cFileName);
+        count++;
+    } while (FindNextFileA(hFind, &fd));
+
+    // Pass 2: files (.SAV)
+    FindClose(hFind);
+    hFind = FindFirstFileA(pattern, &fd);
+    if (hFind != INVALID_HANDLE_VALUE) {
+        do {
+            if (count >= SR_POPUP_LIST_MAX) break;
+            if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) continue;
+            // Only show .SAV files
+            const char* ext = strrchr(fd.cFileName, '.');
+            if (!ext || (_stricmp(ext, ".SAV") != 0)) continue;
+            // Store name without extension, no marker = file
+            char name[256];
+            int namelen = (int)(ext - fd.cFileName);
+            if (namelen > 254) namelen = 254;
+            memcpy(name, fd.cFileName, namelen);
+            name[namelen] = '\0';
+            strncpy(sr_popup_list.items[count], name, 255);
+            count++;
+        } while (FindNextFileA(hFind, &fd));
+        FindClose(hFind);
+    }
+
+    sr_popup_list.count = count;
+    sr_popup_list.index = 0;
+    sr_popup_list.active = (count > 0);
+    sr_debug_log("FB-SCAN: %d entries in %s", count, sr_fb_path);
+    for (int i = 0; i < count && i < 5; i++) {
+        sr_debug_log("  fb[%d]: %s", i, sr_popup_list.items[i]);
+    }
+}
+
+// Build announcement string for current file browser item.
+// Format: "N of M: name, Folder" or "N of M: name"
+void sr_fb_announce_current() {
+    if (!sr_popup_list.active || sr_popup_list.count <= 0) return;
+    int idx = sr_popup_list.index;
+    const char* raw = sr_popup_list.items[idx];
+    char name[256];
+    strncpy(name, raw, 255);
+    name[255] = '\0';
+
+    // Check for \x01 marker (directory)
+    int len = strlen(name);
+    bool is_dir = (len > 0 && name[len - 1] == '\x01');
+    if (is_dir) name[len - 1] = '\0';
+
+    // ".." gets special label
+    const char* display_name = name;
+    bool is_parent = (strcmp(name, "..") == 0);
+    if (is_parent) display_name = loc(SR_FILE_PARENT_DIR);
+
+    const char* type = is_dir ? loc(SR_FILE_FOLDER)
+                     : is_parent ? loc(SR_FILE_FOLDER)
+                     : "SAV";
+
+    char buf[512];
+    snprintf(buf, sizeof(buf), loc(SR_FILE_ITEM_FMT),
+        idx + 1, sr_popup_list.count, display_name, type);
+    sr_output(buf, true);
+    sr_debug_log("FB-NAV: %s", buf);
+}
+
+bool sr_file_browser_active() {
+    return sr_fb_active;
+}
+
+void sr_file_browser_on_enter() {
+    if (!sr_fb_active || !sr_popup_list.active) return;
+    int idx = sr_popup_list.index;
+    const char* raw = sr_popup_list.items[idx];
+    int len = strlen(raw);
+    bool is_dir = (len > 0 && raw[len - 1] == '\x01');
+
+    if (!is_dir) return; // file selected — game handles loading
+
+    char name[256];
+    strncpy(name, raw, 255);
+    name[255] = '\0';
+    name[len - 1] = '\0'; // strip marker
+
+    if (strcmp(name, "..") == 0) {
+        // Go up one level
+        char* last_sep = strrchr(sr_fb_path, '\\');
+        if (!last_sep) last_sep = strrchr(sr_fb_path, '/');
+        if (last_sep && last_sep > sr_fb_path) {
+            *last_sep = '\0';
+        }
+    } else {
+        // Enter subdirectory
+        char newpath[260];
+        snprintf(newpath, sizeof(newpath), "%s\\%s", sr_fb_path, name);
+        strncpy(sr_fb_path, newpath, sizeof(sr_fb_path) - 1);
+        sr_fb_path[sizeof(sr_fb_path) - 1] = '\0';
+    }
+    sr_debug_log("FB-ENTER: new path=%s", sr_fb_path);
+    sr_fb_scan_dir();
+    if (sr_popup_list.active) {
+        sr_fb_announce_current();
+    }
+}
+
+void sr_file_browser_rebuild() {
+    if (sr_fb_active) sr_fb_scan_dir();
+}
+
+/*
+Hook for load_game: announces the file browser dialog, builds a navigable
+file list from the filesystem, then calls the original load_game function.
+load_game blocks until the user picks a file or cancels.
+*/
+static int __cdecl sr_hook_load_game(int a, int b) {
+    if (sr_is_available()) {
+        sr_output(loc(SR_FILE_LOAD_GAME), true);
+        sr_fb_active = true;
+    }
+    int result = sr_orig_load_game(a, b);
+    sr_fb_active = false;
+    sr_debug_log("FB-CLOSE: load_game returned %d", result);
     return result;
 }
 
@@ -1809,8 +2031,8 @@ bool sr_install_text_hooks() {
     sr_hook_log("=== Hook Installation ===");
     // Allocate executable memory for trampolines
     // Each trampoline needs up to 32 bytes (stolen bytes + JMP)
-    // Allocate space for 19 trampolines (13 text + 5 popup/planetfall + 1 write_strings)
-    trampoline_mem = (uint8_t*)VirtualAlloc(NULL, 20 * 32,
+    // 22 slots: 13 text + 6 popup/planetfall + 1 write_strings + 1 load_game + 1 spare
+    trampoline_mem = (uint8_t*)VirtualAlloc(NULL, 22 * 32,
         MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
     if (!trampoline_mem) {
         sr_log("sr_install_text_hooks: VirtualAlloc FAILED");
@@ -1881,6 +2103,15 @@ bool sr_install_text_hooks() {
     int popup_hooked = sr_install_popup_hooks(slot);
     hooked += popup_hooked;
 
+    // Hook load_game at 0x5AAAB0 (file browser for loading saves)
+    tramp = install_inline_hook(0x5AAAB0, (void*)sr_hook_load_game, slot);
+    if (tramp) {
+        sr_orig_load_game = (fp_2int)tramp;
+        slot += 32;
+        hooked++;
+        sr_hook_log("load_game hooked at 0x5AAAB0");
+    }
+
     // Hook pop_ask_number via function pointer redirect (no inline hook needed)
     sr_orig_pop_ask_number = pop_ask_number;
     pop_ask_number = sr_hook_pop_ask_number;
@@ -1888,7 +2119,7 @@ bool sr_install_text_hooks() {
     sr_hook_log("pop_ask_number redirected to sr_hook_pop_ask_number");
 
     char logbuf[128];
-    snprintf(logbuf, sizeof(logbuf), "sr_install_text_hooks: done (%d of 20 hooked)", hooked);
+    snprintf(logbuf, sizeof(logbuf), "sr_install_text_hooks: done (%d of 22 hooked)", hooked);
     sr_log(logbuf);
     sr_hook_log(logbuf);
     return true;

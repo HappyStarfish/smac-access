@@ -687,24 +687,70 @@ void OnOpen(bool announce_help) {
     }
 
     BASE* base = &Bases[*CurrentBaseID];
-    int item = base->item();
-    int cost = mineral_cost(*CurrentBaseID, item);
+    char buf[768];
+    int pos = 0;
 
-    char turns_str[64];
-    int prod_turns = turns_to_complete(base);
-    if (base->mineral_surplus <= 0) {
-        snprintf(turns_str, sizeof(turns_str), "%s", loc(SR_FMT_GROWTH_NEVER));
-    } else {
-        snprintf(turns_str, sizeof(turns_str), loc(SR_FMT_TURNS), prod_turns);
+    // 1. Special states (only if present, announced first)
+    if (base->drone_riots_active()) {
+        pos += snprintf(buf + pos, sizeof(buf) - pos, "%s", loc(SR_FMT_DRONE_RIOTS));
+    }
+    if (base->golden_age_active()) {
+        pos += snprintf(buf + pos, sizeof(buf) - pos, "%s", loc(SR_FMT_GOLDEN_AGE));
+    }
+    if (base->eco_damage > 0) {
+        pos += snprintf(buf + pos, sizeof(buf) - pos, loc(SR_FMT_ECO_DAMAGE), base->eco_damage);
+    }
+    if (base->nerve_staple_turns_left > 0) {
+        pos += snprintf(buf + pos, sizeof(buf) - pos, loc(SR_FMT_NERVE_STAPLE),
+            (int)base->nerve_staple_turns_left);
+    }
+    if (pos > 0) {
+        pos += snprintf(buf + pos, sizeof(buf) - pos, " ");
     }
 
-    char buf[512];
-    snprintf(buf, sizeof(buf), loc(SR_FMT_BASE_OPEN_V2),
-        sr_base_name(base), (int)base->pop_size,
-        sr_prod(item), base->minerals_accumulated, cost, turns_str);
+    // 2. Base name and population
+    pos += snprintf(buf + pos, sizeof(buf) - pos, loc(SR_FMT_BASE_OPEN_NAME),
+        sr_base_name(base), (int)base->pop_size);
+
+    // 3. Resources with growth info
+    char growth_str[64];
+    int growth_turns = turns_to_growth(base);
+    if (base->nutrient_surplus <= 0) {
+        snprintf(growth_str, sizeof(growth_str), "%s", loc(SR_FMT_GROWTH_NEVER));
+    } else {
+        snprintf(growth_str, sizeof(growth_str), loc(SR_FMT_TURNS), growth_turns);
+    }
+    pos += snprintf(buf + pos, sizeof(buf) - pos, " ");
+    pos += snprintf(buf + pos, sizeof(buf) - pos, loc(SR_FMT_BASE_OPEN_RESOURCES),
+        base->nutrient_surplus, growth_str,
+        base->mineral_surplus, base->energy_surplus);
+
+    // 4. Mood (only if talents or drones > 0)
+    if (base->talent_total > 0 || base->drone_total > 0) {
+        pos += snprintf(buf + pos, sizeof(buf) - pos, " ");
+        pos += snprintf(buf + pos, sizeof(buf) - pos, loc(SR_FMT_BASE_OPEN_MOOD),
+            base->talent_total, base->drone_total);
+    }
+
+    // 5. Production
+    int item = base->item();
+    int cost = mineral_cost(*CurrentBaseID, item);
+    char prod_turns_str[64];
+    int prod_turns = turns_to_complete(base);
+    if (base->mineral_surplus <= 0) {
+        snprintf(prod_turns_str, sizeof(prod_turns_str), "%s", loc(SR_FMT_GROWTH_NEVER));
+    } else {
+        snprintf(prod_turns_str, sizeof(prod_turns_str), loc(SR_FMT_TURNS), prod_turns);
+    }
+    pos += snprintf(buf + pos, sizeof(buf) - pos, " ");
+    pos += snprintf(buf + pos, sizeof(buf) - pos, loc(SR_FMT_BASE_OPEN_PROD),
+        sr_prod(item), base->minerals_accumulated, cost, prod_turns_str);
+
     sr_output(buf, true);
+
+    // 6. Help hint (only on first open)
     if (announce_help) {
-        sr_output(loc(SR_BASE_HELP), false);  // queue help on first open only
+        sr_output(loc(SR_BASE_HELP), false);
     }
     sr_debug_log("BASE-OPEN: %s", buf);
 }
@@ -782,7 +828,7 @@ bool Update(UINT msg, WPARAM wParam) {
                     _renameLen--;
                     _renameBuf[_renameLen] = '\0';
                     if (_renameLen > 0) {
-                        sr_output(_renameBuf, true);
+                        sr_output(sr_game_str(_renameBuf), true);
                     } else {
                         sr_output(loc(SR_RENAME_CANCEL), true); // "empty" feedback
                     }
@@ -792,7 +838,7 @@ bool Update(UINT msg, WPARAM wParam) {
             if (wParam == 'R' && ctrl_key_down()) {
                 // Read current name buffer
                 if (_renameLen > 0) {
-                    sr_output(_renameBuf, true);
+                    sr_output(sr_game_str(_renameBuf), true);
                 } else {
                     sr_output(loc(SR_RENAME_CANCEL), true);
                 }
@@ -801,14 +847,16 @@ bool Update(UINT msg, WPARAM wParam) {
             return true; // consume all other keydown in rename mode
         }
         if (msg == WM_CHAR) {
-            char ch = (char)wParam;
-            // Accept printable ASCII chars (space through tilde)
-            if (ch >= 32 && ch <= 126 && _renameLen < 24) {
-                _renameBuf[_renameLen++] = ch;
+            unsigned char ch = (unsigned char)wParam;
+            // Accept printable chars (Windows-1252, including umlauts)
+            if (ch >= 32 && ch != 127 && _renameLen < 24) {
+                _renameBuf[_renameLen++] = (char)ch;
                 _renameBuf[_renameLen] = '\0';
-                char letter[4];
-                snprintf(letter, sizeof(letter), loc(SR_RENAME_CHAR_FMT), ch);
-                sr_output(letter, true);
+                // Convert single char from Windows-1252 to UTF-8 for speech
+                char ansi[2] = { (char)ch, '\0' };
+                char utf8[8];
+                sr_ansi_to_utf8(ansi, utf8, sizeof(utf8));
+                sr_output(utf8, true);
             }
             return true; // consume all WM_CHAR in rename mode
         }

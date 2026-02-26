@@ -208,6 +208,11 @@ static const char* sr_defaults[SR_COUNT] = {
     /* SR_MENU_SCENARIO_MENU*/ "Scenario",
     /* SR_MENU_THINKER      */ "Thinker Menu",
     /* SR_MENU_GAME_MENU    */ "Game Menu",
+    /* SR_MENU_FILE_SELECT  */ "File Selection",
+    /* SR_FILE_LOAD_GAME   */ "Load Game",
+    /* SR_FILE_FOLDER      */ "Folder",
+    /* SR_FILE_ITEM_FMT    */ "%d of %d: %s, %s",
+    /* SR_FILE_PARENT_DIR  */ "Parent directory",
 
     /* SR_POPUP_LIST_FMT   */ "%d of %d: %s",
     /* SR_POPUP_CONTINUE   */ "Enter to continue.",
@@ -225,7 +230,7 @@ static const char* sr_defaults[SR_COUNT] = {
     /* SR_SOCENG_PENDING               */ "Pending change to %s",
     /* SR_SOCENG_SUMMARY_FMT           */ "%s: %s",
     /* SR_SOCENG_UPHEAVAL_COST         */ "Upheaval cost: %d energy credits",
-    /* SR_SOCENG_HELP                  */ "Up/Down: Categories. Left/Right: Models. Enter: Select model. Ctrl+Enter: Confirm and close. S or Tab: Summary. Ctrl+I: Repeat. Escape: Cancel and close.",
+    /* SR_SOCENG_HELP                  */ "Up/Down: Categories. Left/Right: Models. G: Total effects. W: Energy allocation mode. I: Research info. S or Tab: Summary. Ctrl+I: Repeat. Enter: Confirm. Escape: Cancel.",
     /* SR_SOCENG_CLOSED                */ "Social Engineering closed.",
 
     // Preferences Handler
@@ -448,6 +453,12 @@ static const char* sr_defaults[SR_COUNT] = {
     /* SR_RENAME_DONE          */ "Base renamed to %s.",
     /* SR_RENAME_CANCEL        */ "Rename cancelled.",
 
+    // Base Open (extended announcement)
+    /* SR_FMT_BASE_OPEN_NAME       */ "Base: %s, Population %d.",
+    /* SR_FMT_BASE_OPEN_RESOURCES  */ "Nutrients %+d, %s. Minerals %+d. Energy %+d.",
+    /* SR_FMT_BASE_OPEN_MOOD       */ "Talents %d, Drones %d.",
+    /* SR_FMT_BASE_OPEN_PROD       */ "Building %s, %d of %d, %s.",
+
     // Governor Configuration (Ctrl+G)
     /* SR_GOV_TITLE            */ "Governor configuration. %d options.",
     /* SR_GOV_OPTION_FMT       */ "%d of %d: %s, %s",
@@ -463,6 +474,28 @@ static const char* sr_defaults[SR_COUNT] = {
     /* SR_GOV_PRIORITY_DISCOVER*/ "Discover",
     /* SR_GOV_PRIORITY_BUILD   */ "Build",
     /* SR_GOV_PRIORITY_CONQUER */ "Conquer",
+
+    // Social Engineering (extended)
+    /* SR_SOCENG_TOTAL_EFFECTS   */ "Total effects: %s",
+    /* SR_SOCENG_NO_TOTAL_EFFECT */ "No total effects",
+    /* SR_SOCENG_ALLOC_FMT       */ "Energy allocation: Economy %d%%, Psych %d%%, Labs %d%%",
+    /* SR_SOCENG_ALLOC_MODE      */ "Energy allocation mode. Up/Down: select slider. Left/Right: adjust.",
+    /* SR_SOCENG_ALLOC_SLIDER    */ "%s: %d%%",
+    /* SR_SOCENG_INFO_FMT        */ "Researching %s. %d of %d labs, %d turns. Energy: %d credits, %+d per turn",
+    /* SR_SOCENG_ALLOC_ECON      */ "Economy",
+    /* SR_SOCENG_ALLOC_PSYCH     */ "Psych",
+    /* SR_SOCENG_ALLOC_LABS      */ "Labs",
+
+    // Message Log (Ctrl+M)
+    /* SR_MSG_OPEN               */ "Message log. %d messages.",
+    /* SR_MSG_ITEM               */ "%d of %d: %s",
+    /* SR_MSG_ITEM_LOC           */ "%d of %d: %s (%d, %d)",
+    /* SR_MSG_EMPTY              */ "No messages.",
+    /* SR_MSG_CLOSED             */ "Message log closed.",
+    /* SR_MSG_NO_LOCATION        */ "No location for this message.",
+    /* SR_MSG_SUMMARY            */ "%d messages. Turn %d.",
+    /* SR_MSG_HELP               */ "Up/Down: Browse. Enter: Jump to location. S: Summary. Escape: Close.",
+    /* SR_MSG_NOTIFICATION       */ "Message: %s",
 };
 
 // Key names matching the enum order (for file parsing)
@@ -518,6 +551,8 @@ static const char* sr_keys[SR_COUNT] = {
     "menu_nav_fmt",
     "menu_main", "menu_map_menu", "menu_multiplayer",
     "menu_scenario_menu", "menu_thinker", "menu_game_menu",
+    "menu_file_select",
+    "file_load_game", "file_folder", "file_item_fmt", "file_parent_dir",
     "popup_list_fmt", "popup_continue",
     "soceng_title", "soceng_category_fmt", "soceng_model_fmt",
     "soceng_effects", "soceng_no_effect", "soceng_unavailable_tech",
@@ -611,11 +646,23 @@ static const char* sr_keys[SR_COUNT] = {
     "nerve_staple_confirm", "nerve_staple_done", "nerve_staple_cannot",
     // Base Rename
     "rename_open", "rename_char_fmt", "rename_done", "rename_cancel",
+    // Base Open (extended announcement)
+    "fmt_base_open_name", "fmt_base_open_resources",
+    "fmt_base_open_mood", "fmt_base_open_prod",
     // Governor Configuration
     "gov_title", "gov_option_fmt", "gov_on", "gov_off",
     "gov_help", "gov_summary_fmt", "gov_saved", "gov_cancelled",
     "gov_priority_fmt", "gov_priority_none", "gov_priority_explore",
     "gov_priority_discover", "gov_priority_build", "gov_priority_conquer",
+    // Social Engineering (extended)
+    "soceng_total_effects", "soceng_no_total_effect",
+    "soceng_alloc_fmt", "soceng_alloc_mode", "soceng_alloc_slider",
+    "soceng_info_fmt", "soceng_alloc_econ", "soceng_alloc_psych",
+    "soceng_alloc_labs",
+    // Message Log
+    "msg_open", "msg_item", "msg_item_loc", "msg_empty",
+    "msg_closed", "msg_no_location", "msg_summary", "msg_help",
+    "msg_notification",
 };
 
 // Loaded strings (dynamically allocated, or NULL = use default)

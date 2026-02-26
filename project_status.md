@@ -162,35 +162,45 @@ Filters from triggers 1-3:
 
 ## Notes for Next Session
 
+### TODO: V key stack cycling (announce unit switch)
+- V cycles through units in the same tile stack — important for managing stacked units
+- Currently no SR announcement when V is pressed
+- **Debugging done**: V arrives as WM_KEYDOWN wParam='V' in HandleKey (confirmed in SR log)
+- **Problem**: Calling WinProc(hwnd, WM_KEYDOWN/WM_CHAR, V) recurses back into ModWinProc — the game never processes V
+- **Solution approach**: Use `return false` pattern (like Space/skip). Set a `sr_v_pressed` flag, let V pass through to game, detect unit change in OnTimer poll. The unit change detection already works (iUnit tracking) — just need to check if V changes iUnit or uses a different variable (CurrentVehID, iUnitIndex). If iUnit doesn't change, may need to track the vehicle linked list on the tile (veh->next_veh_id_stack).
+- **Alternative**: Check if game processes V via WM_CHAR lowercase 'v' only (not WM_KEYDOWN) — then don't intercept WM_KEYDOWN at all
+
 ### Pending Tests
 
-0z. **Specialist management (Ctrl+W)** — PARTIALLY TESTED. Ansagen kommen. Left/Right: Worker sagt "Arbeiter haben keinen Typ", Specialist mit nur 1 Typ sagt "Keine weiteren Typen". Offen: Abgleich mit Quellcode nötig — Nutzer unsicher ob Verhalten spielkonform ist. Nächste Session: OpenSMACX/Thinker Quellcode prüfen für korrektes Specialist-Verhalten.
+0z. **Specialist management (Ctrl+W)** — TESTED OK (2026-02-26). All announcements working correctly.
 0k. **Design Workshop (Shift+D)** — TESTED OK (2026-02-26). Two-level navigation works. Kostenanzeige zeigt Grundkosten (ohne Prototyp-Zuschlag) — ist korrekt, Aufschlag kommt erst beim Bauen.
-0a. **Preferences handler (Ctrl+P)** — NOT YET TESTED.
-0b. **Targeting mode (J, P, F, Ctrl+T)** — NOT YET TESTED.
-0c. **Go to base (G)** — NOT YET TESTED.
+0a. **Preferences handler (Ctrl+P)** — TESTED OK (2026-02-26).
+0b. **Targeting mode (J, P, F, Ctrl+T)** — TESTED OK (2026-02-26).
+0c. **Go to base (G)** — TESTED OK (2026-02-26).
 0d. **Note: Ctrl+R conflict** — Ctrl+R currently means "read screen". Game also uses Ctrl+R for "Road to" targeting. Not intercepted yet — needs decision on key mapping.
 0e. **Facility demolition (Ctrl+D)** — TESTED OK (2026-02-23).
-0f. **Interlude story text** — TESTED OK (2026-02-23). Full narrative text announced with title. BUT umlauts still broken (see 0h).
-0g. **Diplomacy: F12 Commlink dialog** — TESTED OK (2026-02-25). F12 opens accessible faction list, Enter initiates contact. Working pattern: diplo_second_faction + diplo_lock + diplomacy_caption + communicate(player, fid, 1). Five approaches tested before success (documented in game-api.md). S/Tab summary and DiplomacyHandler open/close detection TESTED OK (2026-02-25). Remaining untested: Ctrl+F1 help during active diplomacy, NetMsg_pop treaty announcements.
-0h. **Interlude umlaut fix** — NOT YET TESTED (2026-02-25). Fixed sr_ansi_to_utf8 fallback (was copying raw ANSI when UTF-8 exceeded buffer). Enlarged popup text buffer to 8192 bytes. User reported "bl ttern" instead of "blättern" in interlude text.
-0i. **Variable substitution fix** — TESTED (2026-02-26). $<M1:$CHARACTERADJ9> and $<F2:$FOLLOWERADJ5> now resolved. Letter-prefixed $<...> patterns strip wrapper, inner $WORD# resolved next iteration. Diplomacy text confirmed working.
-0j. **Number input dialog (pop_ask_number)** — NOT YET IMPLEMENTED. "Größe des Geschenks?" input field not announced as input, typed digits not read. Needs hook on pop_ask_number (0x627C30).
-0l. **Former terraform announcements** — TESTED OK (2026-02-26). Order given ("Building Forest, 4 turns"), status on unit select ("Building Forest, 2 of 4 turns"), completion ("Forest completed").
-0m. **Governor priorities (Ctrl+G)** — TESTED OK (2026-02-26). Priority selector as first item (Explore/Discover/Build/Conquer/None), Left/Right/Space to cycle.
+0f. **Interlude story text** — TESTED OK (2026-02-23). Full narrative text announced with title.
+0g. **Diplomacy: F12 Commlink dialog** — TESTED OK (2026-02-25). All diplomacy features working.
+0h. **Interlude umlaut fix** — TESTED OK (2026-02-26). Umlauts now display correctly.
+0i. **Variable substitution fix** — TESTED OK (2026-02-26). All variable patterns resolved.
+0j. **Number input dialog (pop_ask_number)** — TESTED OK (2026-02-26).
+0l. **Former terraform announcements** — TESTED OK (2026-02-26).
+0m. **Governor priorities (Ctrl+G)** — TESTED OK (2026-02-26).
 0. **Scanner mode** — TESTED OK (2026-02-19).
 1. **Enhanced tile announcements** — TESTED OK (2026-02-19).
-1b. **Social Engineering handler (E key)** — TESTED OK (2026-02-22). Modal loop approach, Enter confirms, Escape cancels.
-1c. **Tutorial popup fix** — TESTED OK (2026-02-22). Tutorial body text no longer interrupted by worldmap HUD.
-1d. **Base naming prompt** — TESTED OK (2026-02-22). "Enter a name for your new base. Name:" now announced.
-1e. **Planetfall variables** — TESTED OK (2026-02-22). $BASENAME0 and $UNITNAME1 resolved.
-1f. **Menu name announcements** — TESTED OK (2026-02-22). "Main Menu", "Select Size of Planet" etc.
+1b. **Social Engineering handler (E key)** — TESTED OK (2026-02-22).
+1c. **Tutorial popup fix** — TESTED OK (2026-02-22).
+1d. **Base naming prompt** — TESTED OK (2026-02-22).
+1e. **Planetfall variables** — TESTED OK (2026-02-22).
+1f. **Menu name announcements** — TESTED OK (2026-02-22).
 2. **Production queue management (Ctrl+Q)** — TESTED OK (2026-02-22).
 3. **Production picker detail (D key)** — TESTED OK (2026-02-22).
 4. **Menu bar navigation** — TESTED OK (2026-02-22).
 5. **Tour button accessibility** — TESTED OK (2026-02-22).
 6. **Setup option accessibility** — WORLDSIZE, WORLDLAND etc. have options + Random button. Need to make navigable.
 7. If step movement has issues, fallback: remove action() call, let game loop process ORDER_MOVE_TO naturally.
+8. **Load Game dialog** — File list navigation works (filenames read), open announcement works ("Spiel laden"). Missing: folder/file type markers in arrow-nav announce (GetFileAttributesA approach tried but CWD mismatch — needs different strategy, e.g. hooking game's file list or using sr_fb_path with full path construction). Deferred as future TODO.
+9. **Multiplayer screens** — MULTIMENU announced, but NETCONNECT dialogs and SetupWin (faction selection) have no SR support. In progress.
 
 ## Session Log
 
@@ -222,4 +232,7 @@ Filters from triggers 1-3:
 - **2026-02-25 (session 2)**: Diplomacy accessibility + variable substitution. (1) F12 Commlink: accessible faction list with modal PeekMessage loop (same pattern as Go-to-Base). Five contact approaches tried — communicate(p,f,0) empty, commlink_attempt(f) silent, commlink_attempter(p,f) own popup, finally working: diplo_second_faction + diplo_lock + diplomacy_caption + communicate(p,f,1). TESTED OK. (2) Variable substitution fix: extracted sr_substitute_game_vars() shared function from sr_read_popup_text. Fixed underscores in var names ($TO_CARRY_OUT_OUR_MISSION6). Added $<N:form0:form1:...> gender/plurality pattern (German 6-form: gender + plurality*3). Added substitution to sr_popup_list_parse for dialog options ($TITLE3, $NAME4, $TECH0). (3) DiplomacyHandler: new files diplo_handler.h/cpp. IsActive() via DiploWinState, OnTimer() detects open/close, HandleKey() for S/Tab summary + Ctrl+F1 help. (4) NetMsg_pop SR output for treaty notifications. (5) Documented full diplomacy API in game-api.md. 20 new loc strings (en+de).
 - **2026-02-25**: German language patch support + umlaut fix. (1) ANSI→UTF-8 conversion: Game text (Windows-1252) was passed to sr_output(CP_UTF8) without encoding conversion, causing umlauts to appear as question marks. Added sr_ansi_to_utf8() and sr_game_str() helpers to screen_reader.h/cpp. Applied conversion at all entry points: sr_record_text (13 hooks), sr_read_popup_text (game text files), sr_popup_list_parse (popup options), sr_try_tutorial_announce (tutor.txt body text). Wrapped ~25 game string locations in handlers (Facility[].name/effect, Bases[].name, Vehs[].name(), Chassis/Weapon/Armor/Reactor/Ability/Citizen names, Tech[].name, prod_name()) with sr_game_str(). (2) de.txt umlauts: Replaced all ASCII approximations (oe→ö, ue→ü, ae→ä, ss→ß) in sr_lang/de.txt (~210 strings). (3) HUD filter German support: Added German equivalents for all English HUD noise keywords (Missionsjahr, Energie:, Wirt:, Fors:, terrain descriptors, menu bar items, economic panel). Added German junk filter entries (ZUG BEENDET, Kein Kontakt). (4) Auto language detection: loc_init() now defaults to sr_language=auto. Checks alphax.txt for German content indicators. Automatically loads de.txt for German game installs, en.txt otherwise. Manual override still possible via thinker.ini. TESTED OK — user confirmed umlauts work in tutorials, game text, and mod text.
 - **2026-02-26 (session 2)**: Former terraform accessibility + governor priorities + text filter fixes. (1) Former terraform announcements: polling-based in OnTimer via state tracking (sr_prev_order/sr_prev_order_unit). get_terraform_name() helper uses Terraform[order-4].name/name_sea + is_ocean(). Three announcements: order given ("Building Forest, 4 turns"), status on unit select ("Building Forest, 2 of 4 turns"), completion ("Forest completed"). movement_turns counts down from rate. 3 new loc strings (en+de). TESTED OK. (2) Governor priorities: Added priority selector (Explore/Discover/Build/Conquer/None) as first item in Ctrl+G handler. Left/Right/Space cycles priority (radio-button style, mutually exclusive). Priority bits now saved on confirm. Summary includes priority. 6 new loc strings (en+de). TESTED OK. (3) Variable substitution fix: $<M1:$CHARACTERADJ9> and $<F2:$FOLLOWERADJ5> patterns now resolved — letter-prefixed $<...> strips wrapper, inner $WORD# resolved next iteration. (4) Worldmap text filter: Removed has_about flag that made ALL captured items important. Each item now individually checked against whitelist. Added German patterns (ÜBER, neue Befehle, Eingabe). (5) Snapshot suppression on world map: Added GW_World check to gui.cpp snapshot discard — worldmap text (landmarks, info panel) no longer announced via snapshots. Trigger 4 whitelist handles important messages. Fixed "Martialische Luft / Sunny Mesa" noise.
+- **2026-02-26 (session 4)**: Text input accessibility + variable substitution expansion. (1) Modal number input: Replaced sr_hook_pop_ask_number with own modal loop. Digits 0-9 echoed, Backspace removes+announces, Ctrl+R reads buffer, Enter confirms (ParseNumTable[0]), Escape returns default. (2) Popup text input echo: Game-native text inputs (base naming at founding, save filenames) now echo typed characters. Shadow buffer tracks input for Ctrl+R readback and Backspace feedback. Detection via sr_popup_is_active() || WinModalState. Non-consuming (message passes to game). (3) Base rename umlaut fix: Expanded char filter from ASCII 32-126 to all printable (>=32, !=127). Added sr_ansi_to_utf8 conversion for character echo and sr_game_str() for buffer readback. (4) Variable substitution: Added $TECH# (Tech[ParseNumTable[slot]].name), $ABIL# (Ability[].name), $TERRAFORM# (Order[].order). Added sr_substitute_game_vars call to sr_try_tutorial_announce (was missing — $TECH0 appeared raw in tutorial text). 2 new loc strings (SR_INPUT_NUMBER_EMPTY, SR_INPUT_NUMBER_DONE) + 1 updated (SR_INPUT_NUMBER). TESTED — popup echo + umlauts OK, $TECH resolved OK.
+- **2026-02-26 (session 5)**: Extended base open announcement. OnOpen() now builds announcement piece by piece instead of single format string. Order: (1) Special states first if present (drone riots, golden age, eco damage, nerve staple) — reuses existing loc strings. (2) Base name + population (new SR_FMT_BASE_OPEN_NAME). (3) Resources: nutrient surplus with growth turns, mineral surplus, energy surplus (new SR_FMT_BASE_OPEN_RESOURCES). (4) Mood: talents + drones, only if >0 (new SR_FMT_BASE_OPEN_MOOD). (5) Production with turns (new SR_FMT_BASE_OPEN_PROD). (6) Help hint on first open (unchanged). 4 new loc strings (en+de). TESTED OK by user.
+- **2026-02-26 (session 6)**: Social Engineering handler extended + V key investigation. (1) SE total effects (G key): social_calc() with pending categories computes combined effects from all 4 models. Announces non-zero effects. (2) Energy allocation mode (W key): sub-mode with Up/Down slider select (Economy/Psych/Labs), Left/Right adjust in 10% steps, writes SE_alloc_psych/SE_alloc_labs directly. W toggles back to category mode. (3) Research/economy info (I key without Ctrl): announces current research, labs progress, estimated turns, energy credits, surplus. (4) Enhanced summary (S/Tab): now includes total effects + allocation + upheaval cost. 9 new loc strings (en+de). Updated help text. (5) V key stack cycling: WM_KEYDOWN arrives in HandleKey (confirmed via SR log), but WinProc call recurses into ModWinProc — game never processes V. TODO for next session: use return false + poll detection approach.
 - **2026-02-26**: Design Workshop accessibility handler (Shift+D). New files: design_handler.h/cpp. Same modal loop pattern as SocialEngHandler. Two-level navigation: Level 1 = prototype list (default units with tech + custom units), Up/Down navigate, Enter edit, N new, Delete retire (two-press confirm), Escape close. Level 2 = component editor with 6 categories (Chassis/Weapon/Armor/Reactor/Ability1/Ability2), Left/Right cycles categories, Up/Down cycles tech-filtered options, S summary, Enter saves via mod_make_proto+mod_name_proto, Escape cancels back to list. Ability compatibility filtering via AFLAG_* flags (triad, combat/terraform/probe checks). Cost calculated via mod_proto_cost. Editing default units creates a copy in faction's custom slot. 26 new loc strings (en+de). Wired via Shift+D in world_map_handler.cpp, added to modal active check in gui.cpp. Build OK, deployed, awaiting testing.
