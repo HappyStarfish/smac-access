@@ -9,6 +9,7 @@
 #include "prefs_handler.h"
 #include "specialist_handler.h"
 #include "veh.h"
+#include "move.h"
 
 #include <algorithm>
 #include <vector>
@@ -174,6 +175,43 @@ static void sr_announce_tile(int x, int y) {
         pos += snprintf(buf + pos, sizeof(buf) - pos, ", %s", loc(SR_FEATURE_SUPPLY_POD));
     if (sq->items & BIT_MONOLITH)
         pos += snprintf(buf + pos, sizeof(buf) - pos, ", %s", loc(SR_FEATURE_MONOLITH));
+
+    // Resource bonus
+    int bonus = mod_bonus_at(x, y);
+    if (bonus == 1)
+        pos += snprintf(buf + pos, sizeof(buf) - pos, ", %s", loc(SR_BONUS_NUTRIENT));
+    else if (bonus == 2)
+        pos += snprintf(buf + pos, sizeof(buf) - pos, ", %s", loc(SR_BONUS_MINERAL));
+    else if (bonus == 3)
+        pos += snprintf(buf + pos, sizeof(buf) - pos, ", %s", loc(SR_BONUS_ENERGY));
+
+    // Landmarks
+    uint32_t lm = sq->landmarks & 0xFFFF;
+    if (lm) {
+        static const struct { uint32_t bit; SrStr str; } lm_table[] = {
+            { LM_CRATER, SR_LANDMARK_CRATER },
+            { LM_VOLCANO, SR_LANDMARK_VOLCANO },
+            { LM_JUNGLE, SR_LANDMARK_JUNGLE },
+            { LM_URANIUM, SR_LANDMARK_URANIUM },
+            { LM_SARGASSO, SR_LANDMARK_SARGASSO },
+            { LM_RUINS, SR_LANDMARK_RUINS },
+            { LM_DUNES, SR_LANDMARK_DUNES },
+            { LM_FRESH, SR_LANDMARK_FRESH },
+            { LM_MESA, SR_LANDMARK_MESA },
+            { LM_CANYON, SR_LANDMARK_CANYON },
+            { LM_GEOTHERMAL, SR_LANDMARK_GEOTHERMAL },
+            { LM_RIDGE, SR_LANDMARK_RIDGE },
+            { LM_BOREHOLE, SR_LANDMARK_BOREHOLE },
+            { LM_NEXUS, SR_LANDMARK_NEXUS },
+            { LM_UNITY, SR_LANDMARK_UNITY },
+            { LM_FOSSIL, SR_LANDMARK_FOSSIL },
+        };
+        for (int i = 0; i < 16; i++) {
+            if (lm & lm_table[i].bit) {
+                pos += snprintf(buf + pos, sizeof(buf) - pos, ", %s", loc(lm_table[i].str));
+            }
+        }
+    }
 
     // Resource yields
     int food = mod_crop_yield(faction, -1, x, y, 0);
@@ -509,6 +547,34 @@ void OnTimer(DWORD now, bool on_world_map, GameWinState cur_win, int cur_popup,
                                 loc(SR_TERRAFORM_STATUS), tf_name, done, rate);
                             sr_output(tf_buf, false);
                         }
+                    }
+                    // Damage announcement (only when damaged)
+                    if (veh->damage_taken > 0) {
+                        int cur_hp = veh->cur_hitpoints();
+                        int max_hp = veh->max_hitpoints();
+                        char dmg_buf[64];
+                        snprintf(dmg_buf, sizeof(dmg_buf),
+                            loc(SR_UNIT_DAMAGED), cur_hp, max_hp);
+                        sr_output(dmg_buf, false);
+                    }
+                }
+            }
+            // Check if the PREVIOUS unit got a terraform order before we switched
+            if (sr_prev_order_unit >= 0 && sr_prev_order_unit < *VehCount
+                && sr_prev_order_unit != cur_unit) {
+                VEH* prev_veh = &Vehs[sr_prev_order_unit];
+                uint8_t prev_cur_order = prev_veh->order;
+                bool was_tf = (sr_prev_order >= ORDER_FARM && sr_prev_order < ORDER_MOVE_TO);
+                bool now_tf = (prev_cur_order >= ORDER_FARM && prev_cur_order < ORDER_MOVE_TO);
+                if (!was_tf && now_tf) {
+                    const char* tf_name = get_terraform_name(prev_veh);
+                    if (tf_name) {
+                        int rate = Terraform[prev_cur_order - ORDER_FARM].rate;
+                        char tf_buf[128];
+                        snprintf(tf_buf, sizeof(tf_buf),
+                            loc(SR_TERRAFORM_ORDER), tf_name, rate);
+                        sr_debug_log("TERRAFORM-ORDER-ON-SWITCH: %s", tf_buf);
+                        sr_output(tf_buf, true);
                     }
                 }
             }
@@ -853,6 +919,89 @@ bool HandleKey(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         return true;
     }
 
+    // Shift+A = automate former (accessible modal)
+    if (wParam == 'A' && shift_key_down() && !ctrl_key_down() && !alt_key_down()
+        && !*GameHalted && cur_win == GW_World) {
+        int veh_id = MapWin->iUnit;
+        if (veh_id < 0 || !Vehs || *VehCount <= 0 || veh_id >= *VehCount) {
+            sr_output(loc(SR_NO_UNIT_SELECTED), true);
+            return true;
+        }
+        VEH* veh = &Vehs[veh_id];
+        if (!veh->is_former()) {
+            // Non-formers: pass through to game for default auto behavior
+            sr_output(loc(SR_AUTO_NOT_FORMER), true);
+            return false;
+        }
+
+        // Automation options matching VehOrderAutoType 0-7
+        static const SrStr auto_labels[] = {
+            SR_AUTO_FULL, SR_AUTO_ROAD, SR_AUTO_MAGTUBE,
+            SR_AUTO_IMPROVE_BASE, SR_AUTO_FARM_SOLAR, SR_AUTO_FARM_MINE,
+            SR_AUTO_FUNGUS, SR_AUTO_SENSOR,
+        };
+        int total = 8;
+        int index = 0;
+        bool want_close = false;
+        bool confirmed = false;
+
+        char buf[256];
+        snprintf(buf, sizeof(buf), loc(SR_AUTO_OPEN), total);
+        sr_output(buf, true);
+        snprintf(buf, sizeof(buf), loc(SR_AUTO_ITEM),
+            1, total, loc(auto_labels[0]));
+        sr_output(buf, false);
+
+        MSG modal_msg;
+        while (!want_close) {
+            if (PeekMessage(&modal_msg, NULL, 0, 0, PM_REMOVE)) {
+                if (modal_msg.message == WM_QUIT) {
+                    PostQuitMessage((int)modal_msg.wParam);
+                    break;
+                }
+                if (modal_msg.message == WM_KEYDOWN) {
+                    WPARAM k = modal_msg.wParam;
+                    if (k == VK_ESCAPE) {
+                        want_close = true;
+                    } else if (k == VK_RETURN) {
+                        want_close = true;
+                        confirmed = true;
+                    } else if (k == VK_UP) {
+                        index = (index - 1 + total) % total;
+                        snprintf(buf, sizeof(buf), loc(SR_AUTO_ITEM),
+                            index + 1, total, loc(auto_labels[index]));
+                        sr_output(buf, true);
+                    } else if (k == VK_DOWN) {
+                        index = (index + 1) % total;
+                        snprintf(buf, sizeof(buf), loc(SR_AUTO_ITEM),
+                            index + 1, total, loc(auto_labels[index]));
+                        sr_output(buf, true);
+                    }
+                }
+            } else {
+                Sleep(10);
+            }
+        }
+
+        // Drain leftover key messages
+        MSG drain;
+        while (PeekMessage(&drain, NULL, WM_CHAR, WM_CHAR, PM_REMOVE)) {}
+        while (PeekMessage(&drain, NULL, WM_KEYUP, WM_KEYUP, PM_REMOVE)) {}
+
+        if (confirmed) {
+            veh->order_auto_type = (uint8_t)index;
+            snprintf(buf, sizeof(buf), loc(SR_AUTO_CONFIRM),
+                loc(auto_labels[index]));
+            sr_debug_log("AUTOMATE: veh %d type %d (%s)",
+                veh_id, index, loc(auto_labels[index]));
+            sr_output(buf, true);
+            mod_veh_skip(veh_id);
+        } else {
+            sr_output(loc(SR_AUTO_CANCEL), true);
+        }
+        return true;
+    }
+
     // Escape during targeting → cancel
     if (wParam == VK_ESCAPE && sr_targeting_active) {
         sr_targeting_active = false;
@@ -870,27 +1019,570 @@ bool HandleKey(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         return true;
     }
 
-    // J (Group Go to), P (Patrol), F (Long range fire) → activate targeting
-    if (!ctrl_key_down() && !shift_key_down() && !alt_key_down()
-        && !*GameHalted && cur_win == GW_World
-        && (wParam == 'J' || wParam == 'P' || wParam == 'F')) {
-        sr_targeting_active = true;
-        sr_targeting_time = GetTickCount();
-        sr_output(loc(SR_TARGETING_MODE), true);
-        sr_debug_log("TARGETING: activated via key %c", (char)wParam);
-        WinProc(hwnd, msg, wParam, lParam);
+    // J → accessible group go-to base list
+    if (wParam == 'J' && !ctrl_key_down() && !shift_key_down() && !alt_key_down()
+        && !*GameHalted && cur_win == GW_World) {
+        int veh_id = MapWin->iUnit;
+        if (veh_id < 0 || !Vehs || *VehCount <= 0 || veh_id >= *VehCount) {
+            sr_output(loc(SR_NO_UNIT_SELECTED), true);
+            return true;
+        }
+        VEH* veh = &Vehs[veh_id];
+        int faction = veh->faction_id;
+        int tile_x = veh->x;
+        int tile_y = veh->y;
+
+        // Count units at the current tile belonging to same faction
+        std::vector<int> unit_ids;
+        int iter_id = veh_at(tile_x, tile_y);
+        while (iter_id >= 0 && iter_id < *VehCount) {
+            if (Vehs[iter_id].faction_id == faction) {
+                unit_ids.push_back(iter_id);
+            }
+            iter_id = Vehs[iter_id].next_veh_id_stack;
+        }
+        if (unit_ids.empty()) {
+            sr_output(loc(SR_NO_UNIT_SELECTED), true);
+            return true;
+        }
+
+        // Build sorted base list
+        struct BaseEntry { int id; int dist; };
+        std::vector<BaseEntry> bases;
+        for (int i = 0; i < *BaseCount; i++) {
+            if (Bases[i].faction_id == faction) {
+                int d = map_range(tile_x, tile_y, Bases[i].x, Bases[i].y);
+                bases.push_back({i, d});
+            }
+        }
+        if (bases.empty()) {
+            sr_output(loc(SR_BASE_LIST_EMPTY), true);
+            return true;
+        }
+        std::sort(bases.begin(), bases.end(),
+            [](const BaseEntry& a, const BaseEntry& b) { return a.dist < b.dist; });
+
+        int total = (int)bases.size();
+        int unit_count = (int)unit_ids.size();
+        int index = 0;
+        bool want_close = false;
+        bool confirmed = false;
+
+        char buf[256];
+        snprintf(buf, sizeof(buf), loc(SR_GROUP_GO_TO_BASE), unit_count, total);
+        sr_output(buf, true);
+
+        {
+            BASE* b = &Bases[bases[0].id];
+            snprintf(buf, sizeof(buf), loc(SR_BASE_LIST_FMT),
+                1, total, sr_game_str(b->name), b->x, b->y, bases[0].dist);
+            sr_output(buf, false);
+        }
+
+        MSG modal_msg;
+        while (!want_close) {
+            if (PeekMessage(&modal_msg, NULL, 0, 0, PM_REMOVE)) {
+                if (modal_msg.message == WM_QUIT) {
+                    PostQuitMessage((int)modal_msg.wParam);
+                    break;
+                }
+                if (modal_msg.message == WM_KEYDOWN) {
+                    WPARAM k = modal_msg.wParam;
+                    if (k == VK_ESCAPE) {
+                        want_close = true;
+                    } else if (k == VK_RETURN) {
+                        want_close = true;
+                        confirmed = true;
+                    } else if (k == VK_UP) {
+                        index = (index - 1 + total) % total;
+                        BASE* b = &Bases[bases[index].id];
+                        snprintf(buf, sizeof(buf), loc(SR_BASE_LIST_FMT),
+                            index + 1, total, sr_game_str(b->name), b->x, b->y, bases[index].dist);
+                        sr_output(buf, true);
+                    } else if (k == VK_DOWN) {
+                        index = (index + 1) % total;
+                        BASE* b = &Bases[bases[index].id];
+                        snprintf(buf, sizeof(buf), loc(SR_BASE_LIST_FMT),
+                            index + 1, total, sr_game_str(b->name), b->x, b->y, bases[index].dist);
+                        sr_output(buf, true);
+                    }
+                }
+            } else {
+                Sleep(10);
+            }
+        }
+
+        MSG drain;
+        while (PeekMessage(&drain, NULL, WM_CHAR, WM_CHAR, PM_REMOVE)) {}
+        while (PeekMessage(&drain, NULL, WM_KEYUP, WM_KEYUP, PM_REMOVE)) {}
+
+        if (confirmed && index >= 0 && index < total) {
+            BASE* b = &Bases[bases[index].id];
+            // Send all units at the tile to the selected base
+            for (int i = 0; i < (int)unit_ids.size(); i++) {
+                set_move_to(unit_ids[i], b->x, b->y);
+            }
+            snprintf(buf, sizeof(buf), loc(SR_GROUP_GOING_TO_BASE),
+                unit_count, sr_game_str(b->name));
+            sr_output(buf, true);
+            sr_debug_log("GROUP-GO-TO: %d units to %s (%d,%d)",
+                unit_count, sr_game_str(b->name), b->x, b->y);
+            mod_veh_skip(veh_id);
+        } else {
+            sr_output(loc(SR_TARGETING_CANCEL), true);
+        }
         return true;
     }
 
-    // Ctrl+R (Road to), Ctrl+T (Tube to) → activate targeting
+    // I → accessible airdrop base selection
+    if (wParam == 'I' && !ctrl_key_down() && !shift_key_down() && !alt_key_down()
+        && !*GameHalted && cur_win == GW_World) {
+        int veh_id = MapWin->iUnit;
+        if (veh_id < 0 || !Vehs || *VehCount <= 0 || veh_id >= *VehCount) {
+            sr_output(loc(SR_NO_UNIT_SELECTED), true);
+            return true;
+        }
+        VEH* veh = &Vehs[veh_id];
+        MAP* cur_sq = mapsq(veh->x, veh->y);
+        if (!cur_sq || !can_airdrop(veh_id, cur_sq)) {
+            sr_output(loc(SR_AIRDROP_NO_ABILITY), true);
+            return true;
+        }
+
+        int faction = veh->faction_id;
+        bool combat = veh->is_combat_unit();
+        int max_range = drop_range(faction);
+
+        // Build list of valid airdrop target bases (own + all others in range)
+        struct DropTarget { int base_id; int dist; };
+        std::vector<DropTarget> targets;
+        for (int i = 0; i < *BaseCount; i++) {
+            BASE* b = &Bases[i];
+            int d = map_range(veh->x, veh->y, b->x, b->y);
+            if (d > max_range) continue;
+            MAP* sq = mapsq(b->x, b->y);
+            if (!sq || is_ocean(sq)) continue;
+            if (!allow_airdrop(b->x, b->y, faction, combat, sq)) continue;
+            targets.push_back({i, d});
+        }
+        if (targets.empty()) {
+            sr_output(loc(SR_AIRDROP_BLOCKED), true);
+            return true;
+        }
+        std::sort(targets.begin(), targets.end(),
+            [](const DropTarget& a, const DropTarget& b) { return a.dist < b.dist; });
+
+        int total = (int)targets.size();
+        int index = 0;
+        bool want_close = false;
+        bool confirmed = false;
+        bool cursor_mode = false;
+
+        // Check if cursor position is a valid drop target
+        int cx = GetCursorX();
+        int cy = GetCursorY();
+        int cursor_dist = map_range(veh->x, veh->y, cx, cy);
+        bool cursor_valid = false;
+        if (cx >= 0 && cy >= 0 && cursor_dist <= max_range) {
+            MAP* csq = mapsq(cx, cy);
+            if (csq && !is_ocean(csq) && allow_airdrop(cx, cy, faction, combat, csq)) {
+                cursor_valid = true;
+            }
+        }
+
+        char buf[256];
+        snprintf(buf, sizeof(buf), loc(SR_AIRDROP_BASE), total);
+        sr_output(buf, true);
+
+        {
+            BASE* b = &Bases[targets[0].base_id];
+            snprintf(buf, sizeof(buf), loc(SR_AIRDROP_BASE_FMT),
+                1, total, sr_game_str(b->name), b->x, b->y, targets[0].dist);
+            sr_output(buf, false);
+        }
+
+        MSG modal_msg;
+        while (!want_close) {
+            if (PeekMessage(&modal_msg, NULL, 0, 0, PM_REMOVE)) {
+                if (modal_msg.message == WM_QUIT) {
+                    PostQuitMessage((int)modal_msg.wParam);
+                    break;
+                }
+                if (modal_msg.message == WM_KEYDOWN) {
+                    WPARAM k = modal_msg.wParam;
+                    if (k == VK_ESCAPE) {
+                        want_close = true;
+                    } else if (k == VK_RETURN) {
+                        want_close = true;
+                        confirmed = true;
+                    } else if (k == VK_UP || k == VK_DOWN) {
+                        cursor_mode = false;
+                        if (k == VK_UP) {
+                            index = (index - 1 + total) % total;
+                        } else {
+                            index = (index + 1) % total;
+                        }
+                        BASE* b = &Bases[targets[index].base_id];
+                        snprintf(buf, sizeof(buf), loc(SR_AIRDROP_BASE_FMT),
+                            index + 1, total, sr_game_str(b->name), b->x, b->y, targets[index].dist);
+                        sr_output(buf, true);
+                    } else if (k == 'C') {
+                        // C = select cursor position as drop target
+                        if (cursor_valid) {
+                            cursor_mode = true;
+                            snprintf(buf, sizeof(buf), loc(SR_AIRDROP_CURSOR),
+                                cx, cy, cursor_dist);
+                            sr_output(buf, true);
+                        } else {
+                            sr_output(loc(SR_AIRDROP_CURSOR_INVALID), true);
+                        }
+                    }
+                }
+            } else {
+                Sleep(10);
+            }
+        }
+
+        MSG drain;
+        while (PeekMessage(&drain, NULL, WM_CHAR, WM_CHAR, PM_REMOVE)) {}
+        while (PeekMessage(&drain, NULL, WM_KEYUP, WM_KEYUP, PM_REMOVE)) {}
+
+        if (confirmed && cursor_mode && cursor_valid) {
+            action_airdrop(veh_id, cx, cy, 3);
+            snprintf(buf, sizeof(buf), loc(SR_AIRDROP_CURSOR_CONFIRM), cx, cy);
+            sr_output(buf, true);
+            sr_debug_log("AIRDROP: %s to cursor (%d,%d)",
+                sr_game_str(veh->name()), cx, cy);
+            mod_veh_skip(veh_id);
+        } else if (confirmed && !cursor_mode && index >= 0 && index < total) {
+            BASE* b = &Bases[targets[index].base_id];
+            action_airdrop(veh_id, b->x, b->y, 3);
+            snprintf(buf, sizeof(buf), loc(SR_AIRDROP_CONFIRM), sr_game_str(b->name));
+            sr_output(buf, true);
+            sr_debug_log("AIRDROP: %s to %s (%d,%d)",
+                sr_game_str(veh->name()), sr_game_str(b->name), b->x, b->y);
+            mod_veh_skip(veh_id);
+        } else {
+            sr_output(loc(SR_TARGETING_CANCEL), true);
+        }
+        return true;
+    }
+
+    // F (Long range fire) → accessible artillery modal
+    if (wParam == 'F' && !ctrl_key_down() && !shift_key_down() && !alt_key_down()
+        && !*GameHalted && cur_win == GW_World) {
+        int veh_id = MapWin->iUnit;
+        if (veh_id < 0 || !Vehs || *VehCount <= 0 || veh_id >= *VehCount) {
+            sr_output(loc(SR_NO_UNIT_SELECTED), true);
+            return true;
+        }
+        VEH* veh = &Vehs[veh_id];
+        if (!can_arty(veh->unit_id, true)) {
+            sr_output(loc(SR_ARTY_CANNOT), true);
+            return true;
+        }
+        if (!veh_ready(veh_id)) {
+            sr_output(loc(SR_ARTY_CANNOT), true);
+            return true;
+        }
+
+        int faction = veh->faction_id;
+        int max_range = arty_range(veh->unit_id);
+
+        // Build target list: enemy units and bases within range
+        struct ArtyTarget {
+            int x, y, dist;
+            bool is_base;
+            int id; // veh_id or base_id
+        };
+        std::vector<ArtyTarget> targets;
+
+        // Scan enemy vehicles
+        for (int i = 0; i < *VehCount; i++) {
+            VEH* v = &Vehs[i];
+            if (v->faction_id == faction || has_pact(faction, v->faction_id)) continue;
+            int d = map_range(veh->x, veh->y, v->x, v->y);
+            if (d < 1 || d > max_range) continue;
+            // Only add top-of-stack unit at each location
+            if (stack_fix(veh_at(v->x, v->y)) != i) continue;
+            targets.push_back({v->x, v->y, d, false, i});
+        }
+
+        // Scan enemy bases
+        for (int i = 0; i < *BaseCount; i++) {
+            BASE* b = &Bases[i];
+            if (b->faction_id == faction || has_pact(faction, b->faction_id)) continue;
+            int d = map_range(veh->x, veh->y, b->x, b->y);
+            if (d < 1 || d > max_range) continue;
+            // Check if there's already a unit target at this location
+            bool has_unit = false;
+            for (size_t j = 0; j < targets.size(); j++) {
+                if (targets[j].x == b->x && targets[j].y == b->y) {
+                    has_unit = true;
+                    break;
+                }
+            }
+            if (!has_unit) {
+                targets.push_back({b->x, b->y, d, true, i});
+            }
+        }
+
+        if (targets.empty()) {
+            char buf[256];
+            snprintf(buf, sizeof(buf), loc(SR_ARTY_NO_TARGETS), max_range);
+            sr_output(buf, true);
+            return true;
+        }
+
+        std::sort(targets.begin(), targets.end(),
+            [](const ArtyTarget& a, const ArtyTarget& b) { return a.dist < b.dist; });
+
+        int total = (int)targets.size();
+        int index = 0;
+        bool want_close = false;
+        bool confirmed = false;
+        bool cursor_mode = false;
+        char buf[512];
+
+        // Build target name for announcement
+        auto target_name = [&](const ArtyTarget& t) -> const char* {
+            static char namebuf[128];
+            if (t.is_base) {
+                BASE* b = &Bases[t.id];
+                snprintf(namebuf, sizeof(namebuf), "%s (%s)",
+                    sr_game_str(b->name),
+                    sr_game_str(MFactions[b->faction_id].noun_faction));
+            } else {
+                VEH* v = &Vehs[t.id];
+                snprintf(namebuf, sizeof(namebuf), "%s (%s)",
+                    sr_game_str(v->name()),
+                    sr_game_str(MFactions[v->faction_id].noun_faction));
+            }
+            return namebuf;
+        };
+
+        // Announce open
+        snprintf(buf, sizeof(buf), loc(SR_ARTY_OPEN), total, max_range);
+        sr_output(buf, true);
+
+        // Announce first target
+        snprintf(buf, sizeof(buf), loc(SR_ARTY_TARGET_FMT),
+            1, total, target_name(targets[0]),
+            targets[0].x, targets[0].y, targets[0].dist);
+        sr_output(buf, false);
+
+        MSG modal_msg;
+        while (!want_close) {
+            if (PeekMessage(&modal_msg, NULL, 0, 0, PM_REMOVE)) {
+                if (modal_msg.message == WM_QUIT) {
+                    PostQuitMessage((int)modal_msg.wParam);
+                    break;
+                }
+                if (modal_msg.message == WM_KEYDOWN) {
+                    WPARAM k = modal_msg.wParam;
+                    if (k == VK_ESCAPE) {
+                        want_close = true;
+                    } else if (k == VK_RETURN) {
+                        want_close = true;
+                        confirmed = true;
+                    } else if (k == VK_UP || k == VK_DOWN) {
+                        cursor_mode = false;
+                        if (k == VK_UP) {
+                            index = (index - 1 + total) % total;
+                        } else {
+                            index = (index + 1) % total;
+                        }
+                        snprintf(buf, sizeof(buf), loc(SR_ARTY_TARGET_FMT),
+                            index + 1, total, target_name(targets[index]),
+                            targets[index].x, targets[index].y, targets[index].dist);
+                        sr_output(buf, true);
+                    } else if (k == 'C') {
+                        cursor_mode = true;
+                        int cx = GetCursorX();
+                        int cy = GetCursorY();
+                        int cd = map_range(veh->x, veh->y, cx, cy);
+                        if (cd >= 1 && cd <= max_range) {
+                            snprintf(buf, sizeof(buf), loc(SR_ARTY_CURSOR),
+                                cx, cy, cd);
+                        } else {
+                            snprintf(buf, sizeof(buf), loc(SR_ARTY_CURSOR_OOR),
+                                cx, cy, cd, max_range);
+                        }
+                        sr_output(buf, true);
+                    } else if (k == VK_F1) {
+                        sr_output(loc(SR_ARTY_HELP), true);
+                    }
+                }
+            } else {
+                Sleep(10);
+            }
+        }
+
+        // Drain leftover messages
+        MSG drain;
+        while (PeekMessage(&drain, NULL, WM_CHAR, WM_CHAR, PM_REMOVE)) {}
+        while (PeekMessage(&drain, NULL, WM_KEYUP, WM_KEYUP, PM_REMOVE)) {}
+
+        if (confirmed) {
+            int tx, ty;
+            const char* tname;
+            if (cursor_mode) {
+                tx = GetCursorX();
+                ty = GetCursorY();
+                int cd = map_range(veh->x, veh->y, tx, ty);
+                if (cd < 1 || cd > max_range) {
+                    sr_output(loc(SR_TARGETING_CANCEL), true);
+                    return true;
+                }
+                char cname[64];
+                snprintf(cname, sizeof(cname), "(%d, %d)", tx, ty);
+                snprintf(buf, sizeof(buf), loc(SR_ARTY_FIRED), cname);
+                sr_output(buf, true);
+            } else {
+                tx = targets[index].x;
+                ty = targets[index].y;
+                tname = target_name(targets[index]);
+                snprintf(buf, sizeof(buf), loc(SR_ARTY_FIRED), tname);
+                sr_output(buf, true);
+            }
+            sr_debug_log("ARTILLERY: %s fires at (%d,%d)",
+                sr_game_str(veh->name()), tx, ty);
+            mod_action_arty(veh_id, tx, ty);
+        } else {
+            sr_output(loc(SR_TARGETING_CANCEL), true);
+        }
+        return true;
+    }
+
+    // P (Patrol) → patrol to exploration cursor position (with confirmation)
+    if (wParam == 'P' && !ctrl_key_down() && !shift_key_down() && !alt_key_down()
+        && !*GameHalted && cur_win == GW_World) {
+        int veh_id = MapWin->iUnit;
+        if (veh_id < 0 || !Vehs || *VehCount <= 0 || veh_id >= *VehCount) {
+            sr_output(loc(SR_NO_UNIT_SELECTED), true);
+            return true;
+        }
+        VEH* veh = &Vehs[veh_id];
+        if (veh->faction_id != MapWin->cOwner) {
+            sr_output(loc(SR_PATROL_CANNOT), true);
+            return true;
+        }
+        init_cursor_if_needed();
+        int tx = sr_cursor_x;
+        int ty = sr_cursor_y;
+        if (tx < 0 || ty < 0 || (tx == veh->x && ty == veh->y)) {
+            sr_output(loc(SR_PATROL_CANNOT), true);
+            return true;
+        }
+        // Ask for confirmation
+        char buf[256];
+        snprintf(buf, sizeof(buf), loc(SR_PATROL_PROMPT), tx, ty);
+        sr_output(buf, true);
+        bool confirmed = false;
+        MSG modal_msg;
+        bool wait = true;
+        while (wait) {
+            if (PeekMessage(&modal_msg, NULL, 0, 0, PM_REMOVE)) {
+                if (modal_msg.message == WM_QUIT) {
+                    PostQuitMessage((int)modal_msg.wParam);
+                    break;
+                }
+                if (modal_msg.message == WM_KEYDOWN) {
+                    if (modal_msg.wParam == VK_RETURN) {
+                        confirmed = true;
+                        wait = false;
+                    } else if (modal_msg.wParam == VK_ESCAPE) {
+                        wait = false;
+                    }
+                }
+            } else {
+                Sleep(10);
+            }
+        }
+        MSG drain;
+        while (PeekMessage(&drain, NULL, WM_CHAR, WM_CHAR, PM_REMOVE)) {}
+        while (PeekMessage(&drain, NULL, WM_KEYUP, WM_KEYUP, PM_REMOVE)) {}
+        if (confirmed) {
+            action_patrol(veh_id, tx, ty);
+            snprintf(buf, sizeof(buf), loc(SR_PATROL_CONFIRM), tx, ty);
+            sr_output(buf, true);
+            sr_debug_log("PATROL: %s to (%d,%d)", sr_game_str(veh->name()), tx, ty);
+        } else {
+            sr_output(loc(SR_TARGETING_CANCEL), true);
+        }
+        return true;
+    }
+
+    // Ctrl+R (Road to), Ctrl+T (Tube to) → build to cursor position (with confirmation)
     if (ctrl_key_down() && !shift_key_down() && !alt_key_down()
         && !*GameHalted && cur_win == GW_World
         && (wParam == 'R' || wParam == 'T')) {
-        sr_targeting_active = true;
-        sr_targeting_time = GetTickCount();
-        sr_output(loc(SR_TARGETING_MODE), true);
-        sr_debug_log("TARGETING: activated via Ctrl+%c", (char)wParam);
-        WinProc(hwnd, msg, wParam, lParam);
+        bool is_tube = (wParam == 'T');
+        int veh_id = MapWin->iUnit;
+        if (veh_id < 0 || !Vehs || *VehCount <= 0 || veh_id >= *VehCount) {
+            sr_output(loc(SR_NO_UNIT_SELECTED), true);
+            return true;
+        }
+        VEH* veh = &Vehs[veh_id];
+        if (veh->faction_id != MapWin->cOwner || !veh->is_former()) {
+            sr_output(loc(SR_ROAD_TO_CANNOT), true);
+            return true;
+        }
+        init_cursor_if_needed();
+        int tx = sr_cursor_x;
+        int ty = sr_cursor_y;
+        if (tx < 0 || ty < 0 || (tx == veh->x && ty == veh->y)) {
+            sr_output(loc(SR_ROAD_TO_CANNOT), true);
+            return true;
+        }
+        // Ask for confirmation
+        char buf[256];
+        snprintf(buf, sizeof(buf),
+            loc(is_tube ? SR_TUBE_TO_PROMPT : SR_ROAD_TO_PROMPT), tx, ty);
+        sr_output(buf, true);
+        bool confirmed = false;
+        MSG modal_msg;
+        bool wait = true;
+        while (wait) {
+            if (PeekMessage(&modal_msg, NULL, 0, 0, PM_REMOVE)) {
+                if (modal_msg.message == WM_QUIT) {
+                    PostQuitMessage((int)modal_msg.wParam);
+                    break;
+                }
+                if (modal_msg.message == WM_KEYDOWN) {
+                    if (modal_msg.wParam == VK_RETURN) {
+                        confirmed = true;
+                        wait = false;
+                    } else if (modal_msg.wParam == VK_ESCAPE) {
+                        wait = false;
+                    }
+                }
+            } else {
+                Sleep(10);
+            }
+        }
+        MSG drain;
+        while (PeekMessage(&drain, NULL, WM_CHAR, WM_CHAR, PM_REMOVE)) {}
+        while (PeekMessage(&drain, NULL, WM_KEYUP, WM_KEYUP, PM_REMOVE)) {}
+        if (confirmed) {
+            if (is_tube) {
+                veh->waypoint_x[0] = tx;
+                veh->waypoint_y[0] = ty;
+                veh->order = ORDER_MAGTUBE_TO;
+                veh->status_icon = 'T';
+            } else {
+                set_road_to(veh_id, tx, ty);
+            }
+            snprintf(buf, sizeof(buf),
+                loc(is_tube ? SR_TUBE_TO_CONFIRM : SR_ROAD_TO_CONFIRM), tx, ty);
+            sr_output(buf, true);
+            sr_debug_log("%s: %s to (%d,%d)",
+                is_tube ? "TUBE_TO" : "ROAD_TO",
+                sr_game_str(veh->name()), tx, ty);
+            mod_veh_skip(veh_id);
+        } else {
+            sr_output(loc(SR_TARGETING_CANCEL), true);
+        }
         return true;
     }
 
@@ -1012,6 +1704,17 @@ bool HandleKey(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         return true;
     }
 
+    // V → let game toggle Move/View mode, then announce
+    if (wParam == 'V' && !ctrl_key_down() && !shift_key_down() && !alt_key_down()
+        && !*GameHalted && cur_win == GW_World) {
+        WinProc(hwnd, msg, wParam, lParam);
+        if (MapWin->fUnitNotViewMode)
+            sr_output(loc(SR_MODE_MOVE), true);
+        else
+            sr_output(loc(SR_MODE_VIEW), true);
+        return true;
+    }
+
     // E → open Social Engineering handler
     if (wParam == 'E' && !ctrl_key_down() && !alt_key_down()
         && !*GameHalted && cur_win == GW_World) {
@@ -1043,8 +1746,9 @@ bool HandleKey(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         return true;
     }
 
-    // Shift+F1 = context-sensitive help for current unit/terrain
-    if (wParam == VK_F1 && shift_key_down()) {
+    // Ctrl+F1 = context-sensitive help for current unit/terrain
+    if (wParam == VK_F1 && ctrl_key_down() && !shift_key_down()
+        && cur_win == GW_World) {
         char buf[1024];
         int pos = 0;
         pos += snprintf(buf + pos, sizeof(buf) - pos, "%s", loc(SR_HELP_HEADER));
@@ -1132,13 +1836,345 @@ bool HandleKey(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         if (veh && veh->is_combat_unit()) {
             pos += snprintf(buf + pos, sizeof(buf) - pos, " %s.", loc(SR_HELP_ARTILLERY));
         }
+        pos += snprintf(buf + pos, sizeof(buf) - pos, " %s.", loc(SR_HELP_READ));
+        pos += snprintf(buf + pos, sizeof(buf) - pos, " %s.", loc(SR_HELP_CURSOR_TO_UNIT));
+        pos += snprintf(buf + pos, sizeof(buf) - pos, " %s.", loc(SR_HELP_SCAN_FILTER));
+        pos += snprintf(buf + pos, sizeof(buf) - pos, " %s.", loc(SR_HELP_SCAN_JUMP));
+        pos += snprintf(buf + pos, sizeof(buf) - pos, " %s.", loc(SR_STATUS_HELP));
+        pos += snprintf(buf + pos, sizeof(buf) - pos, " %s.", loc(SR_ACT_MENU_HELP));
 
         sr_debug_log("CONTEXT-HELP: %s", buf);
         sr_output(buf, true);
         return true;
     }
 
+    // Shift+F10 = unit action menu
+    if (wParam == VK_F10 && shift_key_down() && !ctrl_key_down()
+        && cur_win == GW_World && !*GameHalted) {
+        int veh_id = MapWin->iUnit;
+        VEH* veh = NULL;
+        if (veh_id >= 0 && Vehs && *VehCount > 0 && veh_id < *VehCount) {
+            veh = &Vehs[veh_id];
+        }
+        if (!veh || veh->faction_id != MapWin->cOwner) {
+            sr_output(loc(SR_NO_UNIT_SELECTED), true);
+            return true;
+        }
+
+        struct UnitAction {
+            SrStr label;
+            WPARAM vk;
+            bool need_shift;
+            bool need_ctrl;
+            bool use_accessible;  // true=PostMessage (our handler), false=WinProc (game)
+            SrStr confirm;        // SR_COUNT = no extra confirmation (feedback from other system)
+            bool skip_after;      // call mod_veh_skip after WinProc (advance to next unit)
+        };
+        std::vector<UnitAction> actions;
+
+        MAP* tile = mapsq(veh->x, veh->y);
+        uint32_t items = tile ? tile->items : 0;
+
+        // Always available
+        // Skip: sr_unit_skipped flag gives "Skipped. Next unit:" via OnTimer
+        actions.push_back({SR_ACT_SKIP, VK_SPACE, false, false, false, SR_COUNT, false});
+        actions.push_back({SR_ACT_HOLD, 'H', false, false, false, SR_ACT_DONE_HOLD, true});
+        actions.push_back({SR_ACT_EXPLORE, 'X', false, false, false, SR_ACT_DONE_EXPLORE, true});
+        // G, P: our modals handle skip themselves
+        actions.push_back({SR_ACT_GOTO_BASE, 'G', false, false, true, SR_COUNT, false});
+        actions.push_back({SR_ACT_PATROL, 'P', false, false, true, SR_COUNT, false});
+
+        // Former actions — terraform polling gives feedback, skip to next unit
+        if (veh->is_former()) {
+            if (tile && tile->is_fungus()) {
+                actions.push_back({SR_ACT_REMOVE_FUNGUS, 'F', false, false, false, SR_COUNT, true});
+            } else {
+                if (!(items & BIT_ROAD)) {
+                    actions.push_back({SR_ACT_BUILD_ROAD, 'R', false, false, false, SR_COUNT, true});
+                } else if (!(items & BIT_MAGTUBE)) {
+                    actions.push_back({SR_ACT_BUILD_MAGTUBE, 'R', false, false, false, SR_COUNT, true});
+                }
+                if (!(items & BIT_FARM)) {
+                    actions.push_back({SR_ACT_BUILD_FARM, 'F', false, false, false, SR_COUNT, true});
+                }
+                if (!(items & BIT_MINE)) {
+                    actions.push_back({SR_ACT_BUILD_MINE, 'M', false, false, false, SR_COUNT, true});
+                }
+                if (!(items & BIT_SOLAR)) {
+                    actions.push_back({SR_ACT_BUILD_SOLAR, 'S', false, false, false, SR_COUNT, true});
+                }
+                if (!(items & BIT_FOREST)) {
+                    actions.push_back({SR_ACT_BUILD_FOREST, 'F', true, false, false, SR_COUNT, true});
+                }
+                actions.push_back({SR_ACT_BUILD_SENSOR, 'O', false, false, false, SR_COUNT, true});
+                actions.push_back({SR_ACT_BUILD_CONDENSER, 'N', false, false, false, SR_COUNT, true});
+                actions.push_back({SR_ACT_BUILD_BOREHOLE, 'N', true, false, false, SR_COUNT, true});
+                actions.push_back({SR_ACT_BUILD_AIRBASE, VK_OEM_PERIOD, false, false, false, SR_COUNT, true});
+                actions.push_back({SR_ACT_BUILD_BUNKER, VK_OEM_PERIOD, true, false, false, SR_COUNT, true});
+            }
+            // Automate: our modal handles skip
+            actions.push_back({SR_ACT_AUTOMATE, 'A', true, false, true, SR_COUNT, false});
+        }
+
+        // Colony — game opens naming dialog, handles skip itself
+        if (veh->is_colony()) {
+            actions.push_back({SR_ACT_BUILD_BASE, 'B', false, false, false, SR_COUNT, false});
+        }
+
+        // Combat: long range fire — our modal handles skip
+        if (veh->is_combat_unit()) {
+            actions.push_back({SR_ACT_LONG_RANGE, 'F', false, false, true, SR_COUNT, false});
+        }
+
+        // Supply — game opens resource popup, handles skip itself
+        if (veh->is_supply()) {
+            actions.push_back({SR_ACT_CONVOY, 'O', false, false, false, SR_COUNT, false});
+        }
+
+        // Transport
+        if (veh->is_transport()) {
+            actions.push_back({SR_ACT_UNLOAD, 'U', false, false, false, SR_ACT_DONE_UNLOAD, true});
+        }
+
+        // Land units: airdrop — our modal handles skip
+        if (veh->triad() != TRIAD_SEA && veh->triad() != TRIAD_AIR) {
+            actions.push_back({SR_ACT_AIRDROP, 'I', false, false, true, SR_COUNT, false});
+        }
+
+        // On base tile — opens base screen, no skip
+        if (tile && tile->is_base()) {
+            actions.push_back({SR_ACT_OPEN_BASE, VK_RETURN, false, false, false, SR_COUNT, false});
+        }
+
+        if (actions.empty()) {
+            sr_output(loc(SR_ACT_MENU_EMPTY), true);
+            return true;
+        }
+
+        int total = (int)actions.size();
+        int index = 0;
+        char buf[256];
+
+        snprintf(buf, sizeof(buf), loc(SR_ACT_MENU_OPEN), total);
+        sr_output(buf, true);
+
+        snprintf(buf, sizeof(buf), loc(SR_ACT_MENU_ITEM),
+            1, total, loc(actions[0].label));
+        sr_output(buf, false);
+
+        bool want_close = false;
+        bool confirmed = false;
+        MSG modal_msg;
+
+        while (!want_close) {
+            if (PeekMessage(&modal_msg, NULL, 0, 0, PM_REMOVE)) {
+                if (modal_msg.message == WM_QUIT) {
+                    PostQuitMessage((int)modal_msg.wParam);
+                    break;
+                }
+                if (modal_msg.message == WM_KEYDOWN) {
+                    WPARAM k = modal_msg.wParam;
+                    if (k == VK_ESCAPE) {
+                        want_close = true;
+                    } else if (k == VK_RETURN) {
+                        want_close = true;
+                        confirmed = true;
+                    } else if (k == VK_UP) {
+                        index = (index - 1 + total) % total;
+                        snprintf(buf, sizeof(buf), loc(SR_ACT_MENU_ITEM),
+                            index + 1, total, loc(actions[index].label));
+                        sr_output(buf, true);
+                    } else if (k == VK_DOWN) {
+                        index = (index + 1) % total;
+                        snprintf(buf, sizeof(buf), loc(SR_ACT_MENU_ITEM),
+                            index + 1, total, loc(actions[index].label));
+                        sr_output(buf, true);
+                    }
+                }
+            } else {
+                Sleep(10);
+            }
+        }
+
+        MSG drain;
+        while (PeekMessage(&drain, NULL, WM_CHAR, WM_CHAR, PM_REMOVE)) {}
+        while (PeekMessage(&drain, NULL, WM_KEYUP, WM_KEYUP, PM_REMOVE)) {}
+
+        if (confirmed && index >= 0 && index < total) {
+            // Re-validate unit still exists
+            if (veh_id >= 0 && veh_id < *VehCount
+                && Vehs[veh_id].faction_id == MapWin->cOwner) {
+                const UnitAction& act = actions[index];
+                sr_debug_log("ACT-MENU: executing %s (vk=%d shift=%d ctrl=%d accessible=%d)",
+                    loc(act.label), (int)act.vk, act.need_shift, act.need_ctrl, act.use_accessible);
+
+                // Set skip flag so OnTimer announces "Skipped. Next unit:"
+                if (act.vk == VK_SPACE && !act.use_accessible) {
+                    sr_unit_skipped = true;
+                }
+
+                if (act.need_shift) keybd_event(VK_SHIFT, 0, 0, 0);
+                if (act.need_ctrl) keybd_event(VK_CONTROL, 0, 0, 0);
+
+                if (act.use_accessible) {
+                    PostMessage(hwnd, WM_KEYDOWN, act.vk, 0);
+                    PostMessage(hwnd, WM_KEYUP, act.vk, 0);
+                } else {
+                    WinProc(hwnd, WM_KEYDOWN, act.vk, 0);
+                }
+
+                if (act.need_ctrl) keybd_event(VK_CONTROL, 0, KEYEVENTF_KEYUP, 0);
+                if (act.need_shift) keybd_event(VK_SHIFT, 0, KEYEVENTF_KEYUP, 0);
+
+                // Announce confirmation for actions without other feedback
+                if (act.confirm != SR_COUNT) {
+                    sr_output(loc(act.confirm), true);
+                }
+
+                // Advance to next unit for actions that consume the turn
+                if (act.skip_after && !act.use_accessible) {
+                    mod_veh_skip(veh_id);
+                }
+            }
+        } else {
+            sr_output(loc(SR_ACT_MENU_CANCEL), true);
+        }
+        return true;
+    }
+
+    // Ctrl+F3 = faction status overview
+    if (wParam == VK_F3 && ctrl_key_down() && !shift_key_down()
+        && cur_win == GW_World && !*GameHalted) {
+        int fid = *CurrentPlayerFaction;
+        Faction* f = &Factions[fid];
+        char buf[1024];
+        int pos = 0;
+
+        // Turn and year
+        pos += snprintf(buf + pos, sizeof(buf) - pos,
+            loc(SR_STATUS_HEADER), *CurrentTurn, *CurrentMissionYear);
+        pos += snprintf(buf + pos, sizeof(buf) - pos, " ");
+
+        // Energy credits
+        pos += snprintf(buf + pos, sizeof(buf) - pos,
+            loc(SR_STATUS_CREDITS), f->energy_credits);
+        pos += snprintf(buf + pos, sizeof(buf) - pos, " ");
+
+        // Allocation sliders
+        int psych = f->SE_alloc_psych;
+        int labs = f->SE_alloc_labs;
+        int econ = 100 - psych - labs;
+        pos += snprintf(buf + pos, sizeof(buf) - pos,
+            loc(SR_STATUS_ALLOC), econ, psych, labs);
+        pos += snprintf(buf + pos, sizeof(buf) - pos, " ");
+
+        // Income breakdown
+        int commerce = f->turn_commerce_income;
+        int surplus = f->energy_surplus_total;
+        int maint = f->facility_maint_total;
+        int gross = surplus + maint;
+        pos += snprintf(buf + pos, sizeof(buf) - pos,
+            loc(SR_STATUS_INCOME), commerce, gross, maint, surplus);
+        pos += snprintf(buf + pos, sizeof(buf) - pos, " ");
+
+        // Research status
+        int tech_id = f->tech_research_id;
+        if (tech_id >= 0 && Tech && Tech[tech_id].name) {
+            int acc = f->tech_accumulated;
+            int cost = f->tech_cost;
+            int pct = (cost > 0) ? (acc * 100 / cost) : 0;
+            pos += snprintf(buf + pos, sizeof(buf) - pos,
+                loc(SR_STATUS_RESEARCH),
+                sr_game_str(Tech[tech_id].name), acc, cost, pct);
+        } else {
+            pos += snprintf(buf + pos, sizeof(buf) - pos,
+                loc(SR_STATUS_RESEARCH_NONE));
+        }
+        pos += snprintf(buf + pos, sizeof(buf) - pos, " ");
+
+        // Bases and population
+        pos += snprintf(buf + pos, sizeof(buf) - pos,
+            loc(SR_STATUS_BASES), f->base_count, f->pop_total);
+
+        sr_debug_log("FACTION-STATUS: %s", buf);
+        sr_output(buf, true);
+        return true;
+    }
+
     return false;
+}
+
+/// Accessible time controls modal (Shift+T on world map).
+/// Lets user browse and select from 6 time control presets.
+void RunTimeControls() {
+    int total = MaxTimeControlNum;
+    int index = AlphaIniPrefs->time_controls;
+    if (index < 0 || index >= total) index = 0;
+
+    char buf[512];
+    snprintf(buf, sizeof(buf), loc(SR_TC_OPEN),
+        total, sr_game_str(TimeControl[index].name));
+    sr_output(buf, true);
+
+    snprintf(buf, sizeof(buf), loc(SR_TC_ITEM),
+        index + 1, total, sr_game_str(TimeControl[index].name),
+        TimeControl[index].turn, TimeControl[index].base,
+        TimeControl[index].unit);
+    sr_output(buf, false);
+
+    bool want_close = false;
+    bool confirmed = false;
+    MSG modal_msg;
+
+    while (!want_close) {
+        if (PeekMessage(&modal_msg, NULL, 0, 0, PM_REMOVE)) {
+            if (modal_msg.message == WM_QUIT) {
+                PostQuitMessage((int)modal_msg.wParam);
+                break;
+            }
+            if (modal_msg.message == WM_KEYDOWN) {
+                WPARAM k = modal_msg.wParam;
+                if (k == VK_ESCAPE) {
+                    want_close = true;
+                } else if (k == VK_RETURN) {
+                    want_close = true;
+                    confirmed = true;
+                } else if (k == VK_UP) {
+                    index = (index - 1 + total) % total;
+                    snprintf(buf, sizeof(buf), loc(SR_TC_ITEM),
+                        index + 1, total, sr_game_str(TimeControl[index].name),
+                        TimeControl[index].turn, TimeControl[index].base,
+                        TimeControl[index].unit);
+                    sr_output(buf, true);
+                } else if (k == VK_DOWN) {
+                    index = (index + 1) % total;
+                    snprintf(buf, sizeof(buf), loc(SR_TC_ITEM),
+                        index + 1, total, sr_game_str(TimeControl[index].name),
+                        TimeControl[index].turn, TimeControl[index].base,
+                        TimeControl[index].unit);
+                    sr_output(buf, true);
+                }
+            }
+        } else {
+            Sleep(10);
+        }
+    }
+
+    MSG drain;
+    while (PeekMessage(&drain, NULL, WM_CHAR, WM_CHAR, PM_REMOVE)) {}
+    while (PeekMessage(&drain, NULL, WM_KEYUP, WM_KEYUP, PM_REMOVE)) {}
+
+    if (confirmed) {
+        AlphaIniPrefs->time_controls = index;
+        set_time_controls();
+        snprintf(buf, sizeof(buf), loc(SR_TC_SET),
+            sr_game_str(TimeControl[index].name));
+        sr_output(buf, true);
+        sr_debug_log("TIME-CONTROLS: set to %d (%s)",
+            index, sr_game_str(TimeControl[index].name));
+    } else {
+        sr_output(loc(SR_TC_CANCELLED), true);
+    }
 }
 
 } // namespace WorldMapHandler

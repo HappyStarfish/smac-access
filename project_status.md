@@ -165,7 +165,57 @@ Filters from triggers 1-3:
 
 ## Notes for Next Session
 
-### NEW: Message Handler (Ctrl+M) — needs testing
+### NEW: Time Controls (Shift+T) — TESTED OK
+- Shift+T on world map opens accessible time controls picker
+- 6 presets from alphax.txt #TIMECONTROLS (None, Tight/Kurz, Standard, Moderate/Mäßig, Loose/Locker, Custom/Angepasst)
+- Up/Down navigates, Enter confirms (sets AlphaIniPrefs->time_controls + set_time_controls()), Escape cancels
+- Announces preset name + seconds per turn/base/unit
+- 4 new loc strings (en+de)
+
+### NEW: Chat (Ctrl+C) — deferred testing
+- Ctrl+C on world map announces "Chat" when MultiplayerActive
+- Key passes through to game's native chat handler (not consumed)
+- Only relevant for network multiplayer (not hotseat) — testing deferred until network MP session
+
+### NEW: Group Go-to-Base (J key) — TESTED OK (2026-02-27)
+- J on world map opens accessible group go-to-base picker (sends ALL units on tile to selected base)
+- Same modal pattern as G (single unit go-to-base)
+- 2 new loc strings (en+de): group_go_to_base, group_going_to_base
+
+### NEW: Airdrop (I key) — needs testing (late game feature)
+- I on world map opens accessible airdrop modal (requires Drop Pod ability)
+- **Voraussetzung**: Einheit muss Drop Pod-Fähigkeit haben, noch nicht gedroppt diese Runde, auf Luftstützpunkt stehen
+- **Zwei Modi im Dialog:**
+  - **Basisliste** (Standard): Hoch/Runter blättert durch alle gültigen Zielbasen (eigene + feindliche) in Reichweite, sortiert nach Entfernung
+  - **Cursor-Position** (C-Taste): Wählt die aktuelle Explorations-Cursor-Position als Abwurfziel — beliebiges Landfeld, gleichwertig zu sehenden Spielern
+- **Moduswechsel**: C wählt Cursor-Modus, Hoch/Runter wechselt zurück zu Basenliste
+- **Bedienung**: Eingabe bestätigt (je nach Modus), Escape bricht ab
+- **Workflow Cursor-Drop**: Vor I-Drücken mit Explorations-Cursor (Pfeiltasten) gewünschte Position ansteuern → I drücken → C drücken (zeigt Koordinaten + Entfernung) → Eingabe bestätigt
+- **Validierung**: can_airdrop() prüft Einheit (Drop Pod, nicht gedroppt, keine Bewegung verbraucht, auf Airbase), allow_airdrop() prüft Ziel (kein Ozean, keine Aerospace Complex-Blockade, ZOC-Check für Nicht-Kampfeinheiten, keine feindlichen Einheiten auf Feld)
+- **Reichweite**: 8 Felder Standard, unbegrenzt mit Orbital Insertion-Technologie
+- 8 new loc strings (en+de)
+- **Kann erst spät im Spiel getestet werden** — braucht Drop Pod-Technologie + Einheit mit der Fähigkeit
+
+### NEW: Patrol (P key) — TESTED OK (2026-02-27)
+- P nutzt jetzt Explorations-Cursor-Position als Patrol-Ziel (nicht mehr den Game-Cursor)
+- Bestätigungsschritt: "Patrouille zu (x, y)? Eingabe zum Bestätigen, Escape zum Abbrechen."
+- **Hintergrund**: Game-Pfeiltasten wechseln Einheiten, nicht den Cursor — alter Targeting-Modus war für blinde Spieler nicht nutzbar
+
+### NEW: Ctrl+R (Road to) / Ctrl+T (Tube to) — needs testing
+- Gleicher Ansatz wie Patrol: Cursor vorher positionieren, Taste drücken, Enter bestätigen
+- Prüft ob ein Former ausgewählt ist (sonst "Bau nicht möglich")
+- Nutzt set_road_to() / ORDER_MAGTUBE_TO direkt statt Game-Targeting
+- 6 new loc strings (en+de)
+- **Kann getestet werden sobald Former Straßen/Tubes bauen können**
+
+### Probe Team actions — needs testing (late game feature)
+- Subvert Enemy Unit, Mind Control City, and other probe actions use standard popup menus
+- Should already work via existing sr_popup_list_parse() and NetMsg_pop capture
+- **Voraussetzung**: Probe Team bauen (braucht entsprechende Technologie), neben feindliche Einheit/Basis bewegen
+- **Zu testen**: Popup-Menü lesbar? Ergebnis-Meldung vorgelesen? Kostenanzeige (Energy Credits)?
+- **Kann erst getestet werden wenn Kontakt mit anderen Fraktionen + Probe Team verfügbar**
+
+### Message Handler (Ctrl+M) — needs testing
 - **Ctrl+M on world map**: Opens modal message log browser with all captured messages
 - **Auto-announce**: All NetMsg_pop calls now captured and announced via SR (queued, non-interrupting)
 - **Browser controls**: Up/Down browse, Enter jump to location (sets SR cursor + centers map), S summary, Home/End first/last, Ctrl+F1 help, Escape close
@@ -175,6 +225,15 @@ Filters from triggers 1-3:
 - **9 new loc strings** (en+de): msg_open, msg_item, msg_item_loc, msg_empty, msg_closed, msg_no_location, msg_summary, msg_help, msg_notification
 - **WorldMapHandler::SetCursor()**: New function to set SR cursor, center map, and announce tile — used by message browser Enter
 
+### Base Screen Gaps Closed — TESTED OK (2026-02-27)
+- **Resources section extended**: Shows nutrient consumption, mineral support cost, energy inefficiency. Starvation warning when nutrient_surplus < 0.
+- **Economy section extended**: Commerce income from trade (BaseCommerceImport sum).
+- **Status section extended**: 7 new warnings — Starvation, Low minerals, Inefficiency, No headquarters, High support cost, Undefended, Police units count.
+- **OnOpen extended**: Starvation and Undefended warnings in opening announcement. Help text uses GetHelpText() (always in sync with Ctrl+F1).
+- **Supported Units (Ctrl+Shift+S)**: Scrollable list of all units home-based at current base. Up/Down, D details, Enter activate, Escape close.
+- **Psych Detail (Ctrl+Shift+Y)**: One-shot announcement — police units, psych output, talents vs drones, riot status.
+- ~20 new loc strings (en+de)
+
 ### TODO: V key stack cycling (announce unit switch)
 - V cycles through units in the same tile stack — important for managing stacked units
 - Currently no SR announcement when V is pressed
@@ -183,15 +242,50 @@ Filters from triggers 1-3:
 - **Solution approach**: Use `return false` pattern (like Space/skip). Set a `sr_v_pressed` flag, let V pass through to game, detect unit change in OnTimer poll. The unit change detection already works (iUnit tracking) — just need to check if V changes iUnit or uses a different variable (CurrentVehID, iUnitIndex). If iUnit doesn't change, may need to track the vehicle linked list on the tile (veh->next_veh_id_stack).
 - **Alternative**: Check if game processes V via WM_CHAR lowercase 'v' only (not WM_KEYDOWN) — then don't intercept WM_KEYDOWN at all
 
+### NEW: Artillery Modal (F key) — needs testing (late game feature)
+- F on world map opens accessible artillery target list (requires artillery-capable unit)
+- **Voraussetzung**: Einheit muss Artillerie-Fähigkeit haben (can_arty), Einheit muss bereit sein (veh_ready)
+- **Zielliste**: Alle feindlichen Einheiten (top-of-stack) + feindlichen Basen in Artillerie-Reichweite, sortiert nach Entfernung
+- **Zwei Modi im Dialog:**
+  - **Zielliste** (Standard): Hoch/Runter blättert durch Ziele mit "X von Y: Name (Fraktion), Z Felder entfernt"
+  - **Cursor-Position** (C-Taste): Zeigt Entfernung + ob in/außer Reichweite
+- **Bedienung**: Eingabe feuert (mod_action_arty), Escape bricht ab, F1 Hilfe
+- **Unterschied zu P (Patrol)**: P nutzt weiterhin den normalen Targeting-Modus des Spiels (Spielcursor bewegen, Enter bestätigt) — das ist beabsichtigt
+- 8 new loc strings (en+de)
+- **Kann erst getestet werden wenn Artillerie-Einheiten verfügbar**
+
+### NEW: Unit Action Menu (Shift+F10) — TESTED OK (2026-02-27)
+- Shift+F10 on world map opens navigable action menu for current unit
+- Context-sensitive: shows only actions relevant to unit type and terrain
+- Former: terraform actions (Road/Farm/Mine/Solar/Forest/Sensor/Condenser/Borehole/Airbase/Bunker/Remove Fungus/Automate)
+- Colony Pod: Build Base
+- Combat: Long Range Fire
+- Supply: Convoy
+- Transport: Unload
+- Land units: Airdrop
+- On base tile: Open Base
+- Always: Skip/Hold/Explore/Go to Base/Patrol
+- Feedback: Hold → "Hält Position", Explore → "Erkundet automatisch", Unload → "Entlädt", Skip → "Übersprungen. Nächste Einheit: X", Terraform → Terraform-Polling
+- mod_veh_skip nach WinProc-Aktionen (H, X, U, Terraform) — Einheit wird korrekt abgegeben
+- 32 loc strings (en+de), auch in Ctrl+F1 Hilfe referenziert
+
+### Convoy (O key on Supply Crawler) — needs testing (late game feature)
+- **Voraussetzung**: Supply Crawler bauen (braucht Industrial Automation-Technologie)
+- **Mechanik**: Supply Crawler auf Feld bewegen → O drücken → Ressource wählen (Nahrung/Mineralien/Energie) → Crawler bleibt auf Feld und liefert Ertrag dauerhaft an Basis
+- **Im Aktionsmenü**: Erscheint nur für Supply Crawler (`is_supply()`), nicht für Former (die bekommen "Sensor bauen, O")
+- **Zu testen**: O öffnet Ressourcen-Popup (vom Spiel), Popup lesbar über bestehendes Popup-Capture-System?
+- **Kann erst getestet werden wenn Supply Crawler verfügbar (Industrial Automation)**
+
 ### Pending Tests
 
-0n. **Message Handler (Ctrl+M)** — NEW. Test: (1) Start new turn → production/terraforming messages should auto-announce. (2) Ctrl+M → "Message log, X messages" + newest message. (3) Up/Down browse. (4) Enter on message with coords → map jumps, tile announced. (5) Escape → "closed". (6) S → summary.
+0o. **Base Screen Gaps** (Resources V3, Economy V3, Status warnings, Ctrl+Shift+S Support, Ctrl+Shift+Y Psych) — TESTED OK (2026-02-27).
+0n. **Message Handler (Ctrl+M)** — TESTED OK (2026-02-27). Basic flow works (open, browse, close). Messages only in current session (ring buffer, no savegame persistence — by design). Open question: behavior with multiple message categories (combat, diplomacy, production mixed) not yet tested — needs a busier game state.
 0z. **Specialist management (Ctrl+W)** — TESTED OK (2026-02-26). All announcements working correctly.
 0k. **Design Workshop (Shift+D)** — TESTED OK (2026-02-26). Two-level navigation works. Kostenanzeige zeigt Grundkosten (ohne Prototyp-Zuschlag) — ist korrekt, Aufschlag kommt erst beim Bauen.
 0a. **Preferences handler (Ctrl+P)** — TESTED OK (2026-02-26).
 0b. **Targeting mode (J, P, F, Ctrl+T)** — TESTED OK (2026-02-26).
 0c. **Go to base (G)** — TESTED OK (2026-02-26).
-0d. **Note: Ctrl+R conflict** — Ctrl+R currently means "read screen". Game also uses Ctrl+R for "Road to" targeting. Not intercepted yet — needs decision on key mapping.
+0d. **Ctrl+R conflict** — RESOLVED (2026-02-27). Key mapping decided by user.
 0e. **Facility demolition (Ctrl+D)** — TESTED OK (2026-02-23).
 0f. **Interlude story text** — TESTED OK (2026-02-23). Full narrative text announced with title.
 0g. **Diplomacy: F12 Commlink dialog** — TESTED OK (2026-02-25). All diplomacy features working.
@@ -211,9 +305,13 @@ Filters from triggers 1-3:
 3. **Production picker detail (D key)** — TESTED OK (2026-02-22).
 4. **Menu bar navigation** — TESTED OK (2026-02-22).
 5. **Tour button accessibility** — TESTED OK (2026-02-22).
-6. **Setup option accessibility** — WORLDSIZE, WORLDLAND etc. have options + Random button. Need to make navigable.
+6. **Setup option accessibility** — RESOLVED (2026-02-27). Already works automatically via existing popup/text capture system.
 7. If step movement has issues, fallback: remove action() call, let game loop process ORDER_MOVE_TO naturally.
-8. **Load Game dialog** — File list navigation works (filenames read), open announcement works ("Spiel laden"). Missing: folder/file type markers in arrow-nav announce (GetFileAttributesA approach tried but CWD mismatch — needs different strategy, e.g. hooking game's file list or using sr_fb_path with full path construction). Deferred as future TODO.
+8. **Load Game dialog** — TESTED OK (2026-02-27).
+8d. **Save Game dialog** — TESTED OK (2026-02-27). Overwrite confirmation announces question + "Eingabe zum Bestätigen, Escape zum Abbrechen" (buttons not arrow-navigable). Background noise filtered via positive identification (only .SAV, known dirs, known buttons announced).
+8e. **File browser refinement** — TODO (later). (1) File selection reliability during save/load — user reports occasional uncertainty. (2) Investigate whether custom filename input is possible (typing a new save name). Low priority, basic save/load works.
+8b. **Base screen mini-map** — NOT NEEDED (2026-02-27). Map overlay is read-only/visual only. No click-to-assign-workers — worker management already handled by Ctrl+W (SpecialistHandler). No accessibility gap.
+8c. **Zoom level feedback (+/- keys)** — NOT NEEDED (2026-02-27). Zoom is purely visual (tile render size). SR exploration cursor and scanner work at coordinate level, unaffected by zoom.
 9. **Multiplayer screens** — MULTIMENU announced, but NETCONNECT dialogs and SetupWin (faction selection) have no SR support. In progress.
 
 ## Session Log
@@ -251,3 +349,5 @@ Filters from triggers 1-3:
 - **2026-02-26 (session 6)**: Social Engineering handler extended + V key investigation. (1) SE total effects (G key): social_calc() with pending categories computes combined effects from all 4 models. Announces non-zero effects. (2) Energy allocation mode (W key): sub-mode with Up/Down slider select (Economy/Psych/Labs), Left/Right adjust in 10% steps, writes SE_alloc_psych/SE_alloc_labs directly. W toggles back to category mode. (3) Research/economy info (I key without Ctrl): announces current research, labs progress, estimated turns, energy credits, surplus. (4) Enhanced summary (S/Tab): now includes total effects + allocation + upheaval cost. 9 new loc strings (en+de). Updated help text. (5) V key stack cycling: WM_KEYDOWN arrives in HandleKey (confirmed via SR log), but WinProc call recurses into ModWinProc — game never processes V. TODO for next session: use return false + poll detection approach.
 - **2026-02-26 (session 8)**: Message Handler (Ctrl+M). New files: message_handler.h/cpp. Ring buffer (50 messages) captures all NetMsg_pop calls with resolved text, coordinates, base_id, turn. Auto-announce on new message (queued, non-interrupting). Ctrl+M opens modal browser: Up/Down browse, Enter jumps to location (WorldMapHandler::SetCursor), S summary, Home/End first/last, Ctrl+F1 help, Escape close. Coverage: veh.cpp (~30 goody hut/monolith calls), faction.cpp (8 spy/atrocity calls), base.cpp (1), tech.cpp (1), patch.cpp (2 wrappers), veh_combat.cpp (4 combat reports), gui.cpp (diplomacy + 2 artillery messages). Used sr_NetMsg_pop() wrapper pattern in veh/faction/base/tech to avoid 30+ individual edits. WorldMapHandler::SetCursor() added — sets SR cursor, centers map, announces tile. 9 new loc strings (en+de). Build OK, deployed.
 - **2026-02-26**: Design Workshop accessibility handler (Shift+D). New files: design_handler.h/cpp. Same modal loop pattern as SocialEngHandler. Two-level navigation: Level 1 = prototype list (default units with tech + custom units), Up/Down navigate, Enter edit, N new, Delete retire (two-press confirm), Escape close. Level 2 = component editor with 6 categories (Chassis/Weapon/Armor/Reactor/Ability1/Ability2), Left/Right cycles categories, Up/Down cycles tech-filtered options, S summary, Enter saves via mod_make_proto+mod_name_proto, Escape cancels back to list. Ability compatibility filtering via AFLAG_* flags (triad, combat/terraform/probe checks). Cost calculated via mod_proto_cost. Editing default units creates a copy in faction's custom slot. 26 new loc strings (en+de). Wired via Shift+D in world_map_handler.cpp, added to modal active check in gui.cpp. Build OK, deployed, awaiting testing.
+- **2026-02-27 (session 2)**: Base screen gaps closed. (1) Resources V3: nutrient consumption, mineral support cost, energy inefficiency. Starvation warning at negative surplus. (2) Economy V3: commerce income from BaseCommerceImport. (3) Status extended: 7 warnings (starvation, low minerals, inefficiency, no HQ, high support, undefended, police count). (4) OnOpen: starvation + undefended warnings. Help text now via GetHelpText() (always in sync). (5) Ctrl+Shift+S: supported units list (home_base_id units, like garrison). (6) Ctrl+Shift+Y: psych detail one-shot. (7) gui.cpp: support mode interception + Ctrl+Shift+S/Y dispatch. ~20 new loc strings (en+de). TESTED OK.
+- **2026-02-27**: Load Game + Save Game dialog accessibility + status cleanup. (1) Load Game file browser: Initial approach (parallel file list with own index, popup_list navigation) failed after 5 iterations — our index desynchronized with game's internal cursor, Enter on folders was consumed but game didn't navigate, user ended up in C:\ root. Root cause: game's file dialog is a modal with its own state we can't control. **Rewrote to text-capture approach**: game handles all navigation (arrows/Enter/Escape), we observe rendered filenames via Trigger 2 (Arrow Nav) and route through sr_fb_on_text_captured() which adds type markers (Ordner/SAV). Directory names from saves/ scanned via FindFirstFile as lookup table. Triggers 1+3 suppressed during file browser. TESTED OK. (2) Status cleanup: Ctrl+R conflict RESOLVED, Setup options RESOLVED (already works), Base screen mini-map NOT NEEDED (read-only visual), Zoom feedback NOT NEEDED (purely visual). (3) Key lesson documented in memory: for game modal dialogs, always observe+annotate, never build parallel navigation. (4) Save Game dialog: Hooked save_game at 0x5A9EB0 with same text-capture pattern as load_game (shared sr_fb_open/sr_fb_close helpers). "Spiel speichern" announced on Ctrl+S. Modified sr_fb_on_text_captured() to announce button text (OK, ABBRECHEN, SPEICHERN, LADEN, CANCEL, SAVE, LOAD) directly instead of skipping — enables overwrite confirmation dialog options to be read. SR_FILE_SAVE_GAME loc string added (en+de). Inline hook slot 24 used. Awaiting testing.

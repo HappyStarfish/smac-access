@@ -8,6 +8,7 @@
 #include "base_handler.h"
 #include "screen_reader.h"
 #include "localization.h"
+#include "map.h"
 
 // Helper: convert game production name to UTF-8
 static const char* sr_prod(int item_id) {
@@ -40,6 +41,18 @@ static int _demolitionCount = 0;
 static int _demolitionItems[65]; // FacilityId values of built facilities
 static bool _demolitionConfirm = false; // Awaiting second Delete press
 
+// Garrison list state
+static bool _garrisonActive = false;
+static int _garrisonIndex = 0;
+static int _garrisonCount = 0;
+static int _garrisonVehIds[64]; // Vehicle indices in Vehs[]
+
+// Supported units list state
+static bool _supportActive = false;
+static int _supportIndex = 0;
+static int _supportCount = 0;
+static int _supportVehIds[128]; // Vehicle indices in Vehs[]
+
 // Nerve staple state
 static bool _nerveStapleConfirm = false;
 
@@ -48,6 +61,20 @@ static bool _renameActive = false;
 static char _renameBuf[25] = {};    // working buffer
 static char _renameOriginal[25] = {}; // backup for cancel
 static int _renameLen = 0;
+
+// Tile assignment state
+static bool _tileAssignActive = false;
+static int _tileAssignIndex = 0;
+static int _tileAssignCount = 0;
+
+struct TileAssignEntry {
+    int bit_index;    // 0-20
+    int x, y;         // map coordinates
+    int N, M, E;      // yields (food, minerals, energy)
+    int flags;        // BaseTileFlags value
+    bool worked;      // currently being worked
+};
+static TileAssignEntry _tileAssignList[21];
 
 static const SrStr section_str_ids[] = {
     SR_SEC_OVERVIEW,
@@ -143,7 +170,9 @@ static void announce_section_resources() {
     // Growth info
     char growth_str[64];
     int growth_turns = turns_to_growth(base);
-    if (base->nutrient_surplus <= 0) {
+    if (base->nutrient_surplus < 0) {
+        snprintf(growth_str, sizeof(growth_str), "%s", loc(SR_FMT_STARVATION));
+    } else if (base->nutrient_surplus == 0) {
         snprintf(growth_str, sizeof(growth_str), "%s", loc(SR_FMT_GROWTH_NEVER));
     } else {
         snprintf(growth_str, sizeof(growth_str), loc(SR_FMT_TURNS), growth_turns);
@@ -153,9 +182,11 @@ static void announce_section_resources() {
         * (base->pop_size + 1);
 
     char buf[512];
-    snprintf(buf, sizeof(buf), loc(SR_FMT_RESOURCES_V2),
+    snprintf(buf, sizeof(buf), loc(SR_FMT_RESOURCES_V3),
         base->nutrient_surplus, base->nutrients_accumulated, nut_cost, growth_str,
-        base->mineral_surplus, base->energy_surplus);
+        base->nutrient_consumption,
+        base->mineral_surplus, base->mineral_consumption,
+        base->energy_surplus, base->energy_inefficiency);
     sr_output(buf, _announceInterrupt);
 }
 
@@ -208,14 +239,20 @@ static void announce_section_economy() {
     BASE* base = &Bases[*CurrentBaseID];
     Faction* f = &Factions[base->faction_id];
 
+    // Calculate commerce income from trade
+    int commerce = 0;
+    for (int i = 0; i < 8; i++) {
+        commerce += BaseCommerceImport[i];
+    }
+
     char credits_str[64];
     snprintf(credits_str, sizeof(credits_str), loc(SR_FMT_FACTION_CREDITS),
         f->energy_credits);
 
     char buf[256];
-    snprintf(buf, sizeof(buf), loc(SR_FMT_ECONOMY_V2),
+    snprintf(buf, sizeof(buf), loc(SR_FMT_ECONOMY_V3),
         base->economy_total, base->psych_total, base->labs_total,
-        credits_str);
+        commerce, credits_str);
     sr_output(buf, _announceInterrupt);
 }
 
@@ -254,6 +291,55 @@ static void announce_section_facilities() {
     sr_output(buf, _announceInterrupt);
 }
 
+/// Count military units stationed at the current base (for police calculation).
+static int count_police_units() {
+    if (!valid_base()) return 0;
+    BASE* base = &Bases[*CurrentBaseID];
+    int bx = base->x;
+    int by = base->y;
+    int count = 0;
+    for (int i = 0; i < *VehCount; i++) {
+        VEH* v = &Vehs[i];
+        if (v->x == bx && v->y == by && v->faction_id == base->faction_id) {
+            UNIT* u = &Units[v->unit_id];
+            if (Weapon[u->weapon_id].offense_value > 0) {
+                count++;
+            }
+        }
+    }
+    return count;
+}
+
+/// Check if any base of the faction has headquarters.
+static bool faction_has_hq(int faction_id) {
+    for (int i = 0; i < *BaseCount; i++) {
+        if (Bases[i].faction_id == faction_id
+            && has_fac_built(FAC_HEADQUARTERS, i)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+/// Check if base has any military unit defending it.
+static bool base_has_defender() {
+    if (!valid_base()) return false;
+    BASE* base = &Bases[*CurrentBaseID];
+    int bx = base->x;
+    int by = base->y;
+    for (int i = 0; i < *VehCount; i++) {
+        VEH* v = &Vehs[i];
+        if (v->x == bx && v->y == by && v->faction_id == base->faction_id) {
+            UNIT* u = &Units[v->unit_id];
+            if (Weapon[u->weapon_id].offense_value > 0
+                || Armor[u->armor_id].defense_value > 1) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
 static void announce_section_status() {
     if (!valid_base()) return;
     BASE* base = &Bases[*CurrentBaseID];
@@ -275,6 +361,38 @@ static void announce_section_status() {
     if (base->nerve_staple_turns_left > 0) {
         pos += snprintf(buf + pos, sizeof(buf) - pos, loc(SR_FMT_NERVE_STAPLE),
             (int)base->nerve_staple_turns_left);
+    }
+    // Starvation warning
+    if (base->nutrient_surplus < 0) {
+        pos += snprintf(buf + pos, sizeof(buf) - pos, " %s", loc(SR_FMT_STARVATION));
+    }
+    // Low minerals warning
+    if (base->mineral_surplus <= 0) {
+        pos += snprintf(buf + pos, sizeof(buf) - pos, " %s", loc(SR_FMT_LOW_MINERALS));
+    }
+    // Inefficiency warning
+    if (base->energy_inefficiency > 0) {
+        pos += snprintf(buf + pos, sizeof(buf) - pos, loc(SR_FMT_INEFFICIENCY),
+            base->energy_inefficiency);
+    }
+    // No headquarters warning
+    if (!faction_has_hq(base->faction_id)) {
+        pos += snprintf(buf + pos, sizeof(buf) - pos, "%s", loc(SR_FMT_NO_HQ));
+    }
+    // High support cost warning
+    if (base->mineral_consumption > 0
+        && base->mineral_consumption > base->mineral_intake_2 / 2) {
+        pos += snprintf(buf + pos, sizeof(buf) - pos, loc(SR_FMT_HIGH_SUPPORT),
+            base->mineral_consumption);
+    }
+    // Undefended warning
+    if (!base_has_defender()) {
+        pos += snprintf(buf + pos, sizeof(buf) - pos, "%s", loc(SR_FMT_UNDEFENDED));
+    }
+    // Police units
+    int police = count_police_units();
+    if (police > 0) {
+        pos += snprintf(buf + pos, sizeof(buf) - pos, loc(SR_FMT_POLICE_UNITS), police);
     }
 
     if (pos == (int)strlen(loc(SR_FMT_STATUS))) {
@@ -635,6 +753,234 @@ static void demolition_execute() {
     }
 }
 
+/// Build list of vehicle IDs stationed at the current base.
+static void garrison_build_list() {
+    _garrisonCount = 0;
+    if (!valid_base()) return;
+    BASE* base = &Bases[*CurrentBaseID];
+    int bx = base->x;
+    int by = base->y;
+    for (int i = 0; i < *VehCount; i++) {
+        VEH* v = &Vehs[i];
+        if (v->x == bx && v->y == by && v->faction_id == base->faction_id) {
+            if (_garrisonCount < 64) {
+                _garrisonVehIds[_garrisonCount++] = i;
+            }
+        }
+    }
+}
+
+/// Announce the current garrison list item.
+static void garrison_announce_item(bool interrupt = true) {
+    if (_garrisonCount == 0) return;
+    int veh_id = _garrisonVehIds[_garrisonIndex];
+    VEH* v = &Vehs[veh_id];
+    const char* morale_name = Morale[v->morale].name
+        ? sr_game_str(Morale[v->morale].name) : "???";
+    char buf[256];
+    snprintf(buf, sizeof(buf), loc(SR_GARRISON_ITEM),
+        _garrisonIndex + 1, _garrisonCount,
+        sr_game_str(v->name()), v->cur_hitpoints(), v->max_hitpoints(),
+        morale_name);
+    sr_output(buf, interrupt);
+}
+
+/// Announce detailed info about the selected garrison unit.
+static void garrison_announce_detail() {
+    if (_garrisonCount == 0) return;
+    int veh_id = _garrisonVehIds[_garrisonIndex];
+    VEH* v = &Vehs[veh_id];
+    UNIT* u = &Units[v->unit_id];
+
+    const char* weapon_name = Weapon[u->weapon_id].name
+        ? sr_game_str(Weapon[u->weapon_id].name) : "???";
+    const char* armor_name = Armor[u->armor_id].name
+        ? sr_game_str(Armor[u->armor_id].name) : "???";
+    const char* chassis_name = Chassis[u->chassis_id].offsv1_name
+        ? sr_game_str(Chassis[u->chassis_id].offsv1_name) : "???";
+    int atk = Weapon[u->weapon_id].offense_value;
+    int def = Armor[u->armor_id].defense_value;
+    int move_speed = Chassis[u->chassis_id].speed;
+
+    // Home base name
+    const char* home_name = "---";
+    if (v->home_base_id >= 0 && v->home_base_id < *BaseCount) {
+        home_name = sr_game_str(Bases[v->home_base_id].name);
+    }
+
+    // Build abilities string
+    char abilities[256] = "";
+    if (u->ability_flags) {
+        int pos = snprintf(abilities, sizeof(abilities), "%s", loc(SR_UNIT_ABILITIES));
+        for (int i = 0; i < MaxAbilityNum; i++) {
+            if (u->ability_flags & (1u << i)) {
+                const char* aname = Ability[i].name ? sr_game_str(Ability[i].name) : "???";
+                pos += snprintf(abilities + pos, sizeof(abilities) - pos, " %s,", aname);
+                if (pos >= (int)sizeof(abilities) - 50) break;
+            }
+        }
+        if (pos > 0 && abilities[pos - 1] == ',') {
+            abilities[pos - 1] = '.';
+        }
+    }
+
+    char buf[512];
+    snprintf(buf, sizeof(buf), loc(SR_GARRISON_DETAIL),
+        sr_game_str(v->name()), weapon_name, atk, armor_name, def,
+        chassis_name, move_speed, home_name, abilities);
+    sr_output(buf, true);
+}
+
+/// Activate the selected garrison unit: close base, select unit on world map.
+static void garrison_activate() {
+    if (_garrisonCount == 0 || !valid_base()) return;
+    int veh_id = _garrisonVehIds[_garrisonIndex];
+    VEH* v = &Vehs[veh_id];
+
+    char buf[256];
+    snprintf(buf, sizeof(buf), loc(SR_GARRISON_ACTIVATE), sr_game_str(v->name()));
+
+    *CurrentVehID = veh_id;
+    veh_wake(veh_id);
+    _garrisonActive = false;
+    GraphicWin_close((Win*)BaseWin);
+
+    sr_output(buf, true);
+    sr_debug_log("GARRISON-ACTIVATE: veh_id=%d %s", veh_id, v->name());
+}
+
+/// Set the home base of the selected garrison unit to the current base.
+static void garrison_set_home() {
+    if (_garrisonCount == 0 || !valid_base()) return;
+    int veh_id = _garrisonVehIds[_garrisonIndex];
+    VEH* v = &Vehs[veh_id];
+
+    action_home(veh_id, *CurrentBaseID);
+
+    BASE* base = &Bases[*CurrentBaseID];
+    char buf[256];
+    snprintf(buf, sizeof(buf), loc(SR_GARRISON_HOME_SET), sr_game_str(base->name));
+    sr_output(buf, true);
+    sr_debug_log("GARRISON-HOME: veh_id=%d -> base %s", veh_id, base->name);
+}
+
+/// Build list of vehicle IDs supported by (home based at) the current base.
+static void support_build_list() {
+    _supportCount = 0;
+    if (!valid_base()) return;
+    int base_id = *CurrentBaseID;
+    BASE* base = &Bases[base_id];
+    for (int i = 0; i < *VehCount; i++) {
+        VEH* v = &Vehs[i];
+        if (v->home_base_id == base_id && v->faction_id == base->faction_id) {
+            if (_supportCount < 128) {
+                _supportVehIds[_supportCount++] = i;
+            }
+        }
+    }
+}
+
+/// Announce the current support list item.
+static void support_announce_item(bool interrupt = true) {
+    if (_supportCount == 0) return;
+    int veh_id = _supportVehIds[_supportIndex];
+    VEH* v = &Vehs[veh_id];
+    char buf[256];
+    snprintf(buf, sizeof(buf), loc(SR_SUPPORT_ITEM),
+        _supportIndex + 1, _supportCount,
+        sr_game_str(v->name()), (int)v->x, (int)v->y,
+        v->cur_hitpoints(), v->max_hitpoints());
+    sr_output(buf, interrupt);
+}
+
+/// Announce detailed info about the selected support unit.
+static void support_announce_detail() {
+    if (_supportCount == 0) return;
+    int veh_id = _supportVehIds[_supportIndex];
+    VEH* v = &Vehs[veh_id];
+    UNIT* u = &Units[v->unit_id];
+
+    const char* weapon_name = Weapon[u->weapon_id].name
+        ? sr_game_str(Weapon[u->weapon_id].name) : "???";
+    const char* armor_name = Armor[u->armor_id].name
+        ? sr_game_str(Armor[u->armor_id].name) : "???";
+    const char* chassis_name = Chassis[u->chassis_id].offsv1_name
+        ? sr_game_str(Chassis[u->chassis_id].offsv1_name) : "???";
+    int atk = Weapon[u->weapon_id].offense_value;
+    int def = Armor[u->armor_id].defense_value;
+    int move_speed = Chassis[u->chassis_id].speed;
+
+    const char* home_name = "---";
+    if (v->home_base_id >= 0 && v->home_base_id < *BaseCount) {
+        home_name = sr_game_str(Bases[v->home_base_id].name);
+    }
+
+    // Build abilities string
+    char abilities[256] = "";
+    if (u->ability_flags) {
+        int pos = snprintf(abilities, sizeof(abilities), "%s", loc(SR_UNIT_ABILITIES));
+        for (int i = 0; i < MaxAbilityNum; i++) {
+            if (u->ability_flags & (1u << i)) {
+                const char* aname = Ability[i].name ? sr_game_str(Ability[i].name) : "???";
+                pos += snprintf(abilities + pos, sizeof(abilities) - pos, " %s,", aname);
+                if (pos >= (int)sizeof(abilities) - 50) break;
+            }
+        }
+        if (pos > 0 && abilities[pos - 1] == ',') {
+            abilities[pos - 1] = '.';
+        }
+    }
+
+    char buf[512];
+    snprintf(buf, sizeof(buf), loc(SR_SUPPORT_DETAIL),
+        sr_game_str(v->name()), weapon_name, atk, armor_name, def,
+        chassis_name, move_speed, home_name, (int)v->x, (int)v->y, abilities);
+    sr_output(buf, true);
+}
+
+/// Activate the selected support unit: close base, select unit on world map.
+static void support_activate() {
+    if (_supportCount == 0 || !valid_base()) return;
+    int veh_id = _supportVehIds[_supportIndex];
+    VEH* v = &Vehs[veh_id];
+
+    char buf[256];
+    snprintf(buf, sizeof(buf), loc(SR_SUPPORT_ACTIVATE), sr_game_str(v->name()));
+
+    *CurrentVehID = veh_id;
+    veh_wake(veh_id);
+    _supportActive = false;
+    GraphicWin_close((Win*)BaseWin);
+
+    sr_output(buf, true);
+    sr_debug_log("SUPPORT-ACTIVATE: veh_id=%d %s", veh_id, v->name());
+}
+
+/// Announce psych detail for the current base.
+static void announce_psych_detail() {
+    if (!valid_base()) return;
+    BASE* base = &Bases[*CurrentBaseID];
+
+    int police = count_police_units();
+
+    // Determine riot status string
+    const char* riot_status;
+    if (base->drone_riots_active()) {
+        riot_status = loc(SR_FMT_DRONE_RIOTS);
+    } else if (base->golden_age_active()) {
+        riot_status = loc(SR_FMT_GOLDEN_AGE);
+    } else {
+        riot_status = loc(SR_FMT_STATUS_NORMAL);
+    }
+
+    char buf[256];
+    snprintf(buf, sizeof(buf), loc(SR_PSYCH_DETAIL),
+        police, base->psych_total,
+        base->talent_total, base->drone_total,
+        riot_status);
+    sr_output(buf, true);
+}
+
 static void announce_current_section() {
     switch (_currentSection) {
         case BS_Overview:    announce_section_overview(); break;
@@ -661,6 +1007,14 @@ bool IsDemolitionActive() {
     return _demolitionActive;
 }
 
+bool IsGarrisonActive() {
+    return _garrisonActive;
+}
+
+bool IsSupportActive() {
+    return _supportActive;
+}
+
 bool IsRenameActive() {
     return _renameActive;
 }
@@ -678,6 +1032,8 @@ bool IsActive() {
 void OnOpen(bool announce_help) {
     _currentSection = BS_Overview;
     _lastBaseID = *CurrentBaseID;
+    _garrisonActive = false;
+    _supportActive = false;
     _nerveStapleConfirm = false;
     _renameActive = false;
 
@@ -732,7 +1088,12 @@ void OnOpen(bool announce_help) {
             base->talent_total, base->drone_total);
     }
 
-    // 5. Production
+    // 5. Starvation warning
+    if (base->nutrient_surplus < 0) {
+        pos += snprintf(buf + pos, sizeof(buf) - pos, " %s", loc(SR_FMT_STARVATION));
+    }
+
+    // 6. Production
     int item = base->item();
     int cost = mineral_cost(*CurrentBaseID, item);
     char prod_turns_str[64];
@@ -746,11 +1107,16 @@ void OnOpen(bool announce_help) {
     pos += snprintf(buf + pos, sizeof(buf) - pos, loc(SR_FMT_BASE_OPEN_PROD),
         sr_prod(item), base->minerals_accumulated, cost, prod_turns_str);
 
+    // 7. Undefended warning
+    if (!base_has_defender()) {
+        pos += snprintf(buf + pos, sizeof(buf) - pos, " %s", loc(SR_FMT_UNDEFENDED));
+    }
+
     sr_output(buf, true);
 
-    // 6. Help hint (only on first open)
+    // 8. Help hint (only on first open) — uses GetHelpText() so it's always in sync
     if (announce_help) {
-        sr_output(loc(SR_BASE_HELP), false);
+        sr_output(GetHelpText(), false);
     }
     sr_debug_log("BASE-OPEN: %s", buf);
 }
@@ -762,6 +1128,9 @@ void OnClose() {
     _queueInsertMode = false;
     _demolitionActive = false;
     _demolitionConfirm = false;
+    _garrisonActive = false;
+    _supportActive = false;
+    _tileAssignActive = false;
     _nerveStapleConfirm = false;
     _renameActive = false;
     sr_debug_log("BASE-CLOSE");
@@ -783,7 +1152,251 @@ void AnnounceCurrentSection(bool interrupt) {
 }
 
 const char* GetHelpText() {
-    return loc(SR_BASE_HELP);
+    return loc(SR_BASE_HELP_V2);
+}
+
+bool IsTileAssignActive() {
+    return _tileAssignActive;
+}
+
+/// Build a compact terrain description string for a tile.
+static int build_tile_terrain_desc(int x, int y, char* buf, int bufsize) {
+    MAP* sq = mapsq(x, y);
+    if (!sq) return snprintf(buf, bufsize, "?");
+
+    int pos = 0;
+    int alt = sq->alt_level();
+    bool is_land = (alt >= ALT_SHORE_LINE);
+
+    // Terrain type
+    if (alt == ALT_OCEAN_TRENCH) {
+        pos += snprintf(buf + pos, bufsize - pos, "%s", loc(SR_TERRAIN_TRENCH));
+    } else if (alt <= ALT_OCEAN) {
+        pos += snprintf(buf + pos, bufsize - pos, "%s", loc(SR_TERRAIN_OCEAN));
+    } else if (alt == ALT_OCEAN_SHELF) {
+        pos += snprintf(buf + pos, bufsize - pos, "%s", loc(SR_TERRAIN_SHELF));
+    } else {
+        if (sq->is_rocky())
+            pos += snprintf(buf + pos, bufsize - pos, "%s", loc(SR_TERRAIN_ROCKY));
+        else if (sq->is_rolling())
+            pos += snprintf(buf + pos, bufsize - pos, "%s", loc(SR_TERRAIN_ROLLING));
+        else
+            pos += snprintf(buf + pos, bufsize - pos, "%s", loc(SR_TERRAIN_FLAT));
+    }
+
+    // Moisture (land only)
+    if (is_land) {
+        if (sq->is_rainy())
+            pos += snprintf(buf + pos, bufsize - pos, ", %s", loc(SR_TERRAIN_RAINY));
+        else if (sq->is_moist())
+            pos += snprintf(buf + pos, bufsize - pos, ", %s", loc(SR_TERRAIN_MOIST));
+        else if (sq->is_arid())
+            pos += snprintf(buf + pos, bufsize - pos, ", %s", loc(SR_TERRAIN_ARID));
+    }
+
+    // Key features
+    if (sq->is_fungus())
+        pos += snprintf(buf + pos, bufsize - pos, ", %s", loc(SR_FEATURE_FUNGUS));
+    if (sq->items & BIT_FOREST)
+        pos += snprintf(buf + pos, bufsize - pos, ", %s", loc(SR_FEATURE_FOREST));
+    if (sq->items & BIT_FARM)
+        pos += snprintf(buf + pos, bufsize - pos, ", %s", loc(SR_FEATURE_FARM));
+    if (sq->items & BIT_SOIL_ENRICHER)
+        pos += snprintf(buf + pos, bufsize - pos, ", %s", loc(SR_FEATURE_SOIL_ENRICHER));
+    if (sq->items & BIT_MINE)
+        pos += snprintf(buf + pos, bufsize - pos, ", %s", loc(SR_FEATURE_MINE));
+    if (sq->items & BIT_SOLAR)
+        pos += snprintf(buf + pos, bufsize - pos, ", %s", loc(SR_FEATURE_SOLAR));
+    if (sq->items & BIT_CONDENSER)
+        pos += snprintf(buf + pos, bufsize - pos, ", %s", loc(SR_FEATURE_CONDENSER));
+    if (sq->items & BIT_ECH_MIRROR)
+        pos += snprintf(buf + pos, bufsize - pos, ", %s", loc(SR_FEATURE_ECH_MIRROR));
+    if (sq->items & BIT_THERMAL_BORE)
+        pos += snprintf(buf + pos, bufsize - pos, ", %s", loc(SR_FEATURE_BOREHOLE));
+    if (sq->items & BIT_ROAD)
+        pos += snprintf(buf + pos, bufsize - pos, ", %s", loc(SR_FEATURE_ROAD));
+    if (sq->items & BIT_MAGTUBE)
+        pos += snprintf(buf + pos, bufsize - pos, ", %s", loc(SR_FEATURE_MAGTUBE));
+    if (sq->items & BIT_BUNKER)
+        pos += snprintf(buf + pos, bufsize - pos, ", %s", loc(SR_FEATURE_BUNKER));
+    if (sq->items & BIT_AIRBASE)
+        pos += snprintf(buf + pos, bufsize - pos, ", %s", loc(SR_FEATURE_AIRBASE));
+    if (sq->items & BIT_SENSOR)
+        pos += snprintf(buf + pos, bufsize - pos, ", %s", loc(SR_FEATURE_SENSOR));
+    if (sq->items & BIT_RIVER)
+        pos += snprintf(buf + pos, bufsize - pos, ", %s", loc(SR_FEATURE_RIVER));
+
+    return pos;
+}
+
+/// Build the tile assignment list for the current base.
+static void tile_assign_build_list() {
+    if (!valid_base()) return;
+    BASE* base = &Bases[*CurrentBaseID];
+    int faction_id = base->faction_id;
+    int base_id = *CurrentBaseID;
+
+    _tileAssignCount = 0;
+    for (int i = 0; i < 21; i++) {
+        int tx, ty;
+        MAP* sq = next_tile(base->x, base->y, i, &tx, &ty);
+        if (!sq) continue;
+
+        TileAssignEntry& e = _tileAssignList[_tileAssignCount];
+        e.bit_index = i;
+        e.x = tx;
+        e.y = ty;
+        e.flags = BaseTileFlags[i];
+        e.worked = (base->worked_tiles & (1 << i)) != 0;
+
+        // Calculate yields even for unavailable tiles (useful for info)
+        if (e.flags == 0 || e.flags == BR_BASE_IN_TILE || e.worked) {
+            e.N = mod_crop_yield(faction_id, base_id, tx, ty, 0);
+            e.M = mod_mine_yield(faction_id, base_id, tx, ty, 0);
+            e.E = mod_energy_yield(faction_id, base_id, tx, ty, 0);
+        } else {
+            e.N = e.M = e.E = 0;
+        }
+        _tileAssignCount++;
+    }
+}
+
+/// Get the unavailability reason string for a tile.
+static const char* tile_unavail_reason(int flags) {
+    if (flags & BR_FOREIGN_TILE) return loc(SR_TILE_UNAVAIL_FOREIGN);
+    if (flags & BR_WORKER_ACTIVE) return loc(SR_TILE_UNAVAIL_OTHER_BASE);
+    if (flags & BR_VEH_IN_TILE) return loc(SR_TILE_UNAVAIL_VEHICLE);
+    if (flags & BR_NOT_VISIBLE) return loc(SR_TILE_UNAVAIL_UNEXPLORED);
+    if (flags & BR_NOT_AVAILABLE) return loc(SR_TILE_UNAVAIL_UNEXPLORED);
+    return loc(SR_TILE_UNAVAIL_UNEXPLORED);
+}
+
+/// Announce the current tile assignment item.
+static void tile_assign_announce_item() {
+    if (_tileAssignIndex < 0 || _tileAssignIndex >= _tileAssignCount) return;
+    TileAssignEntry& e = _tileAssignList[_tileAssignIndex];
+
+    char terrain[256];
+    build_tile_terrain_desc(e.x, e.y, terrain, sizeof(terrain));
+
+    char buf[512];
+    int pos1 = _tileAssignIndex + 1;
+    int total = _tileAssignCount;
+
+    if (e.bit_index == 0) {
+        // Base center — always worked
+        snprintf(buf, sizeof(buf), loc(SR_TILE_ASSIGN_CENTER),
+            pos1, total, e.x, e.y, terrain, e.N, e.M, e.E);
+    } else if (e.worked) {
+        snprintf(buf, sizeof(buf), loc(SR_TILE_ASSIGN_WORKED),
+            pos1, total, e.x, e.y, terrain, e.N, e.M, e.E);
+    } else if (e.flags == 0) {
+        // Available (no flags = available)
+        snprintf(buf, sizeof(buf), loc(SR_TILE_ASSIGN_AVAILABLE),
+            pos1, total, e.x, e.y, terrain, e.N, e.M, e.E);
+    } else {
+        // Unavailable
+        snprintf(buf, sizeof(buf), loc(SR_TILE_ASSIGN_UNAVAIL),
+            pos1, total, tile_unavail_reason(e.flags), e.x, e.y, terrain);
+    }
+
+    sr_output(buf, true);
+}
+
+/// Toggle worker on/off for the current tile.
+static void tile_assign_toggle() {
+    if (!valid_base()) return;
+    if (_tileAssignIndex < 0 || _tileAssignIndex >= _tileAssignCount) return;
+    TileAssignEntry& e = _tileAssignList[_tileAssignIndex];
+    BASE* base = &Bases[*CurrentBaseID];
+
+    // Base center: cannot toggle
+    if (e.bit_index == 0) {
+        sr_output(loc(SR_TILE_ASSIGN_CANNOT_CENTER), true);
+        return;
+    }
+
+    if (e.worked) {
+        // Disable governor citizen management so manual changes persist
+        if (base->governor_flags & GOV_ACTIVE && base->governor_flags & GOV_MANAGE_CITIZENS) {
+            base->governor_flags &= ~GOV_MANAGE_CITIZENS;
+            sr_debug_log("TILE-ASSIGN: disabled GOV_MANAGE_CITIZENS for %s", base->name);
+        }
+        // Remove worker from this tile → convert to specialist
+        base->worked_tiles &= ~(1 << e.bit_index);
+        base->specialist_total++;
+        int spec_type = best_specialist(base, 1, 1, 2);
+        if (base->specialist_total > 0) {
+            base->set_specialist_type(base->specialist_total - 1, spec_type);
+        }
+        base_compute(1);
+        GraphicWin_redraw((Win*)BaseWin);
+
+        // Rebuild list after change
+        tile_assign_build_list();
+
+        char buf[256];
+        const char* spec_name = sr_game_str(Citizen[spec_type].singular_name);
+        snprintf(buf, sizeof(buf), loc(SR_TILE_ASSIGN_REMOVED), spec_name);
+        sr_output(buf, true);
+        sr_debug_log("TILE-ASSIGN: removed worker from bit %d, now specialist %s",
+            e.bit_index, Citizen[spec_type].singular_name);
+    } else {
+        // Check if tile is available
+        if (e.flags != 0) {
+            sr_output(loc(SR_TILE_ASSIGN_CANNOT_UNAVAIL), true);
+            return;
+        }
+        // Check if there's a free citizen (specialist to convert)
+        if (base->specialist_total <= 0) {
+            sr_output(loc(SR_TILE_ASSIGN_CANNOT_NO_FREE), true);
+            return;
+        }
+        // Disable governor citizen management so manual changes persist
+        if (base->governor_flags & GOV_ACTIVE && base->governor_flags & GOV_MANAGE_CITIZENS) {
+            base->governor_flags &= ~GOV_MANAGE_CITIZENS;
+            sr_debug_log("TILE-ASSIGN: disabled GOV_MANAGE_CITIZENS for %s", base->name);
+        }
+        // Assign worker to this tile
+        base->specialist_total--;
+        base->worked_tiles |= (1 << e.bit_index);
+        base_compute(1);
+        GraphicWin_redraw((Win*)BaseWin);
+
+        // Rebuild list after change
+        tile_assign_build_list();
+
+        // Re-read yields after recompute
+        TileAssignEntry& updated = _tileAssignList[_tileAssignIndex];
+        char buf[256];
+        snprintf(buf, sizeof(buf), loc(SR_TILE_ASSIGN_ASSIGNED),
+            updated.N, updated.M, updated.E);
+        sr_output(buf, true);
+        sr_debug_log("TILE-ASSIGN: assigned worker to bit %d (%d,%d)",
+            e.bit_index, e.x, e.y);
+    }
+}
+
+/// Announce tile assignment summary.
+static void tile_assign_announce_summary() {
+    if (!valid_base()) return;
+    BASE* base = &Bases[*CurrentBaseID];
+
+    int worked = __builtin_popcount(base->worked_tiles);
+    int total_N = 0, total_M = 0, total_E = 0;
+    for (int i = 0; i < _tileAssignCount; i++) {
+        if (_tileAssignList[i].worked) {
+            total_N += _tileAssignList[i].N;
+            total_M += _tileAssignList[i].M;
+            total_E += _tileAssignList[i].E;
+        }
+    }
+
+    char buf[512];
+    snprintf(buf, sizeof(buf), loc(SR_TILE_ASSIGN_SUMMARY),
+        worked, _tileAssignCount, (int)base->specialist_total,
+        total_N, total_M, total_E);
+    sr_output(buf, true);
 }
 
 bool Update(UINT msg, WPARAM wParam) {
@@ -1098,6 +1711,123 @@ bool Update(UINT msg, WPARAM wParam) {
         return true;
     }
 
+    // Garrison list mode: intercept navigation keys
+    if (_garrisonActive) {
+        if (!valid_base()) {
+            _garrisonActive = false;
+            return true;
+        }
+
+        if (wParam == VK_UP) {
+            if (_garrisonCount > 0) {
+                _garrisonIndex = (_garrisonIndex + _garrisonCount - 1) % _garrisonCount;
+                garrison_announce_item();
+            }
+            return true;
+        }
+        if (wParam == VK_DOWN) {
+            if (_garrisonCount > 0) {
+                _garrisonIndex = (_garrisonIndex + 1) % _garrisonCount;
+                garrison_announce_item();
+            }
+            return true;
+        }
+        if (wParam == 'D') {
+            garrison_announce_detail();
+            return true;
+        }
+        if (wParam == VK_RETURN) {
+            garrison_activate();
+            return true;
+        }
+        if (wParam == 'B') {
+            garrison_set_home();
+            return true;
+        }
+        if (wParam == VK_ESCAPE) {
+            _garrisonActive = false;
+            sr_output(loc(SR_GARRISON_CLOSE), true);
+            return true;
+        }
+        // Let game-native base keys (H=Hurry) pass through
+        return true;
+    }
+
+    // Supported units list mode: intercept navigation keys
+    if (_supportActive) {
+        if (!valid_base()) {
+            _supportActive = false;
+            return true;
+        }
+
+        if (wParam == VK_UP) {
+            if (_supportCount > 0) {
+                _supportIndex = (_supportIndex + _supportCount - 1) % _supportCount;
+                support_announce_item();
+            }
+            return true;
+        }
+        if (wParam == VK_DOWN) {
+            if (_supportCount > 0) {
+                _supportIndex = (_supportIndex + 1) % _supportCount;
+                support_announce_item();
+            }
+            return true;
+        }
+        if (wParam == 'D') {
+            support_announce_detail();
+            return true;
+        }
+        if (wParam == VK_RETURN) {
+            support_activate();
+            return true;
+        }
+        if (wParam == VK_ESCAPE) {
+            _supportActive = false;
+            sr_output(loc(SR_SUPPORT_CLOSE), true);
+            return true;
+        }
+        return true;
+    }
+
+    // Tile assignment mode: intercept navigation keys
+    if (_tileAssignActive) {
+        if (!valid_base()) {
+            _tileAssignActive = false;
+            return true;
+        }
+
+        if (wParam == VK_UP) {
+            if (_tileAssignCount > 0) {
+                _tileAssignIndex = (_tileAssignIndex + _tileAssignCount - 1) % _tileAssignCount;
+                tile_assign_announce_item();
+            }
+            return true;
+        }
+        if (wParam == VK_DOWN) {
+            if (_tileAssignCount > 0) {
+                _tileAssignIndex = (_tileAssignIndex + 1) % _tileAssignCount;
+                tile_assign_announce_item();
+            }
+            return true;
+        }
+        if (wParam == VK_SPACE) {
+            tile_assign_toggle();
+            return true;
+        }
+        if (wParam == 'S' || wParam == VK_TAB) {
+            tile_assign_announce_summary();
+            return true;
+        }
+        if (wParam == VK_ESCAPE) {
+            _tileAssignActive = false;
+            sr_output(loc(SR_TILE_ASSIGN_CLOSE), true);
+            return true;
+        }
+        // Consume all other keys while tile assign is active
+        return true;
+    }
+
     // Ctrl+Q: toggle queue management mode
     if (wParam == 'Q' && ctrl_key_down()) {
         if (!valid_base()) return true;
@@ -1185,6 +1915,76 @@ bool Update(UINT msg, WPARAM wParam) {
             sr_game_str(Facility[_demolitionItems[0]].name));
         sr_output(buf, true);
         sr_debug_log("DEMOLITION-OPEN: %d facilities", _demolitionCount);
+        return true;
+    }
+
+    // Ctrl+U: open garrison list
+    if (wParam == 'U' && ctrl_key_down()) {
+        if (!valid_base()) return true;
+
+        garrison_build_list();
+        if (_garrisonCount == 0) {
+            sr_output(loc(SR_GARRISON_EMPTY), true);
+            return true;
+        }
+
+        _garrisonActive = true;
+        _garrisonIndex = 0;
+
+        char buf[256];
+        snprintf(buf, sizeof(buf), loc(SR_GARRISON_OPEN), _garrisonCount);
+        sr_output(buf, true);
+        garrison_announce_item(false);
+        sr_debug_log("GARRISON-OPEN: %d units", _garrisonCount);
+        return true;
+    }
+
+    // Ctrl+Shift+S: open supported units list
+    if (wParam == 'S' && ctrl_key_down() && (GetKeyState(VK_SHIFT) & 0x8000)) {
+        if (!valid_base()) return true;
+
+        support_build_list();
+        if (_supportCount == 0) {
+            sr_output(loc(SR_SUPPORT_EMPTY), true);
+            return true;
+        }
+
+        _supportActive = true;
+        _supportIndex = 0;
+
+        BASE* base = &Bases[*CurrentBaseID];
+        char buf[256];
+        snprintf(buf, sizeof(buf), loc(SR_SUPPORT_OPEN),
+            _supportCount, base->mineral_consumption);
+        sr_output(buf, true);
+        support_announce_item(false);
+        sr_debug_log("SUPPORT-OPEN: %d units", _supportCount);
+        return true;
+    }
+
+    // Ctrl+Shift+Y: psych detail
+    if (wParam == 'Y' && ctrl_key_down() && (GetKeyState(VK_SHIFT) & 0x8000)) {
+        announce_psych_detail();
+        return true;
+    }
+
+    // Ctrl+T: open tile assignment mode
+    if (wParam == 'T' && ctrl_key_down()) {
+        if (!valid_base()) return true;
+        BASE* base = &Bases[*CurrentBaseID];
+        if (base->faction_id != MapWin->cOwner) return true;
+
+        tile_assign_build_list();
+        _tileAssignActive = true;
+        _tileAssignIndex = 0;
+
+        int worked = __builtin_popcount(base->worked_tiles);
+        char buf[256];
+        snprintf(buf, sizeof(buf), loc(SR_TILE_ASSIGN_OPEN),
+            _tileAssignCount, worked);
+        sr_output(buf, true);
+        tile_assign_announce_item();
+        sr_debug_log("TILE-ASSIGN-OPEN: %d tiles, %d worked", _tileAssignCount, worked);
         return true;
     }
 

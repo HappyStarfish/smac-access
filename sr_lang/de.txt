@@ -101,7 +101,7 @@ fmt_units=%d stationiert.
 fmt_units_none=Einheiten: Keine stationiert.
 fmt_base_open_v2=Basis: %s, Bevölkerung %d. Baut %s, %d von %d, %s. Strg+F1: Hilfe.
 fmt_workers=%d Arbeiter
-base_help=Links/Rechts: Vorherige/Nächste Basis. Strg+Hoch/Runter: Sektionen. Strg+Links/Rechts: Reiter. Strg+I: Wiederholen. Strg+H: Beschleunigen. Strg+Shift+P: Produktion ändern. Strg+Q: Warteschlange. Strg+D: Abreißen. Strg+W: Bürger. Strg+G: Gouverneur. Strg+N: Nervenklammer. F2: Umbenennen. Strg+F1: Hilfe. Escape: Schließen.
+base_help=Links/Rechts: Vorherige/Nächste Basis. Strg+Hoch/Runter: Sektionen. Strg+Links/Rechts: Reiter. Strg+I: Wiederholen. Strg+H: Beschleunigen. Strg+Shift+P: Produktion ändern. Strg+Q: Warteschlange. Strg+D: Abreißen. Strg+U: Garnison. Strg+W: Bürger. Strg+G: Gouverneur. Strg+N: Nervenklammer. F2: Umbenennen. Strg+F1: Hilfe. Escape: Schließen.
 fmt_turns=%d Runden
 fmt_growth_never=kein Wachstum
 fmt_faction_credits=%d Energieguthaben
@@ -149,7 +149,7 @@ help_move=Shift+Pfeile: Bewegen
 help_explore=Pfeile: Erkunden
 help_skip=Leertaste: Einheit überspringen
 help_hold=H: Halten
-help_read=Strg+R: Bildschirm vorlesen
+help_read=Strg+R: Straße zum Cursor, Strg+T: Röhre zum Cursor
 help_goto=Shift+Leertaste: Zum Cursor gehen
 help_build_base=B: Basis gründen
 help_build_road=R: Straße bauen
@@ -199,9 +199,11 @@ menu_thinker=Thinker-Menü
 menu_game_menu=Spielmenü
 menu_file_select=Dateiauswahl
 file_load_game=Spiel laden
+file_save_game=Spiel speichern
 file_folder=Ordner
 file_item_fmt=%d von %d: %s, %s
 file_parent_dir=Übergeordneter Ordner
+file_overwrite_hint=Eingabe zum Bestätigen, Escape zum Abbrechen.
 
 # Popup-Listennavigation
 popup_list_fmt=%d von %d: %s
@@ -361,11 +363,51 @@ base_list_empty=Keine Basen verfügbar.
 going_home=Gehe zur Heimatbasis: %s
 going_to_base=Gehe zu %s
 no_unit_selected=Keine Einheit ausgewählt.
+group_go_to_base=Gruppenbewegung zur Basis: %d Einheiten, %d Basen. Hoch/Runter zum Blättern, Eingabe zum Senden, Escape zum Abbrechen.
+group_going_to_base=%d Einheiten zu %s geschickt
 help_go_to_base=G: Zur Basis gehen
 help_go_home=Shift+G: Zur Heimatbasis
 help_group_goto=J: Gruppenbewegung
 help_patrol=P: Patrouille
 help_artillery=F: Fernkampf
+help_scan_filter=Strg+BildAuf/Ab: Scanner-Filter
+help_scan_jump=Strg+Links/Rechts: Zum Treffer springen
+airdrop_no_ability=Luftlandung nicht möglich: Einheit hat keine Landekapsel-Fähigkeit oder bereits abgeworfen.
+airdrop_base=Luftlandung: %d Basen in Reichweite. Hoch/Runter zum Blättern, Eingabe zum Abwerfen, Escape zum Abbrechen.
+airdrop_base_fmt=%d von %d: %s (%d, %d), %d Felder entfernt
+airdrop_confirm=Luftlandung bei %s
+airdrop_blocked=Luftlandung nicht möglich: keine gültigen Ziele in Reichweite.
+airdrop_cursor=C: Abwurf an Cursorposition (%d, %d), %d Felder entfernt
+airdrop_cursor_confirm=Luftlandung bei (%d, %d)
+airdrop_cursor_invalid=Abwurf an Cursorposition nicht möglich: ungültiges Ziel.
+patrol_confirm=Patrouille zu (%d, %d).
+patrol_cannot=Patrouille nicht möglich.
+patrol_prompt=Patrouille zu (%d, %d)? Eingabe zum Bestätigen, Escape zum Abbrechen.
+road_to_confirm=Straße bauen zu (%d, %d).
+road_to_prompt=Straße bauen zu (%d, %d)? Eingabe zum Bestätigen, Escape zum Abbrechen.
+tube_to_confirm=Magnetröhre bauen zu (%d, %d).
+tube_to_prompt=Magnetröhre bauen zu (%d, %d)? Eingabe zum Bestätigen, Escape zum Abbrechen.
+road_to_cannot=Bau nicht möglich: kein Former ausgewählt.
+arty_cannot=Artilleriebeschuss nicht möglich.
+arty_no_targets=Keine Ziele in Reichweite (%d Felder).
+arty_open=Artillerie: %d Ziele in Reichweite (%d Felder). Hoch/Runter zum Blättern, C für Cursor, Eingabe zum Feuern, Escape zum Abbrechen.
+arty_target_fmt=%d von %d: %s (%d, %d), %d Felder entfernt
+arty_cursor=C: Feuern auf Cursor (%d, %d), %d Felder entfernt
+arty_cursor_oor=C: Cursor (%d, %d), %d Felder — außer Reichweite (%d max)
+arty_fired=Feuere auf %s.
+arty_help=Hoch/Runter: Ziele durchblättern. C: Cursorposition. Eingabe: Feuern. Escape: Abbrechen.
+
+help_cursor_to_unit=Strg+Leertaste: Cursor zur Einheit springen
+
+# Fraktionsstatus (Strg+F3)
+status_header=Runde %d, Jahr %d n.M.
+status_credits=%d Energieguthaben.
+status_alloc=Wirtschaft %d%%, Psyche %d%%, Forschung %d%%.
+status_income=Handel: %d. Brutto: %d. Unterhalt: %d. Netto: %d.
+status_research=Erforscht %s, %d von %d (%d%%).
+status_research_none=Keine Forschung aktiv.
+status_bases=%d Basen, %d Bevölkerung.
+status_help=Strg+F3: Fraktionsstatus.
 
 # Diplomatie
 diplo_open=Diplomatie mit %s
@@ -400,6 +442,7 @@ cursor_to_unit=Cursor bei Einheit.
 # Zuginformation
 new_turn=Zug %d, Jahr %d M.Y.
 unit_skipped=Übersprungen. Nächste Einheit: %s
+unit_damaged=Beschädigt: %d von %d HP
 
 # Entwurfswerkstatt
 design_proto_list=Einheitenentwürfe: %d Prototypen.
@@ -477,6 +520,15 @@ soceng_alloc_econ=Wirtschaft
 soceng_alloc_psych=Psycho
 soceng_alloc_labs=Labor
 
+# Garnison (Strg+U)
+garrison_open=Garnison: %d Einheiten. Hoch/Runter: navigieren, D: Details, Eingabe: aktivieren, B: Heimatbasis, H: Beschleunigen, Escape: schließen.
+garrison_item=%d von %d: %s, %d/%d HP, %s
+garrison_detail=%s. %s %d, %s %d, %s, %d Züge. Heimat: %s. %s
+garrison_activate=Aktiviert: %s
+garrison_home_set=Heimatbasis gesetzt: %s
+garrison_empty=Keine Einheiten stationiert.
+garrison_close=Garnison-Liste geschlossen.
+
 # Nachrichtenprotokoll (Strg+M)
 msg_open=Nachrichtenprotokoll. %d Nachrichten.
 msg_item=%d von %d: %s
@@ -487,3 +539,136 @@ msg_no_location=Kein Ort für diese Nachricht.
 msg_summary=%d Nachrichten. Runde %d.
 msg_help=Hoch/Runter: Blättern. Eingabe: Zum Ort springen. S: Zusammenfassung. Escape: Schließen.
 msg_notification=Nachricht: %s
+
+# Zeitsteuerung (Shift+T)
+tc_open=Zeitsteuerung, %d Voreinstellungen. Aktuell: %s. Hoch/Runter zum Blättern, Eingabe zum Auswählen, Escape zum Abbrechen.
+tc_item=%d von %d: %s, %d Sekunden pro Runde, %d pro Basis, %d pro Einheit
+tc_set=Zeitsteuerung auf %s gesetzt
+tc_cancelled=Zeitsteuerung abgebrochen
+
+# Chat (Strg+C)
+chat_open=Chat
+
+# Basis-Bildschirm: Erweiterte Ressourcen/Wirtschaft/Status
+fmt_resources_v3=Ressourcen: Nährstoffe %+d (%d von %d, %s), Verbrauch %d. Mineralien %+d, Unterhalt %d. Energie %+d, Ineffizienz %d.
+fmt_starvation=Hungersnot!
+fmt_low_minerals=Wenig Mineralien.
+fmt_economy_v3=Wirtschaft: %d Wirtschaft, %d Psyche, %d Forschung. Handel %d. %s.
+fmt_commerce=Handel: %d Energie aus Handel.
+fmt_inefficiency= Ineffizienz: %d Energie verloren.
+fmt_no_hq= Kein Hauptquartier!
+fmt_high_support= Hoher Unterhalt: %d Mineralien.
+fmt_undefended= Unverteidigt!
+fmt_police_units= %d Polizeieinheiten.
+
+# Unterstützte Einheiten (Strg+Shift+S)
+support_open=Unterstützte Einheiten: %d Einheiten, %d Mineralien Unterhalt. Hoch/Runter: navigieren, D: Details, Eingabe: aktivieren, Escape: schließen.
+support_item=%d von %d: %s, bei (%d, %d), %d von %d HP
+support_detail=%s. %s %d, %s %d, %s, %d Züge. Heimat: %s. Bei (%d, %d). %s
+support_empty=Keine unterstützten Einheiten.
+support_close=Unterstützungsliste geschlossen.
+support_activate=Aktiviert: %s
+
+# Psyche-Detail (Strg+Shift+Y)
+psych_detail=Psyche-Detail: %d Polizeieinheiten. Psyche-Ausgabe %d. Talente %d, Drohnen %d. %s
+
+# Basis-Hilfe (aktualisiert)
+base_help_v2=Links/Rechts: Vorherige/Nächste Basis. Strg+Hoch/Runter: Sektionen. Strg+Links/Rechts: Reiter. Strg+I: Wiederholen. Strg+H: Beschleunigen. Strg+Shift+P: Produktion ändern. Strg+Q: Warteschlange. Strg+D: Abreißen. Strg+U: Garnison. Strg+Shift+S: Unterstützte Einheiten. Strg+W: Bürger. Strg+T: Feldzuweisung. Strg+G: Gouverneur. Strg+N: Nervenklammer. Strg+Shift+Y: Psyche-Detail. F2: Umbenennen. Strg+F1: Hilfe. Escape: Schließen.
+
+# Feldzuweisung (Strg+T)
+tile_assign_open=Feldzuweisung: %d Felder, %d bearbeitet. Hoch/Runter: blättern, Leertaste: umschalten, S: Zusammenfassung, Escape: schließen.
+tile_assign_worked=%d von %d: Bearbeitet. (%d, %d) %s. %d Nahrung, %d Mineralien, %d Energie.
+tile_assign_available=%d von %d: Verfügbar. (%d, %d) %s. %d Nahrung, %d Mineralien, %d Energie.
+tile_assign_center=%d von %d: Basiszentrum, immer bearbeitet. (%d, %d) %s. %d Nahrung, %d Mineralien, %d Energie.
+tile_assign_unavail=%d von %d: Nicht verfügbar, %s. (%d, %d) %s.
+tile_assign_assigned=Arbeiter zugewiesen. %d Nahrung, %d Mineralien, %d Energie.
+tile_assign_removed=Arbeiter abgezogen. Umgewandelt zu %s.
+tile_assign_cannot_center=Nicht möglich: Basiszentrum wird immer bearbeitet.
+tile_assign_cannot_unavail=Nicht möglich: Feld nicht verfügbar.
+tile_assign_cannot_no_free=Nicht möglich: keine freien Bürger. Erst einen Arbeiter abziehen oder Strg+W nutzen.
+tile_assign_summary=Felder: %d bearbeitet von %d gesamt, %d Spezialisten. Gesamt: %d Nahrung, %d Mineralien, %d Energie.
+tile_assign_close=Feldzuweisung geschlossen.
+tile_unavail_foreign=fremdes Gebiet
+tile_unavail_other_base=von anderer Basis bearbeitet
+tile_unavail_vehicle=durch Fahrzeug blockiert
+tile_unavail_unexplored=unerforscht
+
+# Ressourcenboni
+bonus_nutrient=Nährstoffbonus
+bonus_mineral=Mineralienbonus
+bonus_energy=Energiebonus
+
+# Landmarken
+landmark_crater=Krater
+landmark_volcano=Vulkan
+landmark_jungle=Dschungel
+landmark_uranium=Uranebene
+landmark_sargasso=Sargassosee
+landmark_ruins=Ruinen
+landmark_dunes=Dünen
+landmark_fresh=Süßwassersee
+landmark_mesa=Tafelberg
+landmark_canyon=Schlucht
+landmark_geothermal=Geothermal
+landmark_ridge=Bergkamm
+landmark_borehole=Großes Bohrloch
+landmark_nexus=Mannigfaltigkeitsnexus
+landmark_unity=Unity-Wrack
+landmark_fossil=Fossiliengrat
+
+# Bewegen/Ansicht-Modus
+mode_move=Bewegen-Modus
+mode_view=Ansicht-Modus
+
+# Mehrspieler-Einrichtung
+netsetup_open=Mehrspieler-Einrichtung. Spieltext wird vorgelesen.
+netsetup_help=Mehrspieler-Lobby. Pfeiltasten, Eingabe, Escape.
+
+# Einheiten-Aktionsmenü (Shift+F10)
+act_menu_open=Einheiten-Aktionen, %d Einträge. Hoch/Runter, Eingabe, Escape.
+act_menu_item=%d von %d: %s
+act_menu_cancel=Abgebrochen.
+act_menu_empty=Keine Aktionen verfügbar.
+act_skip=Zug überspringen, Leertaste
+act_hold=Halten, H
+act_explore=Erkunden, X
+act_goto_base=Zur Basis gehen, G
+act_patrol=Patrouille, P
+act_build_road=Straße bauen, R
+act_build_magtube=Magnetschwebebahn bauen, R
+act_build_farm=Farm bauen, F
+act_build_mine=Mine bauen, M
+act_build_solar=Solarkollektor bauen, S
+act_build_forest=Wald pflanzen, Shift+F
+act_build_sensor=Sensor bauen, O
+act_build_condenser=Kondensator bauen, N
+act_build_borehole=Bohrloch bauen, Shift+N
+act_build_airbase=Luftstützpunkt bauen, Punkt
+act_build_bunker=Bunker bauen, Shift+Punkt
+act_remove_fungus=Pilz entfernen, F
+act_automate=Automatisieren, Shift+A
+act_build_base=Basis gründen, B
+act_long_range=Fernkampf, F
+act_convoy=Ressourcen konvoieren, O
+act_unload=Transport entladen, U
+act_airdrop=Luftlandung, I
+act_open_base=Basis öffnen, Eingabe
+act_menu_help=Shift+F10: Aktionsmenü
+act_done_hold=Hält Position.
+act_done_explore=Erkundet automatisch.
+act_done_unload=Entlädt.
+
+# Automatisierung (Shift+A)
+auto_open=Automatisieren: %d Optionen. Hoch, Runter, Eingabe, Escape.
+auto_item=%d von %d: %s
+auto_confirm=Automatisiert: %s
+auto_cancel=Abgebrochen
+auto_not_former=Nicht möglich: kein Former
+auto_full=Volle Terraformierung
+auto_road=Automatische Straßen
+auto_magtube=Automatische Röhren
+auto_improve_base=Autoverbesserung Basis
+auto_farm_solar=Farm+Solar+Straße
+auto_farm_mine=Farm+Mine+Straße
+auto_fungus=Automatische Fungus-Entfernung
+auto_sensor=Automatische Sensoren

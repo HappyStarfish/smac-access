@@ -738,6 +738,7 @@ LRESULT WINAPI ModWinProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     // === Screen reader: unified announce system ===
 
     // Early in_menu check for HUD filter (full in_menu computed later too)
+    bool in_netsetup = (*GameHalted && NetWin && Win_is_visible(NetWin));
     bool in_menu_early = (current_window() == GW_None
         && *PopupDialogState == 0);
 
@@ -785,6 +786,50 @@ LRESULT WINAPI ModWinProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             sr_prev_popup = cur_popup;
         }
 
+        // --- Multiplayer Setup (NetWin) transition detection ---
+        static bool sr_netsetup_was_active = false;
+        if (in_netsetup && !sr_netsetup_was_active) {
+            sr_output(loc(SR_NETSETUP_OPEN), true);
+            sr_announced[0] = '\0';
+            sr_debug_log("ANNOUNCE-SCREEN: Multiplayer Setup");
+            // Dump NetWin child windows for reverse-engineering
+            if (NetWin) {
+                sr_debug_log("NETWIN ptr=%p children=%d caption=[%s] rect=(%d,%d)-(%d,%d)",
+                    (void*)NetWin, NetWin->iChildCount,
+                    NetWin->pszCaption ? NetWin->pszCaption : "null",
+                    NetWin->rRect1.left, NetWin->rRect1.top,
+                    NetWin->rRect1.right, NetWin->rRect1.bottom);
+                for (int ci = 0; ci < NetWin->iChildCount && ci < 30; ci++) {
+                    Win* child = NetWin->apoChildren[ci];
+                    if (!child) continue;
+                    sr_debug_log("  CHILD[%d] ptr=%p ch=%d cap=[%s] rect=(%d,%d)-(%d,%d) vis=%d",
+                        ci, (void*)child, child->iChildCount,
+                        child->pszCaption ? child->pszCaption : "null",
+                        child->rRect1.left, child->rRect1.top,
+                        child->rRect1.right, child->rRect1.bottom,
+                        Win_is_visible(child));
+                    // Dump raw memory after Win base (0x444) to detect type
+                    int* raw = (int*)child;
+                    sr_debug_log("    raw[0x98]=%08x [0xA4]=%08x [0x444]=%08x [0x448]=%08x",
+                        raw[0x98/4], raw[0xA4/4], raw[0x444/4], raw[0x448/4]);
+                    for (int gi = 0; gi < child->iChildCount && gi < 10; gi++) {
+                        Win* gc = child->apoChildren[gi];
+                        if (!gc) continue;
+                        sr_debug_log("    GC[%d.%d] ptr=%p ch=%d cap=[%s] rect=(%d,%d)-(%d,%d) vis=%d",
+                            ci, gi, (void*)gc, gc->iChildCount,
+                            gc->pszCaption ? gc->pszCaption : "null",
+                            gc->rRect1.left, gc->rRect1.top,
+                            gc->rRect1.right, gc->rRect1.bottom,
+                            Win_is_visible(gc));
+                    }
+                }
+            }
+        } else if (!in_netsetup && sr_netsetup_was_active) {
+            sr_debug_log("SCREEN: Multiplayer Setup closed");
+            sr_announced[0] = '\0';
+        }
+        sr_netsetup_was_active = in_netsetup;
+
         // --- Base change detection (Left/Right cycles bases) ---
         static int sr_prev_base_id = -1;
         if (cur_win == GW_Base && *CurrentBaseID != sr_prev_base_id) {
@@ -821,8 +866,9 @@ LRESULT WINAPI ModWinProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                 (int)current_window());
 
             // Popup list navigation (research priorities, etc.)
-            // NOT used for file browser — game text capture handles that.
+            // NOT used for file browser — file browser uses text-capture approach.
             if ((wParam == VK_UP || wParam == VK_DOWN)
+                && !sr_file_browser_active()
                 && sr_popup_list.active && sr_popup_list.count > 0) {
                 if (wParam == VK_DOWN) {
                     sr_popup_list.index++;
@@ -882,7 +928,7 @@ LRESULT WINAPI ModWinProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             || GovernorHandler::IsActive()
             || MessageHandler::IsActive()
             || sr_is_number_input_active();
-        if (sr_modal_active) {
+        if (sr_modal_active || sr_file_browser_active()) {
             sr_snapshot_consume();
         } else if (sr_snapshot_ready()) {
             if (Win_is_visible(TutWin)) {
@@ -960,7 +1006,8 @@ LRESULT WINAPI ModWinProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                             (dit && sr_is_hud_noise(dit, in_menu_early)) ? " [HUD]" : "");
                     }
                 }
-                if (it && strlen(it) >= 3 && !sr_is_hud_noise(it, in_menu_early)) {
+                int nav_min_len = sr_file_browser_active() ? 2 : 3;
+                if (it && (int)strlen(it) >= nav_min_len && !sr_is_hud_noise(it, in_menu_early)) {
                     // Cache entering item at current position
                     int mcpos = MenuHandler::CacheGetPos();
                     MenuHandler::CacheStore(mcpos, it);
@@ -982,7 +1029,11 @@ LRESULT WINAPI ModWinProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                     sr_debug_log("ANNOUNCE-NAV idx=%d/%d dir=%s: %s",
                         nav_idx, count,
                         sr_arrow_dir == VK_DOWN ? "DOWN" : "UP", it);
-                    sr_output(it, true);
+                    if (sr_file_browser_active()) {
+                        sr_fb_on_text_captured(it);
+                    } else {
+                        sr_output(it, true);
+                    }
                     if (strstr(sr_announced, it) == NULL) {
                         int al = strlen(sr_announced);
                         int il = strlen(it);
@@ -1005,7 +1056,8 @@ LRESULT WINAPI ModWinProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         // and in base screen (BaseScreenHandler provides structured info).
         if (sr_stable_since > 0 && (now - sr_stable_since) > 300
             && sr_item_count() > 0 && !on_world_map && !sr_arrow_active
-            && !in_menu && !sr_modal_active && cur_win != GW_Base) {
+            && !in_menu && !sr_modal_active && !sr_file_browser_active()
+            && cur_win != GW_Base) {
             int count = sr_item_count();
             char buf[2048], all[2048];
             if (sr_build_announce(sr_item_get, count, sr_announced,
@@ -1209,8 +1261,48 @@ LRESULT WINAPI ModWinProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     && BaseScreenHandler::IsDemolitionActive()) {
         if (BaseScreenHandler::Update(msg, wParam)) return 0;
 
+    // Screen reader: garrison mode intercepts ALL keys when active
+    } else if (msg == WM_KEYDOWN && sr_is_available()
+    && current_window() == GW_Base
+    && BaseScreenHandler::IsGarrisonActive()) {
+        if (BaseScreenHandler::Update(msg, wParam)) return 0;
+
+    // Screen reader: support mode intercepts ALL keys when active
+    } else if (msg == WM_KEYDOWN && sr_is_available()
+    && current_window() == GW_Base
+    && BaseScreenHandler::IsSupportActive()) {
+        if (BaseScreenHandler::Update(msg, wParam)) return 0;
+
+    // Screen reader: tile assignment mode intercepts ALL keys when active
+    } else if (msg == WM_KEYDOWN && sr_is_available()
+    && current_window() == GW_Base
+    && BaseScreenHandler::IsTileAssignActive()) {
+        if (BaseScreenHandler::Update(msg, wParam)) return 0;
+
     // Screen reader: Ctrl+D = open facility demolition
     } else if (msg == WM_KEYDOWN && wParam == 'D' && ctrl_key_down()
+    && sr_is_available() && current_window() == GW_Base) {
+        if (BaseScreenHandler::Update(msg, wParam)) return 0;
+
+    // Screen reader: Ctrl+U = open garrison list
+    } else if (msg == WM_KEYDOWN && wParam == 'U' && ctrl_key_down()
+    && sr_is_available() && current_window() == GW_Base) {
+        if (BaseScreenHandler::Update(msg, wParam)) return 0;
+
+    // Screen reader: Ctrl+Shift+S = open supported units list
+    } else if (msg == WM_KEYDOWN && wParam == 'S' && ctrl_key_down()
+    && (GetKeyState(VK_SHIFT) & 0x8000) && sr_is_available()
+    && current_window() == GW_Base) {
+        if (BaseScreenHandler::Update(msg, wParam)) return 0;
+
+    // Screen reader: Ctrl+Shift+Y = psych detail
+    } else if (msg == WM_KEYDOWN && wParam == 'Y' && ctrl_key_down()
+    && (GetKeyState(VK_SHIFT) & 0x8000) && sr_is_available()
+    && current_window() == GW_Base) {
+        if (BaseScreenHandler::Update(msg, wParam)) return 0;
+
+    // Screen reader: Ctrl+T = open tile assignment
+    } else if (msg == WM_KEYDOWN && wParam == 'T' && ctrl_key_down()
     && sr_is_available() && current_window() == GW_Base) {
         if (BaseScreenHandler::Update(msg, wParam)) return 0;
 
@@ -1387,6 +1479,20 @@ LRESULT WINAPI ModWinProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     && !*GameHalted) {
         MessageHandler::OpenBrowser();
         return 0;
+
+    // Screen reader: Shift+T = accessible time controls dialog
+    } else if (msg == WM_KEYDOWN && wParam == 'T' && shift_key_down()
+    && !ctrl_key_down() && !alt_key_down() && sr_is_available()
+    && current_window() == GW_World && !*GameHalted) {
+        WorldMapHandler::RunTimeControls();
+        return 0;
+
+    // Screen reader: Ctrl+C = announce chat opening (pass through to game)
+    } else if (msg == WM_KEYDOWN && wParam == 'C' && ctrl_key_down()
+    && !shift_key_down() && !alt_key_down() && sr_is_available()
+    && *MultiplayerActive && current_window() == GW_World && !*GameHalted) {
+        sr_output(loc(SR_CHAT_OPEN), true);
+        // Don't return 0 — let key pass through to game's native handler
 
     // Screen reader: Ctrl+Shift+R = silence speech
     } else if (msg == WM_KEYDOWN && wParam == 'R' && ctrl_key_down()
@@ -2579,6 +2685,12 @@ void* This, const char* filename, const char* label, int a4, int a5, int a6, int
             char buf[2048];
             if (sr_read_popup_text(filename, label, buf, sizeof(buf))) {
                 sr_output(buf, true);
+            }
+            // File browser confirmation dialogs: append key hint
+            // (buttons are not arrow-navigable, Enter=OK, Escape=Cancel)
+            if (sr_file_browser_active() && label
+                && strcmp(label, "FILEWIN_SAVEEXISTS") == 0) {
+                sr_output(loc(SR_FILE_OVERWRITE_HINT), false);
             }
             // Parse popup list for dialogs that bypass popp/popb
             sr_popup_list_parse(filename, label);

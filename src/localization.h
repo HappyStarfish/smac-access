@@ -208,9 +208,11 @@ enum SrStr {
     SR_MENU_GAME_MENU,      // "Game Menu"
     SR_MENU_FILE_SELECT,    // "File Selection" (Load/Save file picker)
     SR_FILE_LOAD_GAME,      // "Load Game"
+    SR_FILE_SAVE_GAME,      // "Save Game"
     SR_FILE_FOLDER,         // "Folder"
     SR_FILE_ITEM_FMT,       // "%d of %d: %s, %s"  (pos, total, name, type)
     SR_FILE_PARENT_DIR,     // "Parent directory"
+    SR_FILE_OVERWRITE_HINT, // "Enter to confirm, Escape to cancel"
 
     // Popup list navigation
     SR_POPUP_LIST_FMT,      // "%d of %d: %s"
@@ -372,9 +374,21 @@ enum SrStr {
     SR_NO_UNIT_SELECTED,
     SR_HELP_GO_TO_BASE,
     SR_HELP_GO_HOME,
+    SR_GROUP_GO_TO_BASE,
+    SR_GROUP_GOING_TO_BASE,
     SR_HELP_GROUP_GOTO,
     SR_HELP_PATROL,
     SR_HELP_ARTILLERY,
+    SR_HELP_SCAN_FILTER,
+    SR_HELP_SCAN_JUMP,
+    SR_AIRDROP_NO_ABILITY,
+    SR_AIRDROP_BASE,
+    SR_AIRDROP_BASE_FMT,
+    SR_AIRDROP_CONFIRM,
+    SR_AIRDROP_BLOCKED,
+    SR_AIRDROP_CURSOR,
+    SR_AIRDROP_CURSOR_CONFIRM,
+    SR_AIRDROP_CURSOR_INVALID,
 
     // Diplomacy
     SR_DIPLO_OPEN,
@@ -404,6 +418,7 @@ enum SrStr {
     // Turn Info
     SR_NEW_TURN,
     SR_UNIT_SKIPPED,
+    SR_UNIT_DAMAGED,
 
     // Input dialogs
     SR_INPUT_NUMBER,
@@ -486,6 +501,15 @@ enum SrStr {
     SR_SOCENG_ALLOC_PSYCH,
     SR_SOCENG_ALLOC_LABS,
 
+    // Garrison List (Ctrl+U)
+    SR_GARRISON_OPEN,
+    SR_GARRISON_ITEM,
+    SR_GARRISON_DETAIL,
+    SR_GARRISON_ACTIVATE,
+    SR_GARRISON_HOME_SET,
+    SR_GARRISON_EMPTY,
+    SR_GARRISON_CLOSE,
+
     // Message Log (Ctrl+M)
     SR_MSG_OPEN,
     SR_MSG_ITEM,
@@ -496,6 +520,174 @@ enum SrStr {
     SR_MSG_SUMMARY,
     SR_MSG_HELP,
     SR_MSG_NOTIFICATION,
+
+    // Time Controls (Shift+T)
+    SR_TC_OPEN,
+    SR_TC_ITEM,
+    SR_TC_SET,
+    SR_TC_CANCELLED,
+
+    // Chat (Ctrl+C)
+    SR_CHAT_OPEN,
+
+    // Base Screen: Resources/Economy/Status V3
+    SR_FMT_RESOURCES_V3,
+    SR_FMT_STARVATION,
+    SR_FMT_LOW_MINERALS,
+    SR_FMT_ECONOMY_V3,
+    SR_FMT_COMMERCE,
+    SR_FMT_INEFFICIENCY,
+    SR_FMT_NO_HQ,
+    SR_FMT_HIGH_SUPPORT,
+    SR_FMT_UNDEFENDED,
+    SR_FMT_POLICE_UNITS,
+
+    // Supported Units (Ctrl+Shift+S)
+    SR_SUPPORT_OPEN,
+    SR_SUPPORT_ITEM,
+    SR_SUPPORT_DETAIL,
+    SR_SUPPORT_EMPTY,
+    SR_SUPPORT_CLOSE,
+    SR_SUPPORT_ACTIVATE,
+
+    // Psych Detail (Ctrl+Shift+Y)
+    SR_PSYCH_DETAIL,
+
+    // Base Help (updated)
+    SR_BASE_HELP_V2,
+
+    // Tile Assignment (Ctrl+T)
+    SR_TILE_ASSIGN_OPEN,
+    SR_TILE_ASSIGN_WORKED,
+    SR_TILE_ASSIGN_AVAILABLE,
+    SR_TILE_ASSIGN_CENTER,
+    SR_TILE_ASSIGN_UNAVAIL,
+    SR_TILE_ASSIGN_ASSIGNED,
+    SR_TILE_ASSIGN_REMOVED,
+    SR_TILE_ASSIGN_CANNOT_CENTER,
+    SR_TILE_ASSIGN_CANNOT_UNAVAIL,
+    SR_TILE_ASSIGN_CANNOT_NO_FREE,
+    SR_TILE_ASSIGN_SUMMARY,
+    SR_TILE_ASSIGN_CLOSE,
+    SR_TILE_UNAVAIL_FOREIGN,
+    SR_TILE_UNAVAIL_OTHER_BASE,
+    SR_TILE_UNAVAIL_VEHICLE,
+    SR_TILE_UNAVAIL_UNEXPLORED,
+
+    // Patrol (P key)
+    SR_PATROL_CONFIRM,
+    SR_PATROL_CANNOT,
+    SR_PATROL_PROMPT,
+
+    // Road/Tube to cursor (Ctrl+R / Ctrl+T)
+    SR_ROAD_TO_CONFIRM,
+    SR_ROAD_TO_PROMPT,
+    SR_TUBE_TO_CONFIRM,
+    SR_TUBE_TO_PROMPT,
+    SR_ROAD_TO_CANNOT,
+
+    // Artillery (F key)
+    SR_ARTY_CANNOT,
+    SR_ARTY_NO_TARGETS,
+    SR_ARTY_OPEN,
+    SR_ARTY_TARGET_FMT,
+    SR_ARTY_CURSOR,
+    SR_ARTY_CURSOR_OOR,
+    SR_ARTY_FIRED,
+    SR_ARTY_HELP,
+
+    // World Map Help (additional)
+    SR_HELP_CURSOR_TO_UNIT,
+
+    // Faction Status (Ctrl+F3)
+    SR_STATUS_HEADER,
+    SR_STATUS_CREDITS,
+    SR_STATUS_ALLOC,
+    SR_STATUS_INCOME,
+    SR_STATUS_RESEARCH,
+    SR_STATUS_RESEARCH_NONE,
+    SR_STATUS_BASES,
+    SR_STATUS_HELP,
+
+    // Resource Bonuses (tile announcement)
+    SR_BONUS_NUTRIENT,
+    SR_BONUS_MINERAL,
+    SR_BONUS_ENERGY,
+
+    // Landmarks (tile announcement)
+    SR_LANDMARK_CRATER,
+    SR_LANDMARK_VOLCANO,
+    SR_LANDMARK_JUNGLE,
+    SR_LANDMARK_URANIUM,
+    SR_LANDMARK_SARGASSO,
+    SR_LANDMARK_RUINS,
+    SR_LANDMARK_DUNES,
+    SR_LANDMARK_FRESH,
+    SR_LANDMARK_MESA,
+    SR_LANDMARK_CANYON,
+    SR_LANDMARK_GEOTHERMAL,
+    SR_LANDMARK_RIDGE,
+    SR_LANDMARK_BOREHOLE,
+    SR_LANDMARK_NEXUS,
+    SR_LANDMARK_UNITY,
+    SR_LANDMARK_FOSSIL,
+
+    // Move/View Mode (V key)
+    SR_MODE_MOVE,
+    SR_MODE_VIEW,
+
+    // Multiplayer Setup (NetWin)
+    SR_NETSETUP_OPEN,
+    SR_NETSETUP_HELP,
+
+    // Unit Action Menu (Shift+F10)
+    SR_ACT_MENU_OPEN,
+    SR_ACT_MENU_ITEM,
+    SR_ACT_MENU_CANCEL,
+    SR_ACT_MENU_EMPTY,
+    SR_ACT_SKIP,
+    SR_ACT_HOLD,
+    SR_ACT_EXPLORE,
+    SR_ACT_GOTO_BASE,
+    SR_ACT_PATROL,
+    SR_ACT_BUILD_ROAD,
+    SR_ACT_BUILD_MAGTUBE,
+    SR_ACT_BUILD_FARM,
+    SR_ACT_BUILD_MINE,
+    SR_ACT_BUILD_SOLAR,
+    SR_ACT_BUILD_FOREST,
+    SR_ACT_BUILD_SENSOR,
+    SR_ACT_BUILD_CONDENSER,
+    SR_ACT_BUILD_BOREHOLE,
+    SR_ACT_BUILD_AIRBASE,
+    SR_ACT_BUILD_BUNKER,
+    SR_ACT_REMOVE_FUNGUS,
+    SR_ACT_AUTOMATE,
+    SR_ACT_BUILD_BASE,
+    SR_ACT_LONG_RANGE,
+    SR_ACT_CONVOY,
+    SR_ACT_UNLOAD,
+    SR_ACT_AIRDROP,
+    SR_ACT_OPEN_BASE,
+    SR_ACT_MENU_HELP,
+    SR_ACT_DONE_HOLD,
+    SR_ACT_DONE_EXPLORE,
+    SR_ACT_DONE_UNLOAD,
+
+    // Automation (Shift+A)
+    SR_AUTO_OPEN,
+    SR_AUTO_ITEM,
+    SR_AUTO_CONFIRM,
+    SR_AUTO_CANCEL,
+    SR_AUTO_NOT_FORMER,
+    SR_AUTO_FULL,
+    SR_AUTO_ROAD,
+    SR_AUTO_MAGTUBE,
+    SR_AUTO_IMPROVE_BASE,
+    SR_AUTO_FARM_SOLAR,
+    SR_AUTO_FARM_MINE,
+    SR_AUTO_FUNGUS,
+    SR_AUTO_SENSOR,
 
     SR_COUNT
 };

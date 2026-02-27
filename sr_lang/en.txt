@@ -101,7 +101,7 @@ fmt_units=%d stationed.
 fmt_units_none=Units: None stationed.
 fmt_base_open_v2=Base: %s, Population %d. Building %s, %d of %d, %s. Ctrl+F1: Help.
 fmt_workers=%d workers
-base_help=Left/Right: Previous/Next base. Ctrl+Up/Down: Sections. Ctrl+Left/Right: Tabs. Ctrl+I: Repeat. Ctrl+H: Hurry. Ctrl+Shift+P: Change production. Ctrl+Q: Queue. Ctrl+D: Demolish. Ctrl+W: Citizens. Ctrl+G: Governor. Ctrl+N: Nerve staple. F2: Rename. Ctrl+F1: Help. Escape: Close.
+base_help=Left/Right: Previous/Next base. Ctrl+Up/Down: Sections. Ctrl+Left/Right: Tabs. Ctrl+I: Repeat. Ctrl+H: Hurry. Ctrl+Shift+P: Change production. Ctrl+Q: Queue. Ctrl+D: Demolish. Ctrl+U: Garrison. Ctrl+W: Citizens. Ctrl+G: Governor. Ctrl+N: Nerve staple. F2: Rename. Ctrl+F1: Help. Escape: Close.
 fmt_turns=%d turns
 fmt_growth_never=no growth
 fmt_faction_credits=%d energy credits
@@ -149,7 +149,7 @@ help_move=Shift+Arrows: Move
 help_explore=Arrows: Explore
 help_skip=Space: Skip unit
 help_hold=H: Hold
-help_read=Ctrl+R: Read screen
+help_read=Ctrl+R: Road to cursor, Ctrl+T: Tube to cursor
 help_goto=Shift+Space: Go to cursor
 help_build_base=B: Build base
 help_build_road=R: Build road
@@ -199,9 +199,11 @@ menu_thinker=Thinker Menu
 menu_game_menu=Game Menu
 menu_file_select=File Selection
 file_load_game=Load Game
+file_save_game=Save Game
 file_folder=Folder
 file_item_fmt=%d of %d: %s, %s
 file_parent_dir=Parent directory
+file_overwrite_hint=Enter to confirm, Escape to cancel.
 
 # Popup List Navigation
 popup_list_fmt=%d of %d: %s
@@ -361,11 +363,51 @@ base_list_empty=No bases available.
 going_home=Going to home base: %s
 going_to_base=Going to %s
 no_unit_selected=No unit selected.
+group_go_to_base=Group go to base: %d units, %d bases. Up/Down to browse, Enter to send all, Escape to cancel.
+group_going_to_base=Sending %d units to %s
 help_go_to_base=G: Go to base
 help_go_home=Shift+G: Go to home base
 help_group_goto=J: Group go to
 help_patrol=P: Patrol
 help_artillery=F: Long range fire
+help_scan_filter=Ctrl+PgUp/PgDn: Scanner filter
+help_scan_jump=Ctrl+Left/Right: Jump to match
+airdrop_no_ability=Cannot airdrop: unit lacks Drop Pod ability or already dropped this turn.
+airdrop_base=Airdrop: %d bases in range. Up/Down to browse, Enter to drop, Escape to cancel.
+airdrop_base_fmt=%d of %d: %s (%d, %d), %d tiles away
+airdrop_confirm=Airdropped to %s
+airdrop_blocked=Cannot airdrop: no valid targets in range.
+airdrop_cursor=C: Drop at cursor (%d, %d), %d tiles away
+airdrop_cursor_confirm=Airdropped to (%d, %d)
+airdrop_cursor_invalid=Cannot drop at cursor: invalid target.
+patrol_confirm=Patrolling to (%d, %d).
+patrol_cannot=Cannot patrol.
+patrol_prompt=Patrol to (%d, %d)? Enter to confirm, Escape to cancel.
+road_to_confirm=Building road to (%d, %d).
+road_to_prompt=Build road to (%d, %d)? Enter to confirm, Escape to cancel.
+tube_to_confirm=Building mag tube to (%d, %d).
+tube_to_prompt=Build mag tube to (%d, %d)? Enter to confirm, Escape to cancel.
+road_to_cannot=Cannot build: no former selected.
+arty_cannot=Cannot fire artillery.
+arty_no_targets=No targets within range (%d tiles).
+arty_open=Artillery: %d targets in range (%d tiles). Up/Down to browse, C for cursor, Enter to fire, Escape to cancel.
+arty_target_fmt=%d of %d: %s (%d, %d), %d tiles away
+arty_cursor=C: Fire at cursor (%d, %d), %d tiles away
+arty_cursor_oor=C: Cursor (%d, %d), %d tiles — out of range (%d max)
+arty_fired=Firing at %s.
+arty_help=Up/Down: browse targets. C: cursor position. Enter: fire. Escape: cancel.
+
+help_cursor_to_unit=Ctrl+Space: Jump cursor to unit
+
+# Faction Status (Ctrl+F3)
+status_header=Turn %d, Year %d M.Y.
+status_credits=%d energy credits.
+status_alloc=Econ %d%%, Psych %d%%, Labs %d%%.
+status_income=Commerce: %d. Gross: %d. Maintenance: %d. Net: %d.
+status_research=Researching %s, %d of %d (%d%%).
+status_research_none=No research in progress.
+status_bases=%d bases, %d population.
+status_help=Ctrl+F3: Faction status.
 
 # Diplomacy
 diplo_open=Diplomacy with %s
@@ -400,6 +442,7 @@ cursor_to_unit=Cursor at unit.
 # Turn Info
 new_turn=Turn %d, Year %d M.Y.
 unit_skipped=Skipped. Next unit: %s
+unit_damaged=Damaged: %d of %d HP
 
 # Design Workshop
 design_proto_list=Unit designs: %d prototypes.
@@ -477,6 +520,15 @@ soceng_alloc_econ=Economy
 soceng_alloc_psych=Psych
 soceng_alloc_labs=Labs
 
+# Garrison List (Ctrl+U)
+garrison_open=Garrison: %d units. Up/Down: navigate, D: details, Enter: activate, B: home base, H: hurry, Escape: close.
+garrison_item=%d of %d: %s, %d/%d HP, %s
+garrison_detail=%s. %s %d, %s %d, %s, %d moves. Home: %s. %s
+garrison_activate=Activated: %s
+garrison_home_set=Home base set: %s
+garrison_empty=No units stationed.
+garrison_close=Garrison list closed.
+
 # Message Log (Ctrl+M)
 msg_open=Message log. %d messages.
 msg_item=%d of %d: %s
@@ -487,3 +539,136 @@ msg_no_location=No location for this message.
 msg_summary=%d messages. Turn %d.
 msg_help=Up/Down: Browse. Enter: Jump to location. S: Summary. Escape: Close.
 msg_notification=Message: %s
+
+# Time Controls (Shift+T)
+tc_open=Time Controls, %d presets. Current: %s. Up/Down to browse, Enter to select, Escape to cancel.
+tc_item=%d of %d: %s, %d seconds per turn, %d per base, %d per unit
+tc_set=Time Controls set to %s
+tc_cancelled=Time Controls cancelled
+
+# Chat (Ctrl+C)
+chat_open=Chat
+
+# Base Screen: Extended Resources/Economy/Status
+fmt_resources_v3=Resources: Nutrients %+d (%d of %d, %s), consuming %d. Minerals %+d, support %d. Energy %+d, inefficiency %d.
+fmt_starvation=Starvation!
+fmt_low_minerals=Low minerals.
+fmt_economy_v3=Economy: %d economy, %d psych, %d labs. Commerce %d. %s.
+fmt_commerce=Commerce: %d energy from trade.
+fmt_inefficiency= Inefficiency: %d energy lost.
+fmt_no_hq= No headquarters!
+fmt_high_support= High support: %d minerals.
+fmt_undefended= Undefended!
+fmt_police_units= %d police units.
+
+# Supported Units (Ctrl+Shift+S)
+support_open=Supported units: %d units, %d mineral support. Up/Down: navigate, D: details, Enter: activate, Escape: close.
+support_item=%d of %d: %s, at (%d, %d), %d of %d HP
+support_detail=%s. %s %d, %s %d, %s, %d moves. Home: %s. At (%d, %d). %s
+support_empty=No supported units.
+support_close=Support list closed.
+support_activate=Activated: %s
+
+# Psych Detail (Ctrl+Shift+Y)
+psych_detail=Psych detail: %d police units. Psych output %d. Talents %d, Drones %d. %s
+
+# Base Help (updated)
+base_help_v2=Left/Right: Previous/Next base. Ctrl+Up/Down: Sections. Ctrl+Left/Right: Tabs. Ctrl+I: Repeat. Ctrl+H: Hurry. Ctrl+Shift+P: Change production. Ctrl+Q: Queue. Ctrl+D: Demolish. Ctrl+U: Garrison. Ctrl+Shift+S: Supported units. Ctrl+W: Citizens. Ctrl+T: Tile assignment. Ctrl+G: Governor. Ctrl+N: Nerve staple. Ctrl+Shift+Y: Psych detail. F2: Rename. Ctrl+F1: Help. Escape: Close.
+
+# Tile Assignment (Ctrl+T)
+tile_assign_open=Tile assignment: %d tiles, %d worked. Up/Down: browse, Space: toggle, S: summary, Escape: close.
+tile_assign_worked=%d of %d: Worked. (%d, %d) %s. %d food, %d minerals, %d energy.
+tile_assign_available=%d of %d: Available. (%d, %d) %s. %d food, %d minerals, %d energy.
+tile_assign_center=%d of %d: Base center, always worked. (%d, %d) %s. %d food, %d minerals, %d energy.
+tile_assign_unavail=%d of %d: Unavailable, %s. (%d, %d) %s.
+tile_assign_assigned=Worker assigned. %d food, %d minerals, %d energy.
+tile_assign_removed=Worker removed. Converted to %s.
+tile_assign_cannot_center=Cannot: base center is always worked.
+tile_assign_cannot_unavail=Cannot: tile unavailable.
+tile_assign_cannot_no_free=Cannot: no free citizens. Remove a worker or use Ctrl+W first.
+tile_assign_summary=Tiles: %d worked of %d total, %d specialists. Total: %d food, %d minerals, %d energy.
+tile_assign_close=Tile assignment closed.
+tile_unavail_foreign=foreign territory
+tile_unavail_other_base=worked by another base
+tile_unavail_vehicle=blocked by vehicle
+tile_unavail_unexplored=unexplored
+
+# Resource Bonuses
+bonus_nutrient=Nutrient bonus
+bonus_mineral=Mineral bonus
+bonus_energy=Energy bonus
+
+# Landmarks
+landmark_crater=Crater
+landmark_volcano=Volcano
+landmark_jungle=Jungle
+landmark_uranium=Uranium flats
+landmark_sargasso=Sargasso Sea
+landmark_ruins=Ruins
+landmark_dunes=Dunes
+landmark_fresh=Freshwater Sea
+landmark_mesa=Mesa
+landmark_canyon=Canyon
+landmark_geothermal=Geothermal
+landmark_ridge=Ridge
+landmark_borehole=Great Borehole
+landmark_nexus=Manifold Nexus
+landmark_unity=Unity wreckage
+landmark_fossil=Fossil Ridge
+
+# Move/View Mode
+mode_move=Move mode
+mode_view=View mode
+
+# Multiplayer Setup
+netsetup_open=Multiplayer Setup. Game text will be read aloud.
+netsetup_help=Multiplayer lobby. Arrow keys, Enter, Escape.
+
+# Unit Action Menu (Shift+F10)
+act_menu_open=Unit actions, %d items. Up/Down, Enter, Escape.
+act_menu_item=%d of %d: %s
+act_menu_cancel=Cancelled.
+act_menu_empty=No actions available.
+act_skip=Skip turn, Space
+act_hold=Hold, H
+act_explore=Explore, X
+act_goto_base=Go to base, G
+act_patrol=Patrol, P
+act_build_road=Build road, R
+act_build_magtube=Build mag tube, R
+act_build_farm=Build farm, F
+act_build_mine=Build mine, M
+act_build_solar=Build solar collector, S
+act_build_forest=Plant forest, Shift+F
+act_build_sensor=Build sensor, O
+act_build_condenser=Build condenser, N
+act_build_borehole=Build borehole, Shift+N
+act_build_airbase=Build airbase, Period
+act_build_bunker=Build bunker, Shift+Period
+act_remove_fungus=Remove fungus, F
+act_automate=Automate, Shift+A
+act_build_base=Build base, B
+act_long_range=Long range fire, F
+act_convoy=Convoy resources, O
+act_unload=Unload transport, U
+act_airdrop=Airdrop, I
+act_open_base=Open base, Enter
+act_menu_help=Shift+F10: Action menu
+act_done_hold=Holding.
+act_done_explore=Auto-exploring.
+act_done_unload=Unloading.
+
+# Automation (Shift+A)
+auto_open=Automate: %d options. Up, Down, Enter, Escape.
+auto_item=%d of %d: %s
+auto_confirm=Automated: %s
+auto_cancel=Cancelled
+auto_not_former=Cannot: not a former
+auto_full=Full Terraforming
+auto_road=Auto Roads
+auto_magtube=Auto Magtubes
+auto_improve_base=Auto Improve Base
+auto_farm_solar=Farm+Solar+Road
+auto_farm_mine=Farm+Mine+Road
+auto_fungus=Auto Fungus Removal
+auto_sensor=Auto Sensors

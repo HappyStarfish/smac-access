@@ -121,8 +121,24 @@ static void announce_slot() {
         int labs = (type_id >= 0 && type_id < MaxCitizenNum) ? Citizen[type_id].labs_bonus : 0;
         snprintf(bonus_str, sizeof(bonus_str), loc(SR_SPEC_BONUS), econ, psych, labs);
 
-        snprintf(buf, sizeof(buf), loc(SR_SPEC_SPECIALIST),
+        int pos = snprintf(buf, sizeof(buf), loc(SR_SPEC_SPECIALIST),
             _currentSlot + 1, _totalSlots, name, bonus_str);
+
+        // List other available types
+        int avail_count = 0;
+        for (int i = 0; i < MaxSpecialistNum; i++) {
+            if (i != type_id && citizen_available(i, base->faction_id, base->pop_size)) {
+                if (avail_count == 0) {
+                    pos += snprintf(buf + pos, sizeof(buf) - pos,
+                        " Left/Right: ");
+                } else {
+                    pos += snprintf(buf + pos, sizeof(buf) - pos, ", ");
+                }
+                pos += snprintf(buf + pos, sizeof(buf) - pos, "%s",
+                    sr_game_str(Citizen[i].singular_name));
+                avail_count++;
+            }
+        }
     }
 
     sr_output(buf, true);
@@ -170,6 +186,14 @@ static void refresh_counts() {
     build_worker_map(base);
 }
 
+// Disable governor citizen management so manual changes persist
+static void disable_gov_manage_citizens(BASE* base) {
+    if (base->governor_flags & GOV_ACTIVE && base->governor_flags & GOV_MANAGE_CITIZENS) {
+        base->governor_flags &= ~GOV_MANAGE_CITIZENS;
+        sr_debug_log("SPEC: disabled GOV_MANAGE_CITIZENS for %s\n", base->name);
+    }
+}
+
 // Convert the current worker to a specialist
 static void convert_to_specialist() {
     if (*CurrentBaseID < 0 || *CurrentBaseID >= *BaseCount) return;
@@ -200,6 +224,9 @@ static void convert_to_specialist() {
         return;
     }
 
+    // Disable governor citizen management so changes persist
+    disable_gov_manage_citizens(base);
+
     // Clear the worked tile bit
     base->worked_tiles &= ~(1 << tile_bit);
     // Increment specialist count
@@ -208,7 +235,10 @@ static void convert_to_specialist() {
     int new_spec_idx = base->specialist_total - 1;
     base->set_specialist_type(new_spec_idx, best_type);
 
-    // Refresh local counts (no base_compute/redraw during modal loop)
+    // Recalculate immediately so yields are consistent
+    base_compute(1);
+
+    // Refresh local counts after recompute
     refresh_counts();
 
     // Move cursor to the new specialist
@@ -237,6 +267,9 @@ static void convert_to_worker() {
         return;
     }
 
+    // Disable governor citizen management so changes persist
+    disable_gov_manage_citizens(base);
+
     int spec_idx = _currentSlot - _workerCount;
 
     // Remove specialist: shift types down if not last
@@ -245,10 +278,12 @@ static void convert_to_worker() {
     }
     base->specialist_total--;
 
-    // Note: game will auto-assign freed citizen to best tile when
-    // base_compute(1) runs at modal loop exit.
+    // Run base_compute immediately so the game assigns the freed citizen
+    // to a tile (sets worked_tiles bit). Without this, worked_tiles + specialist_total
+    // doesn't add up to pop_size+1, and the next base_compute would do a full reset.
+    base_compute(1);
 
-    // Refresh local counts (no base_compute/redraw during modal loop)
+    // Refresh local counts after base_compute assigned the new worker
     refresh_counts();
 
     // Keep cursor in bounds
@@ -293,7 +328,9 @@ bool Update(UINT msg, WPARAM wParam) {
             int new_type = next_citizen_type(current_type, direction,
                 base->faction_id, base->pop_size);
             if (new_type != current_type) {
+                disable_gov_manage_citizens(base);
                 base->set_specialist_type(spec_idx, new_type);
+                base_compute(1);
                 const char* name = "???";
                 if (new_type >= 0 && new_type < MaxCitizenNum
                     && Citizen[new_type].singular_name) {
@@ -306,7 +343,29 @@ bool Update(UINT msg, WPARAM wParam) {
                 sr_output(loc(SR_SPEC_NO_OTHER_TYPE), true);
             }
         } else if (is_worker_slot(_currentSlot)) {
-            sr_output(loc(SR_SPEC_WORKER_NO_TYPE), true);
+            // List available specialist types so user knows what Enter will create
+            BASE* base = &Bases[*CurrentBaseID];
+            char buf[512];
+            int pos = 0;
+            int avail_count = 0;
+            for (int i = 0; i < MaxSpecialistNum; i++) {
+                if (citizen_available(i, base->faction_id, base->pop_size)) {
+                    if (avail_count > 0) {
+                        pos += snprintf(buf + pos, sizeof(buf) - pos, ", ");
+                    }
+                    pos += snprintf(buf + pos, sizeof(buf) - pos, "%s",
+                        sr_game_str(Citizen[i].singular_name));
+                    avail_count++;
+                }
+            }
+            if (avail_count > 0) {
+                // "Workers have no type. Enter to convert." + type list
+                char out[640];
+                snprintf(out, sizeof(out), "%s %s.", loc(SR_SPEC_WORKER_NO_TYPE), buf);
+                sr_output(out, true);
+            } else {
+                sr_output(loc(SR_SPEC_WORKER_NO_TYPE), true);
+            }
         }
         return true;
 

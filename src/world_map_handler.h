@@ -27,4 +27,7 @@ bool IsTargetingActive();
 /// Set SR cursor to given coordinates, center map, and announce tile.
 void SetCursor(int x, int y);
 
+/// Run accessible time controls modal (Shift+T).
+void RunTimeControls();
+
 }

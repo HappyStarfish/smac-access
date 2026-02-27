@@ -113,7 +113,7 @@ static const char* sr_defaults[SR_COUNT] = {
     /* SR_FMT_UNITS_NONE     */ "Units: None stationed.",
     /* SR_FMT_BASE_OPEN_V2   */ "Base: %s, Population %d. Building %s, %d of %d, %s. Ctrl+F1: Help.",
     /* SR_FMT_WORKERS        */ "%d workers",
-    /* SR_BASE_HELP          */ "Left/Right: Previous/Next base. Ctrl+Up/Down: Sections. Ctrl+Left/Right: Tabs. Ctrl+I: Repeat. Ctrl+H: Hurry. Ctrl+Shift+P: Change production. Ctrl+Q: Queue. Ctrl+D: Demolish. Ctrl+W: Citizens. Ctrl+G: Governor. Ctrl+N: Nerve staple. F2: Rename. Ctrl+F1: Help. Escape: Close.",
+    /* SR_BASE_HELP          */ "Left/Right: Previous/Next base. Ctrl+Up/Down: Sections. Ctrl+Left/Right: Tabs. Ctrl+I: Repeat. Ctrl+H: Hurry. Ctrl+Shift+P: Change production. Ctrl+Q: Queue. Ctrl+D: Demolish. Ctrl+U: Garrison. Ctrl+W: Citizens. Ctrl+G: Governor. Ctrl+N: Nerve staple. F2: Rename. Ctrl+F1: Help. Escape: Close.",
     /* SR_FMT_TURNS          */ "%d turns",
     /* SR_FMT_GROWTH_NEVER   */ "no growth",
     /* SR_FMT_FACTION_CREDITS */ "%d energy credits",
@@ -129,7 +129,7 @@ static const char* sr_defaults[SR_COUNT] = {
     /* SR_HELP_EXPLORE      */ "Arrows: Explore",
     /* SR_HELP_SKIP         */ "Space: Skip unit",
     /* SR_HELP_HOLD         */ "H: Hold",
-    /* SR_HELP_READ         */ "Ctrl+R: Read screen",
+    /* SR_HELP_READ         */ "Ctrl+R: Road to cursor, Ctrl+T: Tube to cursor",
     /* SR_HELP_GOTO         */ "Shift+Space: Go to cursor",
     /* SR_HELP_BUILD_BASE   */ "B: Build base",
     /* SR_HELP_BUILD_ROAD   */ "R: Build road",
@@ -210,9 +210,11 @@ static const char* sr_defaults[SR_COUNT] = {
     /* SR_MENU_GAME_MENU    */ "Game Menu",
     /* SR_MENU_FILE_SELECT  */ "File Selection",
     /* SR_FILE_LOAD_GAME   */ "Load Game",
+    /* SR_FILE_SAVE_GAME   */ "Save Game",
     /* SR_FILE_FOLDER      */ "Folder",
     /* SR_FILE_ITEM_FMT    */ "%d of %d: %s, %s",
     /* SR_FILE_PARENT_DIR  */ "Parent directory",
+    /* SR_FILE_OVERWRITE_HINT */ "Enter to confirm, Escape to cancel.",
 
     /* SR_POPUP_LIST_FMT   */ "%d of %d: %s",
     /* SR_POPUP_CONTINUE   */ "Enter to continue.",
@@ -373,9 +375,22 @@ static const char* sr_defaults[SR_COUNT] = {
     /* SR_NO_UNIT_SELECTED   */ "No unit selected.",
     /* SR_HELP_GO_TO_BASE    */ "G: Go to base",
     /* SR_HELP_GO_HOME       */ "Shift+G: Go to home base",
+    /* SR_GROUP_GO_TO_BASE   */ "Group go to base: %d units, %d bases. Up/Down to browse, Enter to send all, Escape to cancel.",
+    /* SR_GROUP_GOING_TO_BASE */ "Sending %d units to %s",
     /* SR_HELP_GROUP_GOTO    */ "J: Group go to",
     /* SR_HELP_PATROL        */ "P: Patrol",
     /* SR_HELP_ARTILLERY     */ "F: Long range fire",
+    /* SR_HELP_SCAN_FILTER   */ "Ctrl+PgUp/PgDn: Scanner filter",
+    /* SR_HELP_SCAN_JUMP     */ "Ctrl+Left/Right: Jump to match",
+    /* SR_AIRDROP_NO_ABILITY */ "Cannot airdrop: unit lacks Drop Pod ability or already dropped this turn.",
+    /* SR_AIRDROP_BASE       */ "Airdrop: %d bases in range. Up/Down to browse, Enter to drop, Escape to cancel.",
+    /* SR_AIRDROP_BASE_FMT   */ "%d of %d: %s (%d, %d), %d tiles away",
+    /* SR_AIRDROP_CONFIRM    */ "Airdropped to %s",
+    /* SR_AIRDROP_BLOCKED    */ "Cannot airdrop: no valid targets in range.",
+
+    /* SR_AIRDROP_CURSOR     */ "C: Drop at cursor (%d, %d), %d tiles away",
+    /* SR_AIRDROP_CURSOR_CONFIRM */ "Airdropped to (%d, %d)",
+    /* SR_AIRDROP_CURSOR_INVALID */ "Cannot drop at cursor: invalid target.",
 
     // Diplomacy
     /* SR_DIPLO_OPEN         */ "Diplomacy with %s",
@@ -404,6 +419,7 @@ static const char* sr_defaults[SR_COUNT] = {
     // Turn Info
     /* SR_NEW_TURN          */ "Turn %d, Year %d M.Y.",
     /* SR_UNIT_SKIPPED      */ "Skipped. Next unit: %s",
+    /* SR_UNIT_DAMAGED      */ "Damaged: %d of %d HP",
 
     // Input dialogs
     /* SR_INPUT_NUMBER       */ "Number input. Default: %d. Type digits, Enter to confirm, Escape for default.",
@@ -486,6 +502,15 @@ static const char* sr_defaults[SR_COUNT] = {
     /* SR_SOCENG_ALLOC_PSYCH     */ "Psych",
     /* SR_SOCENG_ALLOC_LABS      */ "Labs",
 
+    // Garrison List (Ctrl+U)
+    /* SR_GARRISON_OPEN          */ "Garrison: %d units. Up/Down: navigate, D: details, Enter: activate, B: home base, H: hurry, Escape: close.",
+    /* SR_GARRISON_ITEM          */ "%d of %d: %s, %d/%d HP, %s",
+    /* SR_GARRISON_DETAIL        */ "%s. %s %d, %s %d, %s, %d moves. Home: %s. %s",
+    /* SR_GARRISON_ACTIVATE      */ "Activated: %s",
+    /* SR_GARRISON_HOME_SET      */ "Home base set: %s",
+    /* SR_GARRISON_EMPTY         */ "No units stationed.",
+    /* SR_GARRISON_CLOSE         */ "Garrison list closed.",
+
     // Message Log (Ctrl+M)
     /* SR_MSG_OPEN               */ "Message log. %d messages.",
     /* SR_MSG_ITEM               */ "%d of %d: %s",
@@ -496,6 +521,174 @@ static const char* sr_defaults[SR_COUNT] = {
     /* SR_MSG_SUMMARY            */ "%d messages. Turn %d.",
     /* SR_MSG_HELP               */ "Up/Down: Browse. Enter: Jump to location. S: Summary. Escape: Close.",
     /* SR_MSG_NOTIFICATION       */ "Message: %s",
+
+    // Time Controls (Shift+T)
+    /* SR_TC_OPEN                */ "Time Controls, %d presets. Current: %s. Up/Down to browse, Enter to select, Escape to cancel.",
+    /* SR_TC_ITEM                */ "%d of %d: %s, %d seconds per turn, %d per base, %d per unit",
+    /* SR_TC_SET                 */ "Time Controls set to %s",
+    /* SR_TC_CANCELLED           */ "Time Controls cancelled",
+
+    // Chat (Ctrl+C)
+    /* SR_CHAT_OPEN              */ "Chat",
+
+    // Base Screen: Resources/Economy/Status V3
+    /* SR_FMT_RESOURCES_V3       */ "Resources: Nutrients %+d (%d of %d, %s), consuming %d. Minerals %+d, support %d. Energy %+d, inefficiency %d.",
+    /* SR_FMT_STARVATION         */ "Starvation!",
+    /* SR_FMT_LOW_MINERALS       */ "Low minerals.",
+    /* SR_FMT_ECONOMY_V3         */ "Economy: %d economy, %d psych, %d labs. Commerce %d. %s.",
+    /* SR_FMT_COMMERCE           */ "Commerce: %d energy from trade.",
+    /* SR_FMT_INEFFICIENCY       */ " Inefficiency: %d energy lost.",
+    /* SR_FMT_NO_HQ              */ " No headquarters!",
+    /* SR_FMT_HIGH_SUPPORT       */ " High support: %d minerals.",
+    /* SR_FMT_UNDEFENDED         */ " Undefended!",
+    /* SR_FMT_POLICE_UNITS       */ " %d police units.",
+
+    // Supported Units (Ctrl+Shift+S)
+    /* SR_SUPPORT_OPEN           */ "Supported units: %d units, %d mineral support. Up/Down: navigate, D: details, Enter: activate, Escape: close.",
+    /* SR_SUPPORT_ITEM           */ "%d of %d: %s, at (%d, %d), %d of %d HP",
+    /* SR_SUPPORT_DETAIL         */ "%s. %s %d, %s %d, %s, %d moves. Home: %s. At (%d, %d). %s",
+    /* SR_SUPPORT_EMPTY          */ "No supported units.",
+    /* SR_SUPPORT_CLOSE          */ "Support list closed.",
+    /* SR_SUPPORT_ACTIVATE       */ "Activated: %s",
+
+    // Psych Detail (Ctrl+Shift+Y)
+    /* SR_PSYCH_DETAIL           */ "Psych detail: %d police units. Psych output %d. Talents %d, Drones %d. %s",
+
+    // Base Help (updated)
+    /* SR_BASE_HELP_V2           */ "Left/Right: Previous/Next base. Ctrl+Up/Down: Sections. Ctrl+Left/Right: Tabs. Ctrl+I: Repeat. Ctrl+H: Hurry. Ctrl+Shift+P: Change production. Ctrl+Q: Queue. Ctrl+D: Demolish. Ctrl+U: Garrison. Ctrl+Shift+S: Supported units. Ctrl+W: Citizens. Ctrl+T: Tile assignment. Ctrl+G: Governor. Ctrl+N: Nerve staple. Ctrl+Shift+Y: Psych detail. F2: Rename. Ctrl+F1: Help. Escape: Close.",
+
+    // Tile Assignment (Ctrl+T)
+    /* SR_TILE_ASSIGN_OPEN       */ "Tile assignment: %d tiles, %d worked. Up/Down: browse, Space: toggle, S: summary, Escape: close.",
+    /* SR_TILE_ASSIGN_WORKED     */ "%d of %d: Worked. (%d, %d) %s. %d food, %d minerals, %d energy.",
+    /* SR_TILE_ASSIGN_AVAILABLE  */ "%d of %d: Available. (%d, %d) %s. %d food, %d minerals, %d energy.",
+    /* SR_TILE_ASSIGN_CENTER     */ "%d of %d: Base center, always worked. (%d, %d) %s. %d food, %d minerals, %d energy.",
+    /* SR_TILE_ASSIGN_UNAVAIL    */ "%d of %d: Unavailable, %s. (%d, %d) %s.",
+    /* SR_TILE_ASSIGN_ASSIGNED   */ "Worker assigned. %d food, %d minerals, %d energy.",
+    /* SR_TILE_ASSIGN_REMOVED    */ "Worker removed. Converted to %s.",
+    /* SR_TILE_ASSIGN_CANNOT_CENTER */ "Cannot: base center is always worked.",
+    /* SR_TILE_ASSIGN_CANNOT_UNAVAIL */ "Cannot: tile unavailable.",
+    /* SR_TILE_ASSIGN_CANNOT_NO_FREE */ "Cannot: no free citizens. Remove a worker or use Ctrl+W first.",
+    /* SR_TILE_ASSIGN_SUMMARY    */ "Tiles: %d worked of %d total, %d specialists. Total: %d food, %d minerals, %d energy.",
+    /* SR_TILE_ASSIGN_CLOSE      */ "Tile assignment closed.",
+    /* SR_TILE_UNAVAIL_FOREIGN   */ "foreign territory",
+    /* SR_TILE_UNAVAIL_OTHER_BASE */ "worked by another base",
+    /* SR_TILE_UNAVAIL_VEHICLE   */ "blocked by vehicle",
+    /* SR_TILE_UNAVAIL_UNEXPLORED */ "unexplored",
+
+    // Patrol (P key)
+    /* SR_PATROL_CONFIRM  */ "Patrolling to (%d, %d).",
+    /* SR_PATROL_CANNOT   */ "Cannot patrol.",
+    /* SR_PATROL_PROMPT   */ "Patrol to (%d, %d)? Enter to confirm, Escape to cancel.",
+
+    // Road/Tube to cursor (Ctrl+R / Ctrl+T)
+    /* SR_ROAD_TO_CONFIRM */ "Building road to (%d, %d).",
+    /* SR_ROAD_TO_PROMPT  */ "Build road to (%d, %d)? Enter to confirm, Escape to cancel.",
+    /* SR_TUBE_TO_CONFIRM */ "Building mag tube to (%d, %d).",
+    /* SR_TUBE_TO_PROMPT  */ "Build mag tube to (%d, %d)? Enter to confirm, Escape to cancel.",
+    /* SR_ROAD_TO_CANNOT  */ "Cannot build: no former selected.",
+
+    // Artillery (F key)
+    /* SR_ARTY_CANNOT     */ "Cannot fire artillery.",
+    /* SR_ARTY_NO_TARGETS */ "No targets within range (%d tiles).",
+    /* SR_ARTY_OPEN       */ "Artillery: %d targets in range (%d tiles). Up/Down to browse, C for cursor, Enter to fire, Escape to cancel.",
+    /* SR_ARTY_TARGET_FMT */ "%d of %d: %s (%d, %d), %d tiles away",
+    /* SR_ARTY_CURSOR     */ "C: Fire at cursor (%d, %d), %d tiles away",
+    /* SR_ARTY_CURSOR_OOR */ "C: Cursor (%d, %d), %d tiles — out of range (%d max)",
+    /* SR_ARTY_FIRED      */ "Firing at %s.",
+    /* SR_ARTY_HELP       */ "Up/Down: browse targets. C: cursor position. Enter: fire. Escape: cancel.",
+
+    // World Map Help (additional)
+    /* SR_HELP_CURSOR_TO_UNIT */ "Ctrl+Space: Jump cursor to unit",
+
+    // Faction Status (Ctrl+F3)
+    /* SR_STATUS_HEADER       */ "Turn %d, Year %d M.Y.",
+    /* SR_STATUS_CREDITS      */ "%d energy credits.",
+    /* SR_STATUS_ALLOC        */ "Econ %d%%, Psych %d%%, Labs %d%%.",
+    /* SR_STATUS_INCOME       */ "Commerce: %d. Gross: %d. Maintenance: %d. Net: %d.",
+    /* SR_STATUS_RESEARCH     */ "Researching %s, %d of %d (%d%%).",
+    /* SR_STATUS_RESEARCH_NONE */ "No research in progress.",
+    /* SR_STATUS_BASES        */ "%d bases, %d population.",
+    /* SR_STATUS_HELP         */ "Ctrl+F3: Faction status.",
+
+    // Resource Bonuses
+    /* SR_BONUS_NUTRIENT      */ "Nutrient bonus",
+    /* SR_BONUS_MINERAL       */ "Mineral bonus",
+    /* SR_BONUS_ENERGY        */ "Energy bonus",
+
+    // Landmarks
+    /* SR_LANDMARK_CRATER     */ "Crater",
+    /* SR_LANDMARK_VOLCANO    */ "Volcano",
+    /* SR_LANDMARK_JUNGLE     */ "Jungle",
+    /* SR_LANDMARK_URANIUM    */ "Uranium flats",
+    /* SR_LANDMARK_SARGASSO   */ "Sargasso Sea",
+    /* SR_LANDMARK_RUINS      */ "Ruins",
+    /* SR_LANDMARK_DUNES      */ "Dunes",
+    /* SR_LANDMARK_FRESH      */ "Freshwater Sea",
+    /* SR_LANDMARK_MESA       */ "Mesa",
+    /* SR_LANDMARK_CANYON     */ "Canyon",
+    /* SR_LANDMARK_GEOTHERMAL */ "Geothermal",
+    /* SR_LANDMARK_RIDGE      */ "Ridge",
+    /* SR_LANDMARK_BOREHOLE   */ "Great Borehole",
+    /* SR_LANDMARK_NEXUS      */ "Manifold Nexus",
+    /* SR_LANDMARK_UNITY      */ "Unity wreckage",
+    /* SR_LANDMARK_FOSSIL     */ "Fossil Ridge",
+
+    // Move/View Mode
+    /* SR_MODE_MOVE           */ "Move mode",
+    /* SR_MODE_VIEW           */ "View mode",
+
+    // Multiplayer Setup (NetWin)
+    /* SR_NETSETUP_OPEN       */ "Multiplayer Setup. Game text will be read aloud.",
+    /* SR_NETSETUP_HELP       */ "Multiplayer lobby. Arrow keys, Enter, Escape.",
+
+    // Unit Action Menu (Shift+F10)
+    /* SR_ACT_MENU_OPEN       */ "Unit actions, %d items. Up/Down, Enter, Escape.",
+    /* SR_ACT_MENU_ITEM       */ "%d of %d: %s",
+    /* SR_ACT_MENU_CANCEL     */ "Cancelled.",
+    /* SR_ACT_MENU_EMPTY      */ "No actions available.",
+    /* SR_ACT_SKIP            */ "Skip turn, Space",
+    /* SR_ACT_HOLD            */ "Hold, H",
+    /* SR_ACT_EXPLORE         */ "Explore, X",
+    /* SR_ACT_GOTO_BASE       */ "Go to base, G",
+    /* SR_ACT_PATROL          */ "Patrol, P",
+    /* SR_ACT_BUILD_ROAD      */ "Build road, R",
+    /* SR_ACT_BUILD_MAGTUBE   */ "Build mag tube, R",
+    /* SR_ACT_BUILD_FARM      */ "Build farm, F",
+    /* SR_ACT_BUILD_MINE      */ "Build mine, M",
+    /* SR_ACT_BUILD_SOLAR     */ "Build solar collector, S",
+    /* SR_ACT_BUILD_FOREST    */ "Plant forest, Shift+F",
+    /* SR_ACT_BUILD_SENSOR    */ "Build sensor, O",
+    /* SR_ACT_BUILD_CONDENSER */ "Build condenser, N",
+    /* SR_ACT_BUILD_BOREHOLE  */ "Build borehole, Shift+N",
+    /* SR_ACT_BUILD_AIRBASE   */ "Build airbase, Period",
+    /* SR_ACT_BUILD_BUNKER    */ "Build bunker, Shift+Period",
+    /* SR_ACT_REMOVE_FUNGUS   */ "Remove fungus, F",
+    /* SR_ACT_AUTOMATE        */ "Automate, Shift+A",
+    /* SR_ACT_BUILD_BASE      */ "Build base, B",
+    /* SR_ACT_LONG_RANGE      */ "Long range fire, F",
+    /* SR_ACT_CONVOY          */ "Convoy resources, O",
+    /* SR_ACT_UNLOAD          */ "Unload transport, U",
+    /* SR_ACT_AIRDROP         */ "Airdrop, I",
+    /* SR_ACT_OPEN_BASE       */ "Open base, Enter",
+    /* SR_ACT_MENU_HELP       */ "Shift+F10: Action menu",
+    /* SR_ACT_DONE_HOLD       */ "Holding.",
+    /* SR_ACT_DONE_EXPLORE    */ "Auto-exploring.",
+    /* SR_ACT_DONE_UNLOAD     */ "Unloading.",
+
+    // Automation (Shift+A)
+    /* SR_AUTO_OPEN           */ "Automate: %d options. Up, Down, Enter, Escape.",
+    /* SR_AUTO_ITEM           */ "%d of %d: %s",
+    /* SR_AUTO_CONFIRM        */ "Automated: %s",
+    /* SR_AUTO_CANCEL         */ "Cancelled",
+    /* SR_AUTO_NOT_FORMER     */ "Cannot: not a former",
+    /* SR_AUTO_FULL           */ "Full Terraforming",
+    /* SR_AUTO_ROAD           */ "Auto Roads",
+    /* SR_AUTO_MAGTUBE        */ "Auto Magtubes",
+    /* SR_AUTO_IMPROVE_BASE   */ "Auto Improve Base",
+    /* SR_AUTO_FARM_SOLAR     */ "Farm+Solar+Road",
+    /* SR_AUTO_FARM_MINE      */ "Farm+Mine+Road",
+    /* SR_AUTO_FUNGUS         */ "Auto Fungus Removal",
+    /* SR_AUTO_SENSOR         */ "Auto Sensors",
 };
 
 // Key names matching the enum order (for file parsing)
@@ -552,7 +745,8 @@ static const char* sr_keys[SR_COUNT] = {
     "menu_main", "menu_map_menu", "menu_multiplayer",
     "menu_scenario_menu", "menu_thinker", "menu_game_menu",
     "menu_file_select",
-    "file_load_game", "file_folder", "file_item_fmt", "file_parent_dir",
+    "file_load_game", "file_save_game", "file_folder", "file_item_fmt", "file_parent_dir",
+    "file_overwrite_hint",
     "popup_list_fmt", "popup_continue",
     "soceng_title", "soceng_category_fmt", "soceng_model_fmt",
     "soceng_effects", "soceng_no_effect", "soceng_unavailable_tech",
@@ -612,8 +806,12 @@ static const char* sr_keys[SR_COUNT] = {
     // Targeting Mode & Go to Base
     "targeting_mode", "targeting_cancel", "go_to_base", "base_list_fmt",
     "base_list_empty", "going_home", "going_to_base", "no_unit_selected",
+    "group_go_to_base", "group_going_to_base",
     "help_go_to_base", "help_go_home", "help_group_goto", "help_patrol",
-    "help_artillery",
+    "help_artillery", "help_scan_filter", "help_scan_jump",
+    "airdrop_no_ability", "airdrop_base", "airdrop_base_fmt",
+    "airdrop_confirm", "airdrop_blocked",
+    "airdrop_cursor", "airdrop_cursor_confirm", "airdrop_cursor_invalid",
     // Diplomacy
     "diplo_open", "diplo_closed", "diplo_help", "diplo_summary",
     "diplo_status_pact", "diplo_status_treaty", "diplo_status_truce",
@@ -628,6 +826,7 @@ static const char* sr_keys[SR_COUNT] = {
     // Turn Info
     "new_turn",
     "unit_skipped",
+    "unit_damaged",
     "input_number", "input_number_empty", "input_number_done",
     // Design Workshop
     "design_proto_list", "design_proto_fmt", "design_category",
@@ -659,10 +858,81 @@ static const char* sr_keys[SR_COUNT] = {
     "soceng_alloc_fmt", "soceng_alloc_mode", "soceng_alloc_slider",
     "soceng_info_fmt", "soceng_alloc_econ", "soceng_alloc_psych",
     "soceng_alloc_labs",
+    // Garrison List
+    "garrison_open", "garrison_item", "garrison_detail",
+    "garrison_activate", "garrison_home_set", "garrison_empty",
+    "garrison_close",
     // Message Log
     "msg_open", "msg_item", "msg_item_loc", "msg_empty",
     "msg_closed", "msg_no_location", "msg_summary", "msg_help",
     "msg_notification",
+    // Time Controls
+    "tc_open", "tc_item", "tc_set", "tc_cancelled",
+    // Chat
+    "chat_open",
+    // Base Screen: Resources/Economy/Status V3
+    "fmt_resources_v3", "fmt_starvation", "fmt_low_minerals",
+    "fmt_economy_v3", "fmt_commerce",
+    "fmt_inefficiency", "fmt_no_hq", "fmt_high_support",
+    "fmt_undefended", "fmt_police_units",
+    // Supported Units
+    "support_open", "support_item", "support_detail",
+    "support_empty", "support_close", "support_activate",
+    // Psych Detail
+    "psych_detail",
+    // Base Help V2
+    "base_help_v2",
+    // Tile Assignment
+    "tile_assign_open", "tile_assign_worked", "tile_assign_available",
+    "tile_assign_center", "tile_assign_unavail",
+    "tile_assign_assigned", "tile_assign_removed",
+    "tile_assign_cannot_center", "tile_assign_cannot_unavail",
+    "tile_assign_cannot_no_free", "tile_assign_summary",
+    "tile_assign_close",
+    "tile_unavail_foreign", "tile_unavail_other_base",
+    "tile_unavail_vehicle", "tile_unavail_unexplored",
+    // Patrol
+    "patrol_confirm", "patrol_cannot", "patrol_prompt",
+    // Road/Tube to cursor
+    "road_to_confirm", "road_to_prompt",
+    "tube_to_confirm", "tube_to_prompt",
+    "road_to_cannot",
+    // Artillery
+    "arty_cannot", "arty_no_targets", "arty_open", "arty_target_fmt",
+    "arty_cursor", "arty_cursor_oor", "arty_fired", "arty_help",
+    // World Map Help (additional)
+    "help_cursor_to_unit",
+    // Faction Status
+    "status_header", "status_credits", "status_alloc", "status_income",
+    "status_research", "status_research_none", "status_bases", "status_help",
+    // Resource Bonuses
+    "bonus_nutrient", "bonus_mineral", "bonus_energy",
+    // Landmarks
+    "landmark_crater", "landmark_volcano", "landmark_jungle",
+    "landmark_uranium", "landmark_sargasso", "landmark_ruins",
+    "landmark_dunes", "landmark_fresh", "landmark_mesa",
+    "landmark_canyon", "landmark_geothermal", "landmark_ridge",
+    "landmark_borehole", "landmark_nexus", "landmark_unity",
+    "landmark_fossil",
+    // Move/View Mode
+    "mode_move", "mode_view",
+    // Multiplayer Setup (NetWin)
+    "netsetup_open", "netsetup_help",
+    // Unit Action Menu (Shift+F10)
+    "act_menu_open", "act_menu_item", "act_menu_cancel", "act_menu_empty",
+    "act_skip", "act_hold", "act_explore", "act_goto_base", "act_patrol",
+    "act_build_road", "act_build_magtube", "act_build_farm", "act_build_mine",
+    "act_build_solar", "act_build_forest", "act_build_sensor",
+    "act_build_condenser", "act_build_borehole", "act_build_airbase",
+    "act_build_bunker", "act_remove_fungus", "act_automate",
+    "act_build_base", "act_long_range", "act_convoy", "act_unload",
+    "act_airdrop", "act_open_base", "act_menu_help",
+    "act_done_hold", "act_done_explore", "act_done_unload",
+    // Automation (Shift+A)
+    "auto_open", "auto_item", "auto_confirm", "auto_cancel",
+    "auto_not_former",
+    "auto_full", "auto_road", "auto_magtube", "auto_improve_base",
+    "auto_farm_solar", "auto_farm_mine", "auto_fungus", "auto_sensor",
 };
 
 // Loaded strings (dynamically allocated, or NULL = use default)
@@ -677,6 +947,13 @@ static int loc_find_key(const char* key) {
     }
     return -1;
 }
+
+// Compile-time check: enum, defaults, and keys arrays must all have SR_COUNT entries.
+// A mismatch here means a new string was added to one but not the others.
+static_assert(sizeof(sr_defaults) / sizeof(sr_defaults[0]) == SR_COUNT,
+    "sr_defaults array size mismatch with SR_COUNT — did you forget to add a default?");
+static_assert(sizeof(sr_keys) / sizeof(sr_keys[0]) == SR_COUNT,
+    "sr_keys array size mismatch with SR_COUNT — did you forget to add a key?");
 
 // Strip leading/trailing whitespace in-place, return pointer to trimmed start
 static char* loc_trim(char* s) {
