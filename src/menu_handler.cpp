@@ -29,15 +29,19 @@ static struct {
 
 // --- Helper functions ---
 
-/// Strip '&' from menu/item caption for screen reader output.
-static void sr_strip_ampersand(char* dst, const char* src, int maxlen) {
+/// Strip '&' from menu/item caption and convert ANSI→UTF-8.
+static void sr_strip_and_convert(char* dst, const char* src, int maxlen) {
+    // First strip ampersands into a temp buffer
+    char tmp[512];
     int j = 0;
-    for (int i = 0; src[i] && j < maxlen - 1; i++) {
+    for (int i = 0; src[i] && j < (int)sizeof(tmp) - 1; i++) {
         if (src[i] != '&') {
-            dst[j++] = src[i];
+            tmp[j++] = src[i];
         }
     }
-    dst[j] = '\0';
+    tmp[j] = '\0';
+    // Then convert ANSI (Windows-1252) → UTF-8
+    sr_ansi_to_utf8(tmp, dst, maxlen);
 }
 
 /// Get number of top-level menus from live game data.
@@ -48,12 +52,12 @@ static int sr_get_menu_count() {
     return count;
 }
 
-/// Get top-level menu name (ampersand-stripped) into buf.
+/// Get top-level menu name (ampersand-stripped, UTF-8) into buf.
 static bool sr_get_menu_name(int index, char* buf, int bufsize) {
     if (!MapWin || index < 0 || index >= sr_get_menu_count()) return false;
     const char* caption = (const char*)MapWin->oMainMenu.aMainMenuItems[index].pszCaption;
-    if (!caption) return false;
-    sr_strip_ampersand(buf, caption, bufsize);
+    if (!caption || !caption[0]) return false;
+    sr_strip_and_convert(buf, caption, bufsize);
     return true;
 }
 
@@ -63,8 +67,18 @@ static CMenu* sr_get_submenu(int index) {
     return MapWin->oMainMenu.aMainMenuItems[index].poSubMenu;
 }
 
-/// Get the number of VISIBLE items in a submenu.
-static int sr_get_item_count(int menu_index) {
+/// Check if a raw submenu item has a valid (non-empty) caption.
+static bool sr_item_has_caption(CMenu* sub, int raw_index) {
+    if (!sub) return false;
+    int total = sub->iVisibleItemCount;
+    if (total <= 0 || total > 64) total = sub->iMenuItemCount;
+    if (raw_index < 0 || raw_index >= total) return false;
+    const char* caption = (const char*)sub->aMenuItems[raw_index].pszCaption;
+    return caption && caption[0];
+}
+
+/// Get total raw item count for a submenu.
+static int sr_get_raw_item_count(int menu_index) {
     CMenu* sub = sr_get_submenu(menu_index);
     if (!sub) return 0;
     int count = sub->iVisibleItemCount;
@@ -73,32 +87,64 @@ static int sr_get_item_count(int menu_index) {
     return count;
 }
 
-/// Get submenu item caption (ampersand-stripped) into buf.
-static bool sr_get_item_name(int menu_index, int item_index, char* buf, int bufsize) {
+/// Map logical index (skipping separators) to raw index. Returns -1 if invalid.
+static int sr_logical_to_raw(int menu_index, int logical_index) {
     CMenu* sub = sr_get_submenu(menu_index);
-    if (!sub || item_index < 0 || item_index >= sr_get_item_count(menu_index)) return false;
-    const char* caption = (const char*)sub->aMenuItems[item_index].pszCaption;
-    if (!caption) return false;
-    sr_strip_ampersand(buf, caption, bufsize);
+    if (!sub) return -1;
+    int raw_count = sr_get_raw_item_count(menu_index);
+    int logical = 0;
+    for (int raw = 0; raw < raw_count; raw++) {
+        if (sr_item_has_caption(sub, raw)) {
+            if (logical == logical_index) return raw;
+            logical++;
+        }
+    }
+    return -1;
+}
+
+/// Get the number of non-separator items in a submenu.
+static int sr_get_item_count(int menu_index) {
+    CMenu* sub = sr_get_submenu(menu_index);
+    if (!sub) return 0;
+    int raw_count = sr_get_raw_item_count(menu_index);
+    int count = 0;
+    for (int i = 0; i < raw_count; i++) {
+        if (sr_item_has_caption(sub, i)) count++;
+    }
+    return count;
+}
+
+/// Get submenu item caption (ampersand-stripped, UTF-8) into buf.
+/// item_index is the logical index (separators skipped).
+static bool sr_get_item_name(int menu_index, int item_index, char* buf, int bufsize) {
+    int raw = sr_logical_to_raw(menu_index, item_index);
+    CMenu* sub = sr_get_submenu(menu_index);
+    if (!sub || raw < 0) return false;
+    const char* caption = (const char*)sub->aMenuItems[raw].pszCaption;
+    if (!caption || !caption[0]) return false;
+    sr_strip_and_convert(buf, caption, bufsize);
     return true;
 }
 
-/// Get submenu item hotkey string into buf.
+/// Get submenu item hotkey string (UTF-8) into buf.
+/// item_index is the logical index (separators skipped).
 static bool sr_get_item_hotkey(int menu_index, int item_index, char* buf, int bufsize) {
+    int raw = sr_logical_to_raw(menu_index, item_index);
     CMenu* sub = sr_get_submenu(menu_index);
-    if (!sub || item_index < 0 || item_index >= sr_get_item_count(menu_index)) return false;
-    const char* hk = (const char*)sub->aMenuItems[item_index].pszHotKey;
+    if (!sub || raw < 0) { buf[0] = '\0'; return false; }
+    const char* hk = (const char*)sub->aMenuItems[raw].pszHotKey;
     if (!hk || !hk[0]) { buf[0] = '\0'; return false; }
-    strncpy(buf, hk, bufsize - 1);
-    buf[bufsize - 1] = '\0';
+    sr_strip_and_convert(buf, hk, bufsize);
     return true;
 }
 
 /// Activate a submenu item by calling the game's menu handler callback.
+/// item_index is the logical index (separators skipped).
 static bool sr_activate_menu_item(int menu_index, int item_index) {
+    int raw = sr_logical_to_raw(menu_index, item_index);
     CMenu* sub = sr_get_submenu(menu_index);
-    if (!sub || item_index < 0 || item_index >= sr_get_item_count(menu_index)) return false;
-    int menu_id = sub->aMenuItems[item_index].iMenuID;
+    if (!sub || raw < 0) return false;
+    int menu_id = sub->aMenuItems[raw].iMenuID;
     MENU_HANDLER_CB_F handler = MapWin->oMainMenu.pMenuHandlerCB;
     if (!handler) {
         debug("sr_activate_menu_item: no handler callback\n");

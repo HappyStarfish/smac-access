@@ -147,6 +147,12 @@ queue_empty=Queue empty.
 # Movement & Navigation
 movement_points=%d of %d moves
 cannot_move=Cannot move there.
+cannot_move_no_mp=Cannot move: no movement points.
+cannot_move_ocean=Cannot move: water.
+cannot_move_land=Cannot move: land.
+cannot_move_zoc=Cannot move: enemy zone of control.
+cannot_move_edge=Cannot move: map edge.
+cannot_open_base=Cannot open base.
 
 # Context Help (Ctrl+F1)
 help_header=Commands:
@@ -747,6 +753,7 @@ act_menu_help=Shift+F10: Action menu
 act_done_hold=Holding.
 act_done_explore=Auto-exploring.
 act_done_unload=Unloading.
+act_done_destroy=Destroying improvements.
 
 # Automation (Shift+A)
 auto_open=Automate: %d options. Up, Down, Enter, Escape.
@@ -803,7 +810,7 @@ projects_unbuilt=%s, %d of %d: Not built
 projects_destroyed=%s, %d of %d: Destroyed
 projects_summary=%d projects: %d built, %d not built, %d destroyed
 projects_empty=No secret projects.
-projects_help=Up/Down: Browse projects. S: Summary. Escape: Close. Ctrl+F1: This help.
+projects_help=Up/Down: Browse projects. D: Details. S: Summary. Escape: Close. Ctrl+F1: This help.
 
 # Orbital Status (F6)
 orbital_open=Orbital Status. S: summary, D: compare factions, Ctrl+F1: help.
@@ -823,7 +830,7 @@ military_detail_closed=Unit detail closed.
 military_no_units=No active unit types.
 military_rankings_header=Power rankings:
 military_rank_entry=%d. %s, strength %d
-military_help=S: Power rankings. D: Unit types. Escape: Close. Ctrl+F1: This help.
+military_help=S: Power rankings. D: Unit types (then D again for unit details). Escape: Close. Ctrl+F1: This help.
 
 # Score (F8)
 score_open=Score, %d factions. Up/Down: navigate, S: your rank, Ctrl+F1: help.
@@ -831,7 +838,7 @@ score_closed=Score closed.
 score_faction=%d. %s, %d of %d: Bases %d, Population %d, Techs %d
 score_player=Your rank: %s, %d of %d. Bases %d, Population %d, Techs %d.
 score_empty=No factions.
-score_help=Up/Down: Browse rankings. S: Your rank. Escape: Close. Ctrl+F1: This help.
+score_help=Up/Down: Browse rankings. D: Details. S: Your rank. Escape: Close. Ctrl+F1: This help.
 
 # Game End
 victory_conquest=Conquest Victory!
@@ -917,7 +924,7 @@ monuments_info=Monuments. Visual display of your faction's achievements. Not yet
 hall_of_fame_info=Hall of Fame. List of completed games. Not yet accessible.
 
 # Monuments (F9)
-monument_open=Monuments, %d of %d achieved. Up/Down: navigate, S: summary, Escape: close.
+monument_open=Monuments, %d of %d achieved. Visualization of achievements, list may be inaccurate. Up/Down: navigate, S: summary, Escape: close.
 monument_closed=Monuments closed.
 monument_item_achieved=%d of %d: %s, Turn %d.
 monument_item_locked=%d of %d: %s, not achieved.
@@ -1009,14 +1016,14 @@ gsettings_press_d=Press D for details.
 gsettings_faction_info=Press I for faction info.
 
 # Unit List (U key)
-unit_list_open=Unit List, %d units. Up/Down: browse, Enter: select, Escape: close.
+unit_list_open=Unit List, %d units. Up/Down: browse, D: details, Enter: select, Escape: close.
 unit_list_fmt=%d of %d: %s at (%d, %d)
 unit_list_moves=%d of %d moves
 unit_list_health=health %d of %d
 unit_list_home=home base: %s
 unit_list_selected=Selected %s
 unit_list_empty=No units available.
-unit_list_help=Up/Down: Browse. Enter: Select and activate unit. Escape: Close. Ctrl+F1: This help.
+unit_list_help=Up/Down: Browse. Home/End: First/Last. D: Details. Enter: Select and activate unit. Escape: Close. Ctrl+F1: This help.
 order_idle=idle
 order_hold=hold
 order_sentry=sentry
@@ -1025,15 +1032,19 @@ order_goto=go to
 order_convoy=convoy
 
 # Enemy Unit List (Shift+U)
-enemy_list_open=Foreign Units, %d visible. Up/Down: browse, Enter: jump to unit, Escape: close.
+enemy_list_open=Foreign Units, %d visible. Up/Down: browse, D: details, C: combat preview, Enter: jump to unit, Escape: close.
 enemy_list_fmt=%d of %d: %s, %s (%s) at (%d, %d)
 enemy_list_native=Native
 enemy_list_empty=No foreign units visible.
-enemy_list_help=Up/Down: Browse. Enter: Jump to unit on map. Escape: Close. Ctrl+F1: This help.
+enemy_list_help=Up/Down: Browse. Home/End: First/Last. D: Details. Enter: Jump to unit on map. Escape: Close. Ctrl+F1: This help.
 enemy_list_jump=Jumped to %s at (%d, %d)
 enemy_list_triad_land=Land
 enemy_list_triad_sea=Sea
 enemy_list_triad_air=Air
+unit_list_detail=%s. %s, %s %d, %s %d, %s, %s, %d of %d HP.
+enemy_list_detail=%s. %s, %s %d, %s %d, %s, %s, %d of %d HP.
+enemy_list_detail_limited=%s. %s, %s.
+unit_list_focused=Focused on %s, no movement points.
 
 # Stack Cycling (Tab)
 tab_cycle_fmt=%s, %d of %d on tile
@@ -1050,3 +1061,91 @@ netsettings_cat_rules=Rules
 netsettings_summary_fmt=Difficulty: %s, Planet: %s. %d settings changed, %d rules changed.
 netsettings_time_none=None
 netsettings_time_other=Custom
+
+# Detail strings (D key)
+projects_detail=%s. %s. Cost: %d minerals. %s
+projects_detail_built=Built by %s at %s.
+projects_detail_destroyed=Destroyed.
+projects_detail_unbuilt=Not yet built.
+military_unit_detail=%s (%d active). %s, %s %d, %s %d, %s, %d moves, %d HP.
+score_detail=%s. Bases: %d, Population: %d, Techs: %d. Military strength: %d. %s
+
+# Combat Results
+combat_victory=Victory: %s defeated %s. %d of %d HP.
+combat_defeat=Defeat: %s destroyed by %s.
+combat_defense_win=Defense: %s destroyed %s. %d of %d HP.
+combat_defense_loss=Lost: %s destroyed by %s.
+combat_draw=%s vs %s, both survived. %s: %d of %d HP.
+combat_retreat=%s retreated.
+combat_capture=%s captured.
+combat_promoted= Promoted to %s.
+combat_nerve_gas= Nerve gas used!
+combat_intercepted=Intercepted by %s (%s).
+
+# Artillery
+combat_arty_result=Artillery: %s bombarded (%d, %d). %d units hit.
+combat_arty_damage=%s: %d damage, %d of %d HP.
+combat_arty_no_effect=Artillery: No effect.
+
+# Combat Odds (Shift+U)
+combat_odds=Odds %d:%d
+combat_odds_favorable=Favorable
+combat_odds_unfavorable=Unfavorable
+combat_odds_even=Even
+combat_preview=Combat: %s (%s %d, %s, %d/%d HP) vs %s (%s %d, %s, %d/%d HP). Odds %d:%d.
+combat_preview_psi_fmt=Psi combat: %s (%s, %d/%d HP) vs %s (%s, %d/%d HP). Odds %d:%d.
+combat_preview_no_unit=No combat unit selected.
+combat_preview_psi=Psi combat
+enemy_list_help_combat=Up/Down: Browse. Home/End: First/Last. D: Details. C: Combat preview. Enter: Jump to unit on map. Escape: Close. Ctrl+F1: This help.
+
+# Scenario Editor
+editor_not_accessible=Scenario editor. Not yet accessible with screen reader. Scenarios can also be edited via text files (alphax.txt, scenario.txt).
+
+# Thinker Menu (Alt+T)
+tmenu_title=Thinker Menu
+tmenu_item_fmt=%d of %d: %s
+tmenu_stats=Statistics
+tmenu_options=Mod Options
+tmenu_homepage=Open Homepage
+tmenu_close=Close
+tmenu_rules=Game Rules
+tmenu_rules_saved=Game rules applied.
+tmenu_rules_cancelled=Game rules cancelled.
+tmenu_rule_no_council=No Planetary Council
+tmenu_rule_no_social_eng=No Social Engineering
+tmenu_version_fmt=Thinker Access Mod. %s, Build %s
+tmenu_gametime_fmt=Play time: %d hours, %d minutes
+tmenu_opt_fmt=%d of %d: %s: %s
+tmenu_opt_on=On
+tmenu_opt_off=Off
+tmenu_opt_saved=Mod options saved.
+tmenu_opt_cancelled=Mod options cancelled.
+tmenu_help=Up/Down: Navigate. Enter: Select. Escape: Close. Ctrl+F1: This help.
+tmenu_opt_help=Up/Down: Navigate. Space: Toggle. S: Summary. Enter: Save. Escape: Cancel. Ctrl+F1: This help.
+tmenu_stat_header=Game Statistics.
+tmenu_stat_world=World: %d bases, %d units, %d population, %d minerals, %d energy.
+tmenu_stat_faction=Your faction: %d bases, %d units, %d population, %d minerals, %d energy.
+tmenu_opt_new_world=New map generator
+tmenu_opt_continents=World continents
+tmenu_opt_landmarks=Modified landmarks
+tmenu_opt_polar_caps=Polar caps
+tmenu_opt_mirror_x=Mirror map horizontal
+tmenu_opt_mirror_y=Mirror map vertical
+tmenu_opt_auto_bases=Manage player bases
+tmenu_opt_auto_units=Manage player units
+tmenu_opt_former_warn=Warn on former replace
+tmenu_opt_base_info=Render base info on map
+tmenu_opt_treaty_popup=Foreign treaty popup
+tmenu_opt_auto_minimise=Auto minimise window
+
+# Tile Detail Query (number keys 1-8)
+detail_no_units=No units
+detail_no_base=No base
+detail_no_improvements=No improvements
+detail_no_landmarks=No landmarks
+detail_no_work=Not in base radius
+
+# Speech History
+history_empty=No speech history
+history_oldest=Oldest entry
+history_fmt=%d of %d: %s

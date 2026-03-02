@@ -46,6 +46,37 @@ static void AnnounceFaction(int index) {
     sr_output(buf, true);
 }
 
+/// Announce detail for the faction at the given list index.
+static void AnnounceDetail(int index) {
+    if (index < 0 || index >= _rankedCount) return;
+    int fid = _rankedFactions[index];
+    int player = MapWin->cOwner;
+    Faction& f = Factions[fid];
+
+    // Get diplomacy status relative to player
+    const char* diplo_str;
+    if (fid == player) {
+        diplo_str = "";
+    } else if (has_treaty(player, fid, DIPLO_PACT)) {
+        diplo_str = loc(SR_DIPLO_STATUS_PACT);
+    } else if (has_treaty(player, fid, DIPLO_TREATY)) {
+        diplo_str = loc(SR_DIPLO_STATUS_TREATY);
+    } else if (has_treaty(player, fid, DIPLO_TRUCE)) {
+        diplo_str = loc(SR_DIPLO_STATUS_TRUCE);
+    } else if (has_treaty(player, fid, DIPLO_VENDETTA)) {
+        diplo_str = loc(SR_DIPLO_STATUS_VENDETTA);
+    } else {
+        diplo_str = loc(SR_DIPLO_STATUS_NONE);
+    }
+
+    char buf[512];
+    snprintf(buf, sizeof(buf), loc(SR_SCORE_DETAIL),
+             sr_game_str(MFactions[fid].noun_faction),
+             f.base_count, f.pop_total, f.tech_achieved,
+             f.mil_strength_1, diplo_str);
+    sr_output(buf, true);
+}
+
 /// Announce player's own ranking summary.
 static void AnnouncePlayerSummary() {
     int owner = MapWin->cOwner;
@@ -122,6 +153,11 @@ bool Update(UINT msg, WPARAM wParam) {
 
     default:
         break;
+    }
+
+    if (wParam == 'D' && !ctrl_key_down() && !shift_key_down()) {
+        AnnounceDetail(_currentIndex);
+        return true;
     }
 
     if (wParam == 'S' && !ctrl_key_down() && !shift_key_down()) {

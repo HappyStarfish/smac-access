@@ -147,6 +147,12 @@ queue_empty=Warteschlange leer.
 # Bewegung & Navigation
 movement_points=%d von %d Zügen
 cannot_move=Kann sich nicht dorthin bewegen.
+cannot_move_no_mp=Bewegung nicht möglich: keine Bewegungspunkte.
+cannot_move_ocean=Bewegung nicht möglich: Wasser.
+cannot_move_land=Bewegung nicht möglich: Land.
+cannot_move_zoc=Bewegung nicht möglich: feindliche Kontrollzone.
+cannot_move_edge=Bewegung nicht möglich: Kartenrand.
+cannot_open_base=Basis kann nicht geöffnet werden.
 
 # Kontexthilfe (Strg+F1)
 help_header=Befehle:
@@ -747,6 +753,7 @@ act_menu_help=Shift+F10: Aktionsmenü
 act_done_hold=Hält Position.
 act_done_explore=Erkundet automatisch.
 act_done_unload=Entlädt.
+act_done_destroy=Zerstört Verbesserungen.
 
 # Automatisierung (Shift+A)
 auto_open=Automatisieren: %d Optionen. Hoch, Runter, Eingabe, Escape.
@@ -803,7 +810,7 @@ projects_unbuilt=%s, %d von %d: Nicht gebaut
 projects_destroyed=%s, %d von %d: Zerstört
 projects_summary=%d Projekte: %d gebaut, %d nicht gebaut, %d zerstört
 projects_empty=Keine Geheimprojekte.
-projects_help=Hoch/Runter: Projekte durchsuchen. S: Zusammenfassung. Escape: Schließen. Strg+F1: Diese Hilfe.
+projects_help=Hoch/Runter: Projekte durchsuchen. D: Details. S: Zusammenfassung. Escape: Schließen. Strg+F1: Diese Hilfe.
 
 # Orbitalstatus (F6)
 orbital_open=Orbitalstatus. S: Zusammenfassung, D: Fraktionsvergleich, Strg+F1: Hilfe.
@@ -823,7 +830,7 @@ military_detail_closed=Einheiten-Detail geschlossen.
 military_no_units=Keine aktiven Einheitentypen.
 military_rankings_header=Machtrangliste:
 military_rank_entry=%d. %s, Stärke %d
-military_help=S: Machtrangliste. D: Einheitentypen. Escape: Schließen. Strg+F1: Diese Hilfe.
+military_help=S: Machtrangliste. D: Einheitentypen (dann nochmal D für Einheitendetails). Escape: Schließen. Strg+F1: Diese Hilfe.
 
 # Punktestand (F8)
 score_open=Punktestand, %d Fraktionen. Hoch/Runter: navigieren, S: dein Rang, Strg+F1: Hilfe.
@@ -831,7 +838,7 @@ score_closed=Punktestand geschlossen.
 score_faction=%d. %s, %d von %d: Basen %d, Bevölkerung %d, Technologien %d
 score_player=Dein Rang: %s, %d von %d. Basen %d, Bevölkerung %d, Technologien %d.
 score_empty=Keine Fraktionen.
-score_help=Hoch/Runter: Rangliste durchsuchen. S: Dein Rang. Escape: Schließen. Strg+F1: Diese Hilfe.
+score_help=Hoch/Runter: Rangliste durchsuchen. D: Details. S: Dein Rang. Escape: Schließen. Strg+F1: Diese Hilfe.
 
 # Spielende
 victory_conquest=Eroberungssieg!
@@ -917,7 +924,7 @@ monuments_info=Monumente. Visuelle Darstellung der Errungenschaften deiner Frakt
 hall_of_fame_info=Ruhmeshalle. Liste abgeschlossener Spiele. Noch nicht zugänglich.
 
 # Monumente (F9)
-monument_open=Monumente, %d von %d erreicht. Auf/Ab: Navigieren, S: Zusammenfassung, Escape: Schließen.
+monument_open=Monumente, %d von %d erreicht. Visualisierung der Erfolge, Liste kann fehlerhaft sein. Auf/Ab: Navigieren, S: Zusammenfassung, Escape: Schließen.
 monument_closed=Monumente geschlossen.
 monument_item_achieved=%d von %d: %s, Runde %d.
 monument_item_locked=%d von %d: %s, nicht erreicht.
@@ -1009,14 +1016,14 @@ gsettings_press_d=D für Details drücken.
 gsettings_faction_info=I für Fraktionsinfo drücken.
 
 # Einheitenliste (U-Taste)
-unit_list_open=Einheitenliste, %d Einheiten. Hoch/Runter: Blättern, Enter: Auswählen, Escape: Schließen.
+unit_list_open=Einheitenliste, %d Einheiten. Hoch/Runter: Blättern, D: Details, Enter: Auswählen, Escape: Schließen.
 unit_list_fmt=%d von %d: %s bei (%d, %d)
 unit_list_moves=%d von %d Züge
 unit_list_health=Gesundheit %d von %d
 unit_list_home=Heimatbasis: %s
 unit_list_selected=%s ausgewählt
 unit_list_empty=Keine Einheiten verfügbar.
-unit_list_help=Hoch/Runter: Blättern. Enter: Einheit auswählen und aktivieren. Escape: Schließen. Strg+F1: Diese Hilfe.
+unit_list_help=Hoch/Runter: Blättern. Pos1/Ende: Erste/Letzte. D: Details. Enter: Einheit auswählen und aktivieren. Escape: Schließen. Strg+F1: Diese Hilfe.
 order_idle=bereit
 order_hold=halten
 order_sentry=Wache
@@ -1025,15 +1032,19 @@ order_goto=unterwegs
 order_convoy=Konvoi
 
 # Feindliche Einheiten (Umschalt+U)
-enemy_list_open=Fremde Einheiten, %d sichtbar. Hoch/Runter: Blättern, Enter: Zur Einheit springen, Escape: Schließen.
+enemy_list_open=Fremde Einheiten, %d sichtbar. Hoch/Runter: Blättern, D: Details, C: Kampfvorschau, Enter: Zur Einheit springen, Escape: Schließen.
 enemy_list_fmt=%d von %d: %s, %s (%s) bei (%d, %d)
 enemy_list_native=Einheimisch
 enemy_list_empty=Keine fremden Einheiten sichtbar.
-enemy_list_help=Hoch/Runter: Blättern. Enter: Zur Einheit auf der Karte springen. Escape: Schließen. Strg+F1: Diese Hilfe.
+enemy_list_help=Hoch/Runter: Blättern. Pos1/Ende: Erste/Letzte. D: Details. Enter: Zur Einheit auf der Karte springen. Escape: Schließen. Strg+F1: Diese Hilfe.
 enemy_list_jump=Gesprungen zu %s bei (%d, %d)
 enemy_list_triad_land=Boden
 enemy_list_triad_sea=See
 enemy_list_triad_air=Luft
+unit_list_detail=%s. %s, %s %d, %s %d, %s, %s, %d von %d HP.
+enemy_list_detail=%s. %s, %s %d, %s %d, %s, %s, %d von %d HP.
+enemy_list_detail_limited=%s. %s, %s.
+unit_list_focused=%s fokussiert, keine Bewegungspunkte.
 
 # Stapel-Wechsel (Tab)
 tab_cycle_fmt=%s, %d von %d auf Feld
@@ -1050,3 +1061,91 @@ netsettings_cat_rules=Regeln
 netsettings_summary_fmt=Schwierigkeit: %s, Planet: %s. %d Einstellungen geändert, %d Regeln geändert.
 netsettings_time_none=Keine
 netsettings_time_other=Benutzerdefiniert
+
+# Detail-Strings (D-Taste)
+projects_detail=%s. %s. Kosten: %d Mineralien. %s
+projects_detail_built=Gebaut von %s in %s.
+projects_detail_destroyed=Zerstört.
+projects_detail_unbuilt=Noch nicht gebaut.
+military_unit_detail=%s (%d aktiv). %s, %s %d, %s %d, %s, %d Bewegung, %d HP.
+score_detail=%s. Basen: %d, Bevölkerung: %d, Technologien: %d. Militärstärke: %d. %s
+
+# Kampfergebnisse
+combat_victory=Sieg: %s hat %s besiegt. %d von %d HP.
+combat_defeat=Niederlage: %s zerstört von %s.
+combat_defense_win=Verteidigung: %s hat %s zerstört. %d von %d HP.
+combat_defense_loss=Verloren: %s zerstört von %s.
+combat_draw=%s gegen %s, beide überlebt. %s: %d von %d HP.
+combat_retreat=%s ist zurückgewichen.
+combat_capture=%s erobert.
+combat_promoted= Befördert zu %s.
+combat_nerve_gas= Nervengas eingesetzt!
+combat_intercepted=Abgefangen von %s (%s).
+
+# Artillerie
+combat_arty_result=Artillerie: %s hat (%d, %d) bombardiert. %d Einheiten getroffen.
+combat_arty_damage=%s: %d Schaden, %d von %d HP.
+combat_arty_no_effect=Artillerie: Keine Wirkung.
+
+# Kampfchancen (Umschalt+U)
+combat_odds=Chancen %d:%d
+combat_odds_favorable=Günstig
+combat_odds_unfavorable=Ungünstig
+combat_odds_even=Ausgeglichen
+combat_preview=Kampf: %s (%s %d, %s, %d/%d HP) gegen %s (%s %d, %s, %d/%d HP). Chancen %d:%d.
+combat_preview_psi_fmt=Psi-Kampf: %s (%s, %d/%d HP) gegen %s (%s, %d/%d HP). Chancen %d:%d.
+combat_preview_no_unit=Keine Kampfeinheit ausgewählt.
+combat_preview_psi=Psi-Kampf
+enemy_list_help_combat=Hoch/Runter: Blättern. Pos1/Ende: Erste/Letzte. D: Details. C: Kampfvorschau. Enter: Zur Einheit springen. Escape: Schließen. Strg+F1: Diese Hilfe.
+
+# Szenario-Editor
+editor_not_accessible=Szenario-Editor. Noch nicht zugänglich mit Screenreader. Szenarien können auch über Textdateien bearbeitet werden (alphax.txt, scenario.txt).
+
+# Thinker-Menü (Alt+T)
+tmenu_title=Thinker-Menü
+tmenu_item_fmt=%d von %d: %s
+tmenu_stats=Statistiken
+tmenu_options=Mod-Optionen
+tmenu_homepage=Homepage öffnen
+tmenu_close=Schließen
+tmenu_rules=Spielregeln
+tmenu_rules_saved=Spielregeln angewendet.
+tmenu_rules_cancelled=Spielregeln verworfen.
+tmenu_rule_no_council=Kein Planetarischer Rat
+tmenu_rule_no_social_eng=Kein Social Engineering
+tmenu_version_fmt=Thinker Access Mod. %s, Build %s
+tmenu_gametime_fmt=Spielzeit: %d Stunden, %d Minuten
+tmenu_opt_fmt=%d von %d: %s: %s
+tmenu_opt_on=Ein
+tmenu_opt_off=Aus
+tmenu_opt_saved=Mod-Optionen gespeichert.
+tmenu_opt_cancelled=Mod-Optionen verworfen.
+tmenu_help=Hoch/Runter: Navigieren. Enter: Auswählen. Escape: Schließen. Strg+F1: Diese Hilfe.
+tmenu_opt_help=Hoch/Runter: Navigieren. Leertaste: Umschalten. S: Zusammenfassung. Enter: Speichern. Escape: Abbrechen. Strg+F1: Diese Hilfe.
+tmenu_stat_header=Spielstatistiken.
+tmenu_stat_world=Welt: %d Basen, %d Einheiten, %d Bevölkerung, %d Mineralien, %d Energie.
+tmenu_stat_faction=Deine Fraktion: %d Basen, %d Einheiten, %d Bevölkerung, %d Mineralien, %d Energie.
+tmenu_opt_new_world=Neuer Kartengenerator
+tmenu_opt_continents=Welt-Kontinente
+tmenu_opt_landmarks=Modifizierte Landmarken
+tmenu_opt_polar_caps=Polkappen
+tmenu_opt_mirror_x=Karte horizontal spiegeln
+tmenu_opt_mirror_y=Karte vertikal spiegeln
+tmenu_opt_auto_bases=Spieler-Basen verwalten
+tmenu_opt_auto_units=Spieler-Einheiten verwalten
+tmenu_opt_former_warn=Warnung bei Former-Ersetzung
+tmenu_opt_base_info=Basis-Info auf Karte anzeigen
+tmenu_opt_treaty_popup=Fremde Vertragspopups
+tmenu_opt_auto_minimise=Fenster automatisch minimieren
+
+# Tile Detail Query (Zifferntasten 1-8)
+detail_no_units=Keine Einheiten
+detail_no_base=Keine Basis
+detail_no_improvements=Keine Verbesserungen
+detail_no_landmarks=Keine Landmarken
+detail_no_work=Nicht im Basisradius
+
+# Sprachverlauf
+history_empty=Kein Sprachverlauf
+history_oldest=Ältester Eintrag
+history_fmt=%d von %d: %s

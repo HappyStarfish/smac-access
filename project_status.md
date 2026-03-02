@@ -54,7 +54,8 @@
 - **World Map — Exploration (no modifier):**
   - Arrow keys: move cursor N/S/W/E
   - Home/End/PgUp/PgDown: move cursor NW/SW/NE/SE
-  - Announces: "(x, y) Terrain, Features. Base: Name. Unit: Name"
+  - Announces: "(x, y) Units. Base. Terrain, Nature, Improvements. Yields. Ownership. Work status"
+  - Number keys 1-8: detail query (one category per key), 0: full announcement
 - **World Map — Unit Movement (Shift held):**
   - Shift+Arrow keys: move unit N/S/W/E
   - Shift+Home/End/PgUp/PgDown: move unit NW/SW/NE/SE
@@ -176,6 +177,24 @@ Filters from triggers 1-3:
 
 ## Notes for Next Session
 
+### NEW: Tile Detail Query Keys (1-8, 0) — needs testing (2026-03-02)
+- **Refactored sr_announce_tile** into 10 category helper functions for reuse
+- **Reordered full tile announcement**: Coordinates → Units → Base → Terrain → Nature → Improvements → Resource bonus → Landmarks → Yields → Ownership → Work status (previously terrain was first, units/base last)
+- **Number keys 1-8 on world map** (no modifiers): each announces one category of tile info
+  - 1: Coordinates + ownership/diplomacy
+  - 2: Units on tile (or "No units")
+  - 3: Base on tile (or "No base")
+  - 4: Terrain + nature (type, moisture, altitude, fungus, forest, river)
+  - 5: Improvements (or "No improvements")
+  - 6: Yields + resource bonus
+  - 7: Landmarks (or "No landmarks")
+  - 8: Work status (or "Not in base radius")
+  - 9: reserved
+  - 0: Full announcement (new order)
+- Works with both exploration cursor and active unit position
+- 5 new loc strings (en+de): detail_no_units, detail_no_base, detail_no_improvements, detail_no_landmarks, detail_no_work
+- **Test plan**: Load game → navigate world map → press 1-8 on various tiles (base tile, empty ocean, improved land, tile with units) → verify each key announces only its category. Press 0 → full announcement in new order. Check that units/base come before terrain in the full announcement.
+
 ### Game Settings Editor (Ctrl+F10) — TESTED OK (2026-03-01)
 - **Ctrl+F10 in main menu** opens accessible singleplayer settings editor
 - **4 categories** navigated with Tab/Shift+Tab:
@@ -227,6 +246,20 @@ Filters from triggers 1-3:
 - Up/Down navigates, Enter confirms (sets AlphaIniPrefs->time_controls + set_time_controls()), Escape cancels
 - Announces preset name + seconds per turn/base/unit
 - 4 new loc strings (en+de)
+
+### NEW: Thinker Menu (Alt+T) — accessible, needs testing (2026-03-02)
+- **Alt+T** (or Alt+H in reduced mode) now opens accessible modal handler when screen reader is active
+- Non-SR mode unchanged (still uses game popups)
+- **3 modes:**
+  - Main menu: navigate with Up/Down, Enter to select, Escape to close
+  - Statistics: announces world + faction stats (bases, units, pop, minerals, energy), any key returns
+  - Mod Options: 12 checkboxes, Space toggles, S for summary, Enter saves to INI, Escape cancels
+- Opens with version + build date + play time announcement
+- Game Rules option available in main menu (pre-game only)
+- New files: thinker_menu_handler.h/.cpp
+- ~30 new loc strings (en+de)
+- gui.cpp: include, IsActive/Update routing, Alt+T/Alt+H conditional dispatch
+- **Test plan**: In-game, press Alt+T. Check: version announced, menu navigates, Statistics reads data, Mod Options toggles and saves, Escape closes cleanly.
 
 ### NEW: Chat (Ctrl+C) — deferred testing
 - Ctrl+C on world map announces "Chat" when MultiplayerActive
@@ -353,6 +386,7 @@ Filters from triggers 1-3:
 
 ### Pending Tests
 
+0v. **Combat Accessibility** — Added 2026-03-02. Three features: (1) Automatic combat result announcements in mod_battle_fight_2 — melee results (victory/defeat/defense/draw/retreat/capture), artillery bombardment results (units hit + damage per unit), interceptor announcements, promotion announcements, nerve gas warning. (2) Combat odds in Shift+U enemy list — when player has a selected combat unit, odds are appended to each enemy entry (Favorable/Unfavorable/Even). (3) C key in Shift+U for detailed combat preview (weapon, morale, HP, odds). Files: veh_combat.cpp (SR code in mod_battle_fight_2), world_map_handler.cpp (Shift+U enhancement), localization.h/cpp, en.txt, de.txt. 23 new loc strings. Test: Attack enemy → hear result. Use artillery → hear bombardment. Open Shift+U with combat unit selected → hear odds. Press C → hear detailed preview.
 0u. **Faction Selection Keyboard Access** — WIP (2026-03-01). Handler erkennt Fraktionsauswahl per BLURB-Detection. Fraktionsname wird vor BLURB-Text vorgelesen. Tasten: Enter (spielen), G (Gruppe bearbeiten), I (Info), R (Zufallsgruppe), Ctrl+F1 (Hilfe). Dateien: faction_select_handler.h/cpp. Änderungen V3 (2026-03-01): (1) I-Taste liest DATALINKS1+DATALINKS2 direkt aus Fraktionsdatei per sr_read_popup_text() statt INFO-Button-Klick (vermeidet unerreichbares DATALINKS-Popup). (2) ScanButtons() wird bei JEDEM OnBlurbDetected() aufgerufen statt nur beim ersten Mal (_buttonsScanned Guard entfernt) — fix für Buttons die nach Screen-Wechsel nicht mehr funktionieren. (3) BTN_INFO aus enum/MatchButton entfernt. (4) Hilfetext um G/I/R erweitert. Neuer Loc-String SR_FACTION_NO_INFO. **PROBLEM: I-Taste funktioniert gar nicht (kein Effekt).** Nächste Sitzung debuggen — prüfen ob HandleKey überhaupt aufgerufen wird, ob _lastBlurbFile gesetzt ist, ob sr_read_popup_text die Datei findet. Ctrl+F12 Debug-Log prüfen.
 0t. **Research Selection Modal (Shift+R)** — TESTED OK (2026-03-01). Dual-mode: Blind Research ON shows 4 directions, OFF shows specific techs. Announces blind status + current direction on open. Intro text from #TECHRANDOM. All opening messages queued. ANSI→UTF-8 fixed (no double conversion). Enter key no longer leaks to game.
 0s. **Council Handler (Planetary Council Accessibility)** — Added 2026-02-28. Inline hook on call_council (0x52C880) detects council open/close. OnOpen announces faction name + governor + vote summary. S/Tab repeats vote summary, Ctrl+F1 help. Ctrl+V on world map: can council be called? + governor info + vote summary. Observer pattern (game handles navigation). New files: council_handler.h/cpp. 10 new loc strings (en+de). Hook count 22→23. Test: Ctrl+V on world map, council einberufen, S/Tab/Ctrl+F1 während Council, KI-Council löst keine Ansage aus.
@@ -420,6 +454,8 @@ Filters from triggers 1-3:
      - Hook: `write_call(0x4E3279, mod_create_game)` in patch.cpp
      - Flow: activate_button(1) → prepare_game(NetWin) → set flag → GraphicWin_close → create_game returns 1 → AlphaNet_setup proceeds
    - **Pending test**: Start Game → check thinker_sr log for "create_game hook override 0 -> 1". If game crashes in prepare_game, NetWin state may need setup. If game starts but settings wrong, investigate NetWin internal state vs game globals.
+
+10. **Scenario Editor Accessibility** — DEFERRED (future project). See details below under "Future: Scenario Editor".
    - **v5 investigation (2026-03-01)**: Complete rewrite + deep reverse engineering.
      1. **Code simplified**: Removed run_setting_modal, all SettingOption arrays, prepare_game/NetSetupState logic (~200 lines removed).
      2. **WinProc direct call FAILED**: `WinProc(hwnd, WM_LBUTTONDOWN, MK_LBUTTON, MAKELPARAM(x,y))` — clicks logged but game didn't respond. DDrawCompat likely prevents synthetic mouse processing.
@@ -575,3 +611,67 @@ Full details documented in docs/game-api.md.
 - **2026-02-28 (session 4)**: Multiplayer Setup — Start/Cancel fix via disassembly of AlphaNet_setup (0x4E31E0). (1) Discovered `PbemActive` (0x93A95C) is the lobby dialog result: Cancel button (ID 9999 in pick_service loop at 0x4E26E0) sets it to 1, Start leaves it at 0. (2) After lobby: if PbemActive==0 → game shows accessible "Spiel leiten/Beitreten" popup (NETCONNECT_JOIN_OR_CREATE from "jackal" script), if !=0 → cancel path. (3) Fix: Cancel sets `*PbemActive=1` then `GraphicWin_close(NetWin)` → proper cancel. Start just calls `GraphicWin_close(NetWin)` with PbemActive=0 → popup appears for user. (4) Attempted and reverted: mod_netconnect_popup hook at 0x4E3266 — bypassing the popup caused DirectPlay crash (do_join null ptr) or wrong mode selection. The popup is already accessible, no hook needed. (5) Removed diagnostic dump_netwin_fields code. (6) Removed unused WinProc extern. PENDING TEST: Start → popup → Spiel leiten → game starts?
 - **2026-03-01**: Multiplayer NetWin click simulation investigation. (1) Removed run_setting_modal + all SettingOption arrays + prepare_game/NetSetupState logic (~200 lines). (2) WinProc direct call `WinProc(hwnd, WM_LBUTTONDOWN, MK_LBUTTON, MAKELPARAM(x,y))` — clicks were sent but game didn't respond at all (no popup, no state change). DDrawCompat (ddraw.dll in game dir confirmed) likely prevents synthetic mouse processing even via direct WinProc call. (3) SpotList scan: runtime scan of NetWin memory (offsets 0x444-0x1400) after first OnTimer redraw found SpotList at **NetWin+0xD34** (NOT 0xA2C/CWinFonted). 61 spots, max=85. Full hitbox type map: type=0 settings, type=1 checkboxes, type=2/5 player name areas, type=3 faction column, type=4 difficulty column. (4) iHitBoxTagClicked write at NetWin+0xD2C (CWinFonted analogy) — no effect, game didn't process it. (5) Vtable dump code deployed (40 entries) but not yet tested — user ended session. Next: analyze vtable, find on_left_click handler, call directly as `vtbl[N](NetWin, x, y)`.
 - **2026-02-27**: Load Game + Save Game dialog accessibility + status cleanup. (1) Load Game file browser: Initial approach (parallel file list with own index, popup_list navigation) failed after 5 iterations — our index desynchronized with game's internal cursor, Enter on folders was consumed but game didn't navigate, user ended up in C:\ root. Root cause: game's file dialog is a modal with its own state we can't control. **Rewrote to text-capture approach**: game handles all navigation (arrows/Enter/Escape), we observe rendered filenames via Trigger 2 (Arrow Nav) and route through sr_fb_on_text_captured() which adds type markers (Ordner/SAV). Directory names from saves/ scanned via FindFirstFile as lookup table. Triggers 1+3 suppressed during file browser. TESTED OK. (2) Status cleanup: Ctrl+R conflict RESOLVED, Setup options RESOLVED (already works), Base screen mini-map NOT NEEDED (read-only visual), Zoom feedback NOT NEEDED (purely visual). (3) Key lesson documented in memory: for game modal dialogs, always observe+annotate, never build parallel navigation. (4) Save Game dialog: Hooked save_game at 0x5A9EB0 with same text-capture pattern as load_game (shared sr_fb_open/sr_fb_close helpers). "Spiel speichern" announced on Ctrl+S. Modified sr_fb_on_text_captured() to announce button text (OK, ABBRECHEN, SPEICHERN, LADEN, CANCEL, SAVE, LOAD) directly instead of skipping — enables overwrite confirmation dialog options to be read. SR_FILE_SAVE_GAME loc string added (en+de). Inline hook slot 24 used. Awaiting testing.
+- **2026-03-02**: Three small features. (1) D key on world map: SR feedback for "Destroy Improvements" (D without modifiers). Follows H-key pattern (pass to WinProc, announce). New string SR_ACT_DONE_DESTROY (en: "Destroying improvements.", de: "Zerstört Verbesserungen."). (2) Scenario Editor announcement: Detects STATE_SCENARIO_EDITOR activation (Ctrl+K) via static was_editor flag in ModWinProc. Announces "Scenario editor. Not yet accessible with screen reader." New string SR_EDITOR_NOT_ACCESSIBLE. (3) Monument F9 disclaimer: Modified SR_MONUMENT_OPEN to include "Visualization of achievements, list may be inaccurate" / "Visualisierung der Erfolge, Liste kann fehlerhaft sein" — warns user that monument data readout may have errors.
+
+## Future: Scenario Editor Accessibility
+
+**Status:** Deferred. Currently announces "not yet accessible" on activation (Ctrl+K). Full accessibility is a large project.
+
+**Alternative approach to investigate first:** Many scenario settings can also be defined via plain text files (alphax.txt, scenario .txt files). Before building full in-game editor accessibility, investigate how much can be done through text file editing — potentially more practical for blind users than navigating complex visual editor UIs.
+
+### Part 1: In-Game Scenario Editor (Ctrl+K) — 26 functions
+Activated via Ctrl+K. Mostly uses popup dialogs (popp, X_pop7, pop_ask_number) which are already partially accessible via existing hooks.
+
+**Functions (Shift/Ctrl+F-key hotkeys):**
+- Shift+F1: Create unit (Console_editor_veh, 0x4DED00)
+- Ctrl+Shift+F1: Edit unit (Console_editor_edit_veh, 0x4DDA50)
+- Shift+F2: Tech advance (Console_editor_tech, 0x4DFAD0)
+- Ctrl+F2: Modify tech
+- Shift+F3: Swap factions (Console_editor_who, 0x4D9AD0)
+- Ctrl+Shift+F3: Set difficulty (Console_editor_diff, 0x4DD6F0)
+- Shift+F4: Set energy (Console_editor_energy, 0x4E0120)
+- Shift+F5: Set mission year (Console_editor_date, 0x4E0210)
+- Shift+F6: Delete faction (Console_editor_eliminate, 0x4E05E0)
+- Ctrl+Shift+F6: Reload faction (Console_editor_reload, 0x4E0290)
+- Ctrl+F6: Delete all units (Console_editor_kill_vehicles, 0x4E09B0)
+- Shift+F7: View replay
+- Shift+F8: View videos
+- Ctrl+F8: Reset techs (Console_editor_reset_tech, 0x4DBC40)
+- Ctrl+Shift+F8: Reset all factions (Console_editor_reset_faction, 0x4DBB40)
+- Shift+F9: Edit diplomacy (Console_editor_diplomacy, 0x4DB870)
+- Ctrl+F9: Edit personality (Console_editor_personality, 0x4DBD20)
+- Ctrl+Shift+F9: Edit strategy (Console_editor_strategy, 0x4DBFB0)
+- Shift+F10: Edit rules (Console_editor_rules, 0x4DC230)
+- Shift+F11: Edit scenario rules (Console_editor_scen_rules, 0x4DC520)
+- Shift+F12: Edit scenario params (Console_editor_scen_param, 0x4DCCC0)
+- Ctrl+Shift+F12: Edit victory conditions (Console_editor_scen_victory, 0x4DC860)
+- Ctrl+Shift+F7: Load scenario (Console_editor_load, 0x4E0A00)
+- Ctrl+F7: Save scenario (Console_editor_save, 0x4E09E0)
+- Alt+Backspace: Undo (Console_editor_undo, 0x4E1F20)
+- Y: Overview (Console_editor_view, 0x4DF4F0)
+
+**Estimated effort:** Medium. Many functions use existing popup system. First step: test which hotkeys already produce accessible output via popup hooks.
+
+### Part 2: Map Editor (Terrain Painting) — 20 functions
+Completely visual brush-based painting interface. Number keys 0-9 select tools, Ctrl+Left/Right places/removes features.
+
+**Functions:**
+- 1-6: Select terrain type (elevation, rocks, rivers, resources, pods, improvements)
+- 7: Change brush size (Console_editor_set_brush, 0x4E0EA0)
+- 8: Climate/world params (Console_editor_climate, 0x4E0FA0)
+- 9: Slow map generate (Console_editor_generate, 0x4E0FD0)
+- 0: Fast map generate (Console_editor_fast, 0x4E10C0)
+- Ctrl+Left: Place at cursor (Console_editor_paints, 0x4E0A50)
+- Ctrl+Right: Remove at cursor
+- Ctrl+F5: Save map, Ctrl+Shift+F5: Load map
+- Fungus generate/remove, random rockiness, resource beacons, polar caps, clear terrain
+- Ctrl+Shift+F10: Editor-only mode toggle
+
+**Estimated effort:** Very large. Visual painting concept requires completely different interface for blind users (coordinate-based placement instead of brush painting). Low priority.
+
+### Text File Alternative
+SMAC scenarios can be partially defined through text files:
+- **alphax.txt**: Game rules, tech tree, unit definitions, facilities, abilities, terrain params
+- **Scenario .txt files**: Custom rules, victory conditions, faction settings
+- **Map files (.mp)**: Binary format, but map generators exist
+- Investigate: What scenario features can be fully configured via text editing? Could a text-based workflow replace most editor functions for blind users?

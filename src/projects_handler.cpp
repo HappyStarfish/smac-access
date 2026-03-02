@@ -57,6 +57,37 @@ static void AnnounceProject(int index) {
     sr_output(buf, true);
 }
 
+/// Announce detail for the current project (effect, cost, status).
+static void AnnounceDetail(int index) {
+    if (index < 0 || index >= _projectCount) return;
+    int fac_id = _projectIds[index];
+    int sp_idx = fac_id - SP_ID_First;
+    int base_id = SecretProjects[sp_idx];
+
+    const char* name = sr_game_str(Facility[fac_id].name);
+    const char* effect = Facility[fac_id].effect
+        ? sr_game_str(Facility[fac_id].effect) : "";
+    int cost = Facility[fac_id].cost;
+
+    // Build status string
+    char status[256];
+    if (base_id >= 0 && base_id < *BaseCount) {
+        int owner = Bases[base_id].faction_id;
+        snprintf(status, sizeof(status), loc(SR_PROJECTS_DETAIL_BUILT),
+                 sr_game_str(MFactions[owner].noun_faction),
+                 sr_game_str(Bases[base_id].name));
+    } else if (base_id == SP_Destroyed) {
+        snprintf(status, sizeof(status), "%s", loc(SR_PROJECTS_DETAIL_DESTROYED));
+    } else {
+        snprintf(status, sizeof(status), "%s", loc(SR_PROJECTS_DETAIL_UNBUILT));
+    }
+
+    char buf[512];
+    snprintf(buf, sizeof(buf), loc(SR_PROJECTS_DETAIL),
+             name, effect, cost, status);
+    sr_output(buf, true);
+}
+
 /// Announce summary: counts of built/unbuilt/destroyed.
 static void AnnounceSummary() {
     int built = 0, unbuilt = 0, destroyed = 0;
@@ -128,6 +159,11 @@ bool Update(UINT msg, WPARAM wParam) {
 
     default:
         break;
+    }
+
+    if (wParam == 'D' && !ctrl_key_down() && !shift_key_down()) {
+        AnnounceDetail(_currentIndex);
+        return true;
     }
 
     if (wParam == 'S' && !ctrl_key_down() && !shift_key_down()) {

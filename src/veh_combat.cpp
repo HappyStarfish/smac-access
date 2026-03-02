@@ -1,6 +1,8 @@
 
 #include "veh_combat.h"
 #include "message_handler.h"
+#include "screen_reader.h"
+#include "localization.h"
 
 
 static void reset_veh_draw() {
@@ -1236,6 +1238,15 @@ int __cdecl mod_battle_fight_2(int veh_id_atk, int offset, int tx, int ty, int t
     && !mod_stack_check(veh_id_def, 6, ABL_AIR_SUPERIORITY, -1, -1)
     && option && *VehAttackFlags & 2) {
         intercept_state = interceptor(Vehs[veh_id_def].faction_id, faction_id_atk, tx, ty);
+        if (intercept_state && sr_is_available()
+        && (faction_id_atk == player_id || Vehs[veh_id_def].faction_id == player_id)) {
+            char sr_buf[256];
+            int intercept_faction = Vehs[veh_id_def].faction_id;
+            snprintf(sr_buf, sizeof(sr_buf), loc(SR_COMBAT_INTERCEPTED),
+                sr_game_str(Vehs[intercept_state].name()),
+                sr_game_str(MFactions[intercept_faction].adj_name_faction));
+            sr_output(sr_buf, true);
+        }
     }
     veh_id_def = find_defender(veh_id_def, veh_id_atk, combat_type);
     if (veh_id_def >= 0) {
@@ -1279,6 +1290,20 @@ int __cdecl mod_battle_fight_2(int veh_id_atk, int offset, int tx, int ty, int t
     int veh_def_hp = veh_def->cur_hitpoints();
     int veh_atk_val;
     int veh_def_val;
+
+    // SR: Save pre-combat state for announcement
+    char sr_atk_name[64] = {};
+    char sr_def_name[64] = {};
+    int sr_atk_morale_pre = -1;
+    int sr_def_morale_pre = -1;
+    bool sr_player_involved = sr_is_available()
+        && (faction_id_atk == player_id || faction_id_def == player_id);
+    if (sr_player_involved) {
+        strncpy(sr_atk_name, sr_game_str(veh_atk->name()), sizeof(sr_atk_name) - 1);
+        strncpy(sr_def_name, sr_game_str(veh_def->name()), sizeof(sr_def_name) - 1);
+        sr_atk_morale_pre = veh_atk->morale;
+        sr_def_morale_pre = veh_def->morale;
+    }
 
     if (conf.ignore_reactor_power || psi_combat) {
         veh_atk_val = veh_atk->reactor_type(); // Added range limits
@@ -1600,6 +1625,11 @@ int __cdecl mod_battle_fight_2(int veh_id_atk, int offset, int tx, int ty, int t
             Bases[base_id].state_flags |= BSTATE_UNK_200000;
             Bases[base_id].event_flags |= BEVENT_UNK_100;
         }
+        // SR: Track artillery damage for announcement
+        struct ArtyHit { int veh_id; int dmg; int hp_after; int hp_max; };
+        ArtyHit sr_arty_hits[16];
+        int sr_arty_hit_count = 0;
+
         if (veh_id_def >= 0) {
             bool airbase = base_id >= 0 || (sq_def->items & BIT_AIRBASE);
             veh_id_def = veh_top(veh_id_def);
@@ -1626,6 +1656,14 @@ int __cdecl mod_battle_fight_2(int veh_id_atk, int offset, int tx, int ty, int t
                     damage_limit = (veh_def->max_hitpoints() * (100 - val) + 99) / 100;
                 }
                 damage_value = max(0, min(damage_value, veh_def->cur_hitpoints() - damage_limit));
+                // SR: Record hit for announcement
+                if (damage_value > 0 && sr_arty_hit_count < 16) {
+                    sr_arty_hits[sr_arty_hit_count++] = {
+                        veh_id_def, damage_value,
+                        veh_def->cur_hitpoints() - damage_value,
+                        veh_def->max_hitpoints()
+                    };
+                }
                 if (render_battle) {
                     combat_type = 0;
                     *VehDrawAttackID = veh_id_atk;
@@ -1691,6 +1729,28 @@ int __cdecl mod_battle_fight_2(int veh_id_atk, int offset, int tx, int ty, int t
         draw_tile_fixup(tx, ty, 1, 2);
         if (base_id >= 0 && !is_human(faction_id_def)) {
             mod_base_reset(base_id, 0);
+        }
+        // SR: Announce artillery result
+        if (sr_is_available()
+        && (faction_id_atk == player_id || faction_id_def == player_id)) {
+            char sr_buf[512];
+            if (sr_arty_hit_count > 0) {
+                int pos = snprintf(sr_buf, sizeof(sr_buf), loc(SR_COMBAT_ARTY_RESULT),
+                    sr_game_str(veh_atk->name()), tx, ty, sr_arty_hit_count);
+                sr_output(sr_buf, true);
+                for (int i = 0; i < sr_arty_hit_count && i < 4; i++) {
+                    if (sr_arty_hits[i].veh_id >= 0 && sr_arty_hits[i].veh_id < *VehCount) {
+                        snprintf(sr_buf, sizeof(sr_buf), loc(SR_COMBAT_ARTY_DAMAGE),
+                            sr_game_str(Vehs[sr_arty_hits[i].veh_id].name()),
+                            sr_arty_hits[i].dmg,
+                            sr_arty_hits[i].hp_after,
+                            sr_arty_hits[i].hp_max);
+                        sr_output(sr_buf, false);
+                    }
+                }
+            } else {
+                sr_output(loc(SR_COMBAT_ARTY_NO_EFFECT), true);
+            }
         }
         return 0; // Always return here
     }
@@ -1992,6 +2052,66 @@ int __cdecl mod_battle_fight_2(int veh_id_atk, int offset, int tx, int ty, int t
             }
         }
     }
+    // SR: Announce melee combat result
+    if (sr_player_involved) {
+        char sr_buf[512];
+        int pos = 0;
+        bool player_is_attacker = (faction_id_atk == player_id);
+
+        if (def_has_moved) {
+            // Defender retreated
+            snprintf(sr_buf, sizeof(sr_buf), loc(SR_COMBAT_RETREAT), sr_def_name);
+        } else if (marine_detach) {
+            // Marine detachment captured units
+            snprintf(sr_buf, sizeof(sr_buf), loc(SR_COMBAT_CAPTURE), sr_def_name);
+        } else if (atk_alive && def_alive) {
+            // Both survived (single round combat)
+            const char* survivor = player_is_attacker ? sr_atk_name : sr_def_name;
+            int hp = player_is_attacker ? veh_atk_last_hp : veh_def_last_hp;
+            int maxhp = player_is_attacker ? veh_atk->max_hitpoints() : veh_def->max_hitpoints();
+            pos = snprintf(sr_buf, sizeof(sr_buf), loc(SR_COMBAT_DRAW),
+                sr_atk_name, sr_def_name, survivor, hp, maxhp);
+        } else if (player_is_attacker && atk_alive) {
+            // Player attacked and won
+            pos = snprintf(sr_buf, sizeof(sr_buf), loc(SR_COMBAT_VICTORY),
+                sr_atk_name, sr_def_name, veh_atk_last_hp, veh_atk->max_hitpoints());
+        } else if (player_is_attacker && !atk_alive) {
+            // Player attacked and lost
+            pos = snprintf(sr_buf, sizeof(sr_buf), loc(SR_COMBAT_DEFEAT),
+                sr_atk_name, sr_def_name);
+        } else if (!player_is_attacker && def_alive) {
+            // Player defended and won
+            pos = snprintf(sr_buf, sizeof(sr_buf), loc(SR_COMBAT_DEFENSE_WIN),
+                sr_def_name, sr_atk_name, veh_def_last_hp, veh_def->max_hitpoints());
+        } else {
+            // Player defended and lost
+            pos = snprintf(sr_buf, sizeof(sr_buf), loc(SR_COMBAT_DEFENSE_LOSS),
+                sr_def_name, sr_atk_name);
+        }
+
+        // Append promotion info
+        if (atk_alive && veh_atk->morale > sr_atk_morale_pre
+        && veh_atk->morale <= MORALE_ELITE && Morale) {
+            const char* mname = veh_atk->is_native_unit()
+                ? sr_game_str(Morale[mod_morale_veh(veh_id_atk, 1, 0)].name_lifecycle)
+                : sr_game_str(Morale[mod_morale_veh(veh_id_atk, 1, 0)].name);
+            pos += snprintf(sr_buf + pos, sizeof(sr_buf) - pos, loc(SR_COMBAT_PROMOTED), mname);
+        } else if (!atk_alive && def_alive && veh_def->morale > sr_def_morale_pre
+        && veh_def->morale <= MORALE_ELITE && Morale) {
+            const char* mname = veh_def->is_native_unit()
+                ? sr_game_str(Morale[mod_morale_veh(veh_id_def, 1, 0)].name_lifecycle)
+                : sr_game_str(Morale[mod_morale_veh(veh_id_def, 1, 0)].name);
+            pos += snprintf(sr_buf + pos, sizeof(sr_buf) - pos, loc(SR_COMBAT_PROMOTED), mname);
+        }
+
+        // Append nerve gas warning
+        if (nerve_gas) {
+            pos += snprintf(sr_buf + pos, sizeof(sr_buf) - pos, "%s", loc(SR_COMBAT_NERVE_GAS));
+        }
+
+        sr_output(sr_buf, true);
+    }
+
     num_killed = 0;
     num_relics = 0;
     num_damaged = 0;

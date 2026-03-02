@@ -24,6 +24,7 @@
 #include "localization.h"
 #include "world_map_handler.h"
 #include "menu_handler.h"
+#include "thinker_menu_handler.h"
 
 const int32_t MainWinHandle = (int32_t)(&MapWin->oMainWin.oWinBase.field_4); // 0x939444
 
@@ -731,8 +732,15 @@ LRESULT WINAPI ModWinProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         && *GameState & STATE_SCENARIO_EDITOR && *GameState & STATE_OMNISCIENT_VIEW;
     static int delta_accum = 0;
     static bool sr_initialized = false;
+    static bool was_editor = false;
     POINT p;
     MAP* sq;
+
+    // Detect scenario editor activation
+    if (is_editor && !was_editor && sr_is_available()) {
+        sr_output(loc(SR_EDITOR_NOT_ACCESSIBLE), true);
+    }
+    was_editor = is_editor;
 
     // Deferred screen reader init (COM not safe in DllMain)
     if (!sr_initialized) {
@@ -1384,7 +1392,8 @@ LRESULT WINAPI ModWinProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     && (SocialEngHandler::IsActive() || PrefsHandler::IsActive()
         || SpecialistHandler::IsActive() || DesignHandler::IsActive()
         || GovernorHandler::IsActive() || StatusHandler::IsActive()
-        || GameSettingsHandler::IsActive() || NetSetupSettingsHandler::IsActive())) {
+        || GameSettingsHandler::IsActive() || NetSetupSettingsHandler::IsActive()
+        || ThinkerMenuHandler::IsActive())) {
         if (msg == WM_KEYDOWN) {
             if (SocialEngHandler::IsActive()) {
                 SocialEngHandler::Update(msg, wParam);
@@ -1400,6 +1409,8 @@ LRESULT WINAPI ModWinProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                 GameSettingsHandler::Update(msg, wParam);
             } else if (NetSetupSettingsHandler::IsActive()) {
                 NetSetupSettingsHandler::Update(msg, wParam);
+            } else if (ThinkerMenuHandler::IsActive()) {
+                ThinkerMenuHandler::Update(msg, wParam);
             } else {
                 SpecialistHandler::Update(msg, wParam);
             }
@@ -1613,10 +1624,18 @@ LRESULT WINAPI ModWinProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         CState.MouseOverTileInfo = !CState.MouseOverTileInfo;
 
     } else if (!conf.reduced_mode && msg == WM_CHAR && wParam == 't' && alt_key_down()) {
-        show_mod_menu();
+        if (sr_is_available()) {
+            ThinkerMenuHandler::RunModal();
+        } else {
+            show_mod_menu();
+        }
 
     } else if (conf.reduced_mode && msg == WM_CHAR && wParam == 'h' && alt_key_down()) {
-        show_mod_menu();
+        if (sr_is_available()) {
+            ThinkerMenuHandler::RunModal();
+        } else {
+            show_mod_menu();
+        }
 
     // Screen reader: Menu bar navigation (Ctrl+F2 + arrow keys)
     } else if (msg == WM_KEYDOWN && sr_is_available()
@@ -1764,8 +1783,38 @@ LRESULT WINAPI ModWinProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         return 0;
 
     // Screen reader: Ctrl+F12 = toggle debug logging
-    } else if (msg == WM_KEYDOWN && wParam == VK_F12 && ctrl_key_down() && sr_is_available()) {
+    } else if (msg == WM_KEYDOWN && wParam == VK_F12 && ctrl_key_down()
+    && !shift_key_down() && sr_is_available()) {
         sr_debug_toggle();
+
+    // Screen reader: Ctrl+Shift+F11/F12 = speech history browser
+    // Ctrl+Shift+F12 = most recent entry, Ctrl+Shift+F11 = go backwards
+    } else if (msg == WM_KEYDOWN && shift_key_down() && ctrl_key_down()
+    && (wParam == VK_F11 || wParam == VK_F12) && sr_is_available()) {
+        static int hist_pos = 0;
+        if (wParam == VK_F12) {
+            hist_pos = 0; // jump to newest
+        } else {
+            hist_pos++; // go backwards
+        }
+        int total = sr_history_count();
+        sr_history_set_browsing(true);
+        if (total == 0) {
+            sr_output(loc(SR_HISTORY_EMPTY), true);
+        } else if (hist_pos >= total) {
+            hist_pos = total - 1;
+            sr_output(loc(SR_HISTORY_OLDEST), true);
+        } else {
+            const char* entry = sr_history_get(hist_pos);
+            if (entry) {
+                char buf[600];
+                snprintf(buf, sizeof(buf), loc(SR_HISTORY_FMT),
+                    hist_pos + 1, total, entry);
+                sr_output(buf, true);
+            }
+        }
+        sr_history_set_browsing(false);
+        return 0;
 
     // Screen reader: Ctrl+Shift+A = toggle all accessibility features
     } else if (msg == WM_KEYDOWN && wParam == 'A' && ctrl_key_down()

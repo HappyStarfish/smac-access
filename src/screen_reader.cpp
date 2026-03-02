@@ -223,6 +223,10 @@ bool sr_is_available() {
     return hTolk != NULL && pTolk_Output != NULL;
 }
 
+// Forward declarations for speech history (defined below)
+static bool sr_hist_browsing = false;
+void sr_history_add(const char* text);
+
 /*
 Convert ANSI string to wide string and output to screen reader.
 */
@@ -230,6 +234,7 @@ bool sr_output(const char* text, bool interrupt) {
     if (!text || !text[0] || !pTolk_Output) {
         return false;
     }
+    if (!sr_hist_browsing) sr_history_add(text);
     int len = MultiByteToWideChar(CP_UTF8, 0, text, -1, NULL, 0);
     if (len <= 0) return false;
 
@@ -250,6 +255,42 @@ bool sr_silence() {
         return pTolk_Silence();
     }
     return false;
+}
+
+// === Speech history ===
+// Circular buffer of recent announcements for Shift+F11/F12 browsing.
+
+static const int SR_HIST_MAX = 100;
+static const int SR_HIST_LEN = 512;
+static char sr_hist_buf[100][512];
+static int sr_hist_write = 0;   // next write position
+static int sr_hist_count = 0;   // total entries stored
+
+void sr_history_add(const char* text) {
+    if (!text || !text[0]) return;
+    // Skip duplicates of most recent entry
+    if (sr_hist_count > 0) {
+        int last = (sr_hist_write - 1 + SR_HIST_MAX) % SR_HIST_MAX;
+        if (strcmp(sr_hist_buf[last], text) == 0) return;
+    }
+    strncpy(sr_hist_buf[sr_hist_write], text, SR_HIST_LEN - 1);
+    sr_hist_buf[sr_hist_write][SR_HIST_LEN - 1] = '\0';
+    sr_hist_write = (sr_hist_write + 1) % SR_HIST_MAX;
+    if (sr_hist_count < SR_HIST_MAX) sr_hist_count++;
+}
+
+int sr_history_count() {
+    return sr_hist_count;
+}
+
+const char* sr_history_get(int offset) {
+    if (offset < 0 || offset >= sr_hist_count) return NULL;
+    int idx = (sr_hist_write - 1 - offset + SR_HIST_MAX) % SR_HIST_MAX;
+    return sr_hist_buf[idx];
+}
+
+void sr_history_set_browsing(bool active) {
+    sr_hist_browsing = active;
 }
 
 /*
@@ -1011,8 +1052,11 @@ void sr_substitute_game_vars(char* buf, int bufsize) {
                         break;
                     }
                 }
-                bool is_special = is_tech || is_abil || is_terraform;
-                if (!is_special && !is_num && slot < 10 && ParseStrBuffer
+                // Fallback to ParseStrBuffer for ALL non-NUM types,
+                // including TECH/ABIL/TERRAFORM when ParseNumTable lookup failed.
+                // The game sometimes uses parse_says() to store the resolved name
+                // as a string instead of parse_num() with the ID.
+                if (!is_num && slot < 10 && ParseStrBuffer
                     && ParseStrBuffer[slot].str[0]) {
                     int prefix = (int)(start - buf);
                     snprintf(tmp, sizeof(tmp), "%.*s%s%s",

@@ -126,6 +126,12 @@ extern bool sr_mp_no_dedup;
 // that create_game should return success (game start, not cancel).
 extern bool sr_net_start_requested;
 
+// Speech history: browse recent announcements (Ctrl+Shift+F11/F12)
+void sr_history_add(const char* text);
+int sr_history_count();
+const char* sr_history_get(int offset); // 0 = newest, 1 = second newest, ...
+void sr_history_set_browsing(bool active);
+
 // Convert Windows-1252 (ANSI) game text to UTF-8.
 // Used for all text originating from the game engine (Buffer_write hooks,
 // game data arrays like Bases[].name, Facility[].name, etc.)

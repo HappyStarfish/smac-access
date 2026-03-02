@@ -9,7 +9,12 @@ void sr_run_modal_pump(bool* want_close) {
                 PostQuitMessage((int)msg.wParam);
                 break;
             }
-            TranslateMessage(&msg);
+            // Skip TranslateMessage for keyboard messages to prevent
+            // WM_CHAR generation that screen readers read as characters
+            if (msg.message != WM_KEYDOWN && msg.message != WM_KEYUP
+                && msg.message != WM_SYSKEYDOWN && msg.message != WM_SYSKEYUP) {
+                TranslateMessage(&msg);
+            }
             DispatchMessage(&msg);
         } else {
             Sleep(10);

@@ -127,6 +127,12 @@ static const char* sr_defaults[SR_COUNT] = {
     // Movement & Navigation
     /* SR_MOVEMENT_POINTS   */ "%d of %d moves",
     /* SR_CANNOT_MOVE       */ "Cannot move there.",
+    /* SR_CANNOT_MOVE_NO_MP */ "Cannot move: no movement points.",
+    /* SR_CANNOT_MOVE_OCEAN */ "Cannot move: water.",
+    /* SR_CANNOT_MOVE_LAND  */ "Cannot move: land.",
+    /* SR_CANNOT_MOVE_ZOC   */ "Cannot move: enemy zone of control.",
+    /* SR_CANNOT_MOVE_EDGE  */ "Cannot move: map edge.",
+    /* SR_CANNOT_OPEN_BASE  */ "Cannot open base.",
 
     // Context Help (Ctrl+F1)
     /* SR_HELP_HEADER       */ "Commands:",
@@ -821,7 +827,7 @@ static const char* sr_defaults[SR_COUNT] = {
     /* SR_PROJECTS_DESTROYED    */ "%s, %d of %d: Destroyed",
     /* SR_PROJECTS_SUMMARY      */ "%d projects: %d built, %d not built, %d destroyed",
     /* SR_PROJECTS_EMPTY        */ "No secret projects.",
-    /* SR_PROJECTS_HELP         */ "Up/Down: Browse projects. S: Summary. Escape: Close. Ctrl+F1: This help.",
+    /* SR_PROJECTS_HELP         */ "Up/Down: Browse projects. D: Details. S: Summary. Escape: Close. Ctrl+F1: This help.",
 
     // Orbital Status (F6)
     /* SR_ORBITAL_OPEN          */ "Orbital Status. S: summary, D: compare factions, Ctrl+F1: help.",
@@ -841,7 +847,7 @@ static const char* sr_defaults[SR_COUNT] = {
     /* SR_MILITARY_NO_UNITS     */ "No active unit types.",
     /* SR_MILITARY_RANKINGS_HEADER*/ "Power rankings:",
     /* SR_MILITARY_RANK_ENTRY   */ "%d. %s, strength %d",
-    /* SR_MILITARY_HELP         */ "S: Power rankings. D: Unit types. Escape: Close. Ctrl+F1: This help.",
+    /* SR_MILITARY_HELP         */ "S: Power rankings. D: Unit types (then D again for unit details). Escape: Close. Ctrl+F1: This help.",
 
     // Score/Rankings (F8)
     /* SR_SCORE_OPEN            */ "Score, %d factions. Up/Down: navigate, S: your rank, Ctrl+F1: help.",
@@ -849,7 +855,7 @@ static const char* sr_defaults[SR_COUNT] = {
     /* SR_SCORE_FACTION         */ "%d. %s, %d of %d: Bases %d, Population %d, Techs %d",
     /* SR_SCORE_PLAYER          */ "Your rank: %s, %d of %d. Bases %d, Population %d, Techs %d.",
     /* SR_SCORE_EMPTY           */ "No factions.",
-    /* SR_SCORE_HELP            */ "Up/Down: Browse rankings. S: Your rank. Escape: Close. Ctrl+F1: This help.",
+    /* SR_SCORE_HELP            */ "Up/Down: Browse rankings. D: Details. S: Your rank. Escape: Close. Ctrl+F1: This help.",
 
     // Game End
     /* SR_VICTORY_CONQUEST      */ "Conquest Victory!",
@@ -872,7 +878,7 @@ static const char* sr_defaults[SR_COUNT] = {
     /* SR_HALL_OF_FAME_INFO     */ "Hall of Fame. List of completed games. Not yet accessible.",
 
     // Monuments (F9)
-    /* SR_MONUMENT_OPEN         */ "Monuments, %d of %d achieved. Up/Down: navigate, S: summary, Escape: close.",
+    /* SR_MONUMENT_OPEN         */ "Monuments, %d of %d achieved. Visualization of achievements, list may be inaccurate. Up/Down: navigate, S: summary, Escape: close.",
     /* SR_MONUMENT_CLOSED       */ "Monuments closed.",
     /* SR_MONUMENT_ITEM_ACHIEVED */ "%d of %d: %s, Turn %d.",
     /* SR_MONUMENT_ITEM_LOCKED  */ "%d of %d: %s, not achieved.",
@@ -1040,14 +1046,14 @@ static const char* sr_defaults[SR_COUNT] = {
     /* SR_GSETTINGS_FACTION_INFO */ "Press I for faction info.",
 
     // Unit List (U key)
-    /* SR_UNIT_LIST_OPEN     */ "Unit List, %d units. Up/Down: browse, Enter: select, Escape: close.",
+    /* SR_UNIT_LIST_OPEN     */ "Unit List, %d units. Up/Down: browse, D: details, Enter: select, Escape: close.",
     /* SR_UNIT_LIST_FMT      */ "%d of %d: %s at (%d, %d)",
     /* SR_UNIT_LIST_MOVES    */ "%d of %d moves",
     /* SR_UNIT_LIST_HEALTH   */ "health %d of %d",
     /* SR_UNIT_LIST_HOME     */ "home base: %s",
     /* SR_UNIT_LIST_SELECTED */ "Selected %s",
     /* SR_UNIT_LIST_EMPTY    */ "No units available.",
-    /* SR_UNIT_LIST_HELP     */ "Up/Down: Browse. Enter: Select and activate unit. Escape: Close. Ctrl+F1: This help.",
+    /* SR_UNIT_LIST_HELP     */ "Up/Down: Browse. Home/End: First/Last. D: Details. Enter: Select and activate unit. Escape: Close. Ctrl+F1: This help.",
     /* SR_ORDER_IDLE         */ "idle",
     /* SR_ORDER_HOLD         */ "hold",
     /* SR_ORDER_SENTRY       */ "sentry",
@@ -1056,15 +1062,19 @@ static const char* sr_defaults[SR_COUNT] = {
     /* SR_ORDER_CONVOY       */ "convoy",
 
     // Enemy Unit List (Shift+U)
-    /* SR_ENEMY_LIST_OPEN    */ "Foreign Units, %d visible. Up/Down: browse, Enter: jump to unit, Escape: close.",
+    /* SR_ENEMY_LIST_OPEN    */ "Foreign Units, %d visible. Up/Down: browse, D: details, C: combat preview, Enter: jump to unit, Escape: close.",
     /* SR_ENEMY_LIST_FMT     */ "%d of %d: %s, %s (%s) at (%d, %d)",
     /* SR_ENEMY_LIST_NATIVE  */ "Native",
     /* SR_ENEMY_LIST_EMPTY   */ "No foreign units visible.",
-    /* SR_ENEMY_LIST_HELP    */ "Up/Down: Browse. Enter: Jump to unit on map. Escape: Close. Ctrl+F1: This help.",
+    /* SR_ENEMY_LIST_HELP    */ "Up/Down: Browse. Home/End: First/Last. D: Details. Enter: Jump to unit on map. Escape: Close. Ctrl+F1: This help.",
     /* SR_ENEMY_LIST_JUMP    */ "Jumped to %s at (%d, %d)",
     /* SR_ENEMY_LIST_TRIAD_LAND */ "Land",
     /* SR_ENEMY_LIST_TRIAD_SEA  */ "Sea",
     /* SR_ENEMY_LIST_TRIAD_AIR  */ "Air",
+    /* SR_UNIT_LIST_DETAIL          */ "%s. %s, %s %d, %s %d, %s, %s, %d of %d HP.",
+    /* SR_ENEMY_LIST_DETAIL         */ "%s. %s, %s %d, %s %d, %s, %s, %d of %d HP.",
+    /* SR_ENEMY_LIST_DETAIL_LIMITED */ "%s. %s, %s.",
+    /* SR_UNIT_LIST_FOCUSED        */ "Focused on %s, no movement points.",
 
     // Stack Cycling (Tab)
     /* SR_TAB_CYCLE_FMT      */ "%s, %d of %d on tile",
@@ -1081,6 +1091,96 @@ static const char* sr_defaults[SR_COUNT] = {
     /* SR_NETSETTINGS_SUMMARY_FMT   */ "Difficulty: %s, Planet: %s. %d settings changed, %d rules changed.",
     /* SR_NETSETTINGS_TIME_NONE     */ "None",
     /* SR_NETSETTINGS_TIME_OTHER    */ "Custom",
+
+    // Detail strings (D key)
+    /* SR_PROJECTS_DETAIL           */ "%s. %s. Cost: %d minerals. %s",
+    /* SR_PROJECTS_DETAIL_BUILT     */ "Built by %s at %s.",
+    /* SR_PROJECTS_DETAIL_DESTROYED */ "Destroyed.",
+    /* SR_PROJECTS_DETAIL_UNBUILT   */ "Not yet built.",
+    /* SR_MILITARY_UNIT_DETAIL      */ "%s (%d active). %s, %s %d, %s %d, %s, %d moves, %d HP.",
+    /* SR_SCORE_DETAIL              */ "%s. Bases: %d, Population: %d, Techs: %d. Military strength: %d. %s",
+
+    // Combat Results
+    /* SR_COMBAT_VICTORY            */ "Victory: %s defeated %s. %d of %d HP.",
+    /* SR_COMBAT_DEFEAT             */ "Defeat: %s destroyed by %s.",
+    /* SR_COMBAT_DEFENSE_WIN        */ "Defense: %s destroyed %s. %d of %d HP.",
+    /* SR_COMBAT_DEFENSE_LOSS       */ "Lost: %s destroyed by %s.",
+    /* SR_COMBAT_DRAW               */ "%s vs %s, both survived. %s: %d of %d HP.",
+    /* SR_COMBAT_RETREAT            */ "%s retreated.",
+    /* SR_COMBAT_CAPTURE            */ "%s captured.",
+    /* SR_COMBAT_PROMOTED           */ " Promoted to %s.",
+    /* SR_COMBAT_NERVE_GAS          */ " Nerve gas used!",
+    /* SR_COMBAT_INTERCEPTED        */ "Intercepted by %s (%s).",
+
+    // Artillery
+    /* SR_COMBAT_ARTY_RESULT        */ "Artillery: %s bombarded (%d, %d). %d units hit.",
+    /* SR_COMBAT_ARTY_DAMAGE        */ "%s: %d damage, %d of %d HP.",
+    /* SR_COMBAT_ARTY_NO_EFFECT     */ "Artillery: No effect.",
+
+    // Combat Odds (Shift+U integration)
+    /* SR_COMBAT_ODDS               */ "Odds %d:%d",
+    /* SR_COMBAT_ODDS_FAVORABLE     */ "Favorable",
+    /* SR_COMBAT_ODDS_UNFAVORABLE   */ "Unfavorable",
+    /* SR_COMBAT_ODDS_EVEN          */ "Even",
+    /* SR_COMBAT_PREVIEW            */ "Combat: %s (%s %d, %s, %d/%d HP) vs %s (%s %d, %s, %d/%d HP). Odds %d:%d.",
+    /* SR_COMBAT_PREVIEW_PSI_FMT   */ "Psi combat: %s (%s, %d/%d HP) vs %s (%s, %d/%d HP). Odds %d:%d.",
+    /* SR_COMBAT_PREVIEW_NO_UNIT    */ "No combat unit selected.",
+    /* SR_COMBAT_PREVIEW_PSI        */ "Psi combat",
+    /* SR_ENEMY_LIST_HELP_COMBAT    */ "Up/Down: Browse. Home/End: First/Last. D: Details. C: Combat preview. Enter: Jump to unit on map. Escape: Close. Ctrl+F1: This help.",
+
+    // Destroy Improvements (D key)
+    /* SR_ACT_DONE_DESTROY          */ "Destroying improvements.",
+
+    // Scenario Editor
+    /* SR_EDITOR_NOT_ACCESSIBLE     */ "Scenario editor. Not yet accessible with screen reader. Scenarios can also be edited via text files (alphax.txt, scenario.txt).",
+
+    // Thinker Menu (Alt+T)
+    /* SR_TMENU_TITLE               */ "Thinker Menu",
+    /* SR_TMENU_ITEM_FMT            */ "%d of %d: %s",
+    /* SR_TMENU_STATS               */ "Statistics",
+    /* SR_TMENU_OPTIONS             */ "Mod Options",
+    /* SR_TMENU_HOMEPAGE            */ "Open Homepage",
+    /* SR_TMENU_CLOSE               */ "Close",
+    /* SR_TMENU_RULES               */ "Game Rules",
+    /* SR_TMENU_RULES_SAVED         */ "Game rules applied.",
+    /* SR_TMENU_RULES_CANCELLED     */ "Game rules cancelled.",
+    /* SR_TMENU_RULE_NO_COUNCIL     */ "No Planetary Council",
+    /* SR_TMENU_RULE_NO_SOCIAL_ENG  */ "No Social Engineering",
+    /* SR_TMENU_VERSION_FMT         */ "Thinker Access Mod. %s, Build %s",
+    /* SR_TMENU_GAMETIME_FMT        */ "Play time: %d hours, %d minutes",
+    /* SR_TMENU_OPT_FMT             */ "%d of %d: %s: %s",
+    /* SR_TMENU_OPT_ON              */ "On",
+    /* SR_TMENU_OPT_OFF             */ "Off",
+    /* SR_TMENU_OPT_SAVED           */ "Mod options saved.",
+    /* SR_TMENU_OPT_CANCELLED       */ "Mod options cancelled.",
+    /* SR_TMENU_HELP                */ "Up/Down: Navigate. Enter: Select. Escape: Close. Ctrl+F1: This help.",
+    /* SR_TMENU_OPT_HELP            */ "Up/Down: Navigate. Space: Toggle. S: Summary. Enter: Save. Escape: Cancel. Ctrl+F1: This help.",
+    /* SR_TMENU_STAT_HEADER         */ "Game Statistics.",
+    /* SR_TMENU_STAT_WORLD          */ "World: %d bases, %d units, %d population, %d minerals, %d energy.",
+    /* SR_TMENU_STAT_FACTION        */ "Your faction: %d bases, %d units, %d population, %d minerals, %d energy.",
+    /* SR_TMENU_OPT_NEW_WORLD       */ "New map generator",
+    /* SR_TMENU_OPT_CONTINENTS      */ "World continents",
+    /* SR_TMENU_OPT_LANDMARKS       */ "Modified landmarks",
+    /* SR_TMENU_OPT_POLAR_CAPS      */ "Polar caps",
+    /* SR_TMENU_OPT_MIRROR_X        */ "Mirror map horizontal",
+    /* SR_TMENU_OPT_MIRROR_Y        */ "Mirror map vertical",
+    /* SR_TMENU_OPT_AUTO_BASES      */ "Manage player bases",
+    /* SR_TMENU_OPT_AUTO_UNITS      */ "Manage player units",
+    /* SR_TMENU_OPT_FORMER_WARN     */ "Warn on former replace",
+    /* SR_TMENU_OPT_BASE_INFO       */ "Render base info on map",
+    /* SR_TMENU_OPT_TREATY_POPUP    */ "Foreign treaty popup",
+    /* SR_TMENU_OPT_AUTO_MINIMISE   */ "Auto minimise window",
+
+    // Tile Detail Query (number keys 1-8)
+    /* SR_DETAIL_NO_UNITS           */ "No units",
+    /* SR_DETAIL_NO_BASE            */ "No base",
+    /* SR_DETAIL_NO_IMPROVEMENTS    */ "No improvements",
+    /* SR_DETAIL_NO_LANDMARKS       */ "No landmarks",
+    /* SR_DETAIL_NO_WORK            */ "Not in base radius",
+    // Speech History
+    /* SR_HISTORY_EMPTY             */ "No speech history",
+    /* SR_HISTORY_OLDEST            */ "Oldest entry",
+    /* SR_HISTORY_FMT               */ "%d of %d: %s",
 };
 
 // Key names matching the enum order (for file parsing)
@@ -1113,6 +1213,9 @@ static const char* sr_keys[SR_COUNT] = {
     "fmt_base_open_v2", "fmt_workers", "base_help", "fmt_turns",
     "fmt_growth_never", "fmt_faction_credits", "fmt_facilities_count",
     "movement_points", "cannot_move",
+    "cannot_move_no_mp", "cannot_move_ocean", "cannot_move_land",
+    "cannot_move_zoc", "cannot_move_edge",
+    "cannot_open_base",
     "help_header", "help_move", "help_explore", "help_skip", "help_hold",
     "help_read", "help_goto", "help_build_base", "help_build_road",
     "help_build_magtube", "help_build_farm", "help_build_mine",
@@ -1470,6 +1573,8 @@ static const char* sr_keys[SR_COUNT] = {
     "enemy_list_open", "enemy_list_fmt", "enemy_list_native",
     "enemy_list_empty", "enemy_list_help", "enemy_list_jump",
     "enemy_list_triad_land", "enemy_list_triad_sea", "enemy_list_triad_air",
+    "unit_list_detail", "enemy_list_detail", "enemy_list_detail_limited",
+    "unit_list_focused",
     // Stack Cycling (Tab)
     "tab_cycle_fmt", "tab_cycle_none",
     // Net Setup Settings (Ctrl+Shift+F10)
@@ -1478,6 +1583,42 @@ static const char* sr_keys[SR_COUNT] = {
     "netsettings_cat_settings", "netsettings_cat_rules",
     "netsettings_summary_fmt",
     "netsettings_time_none", "netsettings_time_other",
+    // Detail strings (D key)
+    "projects_detail", "projects_detail_built", "projects_detail_destroyed",
+    "projects_detail_unbuilt", "military_unit_detail", "score_detail",
+    // Combat Results
+    "combat_victory", "combat_defeat", "combat_defense_win", "combat_defense_loss",
+    "combat_draw", "combat_retreat", "combat_capture", "combat_promoted",
+    "combat_nerve_gas", "combat_intercepted",
+    // Artillery
+    "combat_arty_result", "combat_arty_damage", "combat_arty_no_effect",
+    // Combat Odds
+    "combat_odds", "combat_odds_favorable", "combat_odds_unfavorable",
+    "combat_odds_even", "combat_preview", "combat_preview_psi_fmt",
+    "combat_preview_no_unit", "combat_preview_psi", "enemy_list_help_combat",
+    // Destroy Improvements (D key)
+    "act_done_destroy",
+    // Scenario Editor
+    "editor_not_accessible",
+    // Thinker Menu (Alt+T)
+    "tmenu_title", "tmenu_item_fmt", "tmenu_stats", "tmenu_options",
+    "tmenu_homepage", "tmenu_close", "tmenu_rules",
+    "tmenu_rules_saved", "tmenu_rules_cancelled",
+    "tmenu_rule_no_council", "tmenu_rule_no_social_eng",
+    "tmenu_version_fmt", "tmenu_gametime_fmt",
+    "tmenu_opt_fmt", "tmenu_opt_on", "tmenu_opt_off",
+    "tmenu_opt_saved", "tmenu_opt_cancelled",
+    "tmenu_help", "tmenu_opt_help",
+    "tmenu_stat_header", "tmenu_stat_world", "tmenu_stat_faction",
+    "tmenu_opt_new_world", "tmenu_opt_continents", "tmenu_opt_landmarks",
+    "tmenu_opt_polar_caps", "tmenu_opt_mirror_x", "tmenu_opt_mirror_y",
+    "tmenu_opt_auto_bases", "tmenu_opt_auto_units", "tmenu_opt_former_warn",
+    "tmenu_opt_base_info", "tmenu_opt_treaty_popup", "tmenu_opt_auto_minimise",
+    // Tile Detail Query
+    "detail_no_units", "detail_no_base", "detail_no_improvements",
+    "detail_no_landmarks", "detail_no_work",
+    // Speech History
+    "history_empty", "history_oldest", "history_fmt",
 };
 
 // Loaded strings (dynamically allocated, or NULL = use default)

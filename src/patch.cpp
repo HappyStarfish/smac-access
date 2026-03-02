@@ -1458,6 +1458,32 @@ bool patch_setup(Config* cf) {
         write_call(0x5060F5, (int)battle_kill_credits);
     }
 
+    // Skip CD-ROM checks: force "complete install" path in all CD lookup calls.
+    {
+        char cdlog[256];
+        snprintf(cdlog, sizeof(cdlog),
+            "CD-patch: before bytes 0x52AB15=%02X 0x631ED3=%02X%02X%02X%02X%02X 0x635F03=%02X%02X%02X%02X%02X",
+            *(byte*)0x52AB15,
+            *(byte*)0x631ED3, *(byte*)0x631ED4, *(byte*)0x631ED5, *(byte*)0x631ED6, *(byte*)0x631ED7,
+            *(byte*)0x635F03, *(byte*)0x635F04, *(byte*)0x635F05, *(byte*)0x635F06, *(byte*)0x635F07);
+        diag_log(cdlog);
+    }
+    // 1) Startup CD check: force is_complete=1 for filefind_init
+    *(byte*)0x52AB15 = 0xEB; // JNZ -> JMP
+    // 2) Movie player CD checks: NOP out CALL filefind_cd so the file handle
+    //    passes through to RET without triggering the CD-not-found dialog.
+    memset((void*)0x631ED3, 0x90, 5); // NOP CALL filefind_cd in movie_open_1
+    memset((void*)0x635F03, 0x90, 5); // NOP CALL filefind_cd in movie_open_2
+    {
+        char cdlog[256];
+        snprintf(cdlog, sizeof(cdlog),
+            "CD-patch: after bytes 0x52AB15=%02X 0x631ED3=%02X%02X%02X%02X%02X 0x635F03=%02X%02X%02X%02X%02X",
+            *(byte*)0x52AB15,
+            *(byte*)0x631ED3, *(byte*)0x631ED4, *(byte*)0x631ED5, *(byte*)0x631ED6, *(byte*)0x631ED7,
+            *(byte*)0x635F03, *(byte*)0x635F04, *(byte*)0x635F05, *(byte*)0x635F06, *(byte*)0x635F07);
+        diag_log(cdlog);
+    }
+
     if (cf->smac_only) {
         if (!FileExists(ModAlphaTxtFile)
         || !FileExists(ModHelpTxtFile)

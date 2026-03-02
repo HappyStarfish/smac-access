@@ -10,9 +10,11 @@
 #include "prefs_handler.h"
 #include "specialist_handler.h"
 #include "veh.h"
+#include "veh_combat.h"
 #include "move.h"
 #include "faction.h"
 #include "map.h"
+#include "path.h"
 
 #include <algorithm>
 #include <vector>
@@ -83,118 +85,211 @@ static const char* get_terraform_name(VEH* veh) {
     return sr_game_str(raw);
 }
 
-/// Announce tile info at given coordinates via screen reader.
-/// Reusable for both MAP-MOVE tracking and virtual exploration cursor.
-static void sr_announce_tile(int x, int y) {
-    if (!sr_is_available()) return;
-    if (*MapAreaX <= 0 || *MapAreaY <= 0) return;
-    if (x < 0 || x >= *MapAreaX || y < 0 || y >= *MapAreaY) {
-        sr_output(loc(SR_MAP_EDGE), true);
+/// Diagnose why a unit could not move to (tx, ty) and announce the reason.
+static void sr_announce_move_failure(int veh_id, int tx, int ty) {
+    if (veh_id < 0 || !Vehs || veh_id >= *VehCount) {
+        sr_output(loc(SR_CANNOT_MOVE), true);
         return;
     }
-    MAP* sq = mapsq(x, y);
-    if (!sq) return;
+    VEH* veh = &Vehs[veh_id];
+    int total_speed = veh_speed(veh_id, 0);
+    int remaining = total_speed - (int)veh->moves_spent;
 
-    int faction = *CurrentPlayerFaction;
-    char buf[512];
+    // Check: no movement points
+    if (remaining <= 0) {
+        sr_output(loc(SR_CANNOT_MOVE_NO_MP), true);
+        return;
+    }
+
+    // Check: target tile terrain vs unit triad
+    if (tx >= 0 && ty >= 0 && ty < *MapAreaY) {
+        MAP* sq = mapsq(tx, ty);
+        if (sq) {
+            int triad = veh->triad();
+            bool ocean = is_ocean(sq);
+            if (triad == TRIAD_LAND && ocean) {
+                sr_output(loc(SR_CANNOT_MOVE_OCEAN), true);
+                return;
+            }
+            if (triad == TRIAD_SEA && !ocean) {
+                sr_output(loc(SR_CANNOT_MOVE_LAND), true);
+                return;
+            }
+        }
+
+        // Check: zone of control
+        if (mod_zoc_any(tx, ty, veh->faction_id)) {
+            sr_output(loc(SR_CANNOT_MOVE_ZOC), true);
+            return;
+        }
+    } else {
+        // Target out of map bounds
+        sr_output(loc(SR_CANNOT_MOVE_EDGE), true);
+        return;
+    }
+
+    // Fallback: unknown reason
+    sr_output(loc(SR_CANNOT_MOVE), true);
+}
+
+// --- Tile detail category helpers ---
+// Each writes to buf+pos, returns chars written. Used by sr_announce_tile and number keys.
+
+static int sr_tile_coordinates(char* buf, int size, int x, int y) {
+    return snprintf(buf, size, "(%d, %d)", x, y);
+}
+
+static int sr_tile_units(char* buf, int size, int x, int y, int faction) {
     int pos = 0;
-
-    // Coordinates
-    pos += snprintf(buf + pos, sizeof(buf) - pos, "(%d, %d) ", x, y);
-
-    // Unexplored check
-    if (!sq->is_visible(faction)) {
-        pos += snprintf(buf + pos, sizeof(buf) - pos, "%s", loc(SR_TILE_UNEXPLORED));
-        sr_debug_log("TILE-ANNOUNCE (%d,%d): %s", x, y, buf);
-        sr_output(buf, true);
-        return;
+    if (!Vehs || *VehCount <= 0) return 0;
+    int unit_count = 0;
+    for (int i = 0; i < *VehCount && unit_count < 3; i++) {
+        if (Vehs[i].x == x && Vehs[i].y == y) {
+            const char* uname = sr_game_str(Vehs[i].name());
+            bool is_foreign = (Vehs[i].faction_id != faction);
+            if (unit_count == 0) {
+                if (is_foreign) {
+                    pos += snprintf(buf + pos, size - pos,
+                        loc(SR_FOREIGN_UNIT_AT),
+                        MFactions[Vehs[i].faction_id].adj_name_faction, uname);
+                } else {
+                    pos += snprintf(buf + pos, size - pos,
+                        loc(SR_UNIT_AT), uname);
+                }
+            } else {
+                if (is_foreign) {
+                    pos += snprintf(buf + pos, size - pos,
+                        ", %s %s",
+                        MFactions[Vehs[i].faction_id].adj_name_faction, uname);
+                } else {
+                    pos += snprintf(buf + pos, size - pos, ", %s", uname);
+                }
+            }
+            if (Vehs[i].is_former()) {
+                const char* tf_name = get_terraform_name(&Vehs[i]);
+                if (tf_name) {
+                    pos += snprintf(buf + pos, size - pos,
+                        loc(SR_UNIT_TERRAFORM), tf_name);
+                }
+            }
+            unit_count++;
+        }
     }
+    if (unit_count > 0) {
+        int remaining = 0;
+        for (int i = 0; i < *VehCount; i++) {
+            if (Vehs[i].x == x && Vehs[i].y == y) remaining++;
+        }
+        if (remaining > unit_count) {
+            pos += snprintf(buf + pos, size - pos,
+                loc(SR_MORE_UNITS), remaining - unit_count);
+        }
+    }
+    return pos;
+}
 
-    // Terrain type
+static int sr_tile_base(char* buf, int size, int x, int y) {
+    int base_id = base_at(x, y);
+    if (base_id >= 0) {
+        return snprintf(buf, size, loc(SR_BASE_AT), sr_game_str(Bases[base_id].name));
+    }
+    return 0;
+}
+
+static int sr_tile_terrain(char* buf, int size, MAP* sq) {
+    int pos = 0;
     int alt = sq->alt_level();
     bool is_land = (alt >= ALT_SHORE_LINE);
     if (alt == ALT_OCEAN_TRENCH) {
-        pos += snprintf(buf + pos, sizeof(buf) - pos, "%s", loc(SR_TERRAIN_TRENCH));
+        pos += snprintf(buf + pos, size - pos, "%s", loc(SR_TERRAIN_TRENCH));
     } else if (alt <= ALT_OCEAN) {
-        pos += snprintf(buf + pos, sizeof(buf) - pos, "%s", loc(SR_TERRAIN_OCEAN));
+        pos += snprintf(buf + pos, size - pos, "%s", loc(SR_TERRAIN_OCEAN));
     } else if (alt == ALT_OCEAN_SHELF) {
-        pos += snprintf(buf + pos, sizeof(buf) - pos, "%s", loc(SR_TERRAIN_SHELF));
+        pos += snprintf(buf + pos, size - pos, "%s", loc(SR_TERRAIN_SHELF));
     } else {
         if (sq->is_rocky())
-            pos += snprintf(buf + pos, sizeof(buf) - pos, "%s", loc(SR_TERRAIN_ROCKY));
+            pos += snprintf(buf + pos, size - pos, "%s", loc(SR_TERRAIN_ROCKY));
         else if (sq->is_rolling())
-            pos += snprintf(buf + pos, sizeof(buf) - pos, "%s", loc(SR_TERRAIN_ROLLING));
+            pos += snprintf(buf + pos, size - pos, "%s", loc(SR_TERRAIN_ROLLING));
         else
-            pos += snprintf(buf + pos, sizeof(buf) - pos, "%s", loc(SR_TERRAIN_FLAT));
+            pos += snprintf(buf + pos, size - pos, "%s", loc(SR_TERRAIN_FLAT));
     }
-
-    // Moisture (land only)
     if (is_land) {
         if (sq->is_rainy())
-            pos += snprintf(buf + pos, sizeof(buf) - pos, ", %s", loc(SR_TERRAIN_RAINY));
+            pos += snprintf(buf + pos, size - pos, ", %s", loc(SR_TERRAIN_RAINY));
         else if (sq->is_moist())
-            pos += snprintf(buf + pos, sizeof(buf) - pos, ", %s", loc(SR_TERRAIN_MOIST));
+            pos += snprintf(buf + pos, size - pos, ", %s", loc(SR_TERRAIN_MOIST));
         else if (sq->is_arid())
-            pos += snprintf(buf + pos, sizeof(buf) - pos, ", %s", loc(SR_TERRAIN_ARID));
+            pos += snprintf(buf + pos, size - pos, ", %s", loc(SR_TERRAIN_ARID));
     }
-
-    // Altitude (land only, 1-4 above sea level)
     if (is_land && alt > ALT_SHORE_LINE) {
         int above_sea = alt - ALT_SHORE_LINE;
-        pos += snprintf(buf + pos, sizeof(buf) - pos, ", ");
-        pos += snprintf(buf + pos, sizeof(buf) - pos,
-            loc(SR_TERRAIN_HIGH), above_sea);
+        pos += snprintf(buf + pos, size - pos, ", ");
+        pos += snprintf(buf + pos, size - pos, loc(SR_TERRAIN_HIGH), above_sea);
     }
+    return pos;
+}
 
-    // Features
+static int sr_tile_nature(char* buf, int size, MAP* sq) {
+    int pos = 0;
     if (sq->is_fungus())
-        pos += snprintf(buf + pos, sizeof(buf) - pos, ", %s", loc(SR_FEATURE_FUNGUS));
+        pos += snprintf(buf + pos, size - pos, "%s%s", pos ? ", " : "", loc(SR_FEATURE_FUNGUS));
     if (sq->items & BIT_FOREST)
-        pos += snprintf(buf + pos, sizeof(buf) - pos, ", %s", loc(SR_FEATURE_FOREST));
+        pos += snprintf(buf + pos, size - pos, "%s%s", pos ? ", " : "", loc(SR_FEATURE_FOREST));
     if (sq->items & BIT_RIVER)
-        pos += snprintf(buf + pos, sizeof(buf) - pos, ", %s", loc(SR_FEATURE_RIVER));
-    if (sq->items & BIT_FARM)
-        pos += snprintf(buf + pos, sizeof(buf) - pos, ", %s", loc(SR_FEATURE_FARM));
-    if (sq->items & BIT_SOIL_ENRICHER)
-        pos += snprintf(buf + pos, sizeof(buf) - pos, ", %s", loc(SR_FEATURE_SOIL_ENRICHER));
-    if (sq->items & BIT_MINE)
-        pos += snprintf(buf + pos, sizeof(buf) - pos, ", %s", loc(SR_FEATURE_MINE));
-    if (sq->items & BIT_SOLAR)
-        pos += snprintf(buf + pos, sizeof(buf) - pos, ", %s", loc(SR_FEATURE_SOLAR));
-    if (sq->items & BIT_CONDENSER)
-        pos += snprintf(buf + pos, sizeof(buf) - pos, ", %s", loc(SR_FEATURE_CONDENSER));
-    if (sq->items & BIT_ECH_MIRROR)
-        pos += snprintf(buf + pos, sizeof(buf) - pos, ", %s", loc(SR_FEATURE_ECH_MIRROR));
-    if (sq->items & BIT_THERMAL_BORE)
-        pos += snprintf(buf + pos, sizeof(buf) - pos, ", %s", loc(SR_FEATURE_BOREHOLE));
-    if (sq->items & BIT_ROAD)
-        pos += snprintf(buf + pos, sizeof(buf) - pos, ", %s", loc(SR_FEATURE_ROAD));
-    if (sq->items & BIT_MAGTUBE)
-        pos += snprintf(buf + pos, sizeof(buf) - pos, ", %s", loc(SR_FEATURE_MAGTUBE));
-    if (sq->items & BIT_BUNKER)
-        pos += snprintf(buf + pos, sizeof(buf) - pos, ", %s", loc(SR_FEATURE_BUNKER));
-    if (sq->items & BIT_AIRBASE)
-        pos += snprintf(buf + pos, sizeof(buf) - pos, ", %s", loc(SR_FEATURE_AIRBASE));
-    if (sq->items & BIT_SENSOR)
-        pos += snprintf(buf + pos, sizeof(buf) - pos, ", %s", loc(SR_FEATURE_SENSOR));
+        pos += snprintf(buf + pos, size - pos, "%s%s", pos ? ", " : "", loc(SR_FEATURE_RIVER));
     if (sq->items & BIT_SUPPLY_POD)
-        pos += snprintf(buf + pos, sizeof(buf) - pos, ", %s", loc(SR_FEATURE_SUPPLY_POD));
+        pos += snprintf(buf + pos, size - pos, "%s%s", pos ? ", " : "", loc(SR_FEATURE_SUPPLY_POD));
     if (sq->items & BIT_MONOLITH) {
-        pos += snprintf(buf + pos, sizeof(buf) - pos, ", %s", loc(SR_FEATURE_MONOLITH));
+        pos += snprintf(buf + pos, size - pos, "%s%s", pos ? ", " : "", loc(SR_FEATURE_MONOLITH));
         if (sq->items & BIT_UNK_2000000)
-            pos += snprintf(buf + pos, sizeof(buf) - pos, "%s", loc(SR_MONOLITH_USED));
+            pos += snprintf(buf + pos, size - pos, "%s", loc(SR_MONOLITH_USED));
     }
+    return pos;
+}
 
-    // Resource bonus
+static int sr_tile_improvements(char* buf, int size, MAP* sq) {
+    int pos = 0;
+    if (sq->items & BIT_FARM)
+        pos += snprintf(buf + pos, size - pos, "%s%s", pos ? ", " : "", loc(SR_FEATURE_FARM));
+    if (sq->items & BIT_SOIL_ENRICHER)
+        pos += snprintf(buf + pos, size - pos, "%s%s", pos ? ", " : "", loc(SR_FEATURE_SOIL_ENRICHER));
+    if (sq->items & BIT_MINE)
+        pos += snprintf(buf + pos, size - pos, "%s%s", pos ? ", " : "", loc(SR_FEATURE_MINE));
+    if (sq->items & BIT_SOLAR)
+        pos += snprintf(buf + pos, size - pos, "%s%s", pos ? ", " : "", loc(SR_FEATURE_SOLAR));
+    if (sq->items & BIT_CONDENSER)
+        pos += snprintf(buf + pos, size - pos, "%s%s", pos ? ", " : "", loc(SR_FEATURE_CONDENSER));
+    if (sq->items & BIT_ECH_MIRROR)
+        pos += snprintf(buf + pos, size - pos, "%s%s", pos ? ", " : "", loc(SR_FEATURE_ECH_MIRROR));
+    if (sq->items & BIT_THERMAL_BORE)
+        pos += snprintf(buf + pos, size - pos, "%s%s", pos ? ", " : "", loc(SR_FEATURE_BOREHOLE));
+    if (sq->items & BIT_ROAD)
+        pos += snprintf(buf + pos, size - pos, "%s%s", pos ? ", " : "", loc(SR_FEATURE_ROAD));
+    if (sq->items & BIT_MAGTUBE)
+        pos += snprintf(buf + pos, size - pos, "%s%s", pos ? ", " : "", loc(SR_FEATURE_MAGTUBE));
+    if (sq->items & BIT_BUNKER)
+        pos += snprintf(buf + pos, size - pos, "%s%s", pos ? ", " : "", loc(SR_FEATURE_BUNKER));
+    if (sq->items & BIT_AIRBASE)
+        pos += snprintf(buf + pos, size - pos, "%s%s", pos ? ", " : "", loc(SR_FEATURE_AIRBASE));
+    if (sq->items & BIT_SENSOR)
+        pos += snprintf(buf + pos, size - pos, "%s%s", pos ? ", " : "", loc(SR_FEATURE_SENSOR));
+    return pos;
+}
+
+static int sr_tile_resources(char* buf, int size, int x, int y) {
     int bonus = mod_bonus_at(x, y);
     if (bonus == 1)
-        pos += snprintf(buf + pos, sizeof(buf) - pos, ", %s", loc(SR_BONUS_NUTRIENT));
+        return snprintf(buf, size, "%s", loc(SR_BONUS_NUTRIENT));
     else if (bonus == 2)
-        pos += snprintf(buf + pos, sizeof(buf) - pos, ", %s", loc(SR_BONUS_MINERAL));
+        return snprintf(buf, size, "%s", loc(SR_BONUS_MINERAL));
     else if (bonus == 3)
-        pos += snprintf(buf + pos, sizeof(buf) - pos, ", %s", loc(SR_BONUS_ENERGY));
+        return snprintf(buf, size, "%s", loc(SR_BONUS_ENERGY));
+    return 0;
+}
 
-    // Landmarks
+static int sr_tile_landmarks(char* buf, int size, MAP* sq) {
+    int pos = 0;
     uint32_t lm = sq->landmarks & 0xFFFF;
     if (lm) {
         static const struct { uint32_t bit; SrStr str; } lm_table[] = {
@@ -217,23 +312,25 @@ static void sr_announce_tile(int x, int y) {
         };
         for (int i = 0; i < 16; i++) {
             if (lm & lm_table[i].bit) {
-                pos += snprintf(buf + pos, sizeof(buf) - pos, ", %s", loc(lm_table[i].str));
+                pos += snprintf(buf + pos, size - pos, "%s%s",
+                    pos ? ", " : "", loc(lm_table[i].str));
             }
         }
     }
+    return pos;
+}
 
-    // Resource yields
+static int sr_tile_yields(char* buf, int size, int x, int y, int faction) {
     int food = mod_crop_yield(faction, -1, x, y, 0);
     int mins = mod_mine_yield(faction, -1, x, y, 0);
     int energy = mod_energy_yield(faction, -1, x, y, 0);
-    pos += snprintf(buf + pos, sizeof(buf) - pos, ". ");
-    pos += snprintf(buf + pos, sizeof(buf) - pos, loc(SR_TILE_YIELDS), food, mins, energy);
+    return snprintf(buf, size, loc(SR_TILE_YIELDS), food, mins, energy);
+}
 
-    // Ownership
+static int sr_tile_ownership(char* buf, int size, MAP* sq, int faction) {
+    int pos = 0;
     if (sq->owner >= 0 && sq->owner < MaxPlayerNum) {
-        pos += snprintf(buf + pos, sizeof(buf) - pos, ". ");
         if (sq->owner != faction) {
-            // Foreign territory: include diplomatic status
             const char* diplo_str = loc(SR_DIPLO_STATUS_NONE);
             if (has_treaty(faction, sq->owner, DIPLO_PACT))
                 diplo_str = loc(SR_DIPLO_STATUS_PACT);
@@ -243,20 +340,22 @@ static void sr_announce_tile(int x, int y) {
                 diplo_str = loc(SR_DIPLO_STATUS_TRUCE);
             else if (has_treaty(faction, sq->owner, DIPLO_VENDETTA))
                 diplo_str = loc(SR_DIPLO_STATUS_VENDETTA);
-            pos += snprintf(buf + pos, sizeof(buf) - pos, loc(SR_TILE_OWNER_DIPLO),
+            pos += snprintf(buf + pos, size - pos, loc(SR_TILE_OWNER_DIPLO),
                 MFactions[sq->owner].noun_faction, diplo_str);
         } else {
-            pos += snprintf(buf + pos, sizeof(buf) - pos, loc(SR_TILE_OWNER),
+            pos += snprintf(buf + pos, size - pos, loc(SR_TILE_OWNER),
                 MFactions[sq->owner].noun_faction);
         }
     } else {
-        pos += snprintf(buf + pos, sizeof(buf) - pos, ". %s", loc(SR_TILE_UNOWNED));
+        pos += snprintf(buf + pos, size - pos, "%s", loc(SR_TILE_UNOWNED));
     }
+    return pos;
+}
 
-    // City radius
+static int sr_tile_workstatus(char* buf, int size, int x, int y, MAP* sq) {
+    int pos = 0;
     if (sq->items & BIT_BASE_RADIUS) {
-        pos += snprintf(buf + pos, sizeof(buf) - pos, ". %s", loc(SR_TILE_IN_RADIUS));
-        // Check if this tile is actively worked by any base
+        pos += snprintf(buf + pos, size - pos, "%s", loc(SR_TILE_IN_RADIUS));
         bool is_worked = false;
         for (int b = 0; b < *BaseCount && !is_worked; b++) {
             for (int i = 0; i <= 20; i++) {
@@ -270,66 +369,83 @@ static void sr_announce_tile(int x, int y) {
             }
         }
         if (is_worked) {
-            pos += snprintf(buf + pos, sizeof(buf) - pos, "%s", loc(SR_TILE_WORKED));
+            pos += snprintf(buf + pos, size - pos, "%s", loc(SR_TILE_WORKED));
         }
+    }
+    return pos;
+}
+
+/// Announce tile info at given coordinates via screen reader.
+/// Reusable for both MAP-MOVE tracking and virtual exploration cursor.
+static void sr_announce_tile(int x, int y) {
+    if (!sr_is_available()) return;
+    if (*MapAreaX <= 0 || *MapAreaY <= 0) return;
+    if (x < 0 || x >= *MapAreaX || y < 0 || y >= *MapAreaY) {
+        sr_output(loc(SR_MAP_EDGE), true);
+        return;
+    }
+    MAP* sq = mapsq(x, y);
+    if (!sq) return;
+
+    int faction = *CurrentPlayerFaction;
+    char buf[512];
+    int pos = 0;
+
+    // Coordinates
+    pos += sr_tile_coordinates(buf + pos, sizeof(buf) - pos, x, y);
+    pos += snprintf(buf + pos, sizeof(buf) - pos, " ");
+
+    // Unexplored check
+    if (!sq->is_visible(faction)) {
+        pos += snprintf(buf + pos, sizeof(buf) - pos, "%s", loc(SR_TILE_UNEXPLORED));
+        sr_debug_log("TILE-ANNOUNCE (%d,%d): %s", x, y, buf);
+        sr_output(buf, true);
+        return;
     }
 
-    // Base on tile
-    int base_id = base_at(x, y);
-    if (base_id >= 0) {
-        pos += snprintf(buf + pos, sizeof(buf) - pos,
-            loc(SR_BASE_AT), sr_game_str(Bases[base_id].name));
-    }
+    // New order: Units, Base, Terrain, Nature, Improvements, Resource bonus, Landmarks, Yields, Ownership, Work status
+    char part[256];
+    int n;
 
-    // Units on this tile
-    if (Vehs && *VehCount > 0) {
-        int unit_count = 0;
-        for (int i = 0; i < *VehCount && unit_count < 3; i++) {
-            if (Vehs[i].x == x && Vehs[i].y == y) {
-                const char* uname = sr_game_str(Vehs[i].name());
-                bool is_foreign = (Vehs[i].faction_id != faction);
-                if (unit_count == 0) {
-                    if (is_foreign) {
-                        pos += snprintf(buf + pos, sizeof(buf) - pos,
-                            loc(SR_FOREIGN_UNIT_AT),
-                            MFactions[Vehs[i].faction_id].adj_name_faction, uname);
-                    } else {
-                        pos += snprintf(buf + pos, sizeof(buf) - pos,
-                            loc(SR_UNIT_AT), uname);
-                    }
-                } else {
-                    if (is_foreign) {
-                        pos += snprintf(buf + pos, sizeof(buf) - pos,
-                            ", %s %s",
-                            MFactions[Vehs[i].faction_id].adj_name_faction, uname);
-                    } else {
-                        pos += snprintf(buf + pos, sizeof(buf) - pos,
-                            ", %s", uname);
-                    }
-                }
-                // Append terraform order if unit is a former with active order
-                if (Vehs[i].is_former()) {
-                    const char* tf_name = get_terraform_name(&Vehs[i]);
-                    if (tf_name) {
-                        pos += snprintf(buf + pos, sizeof(buf) - pos,
-                            loc(SR_UNIT_TERRAFORM), tf_name);
-                    }
-                }
-                unit_count++;
-            }
-        }
-        if (unit_count > 0) {
-            // Count remaining
-            int remaining = 0;
-            for (int i = 0; i < *VehCount; i++) {
-                if (Vehs[i].x == x && Vehs[i].y == y) remaining++;
-            }
-            if (remaining > unit_count) {
-                pos += snprintf(buf + pos, sizeof(buf) - pos,
-                    loc(SR_MORE_UNITS), remaining - unit_count);
-            }
-        }
-    }
+    // Units
+    n = sr_tile_units(part, sizeof(part), x, y, faction);
+    if (n > 0) pos += snprintf(buf + pos, sizeof(buf) - pos, "%s. ", part);
+
+    // Base
+    n = sr_tile_base(part, sizeof(part), x, y);
+    if (n > 0) pos += snprintf(buf + pos, sizeof(buf) - pos, "%s. ", part);
+
+    // Terrain
+    n = sr_tile_terrain(part, sizeof(part), sq);
+    if (n > 0) pos += snprintf(buf + pos, sizeof(buf) - pos, "%s", part);
+
+    // Nature
+    n = sr_tile_nature(part, sizeof(part), sq);
+    if (n > 0) pos += snprintf(buf + pos, sizeof(buf) - pos, ", %s", part);
+
+    // Improvements
+    n = sr_tile_improvements(part, sizeof(part), sq);
+    if (n > 0) pos += snprintf(buf + pos, sizeof(buf) - pos, ", %s", part);
+
+    // Resource bonus
+    n = sr_tile_resources(part, sizeof(part), x, y);
+    if (n > 0) pos += snprintf(buf + pos, sizeof(buf) - pos, ", %s", part);
+
+    // Landmarks
+    n = sr_tile_landmarks(part, sizeof(part), sq);
+    if (n > 0) pos += snprintf(buf + pos, sizeof(buf) - pos, ", %s", part);
+
+    // Yields
+    pos += snprintf(buf + pos, sizeof(buf) - pos, ". ");
+    pos += sr_tile_yields(buf + pos, sizeof(buf) - pos, x, y, faction);
+
+    // Ownership
+    pos += snprintf(buf + pos, sizeof(buf) - pos, ". ");
+    pos += sr_tile_ownership(buf + pos, sizeof(buf) - pos, sq, faction);
+
+    // Work status
+    n = sr_tile_workstatus(part, sizeof(part), x, y, sq);
+    if (n > 0) pos += snprintf(buf + pos, sizeof(buf) - pos, ". %s", part);
 
     sr_debug_log("TILE-ANNOUNCE (%d,%d): %s", x, y, buf);
     sr_output(buf, true);
@@ -871,10 +987,10 @@ bool HandleKey(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                                 loc(SR_MOVEMENT_POINTS), disp_rem, disp_tot);
                             sr_output(move_buf, false);
                         } else {
-                            sr_output(loc(SR_CANNOT_MOVE), true);
+                            sr_announce_move_failure(veh_id, tx, ty);
                         }
                     } else {
-                        sr_output(loc(SR_MAP_EDGE), true);
+                        sr_output(loc(SR_CANNOT_MOVE_EDGE), true);
                     }
                 }
             }
@@ -937,6 +1053,25 @@ bool HandleKey(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             old_x = Vehs[veh_id].x;
             old_y = Vehs[veh_id].y;
         }
+        // Compute target tile from numpad direction (for failure diagnosis)
+        // Numpad layout maps to SMAC diamond grid directions:
+        // 7=NW 8=N 9=NE   dir_dx/dy: NE=0, E=1, SE=2, S=3, SW=4, W=5, NW=6, N=7
+        static const int np_dir_dx[] = { 1, 2, 1, 0, -1, -2, -1, 0 };
+        static const int np_dir_dy[] = { -1, 0, 1, 2, 1, 0, -1, -2 };
+        int np_dir = -1;
+        if (wParam == VK_NUMPAD9) np_dir = 0; // NE
+        else if (wParam == VK_NUMPAD6) np_dir = 1; // E
+        else if (wParam == VK_NUMPAD3) np_dir = 2; // SE
+        else if (wParam == VK_NUMPAD2) np_dir = 3; // S
+        else if (wParam == VK_NUMPAD1) np_dir = 4; // SW
+        else if (wParam == VK_NUMPAD4) np_dir = 5; // W
+        else if (wParam == VK_NUMPAD7) np_dir = 6; // NW
+        else if (wParam == VK_NUMPAD8) np_dir = 7; // N
+        int target_x = -1, target_y = -1;
+        if (np_dir >= 0 && old_x >= 0 && old_y >= 0) {
+            target_x = wrap(old_x + np_dir_dx[np_dir]);
+            target_y = old_y + np_dir_dy[np_dir];
+        }
         // Pass to game for actual movement
         WinProc(hwnd, msg, wParam, lParam);
         // Re-read unit state (veh_id may have changed after action)
@@ -956,7 +1091,7 @@ bool HandleKey(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                     loc(SR_MOVEMENT_POINTS), disp_rem, disp_tot);
                 sr_output(move_buf, false);
             } else {
-                sr_output(loc(SR_CANNOT_MOVE), true);
+                sr_announce_move_failure(veh_id, target_x, target_y);
             }
         }
         return true;
@@ -1065,6 +1200,7 @@ bool HandleKey(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     }
 
     // H = hold position (announce and pass to game)
+    // Game handles H on WM_KEYDOWN in its WinProc — this works.
     if (wParam == 'H' && !ctrl_key_down() && !shift_key_down() && !alt_key_down()
         && !*GameHalted && cur_win == GW_World) {
         int veh_id = MapWin->iUnit;
@@ -1076,14 +1212,31 @@ bool HandleKey(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         }
     }
 
-    // X = explore (announce and pass to game, only when unit selected)
+    // X = explore (call Console_explore directly)
+    // Game's WinProc treats X as zoom, not explore. Explore is an action panel
+    // function (Console_explore) that must be called directly.
     if (wParam == 'X' && !ctrl_key_down() && !shift_key_down() && !alt_key_down()
         && !*GameHalted && cur_win == GW_World) {
         int veh_id = MapWin->iUnit;
         if (veh_id >= 0 && Vehs && *VehCount > 0 && veh_id < *VehCount) {
-            WinProc(hwnd, msg, wParam, lParam);
+            Console_explore(MapWin, veh_id);
             sr_output(loc(SR_ACT_DONE_EXPLORE), true);
-            sr_debug_log("EXPLORE: veh %d", veh_id);
+            sr_debug_log("EXPLORE: veh %d order=%d state=0x%X", veh_id,
+                Vehs[veh_id].order, Vehs[veh_id].state);
+            mod_veh_skip(veh_id);
+            return true;
+        }
+    }
+
+    // D = destroy improvements (announce and pass to game)
+    // Game handles D on WM_KEYDOWN in its WinProc.
+    if (wParam == 'D' && !ctrl_key_down() && !shift_key_down() && !alt_key_down()
+        && !*GameHalted && cur_win == GW_World) {
+        int veh_id = MapWin->iUnit;
+        if (veh_id >= 0 && Vehs && *VehCount > 0 && veh_id < *VehCount) {
+            WinProc(hwnd, msg, wParam, lParam);
+            sr_output(loc(SR_ACT_DONE_DESTROY), true);
+            sr_debug_log("DESTROY: veh %d", veh_id);
             return true;
         }
     }
@@ -1165,6 +1318,26 @@ bool HandleKey(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         sr_debug_log("TARGETING: confirmed via Enter");
         WinProc(hwnd, msg, wParam, lParam);
         return true;
+    }
+
+    // Enter on world map → check if base can be opened, error if not
+    if (wParam == VK_RETURN && !shift_key_down() && !ctrl_key_down()
+        && !alt_key_down() && !*GameHalted && cur_win == GW_World) {
+        int veh_id = MapWin->iUnit;
+        if (veh_id < 0 || !Vehs || *VehCount <= 0 || veh_id >= *VehCount) {
+            sr_output(loc(SR_CANNOT_OPEN_BASE), true);
+            sr_debug_log("ENTER: no unit selected, cannot open base");
+            return true;
+        }
+        VEH* veh = &Vehs[veh_id];
+        int bid = base_at(veh->x, veh->y);
+        if (bid < 0) {
+            sr_output(loc(SR_CANNOT_OPEN_BASE), true);
+            sr_debug_log("ENTER: no base at unit position (%d,%d)", veh->x, veh->y);
+            return true;
+        }
+        // Base exists at unit position — let game handle it
+        return false;
     }
 
     // J → accessible group go-to base list
@@ -1930,8 +2103,11 @@ bool HandleKey(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                 disp_rem, disp_tot);
 
             // Order
+            // Note: Player-initiated explore uses ORDER_MOVE_TO + VSTATE_EXPLORE flag,
+            // not ORDER_EXPLORE (which is AI-only). Check VSTATE_EXPLORE first.
             const char* order_str = NULL;
-            if (v->order == ORDER_NONE) order_str = loc(SR_ORDER_IDLE);
+            if (v->state & VSTATE_EXPLORE) order_str = loc(SR_ORDER_EXPLORE);
+            else if (v->order == ORDER_NONE) order_str = loc(SR_ORDER_IDLE);
             else if (v->order == ORDER_HOLD) order_str = loc(SR_ORDER_HOLD);
             else if (v->order == ORDER_SENTRY_BOARD) order_str = loc(SR_ORDER_SENTRY);
             else if (v->order == ORDER_EXPLORE) order_str = loc(SR_ORDER_EXPLORE);
@@ -1999,6 +2175,46 @@ bool HandleKey(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                         announce_unit(index, true);
                     } else if (k == VK_F1 && ctrl_key_down()) {
                         sr_output(loc(SR_UNIT_LIST_HELP), true);
+                    } else if (k == 'D' && index >= 0 && index < total) {
+                        // D = read unit details
+                        int vid = units[index].id;
+                        VEH* v = &Vehs[vid];
+                        UNIT* u = &Units[v->unit_id];
+                        const char* chassis_name = Chassis[u->chassis_id].offsv1_name
+                            ? sr_game_str(Chassis[u->chassis_id].offsv1_name) : "???";
+                        const char* weapon_name = Weapon[u->weapon_id].name
+                            ? sr_game_str(Weapon[u->weapon_id].name) : "???";
+                        const char* armor_name = Armor[u->armor_id].name
+                            ? sr_game_str(Armor[u->armor_id].name) : "???";
+                        const char* reactor_name = Reactor[u->reactor_id].name
+                            ? sr_game_str(Reactor[u->reactor_id].name) : "???";
+                        const char* morale_name = (v->morale <= MORALE_ELITE && Morale)
+                            ? sr_game_str(Morale[v->morale].name) : "???";
+                        int atk = Weapon[u->weapon_id].offense_value;
+                        int def = Armor[u->armor_id].defense_value;
+                        char dbuf[512];
+                        int dpos = snprintf(dbuf, sizeof(dbuf), loc(SR_UNIT_LIST_DETAIL),
+                            sr_game_str(v->name()), chassis_name, weapon_name, atk,
+                            armor_name, def, reactor_name, morale_name,
+                            v->cur_hitpoints(), v->max_hitpoints());
+                        // Append abilities if any
+                        if (u->ability_flags) {
+                            dpos += snprintf(dbuf + dpos, sizeof(dbuf) - dpos,
+                                "%s", loc(SR_UNIT_ABILITIES));
+                            for (int i = 0; i < MaxAbilityNum; i++) {
+                                if (u->ability_flags & (1u << i)) {
+                                    const char* aname = Ability[i].name
+                                        ? sr_game_str(Ability[i].name) : "???";
+                                    dpos += snprintf(dbuf + dpos, sizeof(dbuf) - dpos,
+                                        " %s,", aname);
+                                    if (dpos >= (int)sizeof(dbuf) - 50) break;
+                                }
+                            }
+                            if (dpos > 0 && dbuf[dpos - 1] == ',') {
+                                dbuf[dpos - 1] = '.';
+                            }
+                        }
+                        sr_output(dbuf, true);
                     }
                 }
             } else {
@@ -2014,15 +2230,25 @@ bool HandleKey(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         if (confirmed && index >= 0 && index < total) {
             int vid = units[index].id;
             VEH* v = &Vehs[vid];
-            *CurrentVehID = vid;
-            MapWin->iUnit = vid;
-            veh_wake(vid);
+            int total_speed = veh_speed(vid, 0);
+            int remaining = max(0, total_speed - (int)v->moves_spent);
             sr_cursor_x = v->x;
             sr_cursor_y = v->y;
             Console_focus(MapWin, v->x, v->y, 2);
-            snprintf(buf, sizeof(buf), loc(SR_UNIT_LIST_SELECTED), sr_game_str(v->name()));
-            sr_output(buf, true);
-            sr_debug_log("UNIT-LIST: selected %s at (%d,%d)", sr_game_str(v->name()), v->x, v->y);
+            if (remaining > 0) {
+                // Unit can still move — activate it
+                *CurrentVehID = vid;
+                MapWin->iUnit = vid;
+                veh_wake(vid);
+                snprintf(buf, sizeof(buf), loc(SR_UNIT_LIST_SELECTED), sr_game_str(v->name()));
+                sr_output(buf, true);
+                sr_debug_log("UNIT-LIST: selected %s at (%d,%d)", sr_game_str(v->name()), v->x, v->y);
+            } else {
+                // No movement points — just focus camera, don't activate
+                snprintf(buf, sizeof(buf), loc(SR_UNIT_LIST_FOCUSED), sr_game_str(v->name()));
+                sr_output(buf, true);
+                sr_debug_log("UNIT-LIST: focused %s at (%d,%d), no moves", sr_game_str(v->name()), v->x, v->y);
+            }
         } else {
             sr_output(loc(SR_TARGETING_CANCEL), true);
         }
@@ -2132,6 +2358,28 @@ bool HandleKey(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                     v->cur_hitpoints(), v->max_hitpoints());
             }
 
+            // Combat odds if player has a selected combat unit
+            if (MapWin && MapWin->iUnit >= 0 && MapWin->iUnit < *VehCount) {
+                VEH* pv = &Vehs[MapWin->iUnit];
+                if (pv->is_combat_unit() && pv->faction_id == faction) {
+                    int odds_off_val = 0, odds_def_val = 0;
+                    mod_battle_compute(MapWin->iUnit, vid, &odds_off_val, &odds_def_val, 0);
+                    int odds_off = odds_off_val >> 8;
+                    int odds_def = odds_def_val >> 8;
+                    if (odds_off > 0 || odds_def > 0) {
+                        pos += snprintf(buf + pos, sizeof(buf) - pos, ", ");
+                        pos += snprintf(buf + pos, sizeof(buf) - pos, loc(SR_COMBAT_ODDS), odds_off, odds_def);
+                        if (odds_off > odds_def * 3 / 2) {
+                            pos += snprintf(buf + pos, sizeof(buf) - pos, " %s", loc(SR_COMBAT_ODDS_FAVORABLE));
+                        } else if (odds_def > odds_off * 3 / 2) {
+                            pos += snprintf(buf + pos, sizeof(buf) - pos, " %s", loc(SR_COMBAT_ODDS_UNFAVORABLE));
+                        } else {
+                            pos += snprintf(buf + pos, sizeof(buf) - pos, " %s", loc(SR_COMBAT_ODDS_EVEN));
+                        }
+                    }
+                }
+            }
+
             sr_output(buf, interrupt);
         };
 
@@ -2168,7 +2416,130 @@ bool HandleKey(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                         index = total - 1;
                         announce_enemy(index, true);
                     } else if (k == VK_F1 && ctrl_key_down()) {
-                        sr_output(loc(SR_ENEMY_LIST_HELP), true);
+                        // Show help with combat key if player has a unit
+                        bool has_unit = MapWin && MapWin->iUnit >= 0
+                            && MapWin->iUnit < *VehCount
+                            && Vehs[MapWin->iUnit].is_combat_unit()
+                            && Vehs[MapWin->iUnit].faction_id == faction;
+                        sr_output(loc(has_unit ? SR_ENEMY_LIST_HELP_COMBAT : SR_ENEMY_LIST_HELP), true);
+                    } else if (k == 'C' && index >= 0 && index < total) {
+                        // C = detailed combat preview
+                        if (!MapWin || MapWin->iUnit < 0 || MapWin->iUnit >= *VehCount) {
+                            sr_output(loc(SR_COMBAT_PREVIEW_NO_UNIT), true);
+                        } else {
+                            VEH* pv = &Vehs[MapWin->iUnit];
+                            if (!pv->is_combat_unit() || pv->faction_id != faction) {
+                                sr_output(loc(SR_COMBAT_PREVIEW_NO_UNIT), true);
+                            } else {
+                                int evid = enemies[index].id;
+                                VEH* ev = &Vehs[evid];
+                                int cp_off_val = 0, cp_def_val = 0;
+                                mod_battle_compute(MapWin->iUnit, evid, &cp_off_val, &cp_def_val, 0);
+                                int cp_off = cp_off_val >> 8;
+                                int cp_def = cp_def_val >> 8;
+
+                                bool psi = (pv->offense_value() < 0 || ev->defense_value() < 0);
+                                const char* p_morale = (pv->morale <= MORALE_ELITE && Morale)
+                                    ? sr_game_str(Morale[pv->morale].name) : "???";
+                                const char* e_morale = (ev->morale <= MORALE_ELITE && Morale)
+                                    ? sr_game_str(Morale[ev->morale].name) : "???";
+
+                                char cbuf[512];
+                                if (psi) {
+                                    // Psi combat: no weapon/armor numbers — morale and psi bonuses decide
+                                    // Odds from mod_battle_compute are correct (include all psi modifiers)
+                                    snprintf(cbuf, sizeof(cbuf), loc(SR_COMBAT_PREVIEW_PSI_FMT),
+                                        sr_game_str(pv->name()),
+                                        p_morale, pv->cur_hitpoints(), pv->max_hitpoints(),
+                                        sr_game_str(ev->name()),
+                                        e_morale, ev->cur_hitpoints(), ev->max_hitpoints(),
+                                        cp_off, cp_def);
+                                } else {
+                                    // Conventional combat: show weapon/armor names + values
+                                    snprintf(cbuf, sizeof(cbuf), loc(SR_COMBAT_PREVIEW),
+                                        sr_game_str(pv->name()),
+                                        sr_game_str(Weapon[Units[pv->unit_id].weapon_id].name),
+                                        Weapon[Units[pv->unit_id].weapon_id].offense_value,
+                                        p_morale, pv->cur_hitpoints(), pv->max_hitpoints(),
+                                        sr_game_str(ev->name()),
+                                        sr_game_str(Armor[Units[ev->unit_id].armor_id].name),
+                                        Armor[Units[ev->unit_id].armor_id].defense_value,
+                                        e_morale, ev->cur_hitpoints(), ev->max_hitpoints(),
+                                        cp_off, cp_def);
+                                }
+                                sr_output(cbuf, true);
+                            }
+                        }
+                    } else if (k == 'D' && index >= 0 && index < total) {
+                        // D = read unit details
+                        // Sighted players only see full details if they have
+                        // infiltrated the faction or seen the unit in combat.
+                        // Otherwise only name, chassis, and morale are visible.
+                        int vid = enemies[index].id;
+                        VEH* v = &Vehs[vid];
+                        UNIT* u = &Units[v->unit_id];
+                        const char* chassis_name = Chassis[u->chassis_id].offsv1_name
+                            ? sr_game_str(Chassis[u->chassis_id].offsv1_name) : "???";
+                        const char* morale_name = (v->morale <= MORALE_ELITE && Morale)
+                            ? sr_game_str(Morale[v->morale].name) : "???";
+                        char dbuf[512];
+
+                        // Check if we have intel: infiltrated or seen in combat
+                        bool have_intel = false;
+                        if (v->faction_id == 0) {
+                            // Native units — always fully visible
+                            have_intel = true;
+                        } else if (v->unit_id < MaxProtoFactionNum) {
+                            // Predefined units — always known
+                            have_intel = true;
+                        } else {
+                            // Custom designs: need infiltration or combat encounter
+                            bool infiltrated = has_treaty(faction, v->faction_id,
+                                DIPLO_HAVE_INFILTRATOR);
+                            bool seen_in_combat = (u->combat_factions
+                                & (1u << faction)) != 0;
+                            have_intel = infiltrated || seen_in_combat;
+                        }
+
+                        if (have_intel) {
+                            const char* weapon_name = Weapon[u->weapon_id].name
+                                ? sr_game_str(Weapon[u->weapon_id].name) : "???";
+                            const char* armor_name = Armor[u->armor_id].name
+                                ? sr_game_str(Armor[u->armor_id].name) : "???";
+                            const char* reactor_name = Reactor[u->reactor_id].name
+                                ? sr_game_str(Reactor[u->reactor_id].name) : "???";
+                            int atk = Weapon[u->weapon_id].offense_value;
+                            int def = Armor[u->armor_id].defense_value;
+                            int dpos = snprintf(dbuf, sizeof(dbuf),
+                                loc(SR_ENEMY_LIST_DETAIL),
+                                sr_game_str(v->name()), chassis_name,
+                                weapon_name, atk, armor_name, def,
+                                reactor_name, morale_name,
+                                v->cur_hitpoints(), v->max_hitpoints());
+                            // Append abilities if any
+                            if (u->ability_flags) {
+                                dpos += snprintf(dbuf + dpos, sizeof(dbuf) - dpos,
+                                    "%s", loc(SR_UNIT_ABILITIES));
+                                for (int i = 0; i < MaxAbilityNum; i++) {
+                                    if (u->ability_flags & (1u << i)) {
+                                        const char* aname = Ability[i].name
+                                            ? sr_game_str(Ability[i].name) : "???";
+                                        dpos += snprintf(dbuf + dpos,
+                                            sizeof(dbuf) - dpos, " %s,", aname);
+                                        if (dpos >= (int)sizeof(dbuf) - 50) break;
+                                    }
+                                }
+                                if (dpos > 0 && dbuf[dpos - 1] == ',') {
+                                    dbuf[dpos - 1] = '.';
+                                }
+                            }
+                        } else {
+                            // Limited info: name, chassis, morale only
+                            snprintf(dbuf, sizeof(dbuf),
+                                loc(SR_ENEMY_LIST_DETAIL_LIMITED),
+                                sr_game_str(v->name()), chassis_name, morale_name);
+                        }
+                        sr_output(dbuf, true);
                     }
                 }
             } else {
@@ -2609,34 +2980,17 @@ bool HandleKey(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         char buf[1024];
         int pos = 0;
 
-        // Turn and year
+        // Turn and year (orientation)
         pos += snprintf(buf + pos, sizeof(buf) - pos,
             loc(SR_STATUS_HEADER), *CurrentTurn, *CurrentMissionYear);
         pos += snprintf(buf + pos, sizeof(buf) - pos, " ");
 
-        // Energy credits
+        // Energy credits (changes every turn)
         pos += snprintf(buf + pos, sizeof(buf) - pos,
             loc(SR_STATUS_CREDITS), f->energy_credits);
         pos += snprintf(buf + pos, sizeof(buf) - pos, " ");
 
-        // Allocation sliders
-        int psych = f->SE_alloc_psych;
-        int labs = f->SE_alloc_labs;
-        int econ = 100 - psych - labs;
-        pos += snprintf(buf + pos, sizeof(buf) - pos,
-            loc(SR_STATUS_ALLOC), econ, psych, labs);
-        pos += snprintf(buf + pos, sizeof(buf) - pos, " ");
-
-        // Income breakdown
-        int commerce = f->turn_commerce_income;
-        int surplus = f->energy_surplus_total;
-        int maint = f->facility_maint_total;
-        int gross = surplus + maint;
-        pos += snprintf(buf + pos, sizeof(buf) - pos,
-            loc(SR_STATUS_INCOME), commerce, gross, maint, surplus);
-        pos += snprintf(buf + pos, sizeof(buf) - pos, " ");
-
-        // Research status
+        // Research status (changes every turn)
         int tech_id = f->tech_research_id;
         if (tech_id >= 0 && Tech && Tech[tech_id].name) {
             int acc = f->tech_accumulated;
@@ -2651,12 +3005,122 @@ bool HandleKey(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         }
         pos += snprintf(buf + pos, sizeof(buf) - pos, " ");
 
-        // Bases and population
+        // Income breakdown (moderately changing)
+        int commerce = f->turn_commerce_income;
+        int surplus = f->energy_surplus_total;
+        int maint = f->facility_maint_total;
+        int gross = surplus + maint;
+        pos += snprintf(buf + pos, sizeof(buf) - pos,
+            loc(SR_STATUS_INCOME), commerce, gross, maint, surplus);
+        pos += snprintf(buf + pos, sizeof(buf) - pos, " ");
+
+        // Bases and population (rarely changing)
         pos += snprintf(buf + pos, sizeof(buf) - pos,
             loc(SR_STATUS_BASES), f->base_count, f->pop_total);
+        pos += snprintf(buf + pos, sizeof(buf) - pos, " ");
+
+        // Allocation sliders (rarely changing)
+        int psych = f->SE_alloc_psych;
+        int labs = f->SE_alloc_labs;
+        int econ = 100 - psych - labs;
+        pos += snprintf(buf + pos, sizeof(buf) - pos,
+            loc(SR_STATUS_ALLOC), econ, psych, labs);
 
         sr_debug_log("FACTION-STATUS: %s", buf);
         sr_output(buf, true);
+        return true;
+    }
+
+    // Tile detail query: number keys 1-8, 0 (no modifiers)
+    if (!ctrl_key_down() && !shift_key_down() && !alt_key_down()
+        && (wParam >= '0' && wParam <= '9')) {
+        // Determine tile position
+        int tx = sr_cursor_x, ty = sr_cursor_y;
+        if (tx < 0 || ty < 0) {
+            if (MapWin->iUnit >= 0 && MapWin->iUnit < *VehCount) {
+                tx = Vehs[MapWin->iUnit].x;
+                ty = Vehs[MapWin->iUnit].y;
+            } else {
+                tx = MapWin->iTileX;
+                ty = MapWin->iTileY;
+            }
+        }
+        if (tx < 0 || tx >= *MapAreaX || ty < 0 || ty >= *MapAreaY) return false;
+        MAP* sq = mapsq(tx, ty);
+        if (!sq) return false;
+        int faction = *CurrentPlayerFaction;
+        if (!sq->is_visible(faction)) {
+            sr_output(loc(SR_TILE_UNEXPLORED), true);
+            return true;
+        }
+
+        char detail[256];
+        int n = 0;
+
+        switch (wParam) {
+        case '1': // Coordinates + ownership
+            n = sr_tile_coordinates(detail, sizeof(detail), tx, ty);
+            n += snprintf(detail + n, sizeof(detail) - n, ". ");
+            n += sr_tile_ownership(detail + n, sizeof(detail) - n, sq, faction);
+            break;
+        case '2': // Units
+            n = sr_tile_units(detail, sizeof(detail), tx, ty, faction);
+            if (n == 0) n = snprintf(detail, sizeof(detail), "%s", loc(SR_DETAIL_NO_UNITS));
+            break;
+        case '3': // Base
+            n = sr_tile_base(detail, sizeof(detail), tx, ty);
+            if (n == 0) n = snprintf(detail, sizeof(detail), "%s", loc(SR_DETAIL_NO_BASE));
+            break;
+        case '4': { // Terrain + nature
+            n = sr_tile_terrain(detail, sizeof(detail), sq);
+            int nn = sr_tile_nature(detail + n, sizeof(detail) - n, sq);
+            if (nn > 0) {
+                // Insert separator
+                char tmp[256];
+                int tn = sr_tile_terrain(tmp, sizeof(tmp), sq);
+                tn += snprintf(tmp + tn, sizeof(tmp) - tn, ", ");
+                tn += sr_tile_nature(tmp + tn, sizeof(tmp) - tn, sq);
+                memcpy(detail, tmp, tn + 1);
+                n = tn;
+            }
+            break;
+        }
+        case '5': // Improvements
+            n = sr_tile_improvements(detail, sizeof(detail), sq);
+            if (n == 0) n = snprintf(detail, sizeof(detail), "%s", loc(SR_DETAIL_NO_IMPROVEMENTS));
+            break;
+        case '6': { // Resources (yields + bonus)
+            n = sr_tile_yields(detail, sizeof(detail), tx, ty, faction);
+            int bn = sr_tile_resources(detail + n, sizeof(detail) - n, tx, ty);
+            if (bn > 0) {
+                // Need to insert separator, rebuild
+                char tmp[256];
+                int tn = sr_tile_yields(tmp, sizeof(tmp), tx, ty, faction);
+                tn += snprintf(tmp + tn, sizeof(tmp) - tn, ", ");
+                tn += sr_tile_resources(tmp + tn, sizeof(tmp) - tn, tx, ty);
+                memcpy(detail, tmp, tn + 1);
+                n = tn;
+            }
+            break;
+        }
+        case '7': // Landmarks
+            n = sr_tile_landmarks(detail, sizeof(detail), sq);
+            if (n == 0) n = snprintf(detail, sizeof(detail), "%s", loc(SR_DETAIL_NO_LANDMARKS));
+            break;
+        case '8': // Work status
+            n = sr_tile_workstatus(detail, sizeof(detail), tx, ty, sq);
+            if (n == 0) n = snprintf(detail, sizeof(detail), "%s", loc(SR_DETAIL_NO_WORK));
+            break;
+        case '0': // Full announcement
+            sr_announce_tile(tx, ty);
+            return true;
+        default:
+            return false;
+        }
+
+        if (n > 0) {
+            sr_output(detail, true);
+        }
         return true;
     }
 

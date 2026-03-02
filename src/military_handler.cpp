@@ -148,6 +148,60 @@ bool Update(UINT msg, WPARAM wParam) {
         default:
             break;
         }
+
+        // D key in detail mode = unit type stats
+        if (wParam == 'D' && !ctrl_key_down() && !shift_key_down()) {
+            if (_unitIndex >= 0 && _unitIndex < _unitListCount) {
+                int uid = _unitIds[_unitIndex];
+                UNIT* u = &Units[uid];
+                const char* chassis_name = Chassis[u->chassis_id].offsv1_name
+                    ? sr_game_str(Chassis[u->chassis_id].offsv1_name) : "???";
+                const char* weapon_name = Weapon[u->weapon_id].name
+                    ? sr_game_str(Weapon[u->weapon_id].name) : "???";
+                const char* armor_name = Armor[u->armor_id].name
+                    ? sr_game_str(Armor[u->armor_id].name) : "???";
+                const char* reactor_name = Reactor[u->reactor_id].name
+                    ? sr_game_str(Reactor[u->reactor_id].name) : "???";
+                int atk = Weapon[u->weapon_id].offense_value;
+                int def = Armor[u->armor_id].defense_value;
+                int move_speed = Chassis[u->chassis_id].speed;
+                int hp = 10 * Reactor[u->reactor_id].power;
+
+                char buf[512];
+                int pos = snprintf(buf, sizeof(buf), loc(SR_MILITARY_UNIT_DETAIL),
+                    sr_game_str(u->name), _unitCounts[_unitIndex],
+                    chassis_name, weapon_name, atk, armor_name, def,
+                    reactor_name, move_speed, hp);
+
+                // Append abilities if any
+                if (u->ability_flags) {
+                    pos += snprintf(buf + pos, sizeof(buf) - pos,
+                        "%s", loc(SR_UNIT_ABILITIES));
+                    for (int i = 0; i < MaxAbilityNum; i++) {
+                        if (u->ability_flags & (1u << i)) {
+                            const char* aname = Ability[i].name
+                                ? sr_game_str(Ability[i].name) : "???";
+                            pos += snprintf(buf + pos, sizeof(buf) - pos,
+                                " %s,", aname);
+                            if (pos >= (int)sizeof(buf) - 50) break;
+                        }
+                    }
+                    if (pos > 0 && buf[pos - 1] == ',') {
+                        buf[pos - 1] = '.';
+                    }
+                }
+                sr_output(buf, true);
+            }
+            return true;
+        }
+
+        // F1 in detail mode
+        if (wParam == VK_F1 && ctrl_key_down()) {
+            sr_output(loc(SR_MILITARY_HELP), true);
+            return true;
+        }
+
+        return true; // consume all keys in detail mode
     }
 
     switch (wParam) {
