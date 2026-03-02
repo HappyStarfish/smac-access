@@ -152,7 +152,7 @@ cannot_move_ocean=Cannot move: water.
 cannot_move_land=Cannot move: land.
 cannot_move_zoc=Cannot move: enemy zone of control.
 cannot_move_edge=Cannot move: map edge.
-cannot_open_base=Cannot open base.
+no_base_here=No base at this location.
 
 # Context Help (Ctrl+F1)
 help_header=Commands:

@@ -5,6 +5,7 @@
 #include "screen_reader.h"
 #include "localization.h"
 #include "world_map_handler.h"
+#include "game_log.h"
 
 namespace MessageHandler {
 
@@ -82,6 +83,7 @@ bool OnMessage(const char* label, const char* filename) {
     snprintf(announce, sizeof(announce), loc(SR_MSG_NOTIFICATION), buf);
     sr_output(announce, false);
 
+    game_log("EVENT [%s]: %s", label, buf);
     sr_debug_log("MSG label=%s x=%d y=%d text=%.60s", label, msg.x, msg.y, buf);
     return true;
 }

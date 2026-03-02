@@ -132,7 +132,7 @@ static const char* sr_defaults[SR_COUNT] = {
     /* SR_CANNOT_MOVE_LAND  */ "Cannot move: land.",
     /* SR_CANNOT_MOVE_ZOC   */ "Cannot move: enemy zone of control.",
     /* SR_CANNOT_MOVE_EDGE  */ "Cannot move: map edge.",
-    /* SR_CANNOT_OPEN_BASE  */ "Cannot open base.",
+    /* SR_NO_BASE_HERE      */ "No base at this location.",
 
     // Context Help (Ctrl+F1)
     /* SR_HELP_HEADER       */ "Commands:",
@@ -1215,7 +1215,7 @@ static const char* sr_keys[SR_COUNT] = {
     "movement_points", "cannot_move",
     "cannot_move_no_mp", "cannot_move_ocean", "cannot_move_land",
     "cannot_move_zoc", "cannot_move_edge",
-    "cannot_open_base",
+    "no_base_here",
     "help_header", "help_move", "help_explore", "help_skip", "help_hold",
     "help_read", "help_goto", "help_build_base", "help_build_road",
     "help_build_magtube", "help_build_farm", "help_build_mine",

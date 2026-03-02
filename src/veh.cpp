@@ -1,10 +1,15 @@
 
 #include "veh.h"
 #include "message_handler.h"
+#include "screen_reader.h"
+#include "localization.h"
 
 // Wrapper: capture message for SR log, then show popup
 static int sr_NetMsg_pop(void* This, const char* label, int delay, int a4, const char* a5) {
     MessageHandler::OnMessage(label, 0);
+    if (delay < 0 && sr_is_available()) {
+        sr_output(loc(SR_POPUP_CONTINUE), false);
+    }
     return NetMsg_pop(This, label, delay, a4, a5);
 }
 

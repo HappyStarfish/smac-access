@@ -87,6 +87,7 @@
 5. ~~**No localization system**~~: RESOLVED — loc() system implemented with sr_lang/ files.
 6. **German text in multiplayer menu**: Reported but could not reproduce from game files (all English). Needs investigation during testing.
 7. ~~**Umlauts broken with German language patch**~~: RESOLVED (2026-02-25). Game text (Windows-1252) was passed to sr_output(CP_UTF8) without conversion. Fixed with ANSI→UTF-8 conversion at all entry points.
+8. **Game diary (game_events.txt) unvollständig**: Aktuell loggt nur MessageHandler::OnMessage (Spieler-Popups) + SE-Änderungen + Eliminierungen + Rundenseparator. Viele Events fehlen (Forschung, Produktion, Kampf, Basengründung, Drohnenaufstände). Neuer Ansatz nötig — entweder tiefere Hooks in die Spielmechanik oder Auswertung der Spieltextausgabe. Manuelle game_log()-Aufrufe in Einzelfunktionen haben nicht funktioniert (falsche Filterung, unvollständig).
 
 ## Resolved Issues
 

@@ -2951,6 +2951,7 @@ int __thiscall mod_NetMsg_pop(void* This, const char* label, int delay, int a4, 
     // Capture all messages into the SR message log
     if (sr_is_available() && label) {
         MessageHandler::OnMessage(label, a5);
+        sr_output(loc(SR_POPUP_CONTINUE), false);
     }
 
     if (!conf.foreign_treaty_popup) {

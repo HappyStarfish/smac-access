@@ -1320,19 +1320,19 @@ bool HandleKey(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         return true;
     }
 
-    // Enter on world map → check if base can be opened, error if not
+    // Enter on world map → open base or give specific error
     if (wParam == VK_RETURN && !shift_key_down() && !ctrl_key_down()
         && !alt_key_down() && !*GameHalted && cur_win == GW_World) {
         int veh_id = MapWin->iUnit;
         if (veh_id < 0 || !Vehs || *VehCount <= 0 || veh_id >= *VehCount) {
-            sr_output(loc(SR_CANNOT_OPEN_BASE), true);
-            sr_debug_log("ENTER: no unit selected, cannot open base");
+            sr_output(loc(SR_NO_UNIT_SELECTED), true);
+            sr_debug_log("ENTER: no unit selected");
             return true;
         }
         VEH* veh = &Vehs[veh_id];
         int bid = base_at(veh->x, veh->y);
         if (bid < 0) {
-            sr_output(loc(SR_CANNOT_OPEN_BASE), true);
+            sr_output(loc(SR_NO_BASE_HERE), true);
             sr_debug_log("ENTER: no base at unit position (%d,%d)", veh->x, veh->y);
             return true;
         }

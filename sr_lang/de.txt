@@ -152,7 +152,7 @@ cannot_move_ocean=Bewegung nicht möglich: Wasser.
 cannot_move_land=Bewegung nicht möglich: Land.
 cannot_move_zoc=Bewegung nicht möglich: feindliche Kontrollzone.
 cannot_move_edge=Bewegung nicht möglich: Kartenrand.
-cannot_open_base=Basis kann nicht geöffnet werden.
+no_base_here=Keine Basis an dieser Position.
 
 # Kontexthilfe (Strg+F1)
 help_header=Befehle:

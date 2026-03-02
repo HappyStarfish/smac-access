@@ -1867,23 +1867,20 @@ bool Update(UINT msg, WPARAM wParam) {
         _prodPickerIndex = 0;
 
         // Announce what's currently being built
+        // Note: item 0 is Colony Pod, which is valid. Bases always produce something.
         int cur_item = base->item();
-        if (cur_item != 0) {
-            int cur_cost = mineral_cost(*CurrentBaseID, cur_item);
-            char turns_str[64];
-            int prod_turns = turns_to_complete(base);
-            if (base->mineral_surplus <= 0) {
-                snprintf(turns_str, sizeof(turns_str), "%s", loc(SR_FMT_GROWTH_NEVER));
-            } else {
-                snprintf(turns_str, sizeof(turns_str), loc(SR_FMT_TURNS), prod_turns);
-            }
-            char cur_buf[256];
-            snprintf(cur_buf, sizeof(cur_buf), loc(SR_PROD_PICKER_CURRENT),
-                sr_prod(cur_item), base->minerals_accumulated, cur_cost, turns_str);
-            sr_output(cur_buf, true);
+        int cur_cost = mineral_cost(*CurrentBaseID, cur_item);
+        char turns_str[64];
+        int prod_turns = turns_to_complete(base);
+        if (base->mineral_surplus <= 0) {
+            snprintf(turns_str, sizeof(turns_str), "%s", loc(SR_FMT_GROWTH_NEVER));
         } else {
-            sr_output(loc(SR_PROD_PICKER_CURRENT_NONE), true);
+            snprintf(turns_str, sizeof(turns_str), loc(SR_FMT_TURNS), prod_turns);
         }
+        char cur_buf[256];
+        snprintf(cur_buf, sizeof(cur_buf), loc(SR_PROD_PICKER_CURRENT),
+            sr_prod(cur_item), base->minerals_accumulated, cur_cost, turns_str);
+        sr_output(cur_buf, true);
 
         char buf[256];
         snprintf(buf, sizeof(buf), loc(SR_PROD_PICKER_OPEN), _prodPickerCount);

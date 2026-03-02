@@ -1,9 +1,15 @@
 
 #include "faction.h"
 #include "message_handler.h"
+#include "screen_reader.h"
+#include "localization.h"
+#include "game_log.h"
 
 static int sr_NetMsg_pop(void* This, const char* label, int delay, int a4, const char* a5) {
     MessageHandler::OnMessage(label, 0);
+    if (delay < 0 && sr_is_available()) {
+        sr_output(loc(SR_POPUP_CONTINUE), false);
+    }
     return NetMsg_pop(This, label, delay, a4, a5);
 }
 
@@ -2253,6 +2259,9 @@ int __cdecl mod_eliminate_player(int faction_id, int setup_id) {
             return 0;
         }
     }
+    game_log("ELIMINATED: %s (faction %d)%s",
+        m->adj_name_faction, faction_id,
+        setup_id > 0 ? " [conquered]" : "");
     for (int i = *VehCount - 1; i >= 0; --i) {
         if (Vehs[i].faction_id == faction_id) {
             veh_kill(i); // does not call kill() instead?

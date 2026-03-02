@@ -1,6 +1,7 @@
 
 #include "game.h"
 #include "localization.h"
+#include "game_log.h"
 
 static uint32_t custom_game_rules = 0;
 static uint32_t custom_more_rules = 0;
@@ -988,6 +989,7 @@ void __cdecl mod_random_events(int flag) {
 
 void __cdecl mod_turn_upkeep() {
     debug("turn_upkeep %d bases: %d vehs: %d\n", (*CurrentTurn)+1, *BaseCount, *VehCount);
+    game_log("=== Turn %d (bases: %d, units: %d) ===", *CurrentTurn + 1, *BaseCount, *VehCount);
     snprintf(ThinkerVars->build_date, 12, MOD_DATE);
     if (*CurrentTurn == 0) {
         init_world_config();

@@ -18,6 +18,7 @@
 #include "modal_utils.h"
 #include "screen_reader.h"
 #include "localization.h"
+#include "game_log.h"
 
 namespace SocialEngHandler {
 
@@ -595,7 +596,23 @@ void RunModal() {
 
     // Apply or discard changes
     if (_confirmed) {
+        int old_se[MaxSocialCatNum];
+        for (int i = 0; i < MaxSocialCatNum; i++) {
+            old_se[i] = (&f->SE_Politics)[i];
+        }
         social_set(faction_id);
+        for (int i = 0; i < MaxSocialCatNum; i++) {
+            int new_val = (&f->SE_Politics)[i];
+            if (new_val != old_se[i]) {
+                const char* cat_name = SocialField[i].field_name;
+                const char* old_name = SocialField[i].soc_name[old_se[i]];
+                const char* new_name = SocialField[i].soc_name[new_val];
+                if (cat_name && old_name && new_name) {
+                    game_log("SE CHANGE: %s: %s -> %s",
+                        cat_name, old_name, new_name);
+                }
+            }
+        }
         sr_debug_log("SocialEngHandler::RunModal confirm\n");
     } else {
         // Restore pending to current (cancel)

@@ -18,6 +18,7 @@
 
 #include "main.h"
 #include "lib/ini.h"
+#include "game_log.h"
 
 FILE* debug_log = NULL;
 Config conf;
@@ -489,11 +490,13 @@ DLL_EXPORT BOOL APIENTRY DllMain(HINSTANCE UNUSED(hinstDLL), DWORD fdwReason, LP
             map_rand.reseed(seed ^ 0xffff);
             debug("random_reseed %u\n", seed);
             // Tolk init deferred to first window message (COM not safe in DllMain)
+            game_log_init();
             flushlog();
             diag_log("DllMain: DLL_PROCESS_ATTACH complete");
             break;
 
         case DLL_PROCESS_DETACH:
+            game_log_close();
             sr_shutdown();
             if (debug_log) {
                 fclose(debug_log);

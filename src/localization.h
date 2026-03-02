@@ -129,7 +129,7 @@ enum SrStr {
     SR_CANNOT_MOVE_LAND,
     SR_CANNOT_MOVE_ZOC,
     SR_CANNOT_MOVE_EDGE,
-    SR_CANNOT_OPEN_BASE,
+    SR_NO_BASE_HERE,
 
     // Context Help (Ctrl+F1)
     SR_HELP_HEADER,
