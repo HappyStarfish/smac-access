@@ -4,12 +4,15 @@
 #include "gui.h"
 #include "screen_reader.h"
 #include "localization.h"
+#include "council_handler.h"
 #include "design_handler.h"
 #include "social_handler.h"
 #include "prefs_handler.h"
 #include "specialist_handler.h"
 #include "veh.h"
 #include "move.h"
+#include "faction.h"
+#include "map.h"
 
 #include <algorithm>
 #include <vector>
@@ -135,9 +138,12 @@ static void sr_announce_tile(int x, int y) {
             pos += snprintf(buf + pos, sizeof(buf) - pos, ", %s", loc(SR_TERRAIN_ARID));
     }
 
-    // Altitude (land only, elevated = 2+ above sea level)
-    if (is_land && alt >= ALT_TWO_ABOVE_SEA) {
-        pos += snprintf(buf + pos, sizeof(buf) - pos, ", %s", loc(SR_TERRAIN_HIGH));
+    // Altitude (land only, 1-4 above sea level)
+    if (is_land && alt > ALT_SHORE_LINE) {
+        int above_sea = alt - ALT_SHORE_LINE;
+        pos += snprintf(buf + pos, sizeof(buf) - pos, ", ");
+        pos += snprintf(buf + pos, sizeof(buf) - pos,
+            loc(SR_TERRAIN_HIGH), above_sea);
     }
 
     // Features
@@ -173,8 +179,11 @@ static void sr_announce_tile(int x, int y) {
         pos += snprintf(buf + pos, sizeof(buf) - pos, ", %s", loc(SR_FEATURE_SENSOR));
     if (sq->items & BIT_SUPPLY_POD)
         pos += snprintf(buf + pos, sizeof(buf) - pos, ", %s", loc(SR_FEATURE_SUPPLY_POD));
-    if (sq->items & BIT_MONOLITH)
+    if (sq->items & BIT_MONOLITH) {
         pos += snprintf(buf + pos, sizeof(buf) - pos, ", %s", loc(SR_FEATURE_MONOLITH));
+        if (sq->items & BIT_UNK_2000000)
+            pos += snprintf(buf + pos, sizeof(buf) - pos, "%s", loc(SR_MONOLITH_USED));
+    }
 
     // Resource bonus
     int bonus = mod_bonus_at(x, y);
@@ -223,8 +232,23 @@ static void sr_announce_tile(int x, int y) {
     // Ownership
     if (sq->owner >= 0 && sq->owner < MaxPlayerNum) {
         pos += snprintf(buf + pos, sizeof(buf) - pos, ". ");
-        pos += snprintf(buf + pos, sizeof(buf) - pos, loc(SR_TILE_OWNER),
-            MFactions[sq->owner].noun_faction);
+        if (sq->owner != faction) {
+            // Foreign territory: include diplomatic status
+            const char* diplo_str = loc(SR_DIPLO_STATUS_NONE);
+            if (has_treaty(faction, sq->owner, DIPLO_PACT))
+                diplo_str = loc(SR_DIPLO_STATUS_PACT);
+            else if (has_treaty(faction, sq->owner, DIPLO_TREATY))
+                diplo_str = loc(SR_DIPLO_STATUS_TREATY);
+            else if (has_treaty(faction, sq->owner, DIPLO_TRUCE))
+                diplo_str = loc(SR_DIPLO_STATUS_TRUCE);
+            else if (has_treaty(faction, sq->owner, DIPLO_VENDETTA))
+                diplo_str = loc(SR_DIPLO_STATUS_VENDETTA);
+            pos += snprintf(buf + pos, sizeof(buf) - pos, loc(SR_TILE_OWNER_DIPLO),
+                MFactions[sq->owner].noun_faction, diplo_str);
+        } else {
+            pos += snprintf(buf + pos, sizeof(buf) - pos, loc(SR_TILE_OWNER),
+                MFactions[sq->owner].noun_faction);
+        }
     } else {
         pos += snprintf(buf + pos, sizeof(buf) - pos, ". %s", loc(SR_TILE_UNOWNED));
     }
@@ -232,6 +256,22 @@ static void sr_announce_tile(int x, int y) {
     // City radius
     if (sq->items & BIT_BASE_RADIUS) {
         pos += snprintf(buf + pos, sizeof(buf) - pos, ". %s", loc(SR_TILE_IN_RADIUS));
+        // Check if this tile is actively worked by any base
+        bool is_worked = false;
+        for (int b = 0; b < *BaseCount && !is_worked; b++) {
+            for (int i = 0; i <= 20; i++) {
+                int tx, ty;
+                if (next_tile(Bases[b].x, Bases[b].y, i, &tx, &ty)
+                    && tx == x && ty == y
+                    && (Bases[b].worked_tiles & (1 << i))) {
+                    is_worked = true;
+                    break;
+                }
+            }
+        }
+        if (is_worked) {
+            pos += snprintf(buf + pos, sizeof(buf) - pos, "%s", loc(SR_TILE_WORKED));
+        }
     }
 
     // Base on tile
@@ -246,12 +286,34 @@ static void sr_announce_tile(int x, int y) {
         int unit_count = 0;
         for (int i = 0; i < *VehCount && unit_count < 3; i++) {
             if (Vehs[i].x == x && Vehs[i].y == y) {
+                const char* uname = sr_game_str(Vehs[i].name());
+                bool is_foreign = (Vehs[i].faction_id != faction);
                 if (unit_count == 0) {
-                    pos += snprintf(buf + pos, sizeof(buf) - pos,
-                        loc(SR_UNIT_AT), sr_game_str(Vehs[i].name()));
+                    if (is_foreign) {
+                        pos += snprintf(buf + pos, sizeof(buf) - pos,
+                            loc(SR_FOREIGN_UNIT_AT),
+                            MFactions[Vehs[i].faction_id].adj_name_faction, uname);
+                    } else {
+                        pos += snprintf(buf + pos, sizeof(buf) - pos,
+                            loc(SR_UNIT_AT), uname);
+                    }
                 } else {
-                    pos += snprintf(buf + pos, sizeof(buf) - pos,
-                        ", %s", sr_game_str(Vehs[i].name()));
+                    if (is_foreign) {
+                        pos += snprintf(buf + pos, sizeof(buf) - pos,
+                            ", %s %s",
+                            MFactions[Vehs[i].faction_id].adj_name_faction, uname);
+                    } else {
+                        pos += snprintf(buf + pos, sizeof(buf) - pos,
+                            ", %s", uname);
+                    }
+                }
+                // Append terraform order if unit is a former with active order
+                if (Vehs[i].is_former()) {
+                    const char* tf_name = get_terraform_name(&Vehs[i]);
+                    if (tf_name) {
+                        pos += snprintf(buf + pos, sizeof(buf) - pos,
+                            loc(SR_UNIT_TERRAFORM), tf_name);
+                    }
                 }
                 unit_count++;
             }
@@ -1002,6 +1064,92 @@ bool HandleKey(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         return true;
     }
 
+    // H = hold position (announce and pass to game)
+    if (wParam == 'H' && !ctrl_key_down() && !shift_key_down() && !alt_key_down()
+        && !*GameHalted && cur_win == GW_World) {
+        int veh_id = MapWin->iUnit;
+        if (veh_id >= 0 && Vehs && *VehCount > 0 && veh_id < *VehCount) {
+            WinProc(hwnd, msg, wParam, lParam);
+            sr_output(loc(SR_ACT_DONE_HOLD), true);
+            sr_debug_log("HOLD: veh %d", veh_id);
+            return true;
+        }
+    }
+
+    // X = explore (announce and pass to game, only when unit selected)
+    if (wParam == 'X' && !ctrl_key_down() && !shift_key_down() && !alt_key_down()
+        && !*GameHalted && cur_win == GW_World) {
+        int veh_id = MapWin->iUnit;
+        if (veh_id >= 0 && Vehs && *VehCount > 0 && veh_id < *VehCount) {
+            WinProc(hwnd, msg, wParam, lParam);
+            sr_output(loc(SR_ACT_DONE_EXPLORE), true);
+            sr_debug_log("EXPLORE: veh %d", veh_id);
+            return true;
+        }
+    }
+
+    // Shift+R = research priorities (announce and pass to game)
+    if (wParam == 'R' && shift_key_down() && !ctrl_key_down() && !alt_key_down()
+        && !*GameHalted) {
+        sr_output(loc(SR_RESEARCH_PRIORITIES), true);
+        sr_debug_log("RESEARCH-PRIORITIES: opening");
+        return false; // let game open its tech-pick dialog
+    }
+
+    // + = create group dialog (announce and pass to game)
+    // VK_ADD = numpad +
+    if (!ctrl_key_down() && !alt_key_down() && !*GameHalted && cur_win == GW_World
+        && wParam == VK_ADD) {
+        int veh_id = MapWin->iUnit;
+        if (veh_id >= 0 && Vehs && *VehCount > 0 && veh_id < *VehCount) {
+            sr_output(loc(SR_GROUP_DIALOG), true);
+            sr_debug_log("GROUP-DIALOG: opening for veh %d", veh_id);
+            return false; // let game handle the dialog
+        }
+    }
+
+    // Ctrl+G = grid toggle (pass to game, then announce state)
+    if (wParam == 'G' && ctrl_key_down() && !shift_key_down() && !alt_key_down()
+        && !*GameHalted && cur_win == GW_World) {
+        WinProc(hwnd, msg, wParam, lParam);
+        bool on = (*GamePreferences & PREF_MAP_SHOW_GRID) != 0;
+        sr_output(loc(on ? SR_GRID_ON : SR_GRID_OFF), true);
+        sr_debug_log("GRID-TOGGLE: %s", on ? "on" : "off");
+        return true;
+    }
+
+    // T = flat terrain toggle (pass to game, then announce state)
+    if (wParam == 'T' && !ctrl_key_down() && !shift_key_down() && !alt_key_down()
+        && !*GameHalted && cur_win == GW_World) {
+        WinProc(hwnd, msg, wParam, lParam);
+        bool on = map_is_flat();
+        sr_output(loc(on ? SR_TERRAIN_FLAT_ON : SR_TERRAIN_FLAT_OFF), true);
+        sr_debug_log("TERRAIN-FLAT-TOGGLE: %s", on ? "on" : "off");
+        return true;
+    }
+
+    // C = center on active unit (pass to game, then announce)
+    if (wParam == 'C' && !ctrl_key_down() && !shift_key_down() && !alt_key_down()
+        && !*GameHalted && cur_win == GW_World) {
+        int veh_id = MapWin->iUnit;
+        if (veh_id >= 0 && Vehs && *VehCount > 0 && veh_id < *VehCount) {
+            WinProc(hwnd, msg, wParam, lParam);
+            sr_output(loc(SR_CENTERED), true);
+            sr_debug_log("CENTER: on veh %d", veh_id);
+            return true;
+        }
+    }
+
+    // F9 = monuments — handled in gui.cpp via MonumentHandler::RunModal()
+
+    // F10 = hall of fame (announce and pass to game; Shift+F10 is unit action menu)
+    if (wParam == VK_F10 && !ctrl_key_down() && !shift_key_down() && !alt_key_down()
+        && !*GameHalted && cur_win == GW_World) {
+        sr_output(loc(SR_HALL_OF_FAME_INFO), true);
+        sr_debug_log("HALL-OF-FAME: opening");
+        return false;
+    }
+
     // Escape during targeting → cancel
     if (wParam == VK_ESCAPE && sr_targeting_active) {
         sr_targeting_active = false;
@@ -1704,6 +1852,13 @@ bool HandleKey(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         return true;
     }
 
+    // Ctrl+V → Council vote check
+    if (wParam == 'V' && ctrl_key_down() && !shift_key_down() && !alt_key_down()
+        && !*GameHalted && cur_win == GW_World) {
+        CouncilHandler::AnnouncePreCouncilInfo();
+        return true;
+    }
+
     // V → let game toggle Move/View mode, then announce
     if (wParam == 'V' && !ctrl_key_down() && !shift_key_down() && !alt_key_down()
         && !*GameHalted && cur_win == GW_World) {
@@ -1712,6 +1867,408 @@ bool HandleKey(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             sr_output(loc(SR_MODE_MOVE), true);
         else
             sr_output(loc(SR_MODE_VIEW), true);
+        return true;
+    }
+
+    // U → global unit list (modal)
+    if (wParam == 'U' && !ctrl_key_down() && !shift_key_down() && !alt_key_down()
+        && !*GameHalted && cur_win == GW_World) {
+        if (!Vehs || *VehCount <= 0 || !MapWin) {
+            sr_output(loc(SR_UNIT_LIST_EMPTY), true);
+            return true;
+        }
+        int faction = MapWin->cOwner;
+
+        // Build unit list
+        struct UnitEntry {
+            int id;
+            int sort_order; // idle=0, others by order type
+            int pos_key;    // y * MapAreaX + x for grouping
+        };
+        std::vector<UnitEntry> units;
+        for (int i = 0; i < *VehCount; i++) {
+            if (Vehs[i].faction_id == faction) {
+                int so = (Vehs[i].order == ORDER_NONE) ? 0 : (Vehs[i].order + 1);
+                int pk = Vehs[i].y * (*MapAreaX > 0 ? *MapAreaX : 1) + Vehs[i].x;
+                units.push_back({i, so, pk});
+            }
+        }
+        if (units.empty()) {
+            sr_output(loc(SR_UNIT_LIST_EMPTY), true);
+            return true;
+        }
+        std::sort(units.begin(), units.end(),
+            [](const UnitEntry& a, const UnitEntry& b) {
+                if (a.sort_order != b.sort_order) return a.sort_order < b.sort_order;
+                return a.pos_key < b.pos_key;
+            });
+
+        int total = (int)units.size();
+        int index = 0;
+        bool want_close = false;
+        bool confirmed = false;
+        char buf[512];
+
+        // Helper lambda to announce a unit entry
+        auto announce_unit = [&](int idx, bool interrupt) {
+            int vid = units[idx].id;
+            VEH* v = &Vehs[vid];
+            int pos = 0;
+
+            // Base: "3 of 12: Scout Patrol at (15, 22)"
+            pos += snprintf(buf + pos, sizeof(buf) - pos, loc(SR_UNIT_LIST_FMT),
+                idx + 1, total, sr_game_str(v->name()), v->x, v->y);
+
+            // Moves: "2 of 3 moves"
+            int total_speed = veh_speed(vid, 0);
+            int remaining = total_speed - v->moves_spent;
+            if (remaining < 0) remaining = 0;
+            int disp_rem = remaining / Rules->move_rate_roads;
+            int disp_tot = total_speed / Rules->move_rate_roads;
+            pos += snprintf(buf + pos, sizeof(buf) - pos, ", ");
+            pos += snprintf(buf + pos, sizeof(buf) - pos, loc(SR_UNIT_LIST_MOVES),
+                disp_rem, disp_tot);
+
+            // Order
+            const char* order_str = NULL;
+            if (v->order == ORDER_NONE) order_str = loc(SR_ORDER_IDLE);
+            else if (v->order == ORDER_HOLD) order_str = loc(SR_ORDER_HOLD);
+            else if (v->order == ORDER_SENTRY_BOARD) order_str = loc(SR_ORDER_SENTRY);
+            else if (v->order == ORDER_EXPLORE) order_str = loc(SR_ORDER_EXPLORE);
+            else if (v->order == ORDER_MOVE_TO || v->order == ORDER_ROAD_TO
+                     || v->order == ORDER_MAGTUBE_TO || v->order == ORDER_AI_GO_TO)
+                order_str = loc(SR_ORDER_GOTO);
+            else if (v->order == ORDER_CONVOY) order_str = loc(SR_ORDER_CONVOY);
+            else {
+                // Terraform orders
+                const char* tf = get_terraform_name(v);
+                if (tf) order_str = tf;
+            }
+            if (order_str) {
+                pos += snprintf(buf + pos, sizeof(buf) - pos, ", %s", order_str);
+            }
+
+            // Health (only if damaged)
+            if (v->damage_taken > 0) {
+                pos += snprintf(buf + pos, sizeof(buf) - pos, ", ");
+                pos += snprintf(buf + pos, sizeof(buf) - pos, loc(SR_UNIT_LIST_HEALTH),
+                    v->cur_hitpoints(), v->max_hitpoints());
+            }
+
+            // Home base
+            if (v->home_base_id >= 0 && v->home_base_id < *BaseCount) {
+                pos += snprintf(buf + pos, sizeof(buf) - pos, ", ");
+                pos += snprintf(buf + pos, sizeof(buf) - pos, loc(SR_UNIT_LIST_HOME),
+                    sr_game_str(Bases[v->home_base_id].name));
+            }
+
+            sr_output(buf, interrupt);
+        };
+
+        // Announce open + first item
+        snprintf(buf, sizeof(buf), loc(SR_UNIT_LIST_OPEN), total);
+        sr_output(buf, true);
+        announce_unit(0, false);
+
+        // Modal PeekMessage loop
+        MSG modal_msg;
+        while (!want_close) {
+            if (PeekMessage(&modal_msg, NULL, 0, 0, PM_REMOVE)) {
+                if (modal_msg.message == WM_QUIT) {
+                    PostQuitMessage((int)modal_msg.wParam);
+                    break;
+                }
+                if (modal_msg.message == WM_KEYDOWN) {
+                    WPARAM k = modal_msg.wParam;
+                    if (k == VK_ESCAPE) {
+                        want_close = true;
+                    } else if (k == VK_RETURN) {
+                        want_close = true;
+                        confirmed = true;
+                    } else if (k == VK_UP) {
+                        index = (index - 1 + total) % total;
+                        announce_unit(index, true);
+                    } else if (k == VK_DOWN) {
+                        index = (index + 1) % total;
+                        announce_unit(index, true);
+                    } else if (k == VK_HOME) {
+                        index = 0;
+                        announce_unit(index, true);
+                    } else if (k == VK_END) {
+                        index = total - 1;
+                        announce_unit(index, true);
+                    } else if (k == VK_F1 && ctrl_key_down()) {
+                        sr_output(loc(SR_UNIT_LIST_HELP), true);
+                    }
+                }
+            } else {
+                Sleep(10);
+            }
+        }
+
+        // Drain leftover messages
+        MSG drain;
+        while (PeekMessage(&drain, NULL, WM_CHAR, WM_CHAR, PM_REMOVE)) {}
+        while (PeekMessage(&drain, NULL, WM_KEYUP, WM_KEYUP, PM_REMOVE)) {}
+
+        if (confirmed && index >= 0 && index < total) {
+            int vid = units[index].id;
+            VEH* v = &Vehs[vid];
+            *CurrentVehID = vid;
+            MapWin->iUnit = vid;
+            veh_wake(vid);
+            sr_cursor_x = v->x;
+            sr_cursor_y = v->y;
+            Console_focus(MapWin, v->x, v->y, 2);
+            snprintf(buf, sizeof(buf), loc(SR_UNIT_LIST_SELECTED), sr_game_str(v->name()));
+            sr_output(buf, true);
+            sr_debug_log("UNIT-LIST: selected %s at (%d,%d)", sr_game_str(v->name()), v->x, v->y);
+        } else {
+            sr_output(loc(SR_TARGETING_CANCEL), true);
+        }
+        return true;
+    }
+
+    // Shift+U → enemy unit list (modal)
+    if (wParam == 'U' && shift_key_down() && !ctrl_key_down() && !alt_key_down()
+        && !*GameHalted && cur_win == GW_World) {
+        if (!Vehs || *VehCount <= 0 || !MapWin) {
+            sr_output(loc(SR_ENEMY_LIST_EMPTY), true);
+            return true;
+        }
+        int faction = MapWin->cOwner;
+
+        // Build list of all non-own units on visible tiles
+        struct EnemyEntry {
+            int id;
+            int pos_key; // y * MapAreaX + x for sorting by position
+        };
+        std::vector<EnemyEntry> enemies;
+        for (int i = 0; i < *VehCount; i++) {
+            if (Vehs[i].faction_id == faction) continue;
+            MAP* sq = mapsq(Vehs[i].x, Vehs[i].y);
+            if (!sq || !sq->is_visible(faction)) continue;
+            int pk = Vehs[i].y * (*MapAreaX > 0 ? *MapAreaX : 1) + Vehs[i].x;
+            enemies.push_back({i, pk});
+        }
+        if (enemies.empty()) {
+            sr_output(loc(SR_ENEMY_LIST_EMPTY), true);
+            return true;
+        }
+        std::sort(enemies.begin(), enemies.end(),
+            [](const EnemyEntry& a, const EnemyEntry& b) {
+                return a.pos_key < b.pos_key;
+            });
+
+        int total = (int)enemies.size();
+        int index = 0;
+        bool want_close = false;
+        bool confirmed = false;
+        char buf[512];
+
+        // Helper: get diplomacy status string for a faction
+        auto get_diplo = [&](int other_faction) -> const char* {
+            if (other_faction == 0) return loc(SR_ENEMY_LIST_NATIVE);
+            if (has_treaty(faction, other_faction, DIPLO_VENDETTA))
+                return loc(SR_DIPLO_STATUS_VENDETTA);
+            if (has_treaty(faction, other_faction, DIPLO_PACT))
+                return loc(SR_DIPLO_STATUS_PACT);
+            if (has_treaty(faction, other_faction, DIPLO_TREATY))
+                return loc(SR_DIPLO_STATUS_TREATY);
+            if (has_treaty(faction, other_faction, DIPLO_TRUCE))
+                return loc(SR_DIPLO_STATUS_TRUCE);
+            return loc(SR_DIPLO_STATUS_NONE);
+        };
+
+        // Helper: get triad name
+        auto get_triad = [](int triad) -> const char* {
+            switch (triad) {
+                case TRIAD_LAND: return loc(SR_ENEMY_LIST_TRIAD_LAND);
+                case TRIAD_SEA:  return loc(SR_ENEMY_LIST_TRIAD_SEA);
+                case TRIAD_AIR:  return loc(SR_ENEMY_LIST_TRIAD_AIR);
+                default: return "";
+            }
+        };
+
+        // Helper: announce an enemy entry
+        auto announce_enemy = [&](int idx, bool interrupt) {
+            int vid = enemies[idx].id;
+            VEH* v = &Vehs[vid];
+            const char* uname = sr_game_str(v->name());
+            const char* fname = sr_game_str(MFactions[v->faction_id].adj_name_faction);
+            const char* diplo = get_diplo(v->faction_id);
+
+            // Base: "3 of 12: Scout Patrol, Spartan (Vendetta) at (15, 22)"
+            int pos = snprintf(buf, sizeof(buf), loc(SR_ENEMY_LIST_FMT),
+                idx + 1, total, uname, fname, diplo, v->x, v->y);
+
+            // Morale: "Hardened"
+            if (v->morale <= MORALE_ELITE && Morale) {
+                const char* mname = sr_game_str(Morale[v->morale].name);
+                if (mname && mname[0]) {
+                    pos += snprintf(buf + pos, sizeof(buf) - pos, ", %s", mname);
+                }
+            }
+
+            // Attack/Defense: "Attack 4, Defense 2"
+            int atk = v->offense_value();
+            int def = v->defense_value();
+            if (atk < 0) {
+                // Psi unit — no numeric attack/defense
+                pos += snprintf(buf + pos, sizeof(buf) - pos, ", Psi");
+            } else {
+                pos += snprintf(buf + pos, sizeof(buf) - pos,
+                    ", Atk %d Def %d", atk, def);
+            }
+
+            // Triad: "Land" / "Sea" / "Air"
+            pos += snprintf(buf + pos, sizeof(buf) - pos,
+                ", %s", get_triad(v->triad()));
+
+            // Health (only if damaged)
+            if (v->damage_taken > 0) {
+                pos += snprintf(buf + pos, sizeof(buf) - pos, ", ");
+                pos += snprintf(buf + pos, sizeof(buf) - pos, loc(SR_UNIT_LIST_HEALTH),
+                    v->cur_hitpoints(), v->max_hitpoints());
+            }
+
+            sr_output(buf, interrupt);
+        };
+
+        // Announce open + first item
+        snprintf(buf, sizeof(buf), loc(SR_ENEMY_LIST_OPEN), total);
+        sr_output(buf, true);
+        announce_enemy(0, false);
+
+        // Modal PeekMessage loop
+        MSG modal_msg;
+        while (!want_close) {
+            if (PeekMessage(&modal_msg, NULL, 0, 0, PM_REMOVE)) {
+                if (modal_msg.message == WM_QUIT) {
+                    PostQuitMessage((int)modal_msg.wParam);
+                    break;
+                }
+                if (modal_msg.message == WM_KEYDOWN) {
+                    WPARAM k = modal_msg.wParam;
+                    if (k == VK_ESCAPE) {
+                        want_close = true;
+                    } else if (k == VK_RETURN) {
+                        want_close = true;
+                        confirmed = true;
+                    } else if (k == VK_UP) {
+                        index = (index - 1 + total) % total;
+                        announce_enemy(index, true);
+                    } else if (k == VK_DOWN) {
+                        index = (index + 1) % total;
+                        announce_enemy(index, true);
+                    } else if (k == VK_HOME) {
+                        index = 0;
+                        announce_enemy(index, true);
+                    } else if (k == VK_END) {
+                        index = total - 1;
+                        announce_enemy(index, true);
+                    } else if (k == VK_F1 && ctrl_key_down()) {
+                        sr_output(loc(SR_ENEMY_LIST_HELP), true);
+                    }
+                }
+            } else {
+                Sleep(10);
+            }
+        }
+
+        // Drain leftover messages
+        MSG drain;
+        while (PeekMessage(&drain, NULL, WM_CHAR, WM_CHAR, PM_REMOVE)) {}
+        while (PeekMessage(&drain, NULL, WM_KEYUP, WM_KEYUP, PM_REMOVE)) {}
+
+        if (confirmed && index >= 0 && index < total) {
+            int vid = enemies[index].id;
+            VEH* v = &Vehs[vid];
+            sr_cursor_x = v->x;
+            sr_cursor_y = v->y;
+            Console_focus(MapWin, v->x, v->y, 2);
+            snprintf(buf, sizeof(buf), loc(SR_ENEMY_LIST_JUMP),
+                sr_game_str(v->name()), v->x, v->y);
+            sr_output(buf, true);
+            sr_debug_log("ENEMY-LIST: jumped to %s at (%d,%d)",
+                sr_game_str(v->name()), v->x, v->y);
+        } else {
+            sr_output(loc(SR_TARGETING_CANCEL), true);
+        }
+        return true;
+    }
+
+    // Tab → cycle through own units on tile at exploration cursor
+    if (wParam == VK_TAB && !ctrl_key_down() && !shift_key_down() && !alt_key_down()
+        && !*GameHalted && cur_win == GW_World) {
+        static int _tabCycleIndex = 0;
+        static int _tabLastX = -1;
+        static int _tabLastY = -1;
+
+        int cx = sr_cursor_x;
+        int cy = sr_cursor_y;
+        if (cx < 0 || cy < 0) {
+            sr_output(loc(SR_TAB_CYCLE_NONE), true);
+            return true;
+        }
+
+        // Reset cycle if cursor moved
+        if (cx != _tabLastX || cy != _tabLastY) {
+            _tabCycleIndex = 0;
+            _tabLastX = cx;
+            _tabLastY = cy;
+        }
+
+        // Build list of own units at this tile
+        int faction = MapWin->cOwner;
+        std::vector<int> stack_units;
+        int first = veh_at(cx, cy);
+        for (int vid = first; vid >= 0; vid = Vehs[vid].next_veh_id_stack) {
+            if (Vehs[vid].faction_id == faction) {
+                stack_units.push_back(vid);
+            }
+            if ((int)stack_units.size() > 200) break; // safety limit
+        }
+
+        if (stack_units.empty()) {
+            sr_output(loc(SR_TAB_CYCLE_NONE), true);
+            return true;
+        }
+
+        // Wrap cycle index
+        if (_tabCycleIndex >= (int)stack_units.size()) {
+            _tabCycleIndex = 0;
+        }
+
+        int vid = stack_units[_tabCycleIndex];
+        VEH* v = &Vehs[vid];
+
+        // Wake, select, and focus
+        *CurrentVehID = vid;
+        MapWin->iUnit = vid;
+        veh_wake(vid);
+        Console_focus(MapWin, v->x, v->y, 2);
+
+        // Announce
+        char buf[256];
+        snprintf(buf, sizeof(buf), loc(SR_TAB_CYCLE_FMT),
+            sr_game_str(v->name()), _tabCycleIndex + 1, (int)stack_units.size());
+        sr_output(buf, true);
+
+        // Append moves info
+        int total_speed = veh_speed(vid, 0);
+        int remaining = total_speed - v->moves_spent;
+        if (remaining < 0) remaining = 0;
+        int disp_rem = remaining / Rules->move_rate_roads;
+        int disp_tot = total_speed / Rules->move_rate_roads;
+        char buf2[128];
+        snprintf(buf2, sizeof(buf2), loc(SR_UNIT_LIST_MOVES), disp_rem, disp_tot);
+        sr_output(buf2, false);
+
+        sr_debug_log("TAB-CYCLE: %s (%d of %d) at (%d,%d)",
+            sr_game_str(v->name()), _tabCycleIndex + 1, (int)stack_units.size(), cx, cy);
+
+        _tabCycleIndex++;
         return true;
     }
 
@@ -1842,6 +2399,8 @@ bool HandleKey(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         pos += snprintf(buf + pos, sizeof(buf) - pos, " %s.", loc(SR_HELP_SCAN_JUMP));
         pos += snprintf(buf + pos, sizeof(buf) - pos, " %s.", loc(SR_STATUS_HELP));
         pos += snprintf(buf + pos, sizeof(buf) - pos, " %s.", loc(SR_ACT_MENU_HELP));
+        pos += snprintf(buf + pos, sizeof(buf) - pos, " %s.", loc(SR_HELP_TOGGLE_AI));
+        pos += snprintf(buf + pos, sizeof(buf) - pos, " %s.", loc(SR_HELP_TOGGLE_SR));
 
         sr_debug_log("CONTEXT-HELP: %s", buf);
         sr_output(buf, true);

@@ -1,6 +1,9 @@
 
 #include "tech.h"
 #include "message_handler.h"
+#include "screen_reader.h"
+#include "localization.h"
+#include "modal_utils.h"
 
 static int sr_NetMsg_pop(void* This, const char* label, int delay, int a4, const char* a5) {
     MessageHandler::OnMessage(label, 0);
@@ -239,6 +242,277 @@ int __cdecl mod_tech_selection(int faction_id) {
     return tech_id;
 }
 
+// Category name lookup for tech pick modal
+static const char* tech_cat_name(int cat) {
+    switch (cat) {
+    case TCAT_GROWTH: return loc(SR_DL_TCAT_EXPLORE);
+    case TCAT_TECH:   return loc(SR_DL_TCAT_DISCOVER);
+    case TCAT_WEALTH: return loc(SR_DL_TCAT_BUILD);
+    case TCAT_POWER:  return loc(SR_DL_TCAT_CONQUER);
+    default: return "?";
+    }
+}
+
+// Detect current research direction from faction AI priorities
+static int sr_current_direction(int faction_id) {
+    Faction* f = &Factions[faction_id];
+    if (f->AI_growth && !f->AI_tech && !f->AI_wealth && !f->AI_power) return TCAT_GROWTH;
+    if (f->AI_tech && !f->AI_growth && !f->AI_wealth && !f->AI_power) return TCAT_TECH;
+    if (f->AI_wealth && !f->AI_growth && !f->AI_tech && !f->AI_power) return TCAT_WEALTH;
+    if (f->AI_power && !f->AI_growth && !f->AI_tech && !f->AI_wealth) return TCAT_POWER;
+    return -1; // mixed or no priorities
+}
+
+// Set faction research direction to a single category
+static void sr_set_direction(int faction_id, int category) {
+    Faction* f = &Factions[faction_id];
+    f->AI_growth = (category == TCAT_GROWTH) ? 1 : 0;
+    f->AI_tech   = (category == TCAT_TECH)   ? 1 : 0;
+    f->AI_wealth = (category == TCAT_WEALTH) ? 1 : 0;
+    f->AI_power  = (category == TCAT_POWER)  ? 1 : 0;
+}
+
+// Run the modal keyboard pump, consuming all keyboard messages.
+// Returns true if confirmed (Enter), false if cancelled (Escape).
+static bool sr_tech_pick_pump(int* current, int count,
+    void (*announce)(int index, int count, void* ctx), void* ctx)
+{
+    bool want_close = false;
+    bool confirmed = false;
+
+    sr_popup_set_active(true);
+
+    MSG msg_loop;
+    while (!want_close) {
+        if (PeekMessage(&msg_loop, NULL, 0, 0, PM_REMOVE)) {
+            if (msg_loop.message == WM_QUIT) {
+                PostQuitMessage((int)msg_loop.wParam);
+                break;
+            }
+            if (msg_loop.message == WM_KEYDOWN) {
+                bool ctrl = (GetKeyState(VK_CONTROL) & 0x8000) != 0;
+                WPARAM key = msg_loop.wParam;
+
+                if (key == VK_DOWN && !ctrl) {
+                    if (*current < count - 1) (*current)++;
+                    announce(*current, count, ctx);
+                } else if (key == VK_UP && !ctrl) {
+                    if (*current > 0) (*current)--;
+                    announce(*current, count, ctx);
+                } else if (key == VK_RETURN) {
+                    want_close = true;
+                    confirmed = true;
+                } else if (key == VK_ESCAPE) {
+                    want_close = true;
+                    confirmed = false;
+                } else if (key == 'I' && ctrl) {
+                    announce(*current, count, ctx);
+                } else if (key == VK_F1 && ctrl) {
+                    sr_output(loc(SR_TECH_PICK_HELP), true);
+                }
+                continue;
+            }
+            if (msg_loop.message == WM_KEYUP || msg_loop.message == WM_CHAR
+                || msg_loop.message == WM_SYSKEYDOWN || msg_loop.message == WM_SYSKEYUP) {
+                continue;
+            }
+            TranslateMessage(&msg_loop);
+            DispatchMessage(&msg_loop);
+        } else {
+            Sleep(10);
+        }
+    }
+
+    MSG drain;
+    while (PeekMessage(&drain, NULL, WM_KEYFIRST, WM_KEYLAST, PM_REMOVE)) {}
+
+    sr_popup_set_active(false);
+    return confirmed;
+}
+
+// --- Blind Research ON: direction-only selection ---
+
+struct BlindCtx { int cats[4]; };
+
+static void sr_announce_direction(int index, int count, void* ctx) {
+    BlindCtx* bc = (BlindCtx*)ctx;
+    char buf[256];
+    snprintf(buf, sizeof(buf), loc(SR_TECH_PICK_DIR),
+        index + 1, count, tech_cat_name(bc->cats[index]));
+    sr_output(buf, true);
+}
+
+static int sr_tech_pick_blind(int faction_id) {
+    // Build direction list (only categories that have available techs)
+    BlindCtx bc;
+    int count = 0;
+    for (int cat = 0; cat < 4; cat++) {
+        for (int i = 0; i < MaxTechnologyNum; i++) {
+            if (mod_tech_avail(i, faction_id) && tech_category(i) == cat) {
+                bc.cats[count++] = cat;
+                break;
+            }
+        }
+    }
+    if (count == 0) return -1;
+
+    // Read original game intro text from Script.txt #TECHRANDOM
+    char intro[2048];
+    if (sr_read_popup_text(ScriptFile, "TECHRANDOM", intro, sizeof(intro))) {
+        sr_output(intro, false);
+    }
+
+    // Announce Blind Research status and current direction
+    char buf[512];
+    int cur_dir = sr_current_direction(faction_id);
+    if (cur_dir >= 0) {
+        snprintf(buf, sizeof(buf), loc(SR_TECH_PICK_BLIND_STATUS),
+            tech_cat_name(cur_dir));
+    } else {
+        snprintf(buf, sizeof(buf), "%s", loc(SR_TECH_PICK_BLIND_MIXED));
+    }
+    sr_output(buf, false);
+
+    snprintf(buf, sizeof(buf), loc(SR_TECH_PICK_TITLE), count);
+    sr_output(buf, false);
+
+    // Start on current direction if it's in the list
+    int current = 0;
+    for (int i = 0; i < count; i++) {
+        if (bc.cats[i] == cur_dir) { current = i; break; }
+    }
+
+    // Initial item announcement queued (not interrupt) so intro text finishes
+    {
+        char ibuf[256];
+        snprintf(ibuf, sizeof(ibuf), loc(SR_TECH_PICK_DIR),
+            current + 1, count, tech_cat_name(bc.cats[current]));
+        sr_output(ibuf, false);
+    }
+
+    sr_debug_log("sr_tech_pick_blind: enter, %d directions, blind=ON", count);
+
+    if (!sr_tech_pick_pump(&current, count, sr_announce_direction, &bc)) {
+        sr_debug_log("sr_tech_pick_blind: cancelled");
+        return -1;
+    }
+
+    // Set faction priorities to chosen direction
+    sr_set_direction(faction_id, bc.cats[current]);
+
+    // Use mod_tech_ai to pick a weighted random tech in that direction
+    int tech_id = mod_tech_ai(faction_id);
+
+    char closed[256];
+    snprintf(closed, sizeof(closed), loc(SR_TECH_PICK_BLIND_DONE),
+        tech_cat_name(bc.cats[current]));
+    sr_output(closed, true);
+    sr_debug_log("sr_tech_pick_blind: direction=%d tech=%d %s",
+        bc.cats[current], tech_id, tech_str(tech_id));
+
+    return tech_id;
+}
+
+// --- Blind Research OFF: specific tech selection ---
+
+struct TechOption {
+    int tech_id;
+    int category;
+};
+struct TechCtx { TechOption options[4]; };
+
+static void sr_announce_tech_option(int index, int count, void* ctx) {
+    TechCtx* tc = (TechCtx*)ctx;
+    char buf[512];
+    snprintf(buf, sizeof(buf), loc(SR_TECH_PICK_ITEM),
+        index + 1, count, tech_cat_name(tc->options[index].category),
+        sr_game_str(Tech[tc->options[index].tech_id].name));
+    sr_output(buf, true);
+}
+
+static int sr_tech_pick_specific(int faction_id) {
+    TechCtx tc;
+    int best_id[4] = {-1, -1, -1, -1};
+    int best_score[4] = {-1, -1, -1, -1};
+
+    for (int i = 0; i < MaxTechnologyNum; i++) {
+        if (!mod_tech_avail(i, faction_id)) continue;
+        int cat = tech_category(i);
+        int score;
+        switch (cat) {
+        case TCAT_GROWTH: score = Tech[i].AI_growth; break;
+        case TCAT_TECH:   score = Tech[i].AI_tech; break;
+        case TCAT_WEALTH: score = Tech[i].AI_wealth; break;
+        case TCAT_POWER:  score = Tech[i].AI_power; break;
+        default: score = 0; break;
+        }
+        if (best_id[cat] < 0 || score > best_score[cat]) {
+            best_id[cat] = i;
+            best_score[cat] = score;
+        }
+    }
+
+    int count = 0;
+    for (int cat = 0; cat < 4; cat++) {
+        if (best_id[cat] >= 0) {
+            tc.options[count].tech_id = best_id[cat];
+            tc.options[count].category = cat;
+            count++;
+        }
+    }
+    if (count == 0) return -1;
+
+    // Announce: no blind research, current direction
+    char buf[512];
+    int cur_dir = sr_current_direction(faction_id);
+    if (cur_dir >= 0) {
+        snprintf(buf, sizeof(buf), loc(SR_TECH_PICK_STATUS),
+            tech_cat_name(cur_dir));
+    } else {
+        snprintf(buf, sizeof(buf), "%s", loc(SR_TECH_PICK_STATUS_MIXED));
+    }
+    sr_output(buf, false);
+
+    snprintf(buf, sizeof(buf), loc(SR_TECH_PICK_TITLE), count);
+    sr_output(buf, false);
+
+    int current = 0;
+    // Initial item announcement queued (not interrupt) so intro text finishes
+    {
+        char ibuf[512];
+        snprintf(ibuf, sizeof(ibuf), loc(SR_TECH_PICK_ITEM),
+            1, count, tech_cat_name(tc.options[0].category),
+            sr_game_str(Tech[tc.options[0].tech_id].name));
+        sr_output(ibuf, false);
+    }
+
+    sr_debug_log("sr_tech_pick_specific: enter, %d options, blind=OFF", count);
+
+    if (!sr_tech_pick_pump(&current, count, sr_announce_tech_option, &tc)) {
+        sr_debug_log("sr_tech_pick_specific: cancelled");
+        return -1;
+    }
+
+    int tech_id = tc.options[current].tech_id;
+    // Also set direction to match the chosen category
+    sr_set_direction(faction_id, tc.options[current].category);
+
+    sr_output(loc(SR_TECH_PICK_CLOSED), true);
+    sr_debug_log("sr_tech_pick_specific: selected tech %d %s",
+        tech_id, tech_str(tech_id));
+    return tech_id;
+}
+
+// Accessible tech pick modal for screen reader users.
+// Handles both Blind Research (direction only) and normal (specific tech) modes.
+static int sr_tech_pick_modal(int faction_id) {
+    if (*GameRules & RULES_BLIND_RESEARCH) {
+        return sr_tech_pick_blind(faction_id);
+    } else {
+        return sr_tech_pick_specific(faction_id);
+    }
+}
+
 /*
 Normally the game engine would recalculate research cost in tech_research
 before the next tech is selected in tech_selection > tech_pick.
@@ -247,6 +521,26 @@ Note that tech_pick is also used for TECHSTEAL faction ability.
 */
 int __cdecl mod_tech_pick(int faction_id, int flag, int other_faction_id, const char* label) {
     Faction& plr = Factions[faction_id];
+
+    // Screen reader: accessible tech pick for normal research selection
+    if (sr_is_available() && is_human(faction_id) && !label && other_faction_id < 0) {
+        int tech_id = sr_tech_pick_modal(faction_id);
+        // If cancelled, fall through to original dialog as fallback
+        if (tech_id >= 0) {
+            debug("tech_pick %d %d %d prev: %d %d tech: %d %s (sr)\n",
+                *CurrentTurn, faction_id, other_faction_id,
+                plr.tech_research_id, plr.tech_cost, tech_id, tech_str(tech_id));
+            if (revised_tech_cost()) {
+                if (tech_id != plr.tech_research_id || plr.tech_cost <= 0) {
+                    plr.tech_cost = tech_cost(tech_id, faction_id);
+                }
+            }
+            flushlog();
+            return tech_id;
+        }
+        // Cancelled: fall through to original dialog
+    }
+
     int tech_id = tech_pick(faction_id, flag, other_faction_id, (int)label);
     debug("tech_pick %d %d %d prev: %d %d tech: %d %s\n", *CurrentTurn, faction_id, other_faction_id,
         plr.tech_research_id, plr.tech_cost, tech_id, tech_str(tech_id));

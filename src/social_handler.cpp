@@ -24,10 +24,13 @@ namespace SocialEngHandler {
 static bool _active = false;
 static bool _wantClose = false;
 static bool _confirmed = false;
+static bool _allocOnly = false; // true when opened via F3 (alloc mode only)
 static int _currentCat = 0;   // 0-3: Politics, Economics, Values, Future
 static int _currentModel = 0; // 0-3: model within current category
 static int _mode = 0;         // 0: categories/models, 1: energy allocation
 static int _allocSlider = 0;  // 0: Economy, 1: Psych, 2: Labs
+static int _savedAllocPsych = 0; // saved for cancel in alloc-only mode
+static int _savedAllocLabs = 0;
 
 // Effect names matching CSocialEffect field order
 static const char* effect_names[] = {
@@ -396,8 +399,8 @@ static bool update_alloc_mode(WPARAM wParam, bool ctrl) {
         return true;
 
     case 'W':
-        // W: back to category mode
-        if (!ctrl) {
+        // W: back to category mode (not in alloc-only mode)
+        if (!ctrl && !_allocOnly) {
             _mode = 0;
             announce_category();
             return true;
@@ -606,6 +609,43 @@ void RunModal() {
     sr_output(loc(SR_SOCENG_CLOSED), true);
 
     // Refresh map display
+    draw_map(1);
+}
+
+// Run allocation-only modal (F3 Energy Banks).
+// Starts directly in allocation mode, no SE categories.
+void RunModalAlloc() {
+    Faction* f = &Factions[get_faction_id()];
+
+    // Save current allocation for cancel/restore
+    _savedAllocPsych = f->SE_alloc_psych;
+    _savedAllocLabs = f->SE_alloc_labs;
+
+    _active = true;
+    _wantClose = false;
+    _confirmed = false;
+    _allocOnly = true;
+    _mode = 1;
+    _allocSlider = 0;
+
+    // Announce opening with current allocation
+    char buf[256];
+    build_alloc_string(buf, sizeof(buf));
+    char out[512];
+    snprintf(out, sizeof(out), loc(SR_SOCENG_ALLOC_MODE_OPEN), buf);
+    sr_output(out, true);
+
+    sr_run_modal_pump(&_wantClose);
+
+    if (!_confirmed) {
+        // Restore original values on cancel
+        f->SE_alloc_psych = _savedAllocPsych;
+        f->SE_alloc_labs = _savedAllocLabs;
+    }
+
+    _active = false;
+    _allocOnly = false;
+    sr_output(loc(SR_SOCENG_ALLOC_MODE_CLOSED), true);
     draw_map(1);
 }
 

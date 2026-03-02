@@ -42,11 +42,16 @@ terrain_trench=Tiefsee
 terrain_arid=Trocken
 terrain_moist=Feucht
 terrain_rainy=Regnerisch
-terrain_high=Erhöht
+terrain_high=Höhe %d
 tile_yields=%d Nahrung, %d Mineralien, %d Energie
 tile_owner=Gebiet: %s
 tile_in_radius=Im Basisradius
 tile_unowned=Herrenlos
+tile_owner_diplo=Gebiet: %s (%s)
+tile_worked=, bewirtschaftet
+foreign_unit_at=. Einheit: %s %s
+unit_terraform=, baut %s
+monolith_used= (verbraucht)
 tile_unexplored=Unerforscht
 # Scanner
 scan_all=Scanner: Alle
@@ -464,12 +469,23 @@ design_cancelled=Entwurf abgebrochen.
 design_new=Neuer Einheitenentwurf.
 design_retired=%s ausgemustert.
 design_retire_confirm=Erneut Entf drücken um %s auszumustern.
-design_help=Auf/Ab: durchsuchen. Enter: bearbeiten. N: neu. Entf: ausmustern. Escape: schließen.
+design_help=Auf/Ab: durchsuchen. Enter: bearbeiten. N: neu. R: umbenennen. O: veraltet. U: aufrüsten. Entf: ausmustern. Escape: schließen.
 design_edit_help=Links/Rechts: Kategorie. Auf/Ab: Option. Enter: speichern. S: Übersicht. Escape: abbrechen.
 design_triad_land=Land
 design_triad_sea=See
 design_triad_air=Luft
 design_equipment=Ausrüstung: %s
+design_rename_open=Einheit umbenennen: %s. Neuen Namen eingeben, Enter zum Bestätigen, Escape zum Abbrechen.
+design_rename_done=Einheit umbenannt zu %s.
+design_rename_cancel=Umbenennung abgebrochen.
+design_obsolete_on=%s als veraltet markiert.
+design_obsolete_off=%s nicht mehr veraltet.
+design_upgrade_offer=%d %s auf %s aufrüsten? Kosten: %d Energie. Erneut U drücken zum Bestätigen.
+design_upgrade_confirm=%d %s auf %s aufgerüstet.
+design_upgrade_done=Aufrüstung abgeschlossen.
+design_upgrade_none=Keine Aufrüstung verfügbar für %s.
+design_upgrade_cost=Nicht möglich: nicht genug Energie. Benötigt %d, vorhanden %d.
+design_obsolete_status= (veraltet)
 
 # Terraform-Status
 terraform_order=%s wird gebaut, %d Runden
@@ -519,6 +535,8 @@ soceng_info_fmt=Forschung: %s. %d von %d Labor, %d Runden. Energie: %d Guthaben,
 soceng_alloc_econ=Wirtschaft
 soceng_alloc_psych=Psycho
 soceng_alloc_labs=Labor
+soceng_alloc_mode_open=Energieverteilung. %s Hoch/Runter: Regler wählen, Links/Rechts: ändern. Eingabe: bestätigen, Escape: abbrechen.
+soceng_alloc_mode_closed=Energieverteilung geschlossen.
 
 # Garnison (Strg+U)
 garrison_open=Garnison: %d Einheiten. Hoch/Runter: navigieren, D: Details, Eingabe: aktivieren, B: Heimatbasis, H: Beschleunigen, Escape: schließen.
@@ -621,8 +639,80 @@ mode_move=Bewegen-Modus
 mode_view=Ansicht-Modus
 
 # Mehrspieler-Einrichtung
-netsetup_open=Mehrspieler-Einrichtung. Spieltext wird vorgelesen.
-netsetup_help=Mehrspieler-Lobby. Pfeiltasten, Eingabe, Escape.
+netsetup_open=Mehrspieler-Einrichtung. Tab: Bereiche, Pfeiltasten: navigieren, Eingabe: aktivieren, Strg+F1: Hilfe.
+netsetup_help=Tab/Shift+Tab: Bereiche. Hoch/Runter: Einträge. Eingabe/Leertaste: aktivieren. S: Zusammenfassung. Escape: Abbrechen.
+netsetup_zone_settings=Einstellungen
+netsetup_zone_players=Spieler
+netsetup_zone_checkboxes=Optionen
+netsetup_zone_buttons=Schaltflächen
+netsetup_item_fmt=%d von %d: %s
+netsetup_checkbox_fmt=%d von %d: %s, %s
+netsetup_player_fmt=%d von %d: %s
+netsetup_player_empty=Leer
+netsetup_set_difficulty=Schwierigkeitsgrad
+netsetup_set_time=Zeiteinstellungen
+netsetup_set_gametype=Spielart
+netsetup_set_planetsize=Planetgröße
+netsetup_set_ocean=Ozeanabdeckung
+netsetup_set_erosion=Erosionskräfte
+netsetup_set_natives=Einheimische Lebensformen
+netsetup_set_cloud=Bewölkung
+netsetup_cb_simultaneous=Simultane Bewegungen
+netsetup_cb_transcendence=Höheres Ziel / Transzendenz
+netsetup_cb_conquest=Totaler Krieg / Eroberung
+netsetup_cb_diplomatic=Friedenszeiten / Diplomatisch
+netsetup_cb_economic=Alles meins / Wirtschaftlich
+netsetup_cb_cooperative=Einer für alle / Kooperativ
+netsetup_cb_do_or_die=Leben oder Tod
+netsetup_cb_look_first=Zuerst schauen
+netsetup_cb_tech_stagnation=Tech-Stagnation
+netsetup_cb_spoils=Kriegsbeute
+netsetup_cb_blind_research=Ziellose Forschung
+netsetup_cb_intense_rivalry=Starke Rivalität
+netsetup_cb_no_unity_survey=Keine Unity-Vermessung
+netsetup_cb_no_unity_scatter=Keine Unity-Verteilung
+netsetup_cb_bell_curve=Glockenkurve
+netsetup_cb_time_warp=Zeitsprung
+netsetup_cb_rand_personality=Zufällige Persönlichkeiten
+netsetup_cb_rand_social=Zufällige Gesellschaftsziele
+netsetup_btn_cancel=Abbrechen
+netsetup_btn_start=Spiel starten
+netsetup_player_joined=Spieler beigetreten: %s
+netsetup_player_left=Spieler verlassen: Platz %d
+netsetup_summary=%s Bereich, %d von %d: %s
+netsetup_enabled=aktiviert
+netsetup_disabled=deaktiviert
+netsetup_diff_citizen=Bürger
+netsetup_diff_specialist=Spezialist
+netsetup_diff_talent=Talent
+netsetup_diff_librarian=Bibliothekar
+netsetup_diff_thinker=Denker
+netsetup_diff_transcend=Transzendenz
+netsetup_size_tiny=Winziger Planet
+netsetup_size_small=Kleiner Planet
+netsetup_size_standard=Standard-Planet
+netsetup_size_large=Großer Planet
+netsetup_size_huge=Riesiger Planet
+netsetup_ocean_30=30-50% der Fläche
+netsetup_ocean_50=50-70% der Fläche
+netsetup_ocean_70=70-90% der Fläche
+netsetup_erosion_strong=Starke Erosionskräfte
+netsetup_erosion_avg=Mittlere Erosionskräfte
+netsetup_erosion_weak=Schwache Erosionskräfte
+netsetup_native_rare=Wenige Einheimische
+netsetup_native_avg=Mittlere Einheimische
+netsetup_native_abund=Viele Einheimische
+netsetup_cloud_sparse=Wenig Bewölkung
+netsetup_cloud_avg=Mittlere Bewölkung
+netsetup_cloud_dense=Dichte Bewölkung
+netsetup_not_supported=noch nicht unterstützt
+netsetup_cancelled=Abgebrochen.
+netsetup_of=von
+netsetup_gametype_todo=Spielart-Auswahl wird noch nicht unterstützt.
+netsetup_gt_random=Neues Spiel (Zufallskarte)
+netsetup_gt_scenario=Szenario
+netsetup_gt_load_map=Karte laden
+netsetup_start_no_players=Start nicht möglich: nicht genug Spieler.
 
 # Einheiten-Aktionsmenü (Shift+F10)
 act_menu_open=Einheiten-Aktionen, %d Einträge. Hoch/Runter, Eingabe, Escape.
@@ -672,3 +762,291 @@ auto_farm_solar=Farm+Solar+Straße
 auto_farm_mine=Farm+Mine+Straße
 auto_fungus=Automatische Fungus-Entfernung
 auto_sensor=Automatische Sensoren
+
+# Rat
+council_open=Planetarischer Rat, %s. %s
+council_closed=Rat beendet.
+council_help=S oder Tab: Stimmübersicht. Strg+F1: Hilfe. Spielsteuerung für Navigation.
+council_vote_line=%s: %d Stimmen
+council_total=Gesamt: %d Stimmen. Mehrheit: %d.
+council_your_votes=Deine Stimmen: %d von %d.
+council_governor=Gouverneur: %s
+council_no_governor=Kein Gouverneur.
+council_can_call=Du kannst den Planetarischen Rat einberufen.
+council_cannot_call=Planetarischer Rat kann nicht einberufen werden.
+
+# Basisoperationen (F4)
+baseops_open=Basisoperationen, %d Basen. Hoch/Runter: navigieren, S: Zusammenfassung, D: Detail, Strg+F1: Hilfe.
+baseops_closed=Basisoperationen geschlossen.
+baseops_base_fmt=%s, %d von %d: Bevölkerung %d, Nahrung %+d, Mineralien %+d, Energie %+d, Baut %s, %d Runden
+baseops_base_fmt_stall=%s, %d von %d: Bevölkerung %+d, Nahrung %+d, Mineralien %+d, Energie %+d, Baut %s, stockt
+baseops_summary=%d Basen, Bevölkerung %d, Energie %d
+baseops_help=Hoch/Runter: Basen navigieren. S: Zusammenfassung. D: Detail. Escape: schließen. Strg+F1: diese Hilfe.
+baseops_empty=Keine Basen.
+baseops_detail=%s: Talente %d, Drohnen %d, Spezialisten %d. Wirtschaft %d, Psych %d, Forschung %d. Ökoschaden %d. Höhe %d. %s
+
+# Forschungsstatus (F2)
+labs_open=Forschungsstatus. S: Zusammenfassung, D: Basis-Detail, Strg+F1: Hilfe.
+labs_closed=Forschungsstatus geschlossen.
+labs_summary=Forschung: %s, %d von %d, %d Runden. Forschung pro Runde: %d. Technologien entdeckt: %d. Verteilung: Wirtschaft %d%%, Psyche %d%%, Forschung %d%%.
+labs_summary_done=Forschung: %s. Forschung pro Runde: %d. Technologien entdeckt: %d. Verteilung: Wirtschaft %d%%, Psyche %d%%, Forschung %d%%.
+labs_detail_header=Forschung nach Basis: %d Basen, %d Forschung gesamt.
+labs_detail_base=%s, %d von %d: %d Forschung
+labs_no_bases=Keine Basen.
+labs_help=S: Forschungsübersicht. D: Forschung pro Basis. Escape: Schließen. Strg+F1: Diese Hilfe.
+
+# Geheimprojekte (F5)
+projects_open=Geheimprojekte, %d Projekte. Hoch/Runter: navigieren, S: Zusammenfassung, Strg+F1: Hilfe.
+projects_closed=Geheimprojekte geschlossen.
+projects_built=%s, %d von %d: Gebaut von %s in %s
+projects_unbuilt=%s, %d von %d: Nicht gebaut
+projects_destroyed=%s, %d von %d: Zerstört
+projects_summary=%d Projekte: %d gebaut, %d nicht gebaut, %d zerstört
+projects_empty=Keine Geheimprojekte.
+projects_help=Hoch/Runter: Projekte durchsuchen. S: Zusammenfassung. Escape: Schließen. Strg+F1: Diese Hilfe.
+
+# Orbitalstatus (F6)
+orbital_open=Orbitalstatus. S: Zusammenfassung, D: Fraktionsvergleich, Strg+F1: Hilfe.
+orbital_closed=Orbitalstatus geschlossen.
+orbital_summary=%d Satelliten: %d Nahrung, %d Mineralien, %d Energie, %d Verteidigung.
+orbital_player=%s: %d Satelliten
+orbital_faction=%s: %d Satelliten
+orbital_help=S: Deine Satelliten. D: Fraktionsvergleich. Escape: Schließen. Strg+F1: Diese Hilfe.
+
+# Militärstatus (F7)
+military_open=Militärstatus. S: Rangliste, D: Einheiten-Detail, Strg+F1: Hilfe.
+military_closed=Militärstatus geschlossen.
+military_summary=Kampfeinheiten: %d. Basen: %d. Bevölkerung: %d. Stärke: %d, %s. Beste Waffe: %d, Panzerung: %d, Geschwindigkeit: %d. Planetenzerstörer: %d.
+military_unit=%s, %d von %d: %d aktiv
+military_detail_open=Einheitentypen: %d. Hoch/Runter zum Blättern, Escape zum Zurückkehren.
+military_detail_closed=Einheiten-Detail geschlossen.
+military_no_units=Keine aktiven Einheitentypen.
+military_rankings_header=Machtrangliste:
+military_rank_entry=%d. %s, Stärke %d
+military_help=S: Machtrangliste. D: Einheitentypen. Escape: Schließen. Strg+F1: Diese Hilfe.
+
+# Punktestand (F8)
+score_open=Punktestand, %d Fraktionen. Hoch/Runter: navigieren, S: dein Rang, Strg+F1: Hilfe.
+score_closed=Punktestand geschlossen.
+score_faction=%d. %s, %d von %d: Basen %d, Bevölkerung %d, Technologien %d
+score_player=Dein Rang: %s, %d von %d. Basen %d, Bevölkerung %d, Technologien %d.
+score_empty=Keine Fraktionen.
+score_help=Hoch/Runter: Rangliste durchsuchen. S: Dein Rang. Escape: Schließen. Strg+F1: Diese Hilfe.
+
+# Spielende
+victory_conquest=Eroberungssieg!
+victory_diplomatic=Diplomatischer Sieg!
+victory_economic=Wirtschaftssieg!
+victory_transcendence=Transzendenz-Sieg!
+defeat=Niederlage. Deine Fraktion wurde eliminiert.
+game_over=Spiel vorbei.
+replay_screen=Replay-Karte. Visuelle Animation. Drücke Escape zum Fortfahren.
+
+# Datalinks (F1)
+dl_open=Datalinks, %d Kategorien. Links/Rechts: Kategorie, Hoch/Runter: Einträge, D: Detail, S: Zusammenfassung, Escape: Schließen.
+dl_closed=Datalinks geschlossen.
+dl_help=Links/Rechts: Kategorie wechseln. Hoch/Runter: Einträge durchsuchen. Pos1/Ende: Erster/Letzter. D: Detail. S: Zusammenfassung. Escape: Schließen. Strg+F1: Diese Hilfe.
+dl_empty=Keine Einträge in dieser Kategorie.
+dl_category_fmt=%s, %d Einträge.
+dl_summary=%s, %d Einträge. Technologien bekannt: %d von %d.
+dl_known=bekannt
+dl_unknown=unbekannt
+dl_unlocks=Schaltet frei:
+dl_preq_none=Keine
+dl_preq_disabled=Deaktiviert
+dl_cat_tech=Technologien
+dl_cat_facility=Basiseinrichtungen
+dl_cat_project=Geheimprojekte
+dl_cat_weapon=Waffen
+dl_cat_armor=Rüstung
+dl_cat_chassis=Chassis
+dl_cat_reactor=Reaktoren
+dl_cat_ability=Fähigkeiten
+dl_cat_concept=Spielkonzepte
+dl_tcat_explore=Erkunden
+dl_tcat_discover=Entdecken
+dl_tcat_build=Bauen
+dl_tcat_conquer=Erobern
+dl_item_tech=%d von %d: %s (%s)
+dl_item_facility=%d von %d: %s, Kosten %d, Unterhalt %d
+dl_item_project=%d von %d: %s, nicht gebaut
+dl_item_project_built=%d von %d: %s, gebaut von %s
+dl_item_weapon=%d von %d: %s, Angriff %d
+dl_item_armor=%d von %d: %s, Verteidigung %d
+dl_item_chassis=%d von %d: %s, Geschwindigkeit %d, %s
+dl_item_reactor=%d von %d: %s, Leistung %d
+dl_item_ability=%d von %d: %s
+dl_item_concept=%d von %d: %s
+dl_detail_tech=%s. Benötigt: %s, %s. Kategorie: %s. Stufe %d. %s
+dl_detail_tech_v2=%s. Benötigt: %s. Kategorie: %s. Stufe %d. %s
+dl_detail_facility=%s. Kosten %d, Unterhalt %d. Benötigt: %s. %s
+dl_detail_project=%s. Kosten %d. Benötigt: %s. Nicht gebaut. %s
+dl_detail_project_built=%s. Kosten %d. Benötigt: %s. Gebaut von %s in %s. %s
+dl_detail_weapon=%s. Angriff %d, Kosten %d. Benötigt: %s
+dl_detail_armor=%s. Verteidigung %d, Kosten %d. Benötigt: %s
+dl_detail_chassis=%s. Geschwindigkeit %d, %s, Reichweite %d. Benötigt: %s
+dl_detail_reactor=%s. Leistung %d. Benötigt: %s
+dl_detail_ability=%s. %s. Benötigt: %s
+dl_detail_concept=%s. %s
+# Technologieauswahl (Forschungsziel)
+tech_pick_title=Forschungsziel wählen. Wähle eine Technologie zum Erforschen. %d Optionen verfügbar.
+tech_pick_item=%d von %d: %s, %s
+tech_pick_help=Auf/Ab: Optionen durchblättern. Eingabe: Forschungsziel auswählen. Escape: Abbrechen. Strg+F1: Hilfe.
+tech_pick_closed=Forschung ausgewählt.
+tech_pick_dir=%d von %d: %s
+tech_pick_blind_status=Zufallsforschung. Aktuelle Richtung: %s.
+tech_pick_blind_mixed=Zufallsforschung. Keine bestimmte Richtung festgelegt.
+tech_pick_blind_done=Richtung auf %s gesetzt.
+tech_pick_status=Aktuelle Richtung: %s.
+tech_pick_status_mixed=Keine bestimmte Richtung festgelegt.
+dl_concept_no_text=Keine Beschreibung verfügbar.
+
+# Fraktionsauswahl
+faction_help=Hoch, Runter: Fraktion wählen. Eingabe: spielen. G: Gruppe bearbeiten. I: Fraktionsinfo. R: Zufallsgruppe. Escape: abbrechen. Strg+F1: Hilfe.
+faction_no_info=Keine Fraktionsinfo verfügbar.
+
+# Weltkarten-Aktionen
+research_priorities=Forschungsprioritäten.
+group_dialog=Gruppendialog.
+grid_on=Raster an.
+grid_off=Raster aus.
+terrain_flat_on=Flaches Gelände an.
+terrain_flat_off=Flaches Gelände aus.
+centered=Zentriert.
+monuments_info=Monumente. Visuelle Darstellung der Errungenschaften deiner Fraktion. Noch nicht zugänglich.
+hall_of_fame_info=Ruhmeshalle. Liste abgeschlossener Spiele. Noch nicht zugänglich.
+
+# Monumente (F9)
+monument_open=Monumente, %d von %d erreicht. Auf/Ab: Navigieren, S: Zusammenfassung, Escape: Schließen.
+monument_closed=Monumente geschlossen.
+monument_item_achieved=%d von %d: %s, Runde %d.
+monument_item_locked=%d von %d: %s, nicht erreicht.
+monument_summary=%d von %d Errungenschaften freigeschaltet.
+monument_help=Auf/Ab: Errungenschaften durchblättern. Pos1/Ende: Erste/Letzte. S: Zusammenfassung. Escape: Schließen. Strg+F1: Diese Hilfe.
+monument_type_0=Kolonie gegründet
+monument_type_1=Technologie entdeckt
+monument_type_2=Geheimnisse der Technologie
+monument_type_3=Prototyp gebaut
+monument_type_4=Einrichtung gebaut
+monument_type_5=Geheimprojekt abgeschlossen
+monument_type_6=Feind vernichtet
+monument_type_7=Basis erobert
+monument_type_8=Marineeinheit gebaut
+monument_type_9=Lufteinheit gebaut
+monument_type_10=Einheimisches Leben gezüchtet
+monument_type_11=Erster im Weltraum
+monument_type_12=Naturreservat gebaut
+monument_type_13=Planet vereinigt
+monument_type_14=Transzendenz-Sieg
+monument_type_15=Fraktion eliminiert
+
+# Laufzeit-Schalter
+thinker_ai_on=Thinker-KI aktiviert.
+thinker_ai_off=Thinker-KI deaktiviert. Verwende Original-KI.
+accessibility_on=Screenreader an.
+accessibility_off=Screenreader aus.
+help_toggle_ai=Strg+Umschalt+T: Thinker-KI umschalten
+help_toggle_sr=Strg+Umschalt+A: Screenreader umschalten
+
+# Spieleinstellungs-Editor (Strg+F10)
+gsettings_open=Spieleinstellungen. Tab: Kategorie wechseln. Hoch/Runter: Navigieren. Links/Rechts: Wert ändern. Enter: Speichern. Escape: Abbrechen.
+gsettings_saved=Einstellungen gespeichert.
+gsettings_cancelled=Einstellungen abgebrochen.
+gsettings_help=Tab/Umschalt+Tab: Kategorie wechseln. Hoch/Runter: Einstellungen navigieren. Links/Rechts: Wert ändern. Enter/Leertaste: Umschalten (Regeln). D: Beschreibung. I: Fraktionsinfo. S: Zusammenfassung. Enter: Speichern und schließen. Escape: Abbrechen. Strg+F1: Diese Hilfe.
+gsettings_cat_fmt=Kategorie %d von %d: %s, %d Einstellungen
+gsettings_item_fmt=%d von %d: %s: %s
+gsettings_toggle_fmt=%d von %d: %s: %s
+gsettings_summary_fmt=Schwierigkeit %s, %s, Karte %s, %d Regeln aktiv
+gsettings_cat_general=Allgemein
+gsettings_cat_faction=Fraktion
+gsettings_cat_map=Karte
+gsettings_cat_rules=Regeln
+gsettings_difficulty=Schwierigkeit
+gsettings_faction=Fraktion
+gsettings_map_size=Planetengröße
+gsettings_ocean=Ozeanbedeckung
+gsettings_land=Landbedeckung
+gsettings_erosion=Erosion
+gsettings_clouds=Wolkenbedeckung
+gsettings_natives=Einheimische Lebensformen
+gsettings_land_sparse=Spärlich
+gsettings_land_avg=Durchschnittlich
+gsettings_land_dense=Dicht
+gsettings_on=Ein
+gsettings_off=Aus
+gsettings_rule_conquest=Eroberungssieg
+gsettings_rule_economic=Wirtschaftssieg
+gsettings_rule_diplomatic=Diplomatiesieg
+gsettings_rule_transcendence=Transzendenzsieg
+gsettings_rule_cooperative=Kooperativer Sieg
+gsettings_rule_do_or_die=Sieg oder Tod
+gsettings_rule_look_first=Erst schauen
+gsettings_rule_tech_stagnation=Tech-Stagnation
+gsettings_rule_intense_rivalry=Intensive Rivalität
+gsettings_rule_time_warp=Zeitsprung
+gsettings_rule_no_unity_survey=Kein Unity-Survey
+gsettings_rule_blind_research=Blinde Forschung
+gsettings_rule_no_unity_scatter=Keine Unity-Streuung
+gsettings_rule_spoils_of_war=Kriegsbeute
+gsettings_rule_bell_curve=Glockenkurve
+gsettings_rule_desc_conquest=Sieg durch Eroberung aller anderen Fraktionen.
+gsettings_rule_desc_economic=Sieg durch Kontrolle des globalen Energiemarkts.
+gsettings_rule_desc_diplomatic=Sieg durch Wahl zum Planetaren Gouverneur oder Obersten Anführer.
+gsettings_rule_desc_transcendence=Sieg durch Vollendung des Aufstiegs zur Transzendenz.
+gsettings_rule_desc_cooperative=Verbündete Fraktionen teilen den Sieg.
+gsettings_rule_desc_do_or_die=Eliminierte Fraktionen können nicht neu starten.
+gsettings_rule_desc_look_first=Karte erkunden, bevor ein Landeplatz gewählt wird.
+gsettings_rule_desc_tech_stagnation=Forschung verlangsamt sich mit zunehmender Technologiezahl.
+gsettings_rule_desc_intense_rivalry=Aggressiveres KI-Verhalten.
+gsettings_rule_desc_time_warp=Schnellstart durch Überspringen früher Runden.
+gsettings_rule_desc_no_unity_survey=Keine Kartenübersicht aus dem Orbit.
+gsettings_rule_desc_blind_research=Keine Wahl bestimmter Forschungsziele möglich.
+gsettings_rule_desc_no_unity_scatter=Keine Versorgungskapseln aus Unity-Wrack.
+gsettings_rule_desc_spoils_of_war=Technologie bei Eroberung feindlicher Basen erbeuten.
+gsettings_rule_desc_bell_curve=Kampfergebnisse folgen einer Glockenkurvenverteilung.
+gsettings_no_desc=Keine Beschreibung verfügbar.
+gsettings_press_d=D für Details drücken.
+gsettings_faction_info=I für Fraktionsinfo drücken.
+
+# Einheitenliste (U-Taste)
+unit_list_open=Einheitenliste, %d Einheiten. Hoch/Runter: Blättern, Enter: Auswählen, Escape: Schließen.
+unit_list_fmt=%d von %d: %s bei (%d, %d)
+unit_list_moves=%d von %d Züge
+unit_list_health=Gesundheit %d von %d
+unit_list_home=Heimatbasis: %s
+unit_list_selected=%s ausgewählt
+unit_list_empty=Keine Einheiten verfügbar.
+unit_list_help=Hoch/Runter: Blättern. Enter: Einheit auswählen und aktivieren. Escape: Schließen. Strg+F1: Diese Hilfe.
+order_idle=bereit
+order_hold=halten
+order_sentry=Wache
+order_explore=erkunden
+order_goto=unterwegs
+order_convoy=Konvoi
+
+# Feindliche Einheiten (Umschalt+U)
+enemy_list_open=Fremde Einheiten, %d sichtbar. Hoch/Runter: Blättern, Enter: Zur Einheit springen, Escape: Schließen.
+enemy_list_fmt=%d von %d: %s, %s (%s) bei (%d, %d)
+enemy_list_native=Einheimisch
+enemy_list_empty=Keine fremden Einheiten sichtbar.
+enemy_list_help=Hoch/Runter: Blättern. Enter: Zur Einheit auf der Karte springen. Escape: Schließen. Strg+F1: Diese Hilfe.
+enemy_list_jump=Gesprungen zu %s bei (%d, %d)
+enemy_list_triad_land=Boden
+enemy_list_triad_sea=See
+enemy_list_triad_air=Luft
+
+# Stapel-Wechsel (Tab)
+tab_cycle_fmt=%s, %d von %d auf Feld
+tab_cycle_none=Keine eigenen Einheiten am Cursor.
+
+# Netzwerk-Einstellungen (Strg+Umschalt+F10)
+netsettings_open=Lobby-Einstellungseditor. Tab: Kategorien, Hoch/Runter: navigieren, Links/Rechts: ändern. Enter: speichern, Escape: abbrechen.
+netsettings_saved=Einstellungen angewendet.
+netsettings_cancelled=Einstellungen verworfen.
+netsettings_help=Tab/Umschalt+Tab: Kategorie wechseln. Hoch/Runter: Navigieren. Links/Rechts: Wert ändern oder umschalten. Leertaste: Checkbox umschalten. S: Zusammenfassung. Enter: Speichern und schließen. Escape: Abbrechen. Strg+F1: Diese Hilfe.
+netsettings_cat_fmt=Kategorie %d von %d: %s, %d Elemente
+netsettings_cat_settings=Einstellungen
+netsettings_cat_rules=Regeln
+netsettings_summary_fmt=Schwierigkeit: %s, Planet: %s. %d Einstellungen geändert, %d Regeln geändert.
+netsettings_time_none=Keine
+netsettings_time_other=Benutzerdefiniert

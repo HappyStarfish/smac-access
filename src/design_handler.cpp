@@ -9,6 +9,7 @@
 
 #include "design_handler.h"
 #include "engine.h"
+#include "faction.h"
 #include "gui.h"
 #include "modal_utils.h"
 #include "screen_reader.h"
@@ -65,6 +66,16 @@ static int _availAbilityCount = 0;
 
 // Delete confirmation state
 static int _deleteConfirmId = -1;
+
+// Rename state
+static bool _renameActive = false;
+static char _renameBuf[32] = {};
+static char _renameOriginal[32] = {};
+static int _renameLen = 0;
+
+// Upgrade confirmation state
+static int _upgradeConfirmId = -1;
+static int _upgradeTargetId = -1;
 
 static int get_faction_id() {
     return *CurrentPlayerFaction;
@@ -203,9 +214,9 @@ static void build_proto_list() {
     _protoCount = 0;
 
     // Default units (0..MaxProtoFactionNum-1) that player has tech for
+    // Include obsolete units so user can toggle them back
     for (int i = 0; i < MaxProtoFactionNum; i++) {
-        if (Units[i].is_active() && tech_available(Units[i].preq_tech)
-            && !(Units[i].obsolete_factions & (1 << fid))) {
+        if (Units[i].is_active() && tech_available(Units[i].preq_tech)) {
             _protoList[_protoCount++] = i;
         }
     }
@@ -231,6 +242,40 @@ static int find_empty_slot() {
     return -1;
 }
 
+// Find the best upgrade target for a unit. Returns unit_id or -1.
+static int find_upgrade_target(int old_unit_id) {
+    int fid = get_faction_id();
+    UNIT* old_u = &Units[old_unit_id];
+    int old_triad = Chassis[old_u->chassis_id].triad;
+    int old_wmode = Weapon[old_u->weapon_id].mode;
+    int best_id = -1;
+    int best_score = 0;
+
+    // Search faction custom prototypes for a compatible upgrade
+    int base = fid * MaxProtoFactionNum;
+    for (int i = base; i < base + MaxProtoFactionNum; i++) {
+        if (i == old_unit_id) continue;
+        if (!Units[i].is_active()) continue;
+        if (Units[i].obsolete_factions & (1 << fid)) continue;
+
+        UNIT* u = &Units[i];
+        if (Chassis[u->chassis_id].triad != old_triad) continue;
+        if (Weapon[u->weapon_id].mode != old_wmode) continue;
+
+        int score = Weapon[u->weapon_id].offense_value
+                  + Armor[u->armor_id].defense_value * 2
+                  + Chassis[u->chassis_id].speed;
+        int old_score = Weapon[old_u->weapon_id].offense_value
+                      + Armor[old_u->armor_id].defense_value * 2
+                      + Chassis[old_u->chassis_id].speed;
+        if (score > old_score && score > best_score) {
+            best_score = score;
+            best_id = i;
+        }
+    }
+    return best_id;
+}
+
 // Announce a prototype in the list (Level 1)
 static void announce_proto() {
     if (_protoCount == 0) return;
@@ -246,6 +291,13 @@ static void announce_proto() {
     snprintf(buf, sizeof(buf), loc(SR_DESIGN_PROTO_FMT),
         _protoIndex + 1, _protoCount,
         sr_game_str(u->name), atk, def, spd, cost);
+
+    // Append obsolete indicator
+    int fid = get_faction_id();
+    if (u->obsolete_factions & (1 << fid)) {
+        strncat(buf, loc(SR_DESIGN_OBSOLETE_STATUS), sizeof(buf) - strlen(buf) - 1);
+    }
+
     sr_output(buf, true);
 }
 
@@ -602,6 +654,7 @@ static bool handle_list_key(WPARAM wParam) {
         if (_protoCount > 0) {
             _protoIndex = (_protoIndex + _protoCount - 1) % _protoCount;
             _deleteConfirmId = -1;
+            _upgradeConfirmId = -1;
             announce_proto();
         }
         return true;
@@ -611,6 +664,7 @@ static bool handle_list_key(WPARAM wParam) {
         if (_protoCount > 0) {
             _protoIndex = (_protoIndex + 1) % _protoCount;
             _deleteConfirmId = -1;
+            _upgradeConfirmId = -1;
             announce_proto();
         }
         return true;
@@ -643,6 +697,7 @@ static bool handle_list_key(WPARAM wParam) {
         _editIsNew = false;
         _editing = true;
         _deleteConfirmId = -1;
+        _upgradeConfirmId = -1;
         init_editor_from_unit(_editUnitId);
 
         char buf[256];
@@ -668,6 +723,7 @@ static bool handle_list_key(WPARAM wParam) {
             _editIsNew = true;
             _editing = true;
             _deleteConfirmId = -1;
+            _upgradeConfirmId = -1;
 
             // Initialize the slot as active so mod_make_proto can work with it
             memset(&Units[slot], 0, sizeof(UNIT));
@@ -680,6 +736,118 @@ static bool handle_list_key(WPARAM wParam) {
             snprintf(buf, sizeof(buf), "%s. %s",
                 loc(SR_DESIGN_NEW), loc(SR_DESIGN_EDIT_HELP));
             sr_output(buf, true);
+            return true;
+        }
+        return false;
+
+    case 'R':
+        if (!ctrl) {
+            // Rename selected prototype
+            if (_protoCount == 0) return true;
+            int uid = _protoList[_protoIndex];
+            _renameActive = true;
+            _renameLen = 0;
+            _renameBuf[0] = '\0';
+            strncpy(_renameOriginal, Units[uid].name, 31);
+            _renameOriginal[31] = '\0';
+            _deleteConfirmId = -1;
+            _upgradeConfirmId = -1;
+
+            char buf[256];
+            snprintf(buf, sizeof(buf), loc(SR_DESIGN_RENAME_OPEN),
+                sr_game_str(Units[uid].name));
+            sr_output(buf, true);
+            return true;
+        }
+        return false;
+
+    case 'O':
+        if (!ctrl) {
+            // Toggle obsolete status
+            if (_protoCount == 0) return true;
+            int uid = _protoList[_protoIndex];
+            int fid = get_faction_id();
+            _deleteConfirmId = -1;
+            _upgradeConfirmId = -1;
+
+            if (Units[uid].obsolete_factions & (1 << fid)) {
+                // Remove obsolete
+                Units[uid].obsolete_factions &= ~(1 << fid);
+                char buf[256];
+                snprintf(buf, sizeof(buf), loc(SR_DESIGN_OBSOLETE_OFF),
+                    sr_game_str(Units[uid].name));
+                sr_output(buf, true);
+            } else {
+                // Mark obsolete
+                Units[uid].obsolete_factions |= (1 << fid);
+                char buf[256];
+                snprintf(buf, sizeof(buf), loc(SR_DESIGN_OBSOLETE_ON),
+                    sr_game_str(Units[uid].name));
+                sr_output(buf, true);
+            }
+            sr_debug_log("DesignHandler: obsolete toggle unit_id=%d flags=0x%x\n",
+                uid, Units[uid].obsolete_factions);
+            return true;
+        }
+        return false;
+
+    case 'U':
+        if (!ctrl) {
+            // Upgrade all units of this type
+            if (_protoCount == 0) return true;
+            int uid = _protoList[_protoIndex];
+            int fid = get_faction_id();
+            _deleteConfirmId = -1;
+
+            if (_upgradeConfirmId == uid && _upgradeTargetId >= 0) {
+                // Second press: do the upgrade
+                int count = veh_count(fid, uid);
+                int cost_per = 10 * mod_upgrade_cost(fid, _upgradeTargetId, uid);
+                int total_cost = cost_per * count;
+
+                if (total_cost > Factions[fid].energy_credits) {
+                    char buf[256];
+                    snprintf(buf, sizeof(buf), loc(SR_DESIGN_UPGRADE_COST),
+                        total_cost, Factions[fid].energy_credits);
+                    sr_output(buf, true);
+                } else {
+                    full_upgrade(fid, _upgradeTargetId, uid);
+                    char buf[256];
+                    snprintf(buf, sizeof(buf), loc(SR_DESIGN_UPGRADE_CONFIRM),
+                        count, sr_game_str(Units[uid].name),
+                        sr_game_str(Units[_upgradeTargetId].name));
+                    sr_output(buf, true);
+                    sr_debug_log("DesignHandler: upgraded %d units from %d to %d\n",
+                        count, uid, _upgradeTargetId);
+                    build_proto_list();
+                    if (_protoIndex >= _protoCount) _protoIndex = _protoCount - 1;
+                    if (_protoIndex < 0) _protoIndex = 0;
+                }
+                _upgradeConfirmId = -1;
+                _upgradeTargetId = -1;
+            } else {
+                // First press: find upgrade target and show offer
+                int target = find_upgrade_target(uid);
+                if (target < 0) {
+                    char buf[256];
+                    snprintf(buf, sizeof(buf), loc(SR_DESIGN_UPGRADE_NONE),
+                        sr_game_str(Units[uid].name));
+                    sr_output(buf, true);
+                    _upgradeConfirmId = -1;
+                    _upgradeTargetId = -1;
+                } else {
+                    int count = veh_count(fid, uid);
+                    int cost_per = 10 * mod_upgrade_cost(fid, target, uid);
+                    int total_cost = cost_per * count;
+                    char buf[512];
+                    snprintf(buf, sizeof(buf), loc(SR_DESIGN_UPGRADE_OFFER),
+                        count, sr_game_str(Units[uid].name),
+                        sr_game_str(Units[target].name), total_cost);
+                    sr_output(buf, true);
+                    _upgradeConfirmId = uid;
+                    _upgradeTargetId = target;
+                }
+            }
             return true;
         }
         return false;
@@ -773,6 +941,79 @@ bool IsActive() {
 }
 
 bool Update(UINT msg, WPARAM wParam) {
+    // Rename mode: handle both WM_KEYDOWN and WM_CHAR
+    if (_renameActive) {
+        if (msg == WM_KEYDOWN) {
+            if (wParam == VK_RETURN) {
+                // Confirm rename
+                if (_protoCount == 0) { _renameActive = false; return true; }
+                int uid = _protoList[_protoIndex];
+                _renameBuf[_renameLen] = '\0';
+                if (_renameLen > 0) {
+                    strncpy(Units[uid].name, _renameBuf, 31);
+                    Units[uid].name[31] = '\0';
+                    Units[uid].unit_flags |= UNIT_CUSTOM_NAME_SET;
+                    char buf[128];
+                    snprintf(buf, sizeof(buf), loc(SR_DESIGN_RENAME_DONE),
+                        sr_game_str(Units[uid].name));
+                    sr_output(buf, true);
+                    sr_debug_log("DesignHandler: renamed unit_id=%d to %s\n",
+                        uid, Units[uid].name);
+                } else {
+                    strncpy(Units[uid].name, _renameOriginal, 31);
+                    Units[uid].name[31] = '\0';
+                    sr_output(loc(SR_DESIGN_RENAME_CANCEL), true);
+                }
+                _renameActive = false;
+                return true;
+            }
+            if (wParam == VK_ESCAPE) {
+                if (_protoCount > 0) {
+                    int uid = _protoList[_protoIndex];
+                    strncpy(Units[uid].name, _renameOriginal, 31);
+                    Units[uid].name[31] = '\0';
+                }
+                _renameActive = false;
+                sr_output(loc(SR_DESIGN_RENAME_CANCEL), true);
+                return true;
+            }
+            if (wParam == VK_BACK) {
+                if (_renameLen > 0) {
+                    _renameLen--;
+                    _renameBuf[_renameLen] = '\0';
+                    if (_renameLen > 0) {
+                        sr_output(sr_game_str(_renameBuf), true);
+                    } else {
+                        sr_output(loc(SR_DESIGN_RENAME_CANCEL), true);
+                    }
+                }
+                return true;
+            }
+            if (wParam == 'R' && ctrl_key_down()) {
+                if (_renameLen > 0) {
+                    sr_output(sr_game_str(_renameBuf), true);
+                } else {
+                    sr_output(loc(SR_DESIGN_RENAME_CANCEL), true);
+                }
+                return true;
+            }
+            return true; // consume all other keydown in rename mode
+        }
+        if (msg == WM_CHAR) {
+            unsigned char ch = (unsigned char)wParam;
+            if (ch >= 32 && ch != 127 && _renameLen < 31) {
+                _renameBuf[_renameLen++] = (char)ch;
+                _renameBuf[_renameLen] = '\0';
+                char ansi[2] = { (char)ch, '\0' };
+                char utf8[8];
+                sr_ansi_to_utf8(ansi, utf8, sizeof(utf8));
+                sr_output(utf8, true);
+            }
+            return true;
+        }
+        return false;
+    }
+
     if (msg != WM_KEYDOWN) return false;
 
     if (_editing) {
@@ -789,8 +1030,11 @@ void RunModal() {
     _active = true;
     _wantClose = false;
     _editing = false;
+    _renameActive = false;
     _editUnitId = -1;
     _deleteConfirmId = -1;
+    _upgradeConfirmId = -1;
+    _upgradeTargetId = -1;
 
     build_proto_list();
     _protoIndex = 0;
@@ -808,6 +1052,7 @@ void RunModal() {
 
     _active = false;
     _editing = false;
+    _renameActive = false;
     sr_debug_log("DesignHandler::RunModal exit\n");
 
     draw_map(1);

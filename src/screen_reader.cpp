@@ -37,16 +37,20 @@ static char sr_text_buf[SR_TEXT_BUF_SIZE];
 static int sr_text_pos = 0;
 
 // Individual item tracking (captured text as separate items)
-static const int SR_MAX_ITEMS = 32;
+static const int SR_MAX_ITEMS = 96;
 static const int SR_MAX_ITEM_LEN = 256;
 static char sr_items[SR_MAX_ITEMS][SR_MAX_ITEM_LEN];
+static int sr_items_x[SR_MAX_ITEMS];   // X coordinate per item (-1 if unknown)
 static int sr_items_y[SR_MAX_ITEMS];   // Y coordinate per item (-1 if unknown)
+static void* sr_items_buf[SR_MAX_ITEMS]; // Buffer pointer per item (NULL if unknown)
 static int sr_items_count = 0;
 
 // Snapshot: completed draw cycle saved here when buffer is auto-cleared.
 // Allows gui.cpp to announce screens that transition quickly.
 static char sr_snap_items[SR_MAX_ITEMS][SR_MAX_ITEM_LEN];
+static int sr_snap_items_x[SR_MAX_ITEMS];
 static int sr_snap_items_y[SR_MAX_ITEMS];
+static void* sr_snap_items_buf[SR_MAX_ITEMS];
 static int sr_snap_count = 0;
 static bool sr_snap_ready = false;
 
@@ -87,7 +91,15 @@ static bool sr_defer_flag = false;
 
 bool sr_defer_active() { return sr_defer_flag; }
 bool sr_popup_is_active() { return sr_popup_active; }
+void sr_popup_set_active(bool active) { sr_popup_active = active; }
 void sr_defer_set(bool active) { sr_defer_flag = active; }
+
+// Netsetup coordinate diagnostic: set by gui.cpp when in multiplayer setup
+bool sr_netsetup_log_coords = false;
+
+// Multiplayer no-dedup: skip strstr dedup so repeated names are captured
+bool sr_mp_no_dedup = false;
+bool sr_net_start_requested = false;
 
 static void sr_trace_call(const char* func, const char* text) {
     if (GetTickCount() < sr_trace_until) {
@@ -191,12 +203,23 @@ void sr_shutdown() {
 
 static bool sr_disabled_flag = false;
 
+// Set by no_hooks.txt at startup — permanent, cannot be toggled
+static bool sr_permanent_disabled = false;
+
 bool sr_all_disabled() {
+    return sr_disabled_flag || sr_permanent_disabled;
+}
+
+void sr_set_disabled(bool disabled) {
+    sr_disabled_flag = disabled;
+}
+
+bool sr_get_disabled() {
     return sr_disabled_flag;
 }
 
 bool sr_is_available() {
-    if (sr_disabled_flag) return false;
+    if (sr_disabled_flag || sr_permanent_disabled) return false;
     return hTolk != NULL && pTolk_Output != NULL;
 }
 
@@ -436,7 +459,7 @@ Record text drawn by the game into the capture buffer.
 Auto-clears when a new draw cycle starts (>100ms gap between calls).
 Deduplicates against entire buffer within the same cycle.
 */
-void sr_record_text(const char* text, int y) {
+void sr_record_text(const char* text, int x, int y, void* buf) {
     if (!text || !text[0]) return;
 
     // Convert game text from Windows-1252 (ANSI) to UTF-8.
@@ -475,7 +498,9 @@ void sr_record_text(const char* text, int y) {
             for (int i = 0; i < sr_items_count; i++) {
                 strncpy(sr_snap_items[i], sr_items[i], SR_MAX_ITEM_LEN - 1);
                 sr_snap_items[i][SR_MAX_ITEM_LEN - 1] = '\0';
+                sr_snap_items_x[i] = sr_items_x[i];
                 sr_snap_items_y[i] = sr_items_y[i];
+                sr_snap_items_buf[i] = sr_items_buf[i];
             }
             sr_snap_ready = true;
         }
@@ -485,9 +510,11 @@ void sr_record_text(const char* text, int y) {
     }
     sr_last_record_time = now;
 
-    // Deduplicate: skip if this string is already anywhere in the buffer
-    if (sr_text_pos > 0 && strstr(sr_text_buf, text) != NULL) {
-        sr_debug_log("FILTERED dedup: %s", text);
+    // Deduplicate: skip if this string is already anywhere in the buffer.
+    // When sr_mp_no_dedup is set, allow duplicates (needed for MP player list
+    // where "Computer" appears at multiple y-coordinates).
+    if (!sr_mp_no_dedup && sr_text_pos > 0 && strstr(sr_text_buf, text) != NULL) {
+        sr_debug_log("FILTERED dedup x=%d y=%d: %s", x, y, text);
         return;
     }
 
@@ -501,14 +528,17 @@ void sr_record_text(const char* text, int y) {
     }
 
     // Capture as individual item with prefix dedup:
-    // If new text starts with the last item's text, replace it (same string growing)
-    if (sr_items_count > 0) {
+    // If new text starts with the last item's text, replace it (same string growing).
+    // Skip this when sr_mp_no_dedup is set (MP lobby needs all items at different y).
+    if (!sr_mp_no_dedup && sr_items_count > 0) {
         const char* last = sr_items[sr_items_count - 1];
         int last_len = strlen(last);
         if (len >= last_len && strncmp(text, last, last_len) == 0) {
             strncpy(sr_items[sr_items_count - 1], text, SR_MAX_ITEM_LEN - 1);
             sr_items[sr_items_count - 1][SR_MAX_ITEM_LEN - 1] = '\0';
+            if (x >= 0) sr_items_x[sr_items_count - 1] = x;
             if (y >= 0) sr_items_y[sr_items_count - 1] = y;
+            if (buf) sr_items_buf[sr_items_count - 1] = buf;
             sr_debug_log("CAPTURE update[%d]: %s", sr_items_count - 1, text);
             return;
         }
@@ -516,9 +546,11 @@ void sr_record_text(const char* text, int y) {
     if (sr_items_count < SR_MAX_ITEMS) {
         strncpy(sr_items[sr_items_count], text, SR_MAX_ITEM_LEN - 1);
         sr_items[sr_items_count][SR_MAX_ITEM_LEN - 1] = '\0';
+        sr_items_x[sr_items_count] = x;
         sr_items_y[sr_items_count] = y;
+        sr_items_buf[sr_items_count] = buf;
         sr_items_count++;
-        sr_debug_log("CAPTURE new[%d] y=%d: %s", sr_items_count - 1, y, text);
+        sr_debug_log("CAPTURE new[%d] x=%d y=%d: %s", sr_items_count - 1, x, y, text);
     }
 }
 
@@ -543,11 +575,25 @@ const char* sr_item_get(int index) {
     return NULL;
 }
 
+int sr_item_get_x(int index) {
+    if (index >= 0 && index < sr_items_count) {
+        return sr_items_x[index];
+    }
+    return -1;
+}
+
 int sr_item_get_y(int index) {
     if (index >= 0 && index < sr_items_count) {
         return sr_items_y[index];
     }
     return -1;
+}
+
+void* sr_item_get_buf(int index) {
+    if (index >= 0 && index < sr_items_count) {
+        return sr_items_buf[index];
+    }
+    return NULL;
 }
 
 void sr_items_clear() {
@@ -580,8 +626,33 @@ int sr_snapshot_get_y(int index) {
     return -1;
 }
 
+void* sr_snapshot_get_buf(int index) {
+    if (index >= 0 && index < sr_snap_count) {
+        return sr_snap_items_buf[index];
+    }
+    return NULL;
+}
+
 void sr_snapshot_consume() {
     sr_snap_ready = false;
+}
+
+void sr_force_snapshot() {
+    // Save current items to snapshot
+    sr_snap_count = sr_items_count;
+    for (int i = 0; i < sr_items_count; i++) {
+        strncpy(sr_snap_items[i], sr_items[i], SR_MAX_ITEM_LEN - 1);
+        sr_snap_items[i][SR_MAX_ITEM_LEN - 1] = '\0';
+        sr_snap_items_x[i] = sr_items_x[i];
+        sr_snap_items_y[i] = sr_items_y[i];
+        sr_snap_items_buf[i] = sr_items_buf[i];
+    }
+    sr_snap_ready = true;
+    // Clear current items and text buffer for fresh capture
+    sr_text_pos = 0;
+    sr_text_buf[0] = '\0';
+    sr_items_count = 0;
+    sr_last_record_time = 0;
 }
 
 // ========== Debug Logging ==========
@@ -1477,6 +1548,19 @@ static int __cdecl sr_hook_save_game(int a) {
     return result;
 }
 
+// ========== Planetary Council Hook ==========
+
+#include "council_handler.h"
+
+static fp_1int sr_orig_call_council = NULL;
+
+static int __cdecl sr_hook_call_council(int faction_id) {
+    CouncilHandler::OnCouncilOpen(faction_id);
+    int result = sr_orig_call_council(faction_id);
+    CouncilHandler::OnCouncilClose();
+    return result;
+}
+
 // ========== Number Input Dialog Hook ==========
 
 // Saved original pop_ask_number function address
@@ -1747,79 +1831,109 @@ static void* install_inline_hook(uint32_t target_addr, void* hook_func, uint8_t*
 
 static int __thiscall hook_write_l(void* This, LPCSTR lpString, int x, int y, int max_len) {
     sr_trace_call("write_l", lpString);
-    sr_record_text(lpString, y);
+    if (sr_netsetup_log_coords && lpString && lpString[0]) {
+        sr_debug_log("NET-XY write_l buf=%p x=%d y=%d: %s", This, x, y, lpString);
+    }
+    sr_record_text(lpString, x, y, This);
     return orig_write_l((Buffer*)This, lpString, x, y, max_len);
 }
 
 static int __thiscall hook_write_l2(void* This, LPCSTR lpString, RECT* rc, int max_len) {
     sr_trace_call("write_l2", lpString);
-    sr_record_text(lpString, rc ? rc->top : -1);
+    if (sr_netsetup_log_coords && lpString && lpString[0] && rc) {
+        sr_debug_log("NET-XY write_l2 buf=%p x=%d y=%d: %s", This, rc->left, rc->top, lpString);
+    }
+    sr_record_text(lpString, rc ? rc->left : -1, rc ? rc->top : -1, This);
     return orig_write_l2((Buffer*)This, lpString, rc, max_len);
 }
 
 static int __thiscall hook_write_cent_l(void* This, LPCSTR lpString, int x, int y, int w, int max_len) {
     sr_trace_call("cent_l", lpString);
-    sr_record_text(lpString, y);
+    if (sr_netsetup_log_coords && lpString && lpString[0]) {
+        sr_debug_log("NET-XY cent_l buf=%p x=%d y=%d w=%d: %s", This, x, y, w, lpString);
+    }
+    sr_record_text(lpString, x, y, This);
     return orig_write_cent_l((Buffer*)This, lpString, x, y, w, max_len);
 }
 
 static int __thiscall hook_write_cent_l2(void* This, LPCSTR lpString, int a3, int a4, int a5, int a6, int max_len) {
     sr_trace_call("cent_l2", lpString);
-    sr_record_text(lpString, a4);
+    if (sr_netsetup_log_coords && lpString && lpString[0]) {
+        sr_debug_log("NET-XY cent_l2 buf=%p x=%d y=%d: %s", This, a3, a4, lpString);
+    }
+    sr_record_text(lpString, a3, a4, This);
     return orig_write_cent_l2((Buffer*)This, lpString, a3, a4, a5, a6, max_len);
 }
 
 static int __thiscall hook_write_cent_l3(void* This, LPCSTR lpString, RECT* rc, int max_len) {
     sr_trace_call("cent_l3", lpString);
-    sr_record_text(lpString, rc ? rc->top : -1);
+    if (sr_netsetup_log_coords && lpString && lpString[0] && rc) {
+        sr_debug_log("NET-XY cent_l3 buf=%p x=%d y=%d: %s", This, rc->left, rc->top, lpString);
+    }
+    sr_record_text(lpString, rc ? rc->left : -1, rc ? rc->top : -1, This);
     return orig_write_cent_l3((Buffer*)This, lpString, rc, max_len);
 }
 
 static int __thiscall hook_write_cent_l4(void* This, LPCSTR lpString, int x, int y, int max_len) {
     sr_trace_call("cent_l4", lpString);
-    sr_record_text(lpString, y);
+    if (sr_netsetup_log_coords && lpString && lpString[0]) {
+        sr_debug_log("NET-XY cent_l4 buf=%p x=%d y=%d: %s", This, x, y, lpString);
+    }
+    sr_record_text(lpString, x, y, This);
     return orig_write_cent_l4((Buffer*)This, lpString, x, y, max_len);
 }
 
 static int __thiscall hook_write_right_l(void* This, LPCSTR lpString, int x, int y, int a5, int a6) {
     sr_trace_call("right_l", lpString);
-    sr_record_text(lpString, y);
+    if (sr_netsetup_log_coords && lpString && lpString[0]) {
+        sr_debug_log("NET-XY right_l buf=%p x=%d y=%d: %s", This, x, y, lpString);
+    }
+    sr_record_text(lpString, x, y, This);
     return orig_write_right_l((Buffer*)This, lpString, x, y, a5, a6);
 }
 
 static int __thiscall hook_write_right_l2(void* This, LPCSTR lpString, int x, int y, int max_len) {
     sr_trace_call("right_l2", lpString);
-    sr_record_text(lpString, y);
+    if (sr_netsetup_log_coords && lpString && lpString[0]) {
+        sr_debug_log("NET-XY right_l2 buf=%p x=%d y=%d: %s", This, x, y, lpString);
+    }
+    sr_record_text(lpString, x, y, This);
     return orig_write_right_l2((Buffer*)This, lpString, x, y, max_len);
 }
 
 static int __thiscall hook_write_right_l3(void* This, LPCSTR lpString, int a3, int a4) {
     sr_trace_call("right_l3", lpString);
-    sr_record_text(lpString, a4);
+    if (sr_netsetup_log_coords && lpString && lpString[0]) {
+        sr_debug_log("NET-XY right_l3 buf=%p x=%d y=%d: %s", This, a3, a4, lpString);
+    }
+    sr_record_text(lpString, a3, a4, This);
     return orig_write_right_l3((Buffer*)This, lpString, a3, a4);
 }
 
 static int __thiscall hook_wrap(void* This, LPCSTR lpString, int a3) {
     sr_trace_call("wrap", lpString);
-    sr_record_text(lpString, -1);
+    sr_record_text(lpString, -1, -1, This);
     return orig_wrap((Buffer*)This, lpString, a3);
 }
 
 static int __thiscall hook_wrap2(void* This, LPCSTR lpString, int x, int y, int a5) {
     sr_trace_call("wrap2", lpString);
-    sr_record_text(lpString, y);
+    if (sr_netsetup_log_coords && lpString && lpString[0]) {
+        sr_debug_log("NET-XY wrap2 buf=%p x=%d y=%d: %s", This, x, y, lpString);
+    }
+    sr_record_text(lpString, x, y, This);
     return orig_wrap2((Buffer*)This, lpString, x, y, a5);
 }
 
 static int __thiscall hook_wrap_cent(void* This, LPCSTR lpString, int a3, int y, int a5) {
     sr_trace_call("wrap_cent", lpString);
-    sr_record_text(lpString, y);
+    sr_record_text(lpString, a3, y, This);
     return orig_wrap_cent((Buffer*)This, lpString, a3, y, a5);
 }
 
 static int __thiscall hook_wrap_cent3(void* This, LPCSTR lpString, int a3) {
     sr_trace_call("wrap_cent3", lpString);
-    sr_record_text(lpString, -1);
+    sr_record_text(lpString, -1, -1, This);
     return orig_wrap_cent3((Buffer*)This, lpString, a3);
 }
 
@@ -1922,7 +2036,7 @@ static int __thiscall hook_write_strings(void* This, int a2, int a3, int y, int 
         if (header && count > 0 && !IsBadReadPtr(header, 20)) {
             char buf[2048];
             if (sr_walk_text_tree(header, count, buf, sizeof(buf))) {
-                sr_record_text(buf, y);
+                sr_record_text(buf, -1, y, This);
             }
         }
     }
@@ -2024,7 +2138,7 @@ bool sr_install_text_hooks() {
     FILE* nf = fopen("no_hooks.txt", "r");
     if (nf) {
         fclose(nf);
-        sr_disabled_flag = true;
+        sr_permanent_disabled = true;
         sr_hook_log("=== ALL SR DISABLED (no_hooks.txt found) ===");
         sr_log("sr_install_text_hooks: ALL DISABLED (no_hooks.txt)");
         debug("sr_install_text_hooks: ALL DISABLED (no_hooks.txt)\n");
@@ -2124,6 +2238,16 @@ bool sr_install_text_hooks() {
         sr_hook_log("save_game hooked at 0x5A9EB0");
     }
 
+    // TODO: Hook call_council at 0x52C880 (Planetary Council)
+    // Hook function sr_hook_call_council not yet implemented.
+    // tramp = install_inline_hook(0x52C880, (void*)sr_hook_call_council, slot);
+    // if (tramp) {
+    //     sr_orig_call_council = (fp_1int)tramp;
+    //     slot += 32;
+    //     hooked++;
+    //     sr_hook_log("call_council hooked at 0x52C880");
+    // }
+
     // Hook pop_ask_number via function pointer redirect (no inline hook needed)
     sr_orig_pop_ask_number = pop_ask_number;
     pop_ask_number = sr_hook_pop_ask_number;
@@ -2131,7 +2255,7 @@ bool sr_install_text_hooks() {
     sr_hook_log("pop_ask_number redirected to sr_hook_pop_ask_number");
 
     char logbuf[128];
-    snprintf(logbuf, sizeof(logbuf), "sr_install_text_hooks: done (%d of 22 hooked)", hooked);
+    snprintf(logbuf, sizeof(logbuf), "sr_install_text_hooks: done (%d of 23 hooked)", hooked);
     sr_log(logbuf);
     sr_hook_log(logbuf);
     return true;

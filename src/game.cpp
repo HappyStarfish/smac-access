@@ -1,5 +1,6 @@
 
 #include "game.h"
+#include "localization.h"
 
 static uint32_t custom_game_rules = 0;
 static uint32_t custom_more_rules = 0;
@@ -1160,6 +1161,16 @@ int __cdecl mod_load_map_daemon(const char* name) {
 
 int __cdecl mod_load_daemon(const char* name, int flag) {
     // Another savegame opened from selection dialog
+    reset_state();
+    return load_daemon(name, flag);
+}
+
+int __cdecl mod_replay_load_daemon(const char* name, int flag) {
+    // Replay map screen — announce for screen reader before loading
+    if (sr_is_available()) {
+        sr_output(loc(SR_REPLAY_SCREEN), true);
+        sr_debug_log("REPLAY: announcing replay screen");
+    }
     reset_state();
     return load_daemon(name, flag);
 }

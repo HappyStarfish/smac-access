@@ -60,6 +60,7 @@ bool win_has_focus();
 int __thiscall Win_is_visible(Win* This);
 LRESULT WINAPI ModWinProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 int __cdecl mod_Win_init_class(const char* lpWindowName);
+int __thiscall mod_create_game(void* This);
 void __cdecl mod_amovie_project(const char* name);
 void restore_video_mode();
 void set_video_mode(bool reset_window);

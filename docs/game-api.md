@@ -94,12 +94,13 @@ From `menu.txt` in game directory. Format: `#CATEGORY` followed by items with `|
 
 **Game function:** `action_terraform` at 0x4C9B00 (fp_3int)
 
-**Accessibility status — NOT YET ACCESSIBLE:**
-- Context help (Shift+F1) lists available terraform options per tile — DONE
-- No announcement when terraform order is given (e.g. "Building forest, 4 turns")
-- No announcement of current Former order on unit selection
-- No announcement when terraform completes
-- Turn count available via `veh->order >= ORDER_FARM && veh->order < ORDER_MOVE_TO`
+**Accessibility status — ACCESSIBLE:**
+- Context help (Shift+F1) lists available terraform options per tile
+- Terraform order announcement: "Building forest, 4 turns" (SR_TERRAFORM_ORDER)
+- Current Former order shown on unit selection: ", building %s" (SR_UNIT_TERRAFORM)
+- Terraform completion announcement: "%s completed" (SR_TERRAFORM_COMPLETE)
+- In-progress status: "Building %s, %d of %d turns" (SR_TERRAFORM_STATUS)
+- Terrain altitude announced as "Altitude 1" through "Altitude 4" (SR_TERRAIN_HIGH with %d)
 
 ### Help Menu (#HELP)
 - Index, Concepts, Technologies, Facilities
@@ -771,9 +772,80 @@ When an AI faction contacts the player, the game calls `communicate(ai, player, 
 
 ### Tier 3 — Low Priority
 
-**Multiplayer Screens**
-- Windows: `MultiWin`, `NetWin`, `NetTechWin`, `MessageWin`
-- Lobby, chat, faction selection
+**Multiplayer Setup Screen (NetWin)**
+
+NetWin at address 0x80A6F8 (static Win*). Vtable: 0x0066ccec.
+Detection: `*GameHalted && NetWin && Win_is_visible(NetWin)`
+Canvas buffer at 0x80AB3C (= NetWin + 0x444, GraphicWin canvas). Size: 800x600.
+Game globals (GameRules, DiffLevel, etc.) are ALL ZERO during setup.
+
+Children (4):
+- CHILD[0] vtable=0x669754 (BaseButton): ABBRECHEN — rect (556,212,792,232)
+- CHILD[1] vtable=0x669754 (BaseButton): SPIEL STARTEN — rect (317,212,553,232)
+- CHILD[2] vtable=0x66a038: Status bar — rect (317,356,793,384)
+- CHILD[3] vtable=0x66adc8: Player list area — rect (320,244,790,351), 1 sub-child (scroll)
+
+Coordinate map (all on NetWin canvas buf=0x80AB3C, relative to canvas origin):
+
+Title: "MULTIPLAYER-SETUP" cent_l3 x=6 y=6
+Player list header: "SPIELER" cent_l3 x=317 y=36, "AB" cent_l3 x=7 y=36
+
+Player slots (7 rows, 22px spacing, y=58,80,102,124,146,168,190):
+- Name column: write_l2 x=357
+- Faction column: write_l2 x=537 ("Zufall" = random)
+- Difficulty column: write_l2 x=679 ("Talent" etc.)
+
+Settings (write_l x=11, left side):
+- Schwierigkeitsgrad (difficulty): y=62
+- Zeiteinstellungen (time): y=79
+- Spielart (game type): y=113 (wrap2)
+- Planetgröße (planet size): y=130
+- Ozean-Abdeckung (ocean): y=147
+- Erosionskräfte (erosion): y=164
+- Einheim. Lebensformen (natives): y=181
+- Bewölkung (cloud): y=198
+
+Checkboxes section header: "INDIV. SPIELOPTIONEN" cent_l3 x=7 y=393
+
+Left column checkboxes (write_l2 x=32, checkbox icon approx x=15):
+- y=415: Simultane Bewegungen (MRULES_UNK_10=0x10)
+- y=435: Höheres Ziel / Transzendenz (RULES_VICTORY_TRANSCENDENCE=0x800)
+- y=455: Totaler Krieg / Eroberung (RULES_VICTORY_CONQUEST=0x2)
+- y=475: Friedenszeiten / Diplomatisch (RULES_VICTORY_DIPLOMATIC=0x8)
+- y=495: Alles meins / Wirtschaftlich (RULES_VICTORY_ECONOMIC=0x4)
+- y=515: Einer für alle / Kooperativ (RULES_VICTORY_COOPERATIVE=0x1000)
+- y=535: Leben oder Tod (RULES_DO_OR_DIE=0x1)
+- y=555: Zuerst schauen (RULES_LOOK_FIRST=0x10)
+- y=575: Tech-Stagnation (RULES_TECH_STAGNATION=0x20)
+
+Right column checkboxes (write_l2 x=426, checkbox icon approx x=409):
+- y=415: Kriegsbeute (RULES_SPOILS_OF_WAR=0x4000)
+- y=435: Ziellose Forschung (RULES_BLIND_RESEARCH=0x200)
+- y=455: Starke Rivalität (RULES_INTENSE_RIVALRY=0x40)
+- y=475: Keine Unity-Vermessung (RULES_NO_UNITY_SURVEY=0x100)
+- y=495: Keine Unity-Verteilung (RULES_NO_UNITY_SCATTERING=0x2000)
+- y=515: Glockenkurve (RULES_BELL_CURVE=0x8000)
+- y=535: Zeitsprung (RULES_TIME_WARP=0x80)
+- y=555: Zufallsgenerator Persönlichkeiten (STATE_RAND_FAC_LEADER_PERSONALITIES=0x800000)
+- y=575: Zufallsgenerator Gesellschaftsziele (STATE_RAND_FAC_LEADER_SOCIAL_AGENDA=0x1000000)
+
+Status bar (separate buffer 0x7FDA8C, CHILD[2]):
+- y=0: time settings summary ("Keine Zeiteinst.")
+- y=14: contact status ("KEINE KONTAKTE")
+
+Popup dialogs triggered by clicking settings:
+- Difficulty: popup list (Bürger/Spezialist/Talent/Bibliothekar/Denker/Transzendent)
+- Time: BASEPOP SCRIPT.txt#TIMECONTROLS (Aus/Kurz/Standard/Mittel/Lang/Individuell)
+- Game type, planet size, ocean, erosion, natives, cloud: similar popups
+
+Key functions:
+- config_game = 0x589D30 (singleplayer setup)
+- multiplayer_init = 0x58DB30 (multiplayer init after start)
+- prepare_game area: ~0x481E00 (copies internal state to globals)
+- set_time_controls = 0x523C60
+- time_controls_dialog = 0x589330
+
+Related windows: `NetTechWin`, `MessageWin`
 
 **Scenario/Editor Screens**
 - Windows: `BaseMapWin`, `PlanWin`

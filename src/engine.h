@@ -393,6 +393,7 @@ extern int* const ControlWaitLoop;
 extern int* const SkipTechScreenA;
 extern int* const SkipTechScreenB;
 extern int* const NetUpkeepState;
+extern int* const NetSetupState; // 0=idle, 1=cancel, 2=start game
 extern int* const WorldAddTemperature;
 extern int* const WorldSkipTerritory;
 extern int* const GameDrawState;
@@ -499,6 +500,7 @@ extern DefaultPref* DefaultPrefs;
 extern AlphaIniPref* AlphaIniPrefs;
 extern CMandate* Mandate;
 extern CMight* Might;
+extern Monument* Monuments;
 extern CTimeControl* TimeControl;
 extern CArmor* Armor;
 extern CTech* Tech;

@@ -11,6 +11,7 @@ const int PeekMessageImport = 0x669358;
 const int RegisterClassImport = 0x66929C;
 const int GetSystemMetricsImport = 0x669334;
 const int GetPrivateProfileStringAImport = 0x669108;
+const int GetAsyncKeyStateImport = 0x669330;
 
 const int8_t NetVersion = 12; // Network multiplayer
 

@@ -3,6 +3,8 @@
 #include "patchdata.h"
 #include "patchveh.h"
 #include "message_handler.h"
+#include "monument_handler.h"
+#include "netsetup_settings_handler.h"
 #include <mutex>
 
 static std::mutex FileLock;
@@ -373,6 +375,16 @@ static void init_video_config(Config* cf) {
     }
 }
 
+// IAT hook for GetAsyncKeyState — fakes VK_LBUTTON pressed during popup apply
+static SHORT (WINAPI *real_GetAsyncKeyState)(int) = nullptr;
+
+static SHORT WINAPI sr_hooked_GetAsyncKeyState(int vKey) {
+    if (vKey == VK_LBUTTON && sr_fake_lbutton) {
+        return (SHORT)0x8001; // "pressed" state
+    }
+    return real_GetAsyncKeyState(vKey);
+}
+
 bool patch_setup(Config* cf) {
     DWORD attrs;
     DWORD oldattrs;
@@ -391,6 +403,8 @@ bool patch_setup(Config* cf) {
     *(int32_t*)PeekMessageImport = (int32_t)ModPeekMessage;
     *(int32_t*)RegisterClassImport = (int32_t)ModRegisterClassA;
     *(int32_t*)GetSystemMetricsImport = (int32_t)ModGetSystemMetrics;
+    real_GetAsyncKeyState = (SHORT(WINAPI*)(int))*(int32_t*)GetAsyncKeyStateImport;
+    *(int32_t*)GetAsyncKeyStateImport = (int32_t)sr_hooked_GetAsyncKeyState;
 
     if (!VirtualProtect(AC_IMPORT_BASE, AC_IMPORT_LEN, oldattrs, &attrs)) {
         return false;
@@ -571,7 +585,7 @@ bool patch_setup(Config* cf) {
     write_call(0x5AB891, (int)mod_load_map_daemon); // load_map
     write_call(0x5AAD7D, (int)mod_load_daemon); // load_game
     write_call(0x5ABEB3, (int)mod_load_daemon); // load_undo
-    write_call(0x5ADCD7, (int)mod_load_daemon); // show_replay
+    write_call(0x5ADCD7, (int)mod_replay_load_daemon); // show_replay
     write_call(0x5A9653, (int)save_daemon_header); // save_daemon
     write_call(0x5A9BA8, (int)save_daemon_header); // save_map_daemon
     write_call(0x5A97B3, (int)load_daemon_strcmp); // load_daemon
@@ -617,6 +631,7 @@ bool patch_setup(Config* cf) {
     write_call(0x43FEA8, (int)DiploPop_spying); // DiploPop::draw_info
     write_call(0x482E79, (int)NetWin_random_get); // NetWin::prepare_game
     write_call(0x482E96, (int)NetWin_random_get); // NetWin::prepare_game
+    write_call(0x4E3279, (int)mod_create_game);   // AlphaNet_setup -> create_game
     write_call(0x4E2A81, (int)prefs_get_strcpy); // AlphaNet::do_create
     write_call(0x4E2AA3, (int)prefs_get_strcpy); // AlphaNet::do_create
     write_call(0x4E2EA2, (int)prefs_get_strcpy); // AlphaNet::do_join
@@ -1750,6 +1765,7 @@ bool patch_setup(Config* cf) {
     */
 
     sr_install_text_hooks();
+    MonumentHandler::InstallHooks();
 
     if (!VirtualProtect(AC_IMAGE_BASE, AC_IMAGE_LEN, PAGE_EXECUTE_READ, &attrs)) {
         return false;

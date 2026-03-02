@@ -29,7 +29,7 @@
 
 - All menu navigation via arrows (main menu, game setup, research priorities)
 - Screen transition announcements ("World Map", "Base Screen", etc.)
-- Research Priority selection (EXPLORE/DISCOVER/BUILD/CONQUER navigable)
+- **Research selection modal (Shift+R)** — dual-mode: Blind Research ON shows directions (Explore/Discover/Build/Conquer), OFF shows specific tech names per category. Announces blind research status + current direction on open. Intro text from Script.txt #TECHRANDOM shown in blind mode. All opening messages queued (non-interrupting). ANSI→UTF-8 conversion correct.
 - Arrow boundary detection (last/first item correctly re-announced)
 - HUD data filtered from all announcements
 - MAP-MOVE terrain info on world map cursor change
@@ -43,6 +43,8 @@
 - **Context help** (Ctrl+F1) — announces available commands for current unit/terrain
 - **Go-To cursor position** (Shift+Space) — sends unit to cursor, needs testing
 - **Scanner mode** (Ctrl+Left/Right/PgUp/PgDn) — jump to points of interest, 10 filter categories — TESTED OK
+- **Unit list** (U) — modal list of all own units with full info, select to activate — TESTED OK
+- **Stack cycling** (Tab) — cycle through own units at cursor position — TESTED OK
 
 ## Current Hotkeys
 
@@ -66,6 +68,8 @@
   - Ctrl+PgUp: Previous filter category
   - Ctrl+PgDn: Next filter category
   - 10 filters: All, Own Bases, Enemy Bases, Enemy Units, Own Units, Own Formers, Fungus, Pods/Monoliths, Improvements, Terrain/Nature
+- **U: Unit list** (modal, all own units, sorted idle-first, Enter activates)
+- **Tab: Stack cycling** (own units at cursor, wake + select for movement)
 - **Ctrl+M: Message log browser** (world map only, browse/jump to message locations)
 - **World Map — Menu Bar (Alt key):**
   - Alt: Open menu bar, announce first menu (Game)
@@ -156,6 +160,13 @@ Filters from triggers 1-3:
 - src/design_handler.h — DesignHandler declarations
 - src/message_handler.cpp — MessageHandler (message log, Ctrl+M browser, ring buffer)
 - src/message_handler.h — MessageHandler namespace declarations
+- src/multiplayer_handler.cpp — MultiplayerHandler (NetWin lobby, 4-zone keyboard nav)
+- src/multiplayer_handler.h — MultiplayerHandler namespace declarations
+- src/labs_handler.cpp — LabsHandler (F2 research/labs status)
+- src/projects_handler.cpp — ProjectsHandler (F5 secret projects status)
+- src/orbital_handler.cpp — OrbitalHandler (F6 orbital satellite status)
+- src/military_handler.cpp — MilitaryHandler (F7 military status + unit detail)
+- src/score_handler.cpp — ScoreHandler (F8 faction score/rankings)
 - src/localization.h — SrStr enum, loc(), loc_init()
 - src/localization.cpp — English defaults, UTF-8 file loader, key mapping
 - sr_lang/en.txt — English SR strings (~220 strings)
@@ -164,6 +175,51 @@ Filters from triggers 1-3:
 - docs/game-api.md — Game API documentation
 
 ## Notes for Next Session
+
+### Game Settings Editor (Ctrl+F10) — TESTED OK (2026-03-01)
+- **Ctrl+F10 in main menu** opens accessible singleplayer settings editor
+- **4 categories** navigated with Tab/Shift+Tab:
+  - General (difficulty: 6 levels)
+  - Faction (14 factions, D=BLURB text, I=DATALINKS1 info)
+  - Map (size/ocean/land/erosion/clouds/natives)
+  - Rules (15 toggleable victory conditions + game rules, D=description)
+- **Controls**: Up/Down navigate, Left/Right change value, Enter/Space toggle (rules), S summary
+- **Enter saves** to Alpha Centauri.ini via prefs_save(), sets customize=2 for custom map
+- **Escape cancels** (no changes written)
+- New files: game_settings_handler.h/cpp
+- ~60 new loc strings (en+de) including rule descriptions
+- gui.cpp: 4 changes (include, IsActive check, Ctrl+F10 hotkey, popup-input exclusion)
+- **Fix**: GameSettingsHandler added to popup-input exclusion list (prevented D/I key echo)
+
+### NEW: Multiplayer Lobby Settings Editor (Ctrl+Shift+F10) — PARTIALLY WORKING (2026-03-02)
+- Modal editor for all 8 dropdown settings + 18 checkboxes in NetWin lobby
+- Architecture: GameSettingsHandler pattern (RunModal + sr_run_modal_pump)
+- 2 categories: Settings (8 items), Rules (18 checkboxes)
+- Tab/Shift+Tab categories, Up/Down items, Left/Right values, Space toggle, S summary
+- **IAT hook on GetAsyncKeyState** (0x669330): fakes VK_LBUTTON pressed during popup apply phase
+- Difficulty: direct memory write (NetWin+0xE68, known offset)
+- Other settings: IAT hook + simulate_click opens popup, mouse move to target item, release selects
+- Checkboxes: simulate_click toggles (already working)
+- Values loaded: difficulty from memory, others from rendered text via lookup tables
+- New files: netsetup_settings_handler.h/.cpp
+- Changed: patch.h (GetAsyncKeyStateImport), patch.cpp (IAT hook), gui.cpp (include, modal_active, routing, hotkey), localization.h/.cpp (10 new strings), en.txt/de.txt
+- **Fixed (2026-03-02):** Ctrl+Shift+F10 hotkey was unreachable — MultiplayerHandler's else-if block on line 1369 swallowed the key before the Ctrl+Shift+F10 check on line 1714. Fix: moved Ctrl+Shift+F10 handling into MultiplayerHandler::Update() directly.
+- **Fixed (2026-03-02):** Lobby Left/Right on settings with unknown offsets now opens NetSetupSettingsHandler (via RunModalAt) instead of showing "not supported". Added RunModalAt(category, item) entry point.
+- **OPEN:** Settings editor opens and reads values correctly from rendered text, but applying changes (save via Enter) does not work yet — popup mechanism (IAT hook + simulate_click) needs further debugging. Deferred to later session.
+- **Test plan**: Open MP lobby → Ctrl+Shift+F10 → verify navigation + announcements → change difficulty → change other setting → toggle checkbox → Enter to save → check lobby display updated
+
+### NEW: F-Key Status Screen Handlers (F2, F5-F8) — needs testing (2026-02-28)
+- **F2 (Research/Labs)**: Single-screen summary. S: research summary (tech, progress, turns, allocation). D: labs breakdown per base. Escape: close.
+- **F5 (Secret Projects)**: Navigable list of all secret projects. Up/Down: browse. Shows built (by faction at base), not built, or destroyed. S: summary counts.
+- **F6 (Orbital Status)**: Single-screen summary of satellites (nutrient/mineral/energy/defense). D: compare all factions.
+- **F7 (Military Status)**: Summary of combat units, strength, ranking, best weapon/armor/speed, planet busters. S: power rankings across factions. D: navigable unit type list (Up/Down in sub-mode, Escape returns).
+- **F8 (Score/Rankings)**: Navigable faction ranking list. Up/Down: browse factions by rank. S: your rank. Shows bases, population, techs per faction.
+- **F9 (Monuments)**: Modal handler UI fertig (Navigation, 16 Typen, de+en). ABER: Alle Werte = 0. Hook-Ansatz gescheitert (feuert nie). Nächster Schritt: Monument-Daten direkt aus Speicher lesen — Datenstruktur (317 ints/Fraktion) muss reverse-engineered werden. Details in memory/monuments.md.
+- **Deferred**: F10 (Hall of Fame — external save data).
+- New files: labs_handler.h/cpp, projects_handler.h/cpp, orbital_handler.h/cpp, military_handler.h/cpp, score_handler.h/cpp
+- ~40 new loc strings (en+de)
+- gui.cpp: 5 new F-key intercepts + IsActive/Update routing
+- **Test**: On world map, press each F-key (F2, F5, F6, F7, F8). Check: opens modal, announces data, navigation works, Escape closes, Ctrl+F1 help.
 
 ### NEW: Time Controls (Shift+T) — TESTED OK
 - Shift+T on world map opens accessible time controls picker
@@ -234,13 +290,25 @@ Filters from triggers 1-3:
 - **Psych Detail (Ctrl+Shift+Y)**: One-shot announcement — police units, psych output, talents vs drones, riot status.
 - ~20 new loc strings (en+de)
 
-### TODO: V key stack cycling (announce unit switch)
-- V cycles through units in the same tile stack — important for managing stacked units
-- Currently no SR announcement when V is pressed
-- **Debugging done**: V arrives as WM_KEYDOWN wParam='V' in HandleKey (confirmed in SR log)
-- **Problem**: Calling WinProc(hwnd, WM_KEYDOWN/WM_CHAR, V) recurses back into ModWinProc — the game never processes V
-- **Solution approach**: Use `return false` pattern (like Space/skip). Set a `sr_v_pressed` flag, let V pass through to game, detect unit change in OnTimer poll. The unit change detection already works (iUnit tracking) — just need to check if V changes iUnit or uses a different variable (CurrentVehID, iUnitIndex). If iUnit doesn't change, may need to track the vehicle linked list on the tile (veh->next_veh_id_stack).
-- **Alternative**: Check if game processes V via WM_CHAR lowercase 'v' only (not WM_KEYDOWN) — then don't intercept WM_KEYDOWN at all
+### Unit List (U key) + Stack Cycling (Tab) — TESTED OK (2026-03-01)
+- **U on world map**: Opens modal list of ALL own units, sorted idle-first then by order type then position
+- Each entry: name, position, moves (remaining/total), order (idle/hold/sentry/explore/go to/convoy/terraform name), health (if damaged), home base
+- Up/Down/Home/End navigate, Enter selects (wakes unit, sets CurrentVehID + iUnit, focuses camera), Escape cancels, Ctrl+F1 help
+- **Tab on world map**: Cycles through own units at exploration cursor position
+- Uses veh_at() + next_veh_id_stack linked list, resets when cursor moves
+- Wakes unit, sets CurrentVehID + iUnit for movement control, focuses camera
+
+### Foreign Unit List (Shift+U) — TESTED OK (2026-03-02)
+- **Shift+U on world map**: Opens modal list of ALL non-own units on visible (explored) tiles
+- Each entry: name, faction name + diplomacy status (Pact/Treaty/Truce/Vendetta/None/Native), position, morale, attack/defense values (or "Psi" for native units), triad (Land/Sea/Air), health (if damaged)
+- Sorted by map position
+- Up/Down/Home/End navigate, Enter jumps to unit on map (sets SR cursor + centers camera), Escape closes, Ctrl+F1 help
+- Uses is_visible(faction) to only show units on explored tiles
+- Game strings (faction names) converted via sr_game_str() for correct UTF-8 umlauts
+- 9 new loc strings (en+de): enemy_list_open/fmt/native/empty/help/jump/triad_land/triad_sea/triad_air
+- Announces: "Name, X of Y on tile" + moves
+- 16 new loc strings (en+de): unit_list_open/fmt/moves/health/home/selected/empty/help, order_idle/hold/sentry/explore/goto/convoy, tab_cycle_fmt/none
+- **Key fix**: Initial version didn't set `*CurrentVehID` and `MapWin->iUnit` — unit was focused but not selected for movement. Fixed by copying garrison_activate() pattern.
 
 ### NEW: Artillery Modal (F key) — needs testing (late game feature)
 - F on world map opens accessible artillery target list (requires artillery-capable unit)
@@ -276,8 +344,21 @@ Filters from triggers 1-3:
 - **Zu testen**: O öffnet Ressourcen-Popup (vom Spiel), Popup lesbar über bestehendes Popup-Capture-System?
 - **Kann erst getestet werden wenn Supply Crawler verfügbar (Industrial Automation)**
 
+### NEW: Runtime Toggles (Ctrl+Shift+T / Ctrl+Shift+A) — needs testing (2026-03-01)
+- **Ctrl+Shift+A**: Toggle all accessibility on/off. When off, game behaves like vanilla Thinker (no speech, no handler interception, no virtual cursor). Only Ctrl+Shift+A is checked when disabled. Announces before toggling.
+- **Ctrl+Shift+T**: Toggle Thinker AI on/off (world map only). Sets `conf.factions_enabled` to 0 (original AI) or restores original value. Independent of accessibility toggle.
+- Both hotkeys listed in Ctrl+F1 help.
+- 6 new loc strings (en+de), getter/setter in screen_reader.h/cpp, early-exit in ModWinProc.
+- **Test**: On world map, Ctrl+Shift+A → "Screen reader off" → arrows scroll normally → Ctrl+Shift+A → "Screen reader on". Ctrl+Shift+T → "Thinker AI disabled" → Ctrl+Shift+T → "Thinker AI enabled".
+
 ### Pending Tests
 
+0u. **Faction Selection Keyboard Access** — WIP (2026-03-01). Handler erkennt Fraktionsauswahl per BLURB-Detection. Fraktionsname wird vor BLURB-Text vorgelesen. Tasten: Enter (spielen), G (Gruppe bearbeiten), I (Info), R (Zufallsgruppe), Ctrl+F1 (Hilfe). Dateien: faction_select_handler.h/cpp. Änderungen V3 (2026-03-01): (1) I-Taste liest DATALINKS1+DATALINKS2 direkt aus Fraktionsdatei per sr_read_popup_text() statt INFO-Button-Klick (vermeidet unerreichbares DATALINKS-Popup). (2) ScanButtons() wird bei JEDEM OnBlurbDetected() aufgerufen statt nur beim ersten Mal (_buttonsScanned Guard entfernt) — fix für Buttons die nach Screen-Wechsel nicht mehr funktionieren. (3) BTN_INFO aus enum/MatchButton entfernt. (4) Hilfetext um G/I/R erweitert. Neuer Loc-String SR_FACTION_NO_INFO. **PROBLEM: I-Taste funktioniert gar nicht (kein Effekt).** Nächste Sitzung debuggen — prüfen ob HandleKey überhaupt aufgerufen wird, ob _lastBlurbFile gesetzt ist, ob sr_read_popup_text die Datei findet. Ctrl+F12 Debug-Log prüfen.
+0t. **Research Selection Modal (Shift+R)** — TESTED OK (2026-03-01). Dual-mode: Blind Research ON shows 4 directions, OFF shows specific techs. Announces blind status + current direction on open. Intro text from #TECHRANDOM. All opening messages queued. ANSI→UTF-8 fixed (no double conversion). Enter key no longer leaks to game.
+0s. **Council Handler (Planetary Council Accessibility)** — Added 2026-02-28. Inline hook on call_council (0x52C880) detects council open/close. OnOpen announces faction name + governor + vote summary. S/Tab repeats vote summary, Ctrl+F1 help. Ctrl+V on world map: can council be called? + governor info + vote summary. Observer pattern (game handles navigation). New files: council_handler.h/cpp. 10 new loc strings (en+de). Hook count 22→23. Test: Ctrl+V on world map, council einberufen, S/Tab/Ctrl+F1 während Council, KI-Council löst keine Ansage aus.
+0r. **Enhanced Tile Announcements v2** — Added 2026-02-28. Five enhancements to sr_announce_tile(): (1) Foreign units show faction prefix ("Spartan Scout Patrol"), (2) Foreign territory shows diplo status ("Territory: Spartans (Treaty of Friendship)"), (3) Formers show terraform order ("Former, building Road"), (4) Worked tiles in base radius show ", worked", (5) Used monoliths show "(used)". Test all 5 on world map.
+0q. **Game-End Accessibility (Siegtyp, Replay, Score)** — Added 2026-02-28. Drei Features: (1) Siegtyp-Ansage bei STATE_GAME_DONE (Conquest/Diplomatic/Economic/Transcendence/Defeat/Game Over), (2) Replay-Karte Ansage ("Visuelle Animation, Escape zum Fortfahren"), (3) Score-Screen Text kommt durch bestehendes Text-Capture. Testen: Spiel beenden (Cheat/Szenario), prüfen ob Siegtyp angesagt wird, ob Replay-Karte angesagt wird, ob Score-Texte lesbar sind.
+0p. **Design Workshop: Rename/Obsolete/Upgrade (R/O/U)** — Added 2026-02-28. R: rename unit inline. O: toggle obsolete. U: upgrade with double-press confirm. Rename+Obsolete testable sofort. Upgrade braucht Late-Game mit Custom-Designs.
 0o. **Base Screen Gaps** (Resources V3, Economy V3, Status warnings, Ctrl+Shift+S Support, Ctrl+Shift+Y Psych) — TESTED OK (2026-02-27).
 0n. **Message Handler (Ctrl+M)** — TESTED OK (2026-02-27). Basic flow works (open, browse, close). Messages only in current session (ring buffer, no savegame persistence — by design). Open question: behavior with multiple message categories (combat, diplomacy, production mixed) not yet tested — needs a busier game state.
 0z. **Specialist management (Ctrl+W)** — TESTED OK (2026-02-26). All announcements working correctly.
@@ -312,7 +393,146 @@ Filters from triggers 1-3:
 8e. **File browser refinement** — TODO (later). (1) File selection reliability during save/load — user reports occasional uncertainty. (2) Investigate whether custom filename input is possible (typing a new save name). Low priority, basic save/load works.
 8b. **Base screen mini-map** — NOT NEEDED (2026-02-27). Map overlay is read-only/visual only. No click-to-assign-workers — worker management already handled by Ctrl+W (SpecialistHandler). No accessibility gap.
 8c. **Zoom level feedback (+/- keys)** — NOT NEEDED (2026-02-27). Zoom is purely visual (tile render size). SR exploration cursor and scanner work at coordinate level, unaffected by zoom.
-9. **Multiplayer screens** — MULTIMENU announced, but NETCONNECT dialogs and SetupWin (faction selection) have no SR support. In progress.
+9. **Multiplayer Setup (NetWin)** — IMPLEMENTED, needs testing (2026-02-28).
+   - Full keyboard navigation: Tab/Shift+Tab cycles 4 zones (Settings, Players, Checkboxes, Buttons)
+   - Up/Down navigates within zones, Enter/Space activates (opens popup/toggles/clicks)
+   - Settings: click simulates mouse click, opens game popup (handled by existing sr_popup_list)
+   - Checkboxes: 18 items (victory conditions + game options), state tracked locally, announced on toggle
+   - Players: 7 slots, change detection via snapshot text comparison, join/leave announced
+   - S: summary, Ctrl+F1: help, Escape: cancel (pass-through to game)
+   - Non-modal (game network events keep processing)
+   - ~42 new loc strings (en+de), new files: multiplayer_handler.h/.cpp
+   - **v2 fixes (same session):** First test showed zone navigation + checkbox announce works. Three issues fixed:
+     1. **Escape** now passes through to game (was: simulated click on Cancel, didn't work)
+     2. **SendInput** replaces PostMessage for mouse clicks (canvas→screen coord conversion via ClientToScreen). PostMessage clicks weren't reaching game UI elements.
+     3. **Popup wait mode**: After clicking a setting, handler yields all keys for 3s so popup can be navigated. Clears when sr_popup_list activates or timeout.
+     4. **WM_CHAR tracking**: Only consumes WM_CHAR for keys handler actually handled; pass-through keys (Escape, popup wait) also pass WM_CHAR through.
+   - **v3 fixes (2026-02-28, sessions 3-4)**: Player list, Start Game, Spielart, dedup fixes.
+     1. **Player list FIXED**: Buffer pointer changed to main canvas (NetWin+0x444). Timer uses `sr_force_snapshot()` + `GraphicWin_redraw()` + exact y-matching for 7 player slots. All 7 slots now show correct player data.
+     2. **Dedup bypass**: Added `sr_mp_no_dedup` flag to skip both strstr dedup AND prefix dedup in `sr_record_text()` — needed because multiple "Computer" entries share identical text. SR_MAX_ITEMS increased from 32 to 96.
+     3. **Spielart dialog WORKS**: Modal with 3 options (Random/Scenario/Load Map) writes to `DefaultPrefs->map_type`.
+     4. **Start Game v3 (didn't work)**: `GraphicWin_close(NetWin)` with `PbemActive=0` → showed "Spiel leiten/Beitreten" popup, but then returned to main menu. Root cause: `create_game` (0x4E2E50) returned 0 (failure) because closing the window makes the inner event dispatch return -1.
+     5. **Key reverse-engineering**: `PbemActive` (0x93A95C) is the lobby dialog result global. Cancel button (ID 9999 in pick_service loop) sets it to 1. Start leaves it at 0. AlphaNet_setup checks it after lobby closes: 0→show Host/Join popup, !=0→cancel path.
+   - **v4 fix (2026-02-28, session 5)**: Two-part approach to fix Start Game:
+     1. **prepare_game call**: Before closing lobby, call `prepare_game` (0x482D90, __thiscall void on NetWin) to set up factions, random assignments, and map — same as the game's original Start button does internally.
+     2. **create_game hook**: `mod_create_game` in gui.cpp hooks the call at 0x4E3279 (AlphaNet_setup→create_game). When `sr_net_start_requested` flag is set, overrides return value from 0→1 so AlphaNet_setup treats it as success.
+     - New flag: `sr_net_start_requested` (screen_reader.h/.cpp)
+     - Hook: `write_call(0x4E3279, mod_create_game)` in patch.cpp
+     - Flow: activate_button(1) → prepare_game(NetWin) → set flag → GraphicWin_close → create_game returns 1 → AlphaNet_setup proceeds
+   - **Pending test**: Start Game → check thinker_sr log for "create_game hook override 0 -> 1". If game crashes in prepare_game, NetWin state may need setup. If game starts but settings wrong, investigate NetWin internal state vs game globals.
+   - **v5 investigation (2026-03-01)**: Complete rewrite + deep reverse engineering.
+     1. **Code simplified**: Removed run_setting_modal, all SettingOption arrays, prepare_game/NetSetupState logic (~200 lines removed).
+     2. **WinProc direct call FAILED**: `WinProc(hwnd, WM_LBUTTONDOWN, MK_LBUTTON, MAKELPARAM(x,y))` — clicks logged but game didn't respond. DDrawCompat likely prevents synthetic mouse processing.
+     3. **SpotList FOUND at NetWin+0xD34**: Runtime scan after first redraw found 61 hitbox spots (max=85). Full hitbox map:
+        - type=0: 8 Settings (pos=0,2-8), rects at y=62-215, x=11-312
+        - type=1: 18 Checkboxes, left column pos=100,0-7 (y=415-593), right column pos=8-14,16-17
+        - type=2: Player name areas (7 slots × 2 spots each)
+        - type=3: Player faction column (7 spots)
+        - type=4: Player difficulty column (7 spots)
+        - type=5: Player selector buttons (7 spots)
+     4. **iHitBoxTagClicked at 0xD2C FAILED**: Writing tag to NetWin+0xD2C (CWinFonted analogy: 8 bytes before SpotList) didn't trigger any action.
+     5. **Vtable dump deployed**: Code to dump first 40 vtable entries is deployed but not yet tested. Next: analyze vtable to find on_left_click virtual function.
+   - **v6 fixes (2026-03-01, session 6)**: Start button, sync spam, settings investigation.
+     1. **Start button FIXED**: Warmup click at (10,10) before actual button click → works reliably on first try. Uses `simulate_click` (direct WinProc).
+     2. **Button positions dynamic**: OnOpen reads CHILD windows, gets BaseButton.name (offset 0xA7C) and rRect1 center. Handles localized names ("ABBRECHEN", "SPIEL STARTEN").
+     3. **Sync spam FIXED**: Labels starting with "SYNCH" suppressed in mod_BasePop_start (gui.cpp). No more rapid-fire "Spielsynchronisierung" announcements.
+     4. **_launching flag**: Stops OnTimer when Start is clicked → no player list churn during game launch.
+     5. **SpotList at 0xD34 CONFIRMED**: 61 spots read successfully. Settings (type=0) hitbox rects: x=11-312, y=62-215. Dynamic coordinate update works — settings[].clickX/Y updated from SpotList centers.
+     6. **Settings popups STILL BROKEN**: Exhaustive investigation:
+        - `simulate_click` (direct WinProc): works for checkboxes (type=1), NOT for settings (type=0)
+        - `PostMessage` (async): works for buttons (CHILD), NOT for settings
+        - `mouse_event` + WinProc (hw state): NOT for settings
+        - `SetCursorPos` + PostMessage: NOT for settings
+        - Direct vtable[19] call (0x0047B760): no crash, no effect
+        - Direct dialog functions (`time_controls_dialog`, `config_game`): opens popup BUT crashes at 0x600F10 (null Buffer in rendering code) — these functions are for single-player setup, not MP lobby
+        - Timer-deferred click (SetTimer 50ms → WinProc): DEPLOYED, not yet tested
+     7. **OpenSMACX research**: NetWin vtable at 0x0066ccec. Click dispatch: WinProc → vtbl[19] (0x0047B760) → Spot::check (0x005FAB00) → sub_47E640 (OnClick dispatch) → sub_59E530 (setting popup launcher) → encrypted handlers at 0x0060A6xx.
+   - **v6-v8 results (2026-03-01)**: Timer-deferred WinProc click: popup opens but AUTO-CLOSES instantly (press-drag-release pattern, GetAsyncKeyState sees no button held). SendInput: blocked by DDrawCompat. Direct memory write: +0xE68 was false positive (earlier popup auto-select had already changed display). Memory scan of 0xA14-0xF00: no setting field offsets found. All tested offsets had zero effect on display.
+   - **Next session approaches (prioritized):**
+     1. **Popup-autoselect exploit**: Popup opens and auto-selects first option at mouse position. If we click at the CORRECT y-position for the desired option, it auto-selects that option. Known popup item y-coords: 1, 21, 41, 61, 81, 101. Need to determine popup window position relative to click point.
+     2. **AlphaIniPref test**: Write to 0x94B478 (time_controls) and 0x94B480-0x94B498 (custom_world[0..6]) + redraw → check if settings display changes.
+     3. **Extended memory dump**: NetWin 0xF00-0x1800, also CHILD windows.
+     4. **GetAsyncKeyState IAT hook**: Return VK_LBUTTON=pressed during _inDialog → popup stays open for keyboard navigation.
+
+**What works (tested):**
+- Transition announcement ("Mehrspieler-Einrichtung" on open/close)
+- DirectPlay debug text filtered (Host ID, Guaranteed count, Sending, etc.)
+- Pre-setup dialogs work via existing popup system (NETCONNECT_JOIN_OR_CREATE, NETCONNECT_CREATE, etc.)
+- Popups triggered from setup (time controls, ocean coverage, game type, difficulty) work via BASEPOP capture
+- Player list: all 7 slots read correctly (name, difficulty, faction)
+- Spielart dialog: 3 options (Random/Scenario/Load Map)
+- Checkboxes: toggle + state announcement
+- Zone navigation: Tab/Shift+Tab cycles Settings/Players/Checkboxes/Buttons
+- Cancel: returns to main menu (PbemActive=1)
+- Start Game: calls prepare_game + create_game hook override (v4, needs testing)
+
+**NetWin Child Window structure (confirmed via debug dump):**
+- CHILD[0]: BaseButton "ABBRECHEN" — rect=(556,212,792,232)
+- CHILD[1]: BaseButton "SPIEL STARTEN" — rect=(317,212,553,232)
+- CHILD[2]: Status bar area — rect=(317,356,793,384), flags=0x1102120, no button name (renders "Keine Zeiteinst." + "KEINE KONTAKTE")
+- CHILD[3]: Player list area — rect=(320,244,790,351), has 1 sub-child (scrollbar at x=450-470)
+
+**Key finding: All game options, settings, and player data are rendered DIRECTLY on the NetWin surface — NOT as child windows!**
+- 20 game option checkboxes (Simultane Bewegungen, Siegbedingungen, etc.) → painted with Buffer_write
+- 8 game settings ({Schwierigkeitsgrad}, {Zeiteinstellungen}, {Spielart}, etc.) → painted with Buffer_write
+- Player list (fjkl, Computer x5, Zufall x7) → painted with Buffer_write
+- Interaction is mouse-click based via HitBox/SpotList on the main window
+
+**GameRules, GameState, DiffLevel are ALL ZERO while NetWin is open!**
+NetWin has own internal state fields (beyond Win base struct at offset 0x444+). Rules are only applied to game globals when "SPIEL STARTEN" is pressed.
+
+**GameRules flags mapped to UI options** (engine_enums.h):
+- RULES_VICTORY_TRANSCENDENCE=0x800, RULES_VICTORY_CONQUEST=0x2, RULES_VICTORY_DIPLOMATIC=0x8
+- RULES_VICTORY_ECONOMIC=0x4, RULES_VICTORY_COOPERATIVE=0x1000, RULES_DO_OR_DIE=0x1
+- RULES_LOOK_FIRST=0x10, RULES_TECH_STAGNATION=0x20, RULES_SPOILS_OF_WAR=0x4000
+- RULES_BLIND_RESEARCH=0x200, RULES_INTENSE_RIVALRY=0x40, RULES_NO_UNITY_SURVEY=0x100
+- RULES_NO_UNITY_SCATTERING=0x2000, RULES_BELL_CURVE=0x8000, RULES_TIME_WARP=0x80
+- STATE_RAND_FAC_LEADER_PERSONALITIES=0x800000, STATE_RAND_FAC_LEADER_SOCIAL_AGENDA=0x1000000 (in GameState)
+- "Simultane Bewegungen" → MRULES_UNK_10=0x10 (in GameMoreRules)
+
+**Relevant game addresses:**
+- NetWin: 0x80A6F8 (Win*, rect 800x600)
+- GameHalted: 0x68F21C (1 during setup)
+- GameRules: 0x9A649C, GameMoreRules: 0x9A681C, GameState: 0x9A64C0
+- DiffLevel: 0x9A64C4, MapSizePlanet: 0x94A2A0, MapOceanCoverage: 0x94A2A4
+- MapErosiveForces: 0x94A2AC, MapNativeLifeForms: 0x94A2B8, MapCloudCover: 0x94A2B4
+- AlphaIniPrefs->time_controls, config_game: 0x589D30, time_controls_dialog: 0x589330
+- DefaultPrefs: 0x94B350 (difficulty, faction_id, map_type)
+
+**jackal.txt dialog sections:** NETCONNECT_JOIN_OR_CREATE, NETCONNECT_CREATE, NETCONNECT_JOIN, SELECTSERVICE, NETCONNECT_MAX_PLAYERS, NETCONNECT_PASSWORD_SET, NET_LOBBY_PASSWORD_QUERY, NET_LOBBY_INPUT_PASSWORD, NETCONNECT_SESSIONS, NET_SENDTIMEDOUT, NET_OKTODROPHOST, NET_OKTODROPCLIENT
+
+**Script.txt dialog sections:** #RULES (18 game options with itemlist), #TIMECONTROLS, #DIFFICULTY, #USERULES (Standard/Current/Custom), #HOSTTIME
+
+**Complete coordinate map (confirmed via NET-XY diagnostic, 2026-02-28):**
+All coordinates on NetWin canvas (buf=0x80AB3C), 800x600 pixels.
+Vtable: 0x0066ccec. Canvas = GraphicWin buffer at NetWin+0x444.
+
+Settings (write_l x=11):
+- y=62: Schwierigkeitsgrad, y=79: Zeiteinstellungen, y=113: Spielart (wrap2)
+- y=130: Planetgröße, y=147: Ozean, y=164: Erosion, y=181: Natives, y=198: Cloud
+
+Player list (7 slots, 22px spacing, y=58-190):
+- Name: write_l2 x=357, Faction: x=537, Difficulty: x=679
+
+Left checkboxes (write_l2 x=32, y=415-575, 20px):
+y=415 SimultaneBew, y=435 Transzendenz, y=455 Eroberung, y=475 Diplomatisch,
+y=495 Wirtschaftlich, y=515 Kooperativ, y=535 DoOrDie, y=555 LookFirst, y=575 TechStag
+
+Right checkboxes (write_l2 x=426, y=415-575, 20px):
+y=415 Kriegsbeute, y=435 BlindResearch, y=455 Rivalität, y=475 NoSurvey,
+y=495 NoScattering, y=515 BellCurve, y=535 TimeWarp, y=555 RandPersonalities, y=575 RandAgenda
+
+Status bar (CHILD[2], buf=0x7FDA8C): y=0 time summary, y=14 contact status
+Popups: difficulty list (buf=0x1A69B8), time controls (BASEPOP SCRIPT.txt#TIMECONTROLS)
+Child vtables: CHILD[0]+[1]=0x669754 (BaseButton), CHILD[2]=0x66a038, CHILD[3]=0x66adc8
+
+Full details documented in docs/game-api.md.
+
+**Next step:**
+- Design and build NetSetupHandler (full modal replacement like PrefsHandler)
+- Sections: Settings, Player slots, Checkboxes L/R, Buttons
+- Simulate clicks at known coordinates for interaction
+- Track checkbox state internally (defaults + toggles)
 
 ## Session Log
 
@@ -350,4 +570,8 @@ Filters from triggers 1-3:
 - **2026-02-26 (session 8)**: Message Handler (Ctrl+M). New files: message_handler.h/cpp. Ring buffer (50 messages) captures all NetMsg_pop calls with resolved text, coordinates, base_id, turn. Auto-announce on new message (queued, non-interrupting). Ctrl+M opens modal browser: Up/Down browse, Enter jumps to location (WorldMapHandler::SetCursor), S summary, Home/End first/last, Ctrl+F1 help, Escape close. Coverage: veh.cpp (~30 goody hut/monolith calls), faction.cpp (8 spy/atrocity calls), base.cpp (1), tech.cpp (1), patch.cpp (2 wrappers), veh_combat.cpp (4 combat reports), gui.cpp (diplomacy + 2 artillery messages). Used sr_NetMsg_pop() wrapper pattern in veh/faction/base/tech to avoid 30+ individual edits. WorldMapHandler::SetCursor() added — sets SR cursor, centers map, announces tile. 9 new loc strings (en+de). Build OK, deployed.
 - **2026-02-26**: Design Workshop accessibility handler (Shift+D). New files: design_handler.h/cpp. Same modal loop pattern as SocialEngHandler. Two-level navigation: Level 1 = prototype list (default units with tech + custom units), Up/Down navigate, Enter edit, N new, Delete retire (two-press confirm), Escape close. Level 2 = component editor with 6 categories (Chassis/Weapon/Armor/Reactor/Ability1/Ability2), Left/Right cycles categories, Up/Down cycles tech-filtered options, S summary, Enter saves via mod_make_proto+mod_name_proto, Escape cancels back to list. Ability compatibility filtering via AFLAG_* flags (triad, combat/terraform/probe checks). Cost calculated via mod_proto_cost. Editing default units creates a copy in faction's custom slot. 26 new loc strings (en+de). Wired via Shift+D in world_map_handler.cpp, added to modal active check in gui.cpp. Build OK, deployed, awaiting testing.
 - **2026-02-27 (session 2)**: Base screen gaps closed. (1) Resources V3: nutrient consumption, mineral support cost, energy inefficiency. Starvation warning at negative surplus. (2) Economy V3: commerce income from BaseCommerceImport. (3) Status extended: 7 warnings (starvation, low minerals, inefficiency, no HQ, high support, undefended, police count). (4) OnOpen: starvation + undefended warnings. Help text now via GetHelpText() (always in sync). (5) Ctrl+Shift+S: supported units list (home_base_id units, like garrison). (6) Ctrl+Shift+Y: psych detail one-shot. (7) gui.cpp: support mode interception + Ctrl+Shift+S/Y dispatch. ~20 new loc strings (en+de). TESTED OK.
+- **2026-02-27 (session 4)**: Multiplayer Setup (NetWin) — Phase 1 investigation. (1) Transition detection: `in_netsetup = (*GameHalted && NetWin && Win_is_visible(NetWin))` announces screen open/close. (2) Initial text-capture attempt: unblocked timer/snap/nav for NetWin — caused constant noise (2 labels + player name alternating in 2 render cycles). Rolled back to silent mode (in_menu suppresses all triggers). (3) Junk filter: added 5 DirectPlay debug patterns (Guaranteed count, Sending, Average reply time, Last time, Flags). (4) Reverse-engineering: NetWin has 4 children. CH[0]+CH[1] are BaseButtons with name field at offset 0xA7C ("ABBRECHEN", "SPIEL STARTEN"). CH[2] is edit/chat field (vtbl 0x66a038). CH[3] is GraphicWin panel (470x107px) with hidden scrollbar — renders player list as pixels, no text items. CWinFonted hypothesis disproved (items=100 was wrong offset). Only 2-3 Buffer_write labels captured. Next: test popup dialogs on interaction, consider AlphaNet (0x93CD90) direct access.
+- **2026-02-28**: Multiplayer Setup (NetWin) — Phase 2 reverse engineering complete. (1) Added NET-XY coordinate diagnostic: hooks log buffer pointer + x,y for every text render when in netsetup. (2) Added vtable detection for NetWin and all children. (3) Safe raw memory dump with IsBadReadPtr. (4) DialogChoices monitoring during setup. Complete coordinate map obtained: settings at x=11 (y=62-198), player list at x=357/537/679 (y=58-190), left checkboxes at x=32 (y=415-575), right checkboxes at x=426 (y=415-575). NetWin canvas buffer confirmed at 0x80AB3C. All vtables identified. Full results documented in docs/game-api.md. Ready for handler implementation.
+- **2026-02-28 (session 4)**: Multiplayer Setup — Start/Cancel fix via disassembly of AlphaNet_setup (0x4E31E0). (1) Discovered `PbemActive` (0x93A95C) is the lobby dialog result: Cancel button (ID 9999 in pick_service loop at 0x4E26E0) sets it to 1, Start leaves it at 0. (2) After lobby: if PbemActive==0 → game shows accessible "Spiel leiten/Beitreten" popup (NETCONNECT_JOIN_OR_CREATE from "jackal" script), if !=0 → cancel path. (3) Fix: Cancel sets `*PbemActive=1` then `GraphicWin_close(NetWin)` → proper cancel. Start just calls `GraphicWin_close(NetWin)` with PbemActive=0 → popup appears for user. (4) Attempted and reverted: mod_netconnect_popup hook at 0x4E3266 — bypassing the popup caused DirectPlay crash (do_join null ptr) or wrong mode selection. The popup is already accessible, no hook needed. (5) Removed diagnostic dump_netwin_fields code. (6) Removed unused WinProc extern. PENDING TEST: Start → popup → Spiel leiten → game starts?
+- **2026-03-01**: Multiplayer NetWin click simulation investigation. (1) Removed run_setting_modal + all SettingOption arrays + prepare_game/NetSetupState logic (~200 lines). (2) WinProc direct call `WinProc(hwnd, WM_LBUTTONDOWN, MK_LBUTTON, MAKELPARAM(x,y))` — clicks were sent but game didn't respond at all (no popup, no state change). DDrawCompat (ddraw.dll in game dir confirmed) likely prevents synthetic mouse processing even via direct WinProc call. (3) SpotList scan: runtime scan of NetWin memory (offsets 0x444-0x1400) after first OnTimer redraw found SpotList at **NetWin+0xD34** (NOT 0xA2C/CWinFonted). 61 spots, max=85. Full hitbox type map: type=0 settings, type=1 checkboxes, type=2/5 player name areas, type=3 faction column, type=4 difficulty column. (4) iHitBoxTagClicked write at NetWin+0xD2C (CWinFonted analogy) — no effect, game didn't process it. (5) Vtable dump code deployed (40 entries) but not yet tested — user ended session. Next: analyze vtable, find on_left_click handler, call directly as `vtbl[N](NetWin, x, y)`.
 - **2026-02-27**: Load Game + Save Game dialog accessibility + status cleanup. (1) Load Game file browser: Initial approach (parallel file list with own index, popup_list navigation) failed after 5 iterations — our index desynchronized with game's internal cursor, Enter on folders was consumed but game didn't navigate, user ended up in C:\ root. Root cause: game's file dialog is a modal with its own state we can't control. **Rewrote to text-capture approach**: game handles all navigation (arrows/Enter/Escape), we observe rendered filenames via Trigger 2 (Arrow Nav) and route through sr_fb_on_text_captured() which adds type markers (Ordner/SAV). Directory names from saves/ scanned via FindFirstFile as lookup table. Triggers 1+3 suppressed during file browser. TESTED OK. (2) Status cleanup: Ctrl+R conflict RESOLVED, Setup options RESOLVED (already works), Base screen mini-map NOT NEEDED (read-only visual), Zoom feedback NOT NEEDED (purely visual). (3) Key lesson documented in memory: for game modal dialogs, always observe+annotate, never build parallel navigation. (4) Save Game dialog: Hooked save_game at 0x5A9EB0 with same text-capture pattern as load_game (shared sr_fb_open/sr_fb_close helpers). "Spiel speichern" announced on Ctrl+S. Modified sr_fb_on_text_captured() to announce button text (OK, ABBRECHEN, SPEICHERN, LADEN, CANCEL, SAVE, LOAD) directly instead of skipping — enables overwrite confirmation dialog options to be read. SR_FILE_SAVE_GAME loc string added (en+de). Inline hook slot 24 used. Awaiting testing.

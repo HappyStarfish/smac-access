@@ -29,6 +29,7 @@ int __cdecl save_daemon_header(const char* header, FILE* file);
 int __cdecl load_daemon_strcmp(const char* value, const char* header);
 int __cdecl mod_load_map_daemon(const char* name);
 int __cdecl mod_load_daemon(const char* name, int flag);
+int __cdecl mod_replay_load_daemon(const char* name, int flag);
 void __cdecl mod_auto_save();
 int __cdecl mod_replay_base(int event, int x, int y, int faction_id);
 void __cdecl mod_random_events(int flag);

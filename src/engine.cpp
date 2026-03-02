@@ -145,6 +145,7 @@ int* const ControlWaitLoop = (int*)0x703DE0;
 int* const SkipTechScreenA = (int*)0x945F40; // non-zero skips popups, used in tech_achieved and tech_advance
 int* const SkipTechScreenB = (int*)0x945F44; // non-zero skips popups, used in base_change and tech_advance
 int* const NetUpkeepState = (int*)0x945F48;
+int* const NetSetupState = (int*)0x93E8D0; // 0=idle, 1=cancel, 2=start game
 int* const WorldAddTemperature = (int*)0x9B22E8;
 int* const WorldSkipTerritory = (int*)0x9B22EC;
 int* const GameDrawState = (int*)0x90D91C;

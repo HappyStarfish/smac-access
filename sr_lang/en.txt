@@ -42,11 +42,16 @@ terrain_trench=Deep Ocean
 terrain_arid=Arid
 terrain_moist=Moist
 terrain_rainy=Rainy
-terrain_high=Elevated
+terrain_high=Altitude %d
 tile_yields=%d food, %d minerals, %d energy
 tile_owner=Territory: %s
 tile_in_radius=In base radius
 tile_unowned=Unclaimed
+tile_owner_diplo=Territory: %s (%s)
+tile_worked=, worked
+foreign_unit_at=. Unit: %s %s
+unit_terraform=, building %s
+monolith_used= (used)
 tile_unexplored=Unexplored
 # Scanner
 scan_all=Scanner: All
@@ -464,12 +469,23 @@ design_cancelled=Design cancelled.
 design_new=New unit design.
 design_retired=%s retired.
 design_retire_confirm=Press Delete again to retire %s.
-design_help=Up/Down: browse. Enter: edit. N: new. Delete: retire. Escape: close.
+design_help=Up/Down: browse. Enter: edit. N: new. R: rename. O: obsolete. U: upgrade. Delete: retire. Escape: close.
 design_edit_help=Left/Right: category. Up/Down: option. Enter: save. S: summary. Escape: cancel.
 design_triad_land=Land
 design_triad_sea=Sea
 design_triad_air=Air
 design_equipment=Equipment: %s
+design_rename_open=Rename unit: %s. Type new name, Enter to confirm, Escape to cancel.
+design_rename_done=Unit renamed to %s.
+design_rename_cancel=Rename cancelled.
+design_obsolete_on=%s marked obsolete.
+design_obsolete_off=%s restored from obsolete.
+design_upgrade_offer=Upgrade %d %s to %s? Cost: %d energy. Press U again to confirm.
+design_upgrade_confirm=Upgraded %d %s to %s.
+design_upgrade_done=Upgrade complete.
+design_upgrade_none=No upgrade available for %s.
+design_upgrade_cost=Cannot: not enough energy. Need %d, have %d.
+design_obsolete_status= (obsolete)
 
 # Terraform Status
 terraform_order=Building %s, %d turns
@@ -519,6 +535,8 @@ soceng_info_fmt=Researching %s. %d of %d labs, %d turns. Energy: %d credits, %+d
 soceng_alloc_econ=Economy
 soceng_alloc_psych=Psych
 soceng_alloc_labs=Labs
+soceng_alloc_mode_open=Energy allocation. %s Up/Down: select slider, Left/Right: adjust. Enter: confirm, Escape: cancel.
+soceng_alloc_mode_closed=Energy allocation closed.
 
 # Garrison List (Ctrl+U)
 garrison_open=Garrison: %d units. Up/Down: navigate, D: details, Enter: activate, B: home base, H: hurry, Escape: close.
@@ -621,8 +639,80 @@ mode_move=Move mode
 mode_view=View mode
 
 # Multiplayer Setup
-netsetup_open=Multiplayer Setup. Game text will be read aloud.
-netsetup_help=Multiplayer lobby. Arrow keys, Enter, Escape.
+netsetup_open=Multiplayer Setup. Tab: zones, Arrows: navigate, Enter: activate, Ctrl+F1: help.
+netsetup_help=Tab/Shift+Tab: zones. Up/Down: items. Enter/Space: activate. S: summary. Escape: cancel.
+netsetup_zone_settings=Settings
+netsetup_zone_players=Players
+netsetup_zone_checkboxes=Options
+netsetup_zone_buttons=Buttons
+netsetup_item_fmt=%d of %d: %s
+netsetup_checkbox_fmt=%d of %d: %s, %s
+netsetup_player_fmt=%d of %d: %s
+netsetup_player_empty=Empty
+netsetup_set_difficulty=Difficulty
+netsetup_set_time=Time Controls
+netsetup_set_gametype=Game Type
+netsetup_set_planetsize=Planet Size
+netsetup_set_ocean=Ocean Coverage
+netsetup_set_erosion=Erosive Forces
+netsetup_set_natives=Native Life Forms
+netsetup_set_cloud=Cloud Cover
+netsetup_cb_simultaneous=Simultaneous Moves
+netsetup_cb_transcendence=Transcendence Victory
+netsetup_cb_conquest=Conquest Victory
+netsetup_cb_diplomatic=Diplomatic Victory
+netsetup_cb_economic=Economic Victory
+netsetup_cb_cooperative=Cooperative Victory
+netsetup_cb_do_or_die=Do or Die
+netsetup_cb_look_first=Look First
+netsetup_cb_tech_stagnation=Tech Stagnation
+netsetup_cb_spoils=Spoils of War
+netsetup_cb_blind_research=Blind Research
+netsetup_cb_intense_rivalry=Intense Rivalry
+netsetup_cb_no_unity_survey=No Unity Survey
+netsetup_cb_no_unity_scatter=No Unity Scattering
+netsetup_cb_bell_curve=Bell Curve
+netsetup_cb_time_warp=Time Warp
+netsetup_cb_rand_personality=Random Personalities
+netsetup_cb_rand_social=Random Social Agendas
+netsetup_btn_cancel=Cancel
+netsetup_btn_start=Start Game
+netsetup_player_joined=Player joined: %s
+netsetup_player_left=Player left: slot %d
+netsetup_summary=%s zone, %d of %d: %s
+netsetup_enabled=enabled
+netsetup_disabled=disabled
+netsetup_diff_citizen=Citizen
+netsetup_diff_specialist=Specialist
+netsetup_diff_talent=Talent
+netsetup_diff_librarian=Librarian
+netsetup_diff_thinker=Thinker
+netsetup_diff_transcend=Transcend
+netsetup_size_tiny=Tiny Planet
+netsetup_size_small=Small Planet
+netsetup_size_standard=Standard Planet
+netsetup_size_large=Large Planet
+netsetup_size_huge=Huge Planet
+netsetup_ocean_30=30-50% of surface
+netsetup_ocean_50=50-70% of surface
+netsetup_ocean_70=70-90% of surface
+netsetup_erosion_strong=Strong erosive forces
+netsetup_erosion_avg=Average erosive forces
+netsetup_erosion_weak=Weak erosive forces
+netsetup_native_rare=Rare native life
+netsetup_native_avg=Average native life
+netsetup_native_abund=Abundant native life
+netsetup_cloud_sparse=Sparse cloud cover
+netsetup_cloud_avg=Average cloud cover
+netsetup_cloud_dense=Dense cloud cover
+netsetup_not_supported=not yet supported
+netsetup_cancelled=Cancelled.
+netsetup_of=of
+netsetup_gametype_todo=Game type selection is not yet supported.
+netsetup_gt_random=New Game (Random Map)
+netsetup_gt_scenario=Scenario
+netsetup_gt_load_map=Load Map
+netsetup_start_no_players=Cannot start: not enough players.
 
 # Unit Action Menu (Shift+F10)
 act_menu_open=Unit actions, %d items. Up/Down, Enter, Escape.
@@ -672,3 +762,291 @@ auto_farm_solar=Farm+Solar+Road
 auto_farm_mine=Farm+Mine+Road
 auto_fungus=Auto Fungus Removal
 auto_sensor=Auto Sensors
+
+# Council
+council_open=Planetary Council, %s. %s
+council_closed=Council ended.
+council_help=S or Tab: Vote summary. Ctrl+F1: Help. Game handles navigation and voting.
+council_vote_line=%s: %d votes
+council_total=Total: %d votes. Majority: %d.
+council_your_votes=Your votes: %d of %d.
+council_governor=Governor: %s
+council_no_governor=No Governor.
+council_can_call=You can call the Planetary Council.
+council_cannot_call=Cannot call the Planetary Council.
+
+# Base Operations (F4)
+baseops_open=Base Operations, %d bases. Up/Down: navigate, S: summary, D: detail, Ctrl+F1: help.
+baseops_closed=Base Operations closed.
+baseops_base_fmt=%s, %d of %d: Population %d, Nutrients %+d, Minerals %+d, Energy %+d, Building %s, %d turns
+baseops_base_fmt_stall=%s, %d of %d: Population %d, Nutrients %+d, Minerals %+d, Energy %+d, Building %s, stalled
+baseops_summary=%d bases, Population %d, Energy %d
+baseops_help=Up/Down: navigate bases. S: summary. D: detail. Escape: close. Ctrl+F1: this help.
+baseops_empty=No bases.
+baseops_detail=%s: Talents %d, Drones %d, Specialists %d. Economy %d, Psych %d, Labs %d. Eco damage %d. Elevation %d. %s
+
+# Research Status (F2)
+labs_open=Research Status. S: summary, D: base detail, Ctrl+F1: help.
+labs_closed=Research Status closed.
+labs_summary=Researching %s, %d of %d, %d turns. Labs per turn: %d. Techs discovered: %d. Allocation: Economy %d%%, Psych %d%%, Labs %d%%.
+labs_summary_done=Research: %s. Labs per turn: %d. Techs discovered: %d. Allocation: Economy %d%%, Psych %d%%, Labs %d%%.
+labs_detail_header=Labs by base: %d bases, %d total labs.
+labs_detail_base=%s, %d of %d: %d labs
+labs_no_bases=No bases.
+labs_help=S: Research summary. D: Labs per base. Escape: Close. Ctrl+F1: This help.
+
+# Secret Projects (F5)
+projects_open=Secret Projects, %d projects. Up/Down: navigate, S: summary, Ctrl+F1: help.
+projects_closed=Secret Projects closed.
+projects_built=%s, %d of %d: Built by %s at %s
+projects_unbuilt=%s, %d of %d: Not built
+projects_destroyed=%s, %d of %d: Destroyed
+projects_summary=%d projects: %d built, %d not built, %d destroyed
+projects_empty=No secret projects.
+projects_help=Up/Down: Browse projects. S: Summary. Escape: Close. Ctrl+F1: This help.
+
+# Orbital Status (F6)
+orbital_open=Orbital Status. S: summary, D: compare factions, Ctrl+F1: help.
+orbital_closed=Orbital Status closed.
+orbital_summary=%d satellites: %d nutrient, %d mineral, %d energy, %d defense.
+orbital_player=%s: %d satellites
+orbital_faction=%s: %d satellites
+orbital_help=S: Your satellites. D: Compare factions. Escape: Close. Ctrl+F1: This help.
+
+# Military Status (F7)
+military_open=Military Status. S: rankings, D: unit detail, Ctrl+F1: help.
+military_closed=Military Status closed.
+military_summary=Combat units: %d. Bases: %d. Population: %d. Strength: %d, %s. Best weapon: %d, armor: %d, speed: %d. Planet busters: %d.
+military_unit=%s, %d of %d: %d active
+military_detail_open=Unit types: %d. Up/Down to browse, Escape to return.
+military_detail_closed=Unit detail closed.
+military_no_units=No active unit types.
+military_rankings_header=Power rankings:
+military_rank_entry=%d. %s, strength %d
+military_help=S: Power rankings. D: Unit types. Escape: Close. Ctrl+F1: This help.
+
+# Score (F8)
+score_open=Score, %d factions. Up/Down: navigate, S: your rank, Ctrl+F1: help.
+score_closed=Score closed.
+score_faction=%d. %s, %d of %d: Bases %d, Population %d, Techs %d
+score_player=Your rank: %s, %d of %d. Bases %d, Population %d, Techs %d.
+score_empty=No factions.
+score_help=Up/Down: Browse rankings. S: Your rank. Escape: Close. Ctrl+F1: This help.
+
+# Game End
+victory_conquest=Conquest Victory!
+victory_diplomatic=Diplomatic Victory!
+victory_economic=Economic Victory!
+victory_transcendence=Transcendence Victory!
+defeat=Defeat. Your faction has been eliminated.
+game_over=Game Over.
+replay_screen=Replay map. This is a visual animation. Press Escape to continue.
+
+# Datalinks (F1)
+dl_open=Datalinks, %d categories. Left/Right: category, Up/Down: items, D: detail, S: summary, Escape: close.
+dl_closed=Datalinks closed.
+dl_help=Left/Right: Switch category. Up/Down: Browse items. Home/End: First/Last. D: Detail. S: Summary. Escape: Close. Ctrl+F1: This help.
+dl_empty=No entries in this category.
+dl_category_fmt=%s, %d entries.
+dl_summary=%s, %d entries. Technologies known: %d of %d.
+dl_known=known
+dl_unknown=unknown
+dl_unlocks=Unlocks:
+dl_preq_none=None
+dl_preq_disabled=Disabled
+dl_cat_tech=Technologies
+dl_cat_facility=Base Facilities
+dl_cat_project=Secret Projects
+dl_cat_weapon=Weapons
+dl_cat_armor=Armor
+dl_cat_chassis=Chassis
+dl_cat_reactor=Reactors
+dl_cat_ability=Abilities
+dl_cat_concept=Game Concepts
+dl_tcat_explore=Explore
+dl_tcat_discover=Discover
+dl_tcat_build=Build
+dl_tcat_conquer=Conquer
+dl_item_tech=%d of %d: %s (%s)
+dl_item_facility=%d of %d: %s, Cost %d, Maint %d
+dl_item_project=%d of %d: %s, not built
+dl_item_project_built=%d of %d: %s, built by %s
+dl_item_weapon=%d of %d: %s, Attack %d
+dl_item_armor=%d of %d: %s, Defense %d
+dl_item_chassis=%d of %d: %s, Speed %d, %s
+dl_item_reactor=%d of %d: %s, Power %d
+dl_item_ability=%d of %d: %s
+dl_item_concept=%d of %d: %s
+dl_detail_tech=%s. Requires: %s, %s. Category: %s. Level %d. %s
+dl_detail_tech_v2=%s. Requires: %s. Category: %s. Level %d. %s
+dl_detail_facility=%s. Cost %d, Maintenance %d. Requires: %s. %s
+dl_detail_project=%s. Cost %d. Requires: %s. Not built. %s
+dl_detail_project_built=%s. Cost %d. Requires: %s. Built by %s at %s. %s
+dl_detail_weapon=%s. Attack %d, Cost %d. Requires: %s
+dl_detail_armor=%s. Defense %d, Cost %d. Requires: %s
+dl_detail_chassis=%s. Speed %d, %s, Range %d. Requires: %s
+dl_detail_reactor=%s. Power %d. Requires: %s
+dl_detail_ability=%s. %s. Requires: %s
+dl_detail_concept=%s. %s
+# Tech pick (research selection)
+tech_pick_title=Choose research goal. Select one technology to research. %d options available.
+tech_pick_item=%d of %d: %s, %s
+tech_pick_help=Up/Down: Navigate options. Enter: Select research goal. Escape: Cancel. Ctrl+F1: Help.
+tech_pick_closed=Research selected.
+tech_pick_dir=%d of %d: %s
+tech_pick_blind_status=Blind Research. Current direction: %s.
+tech_pick_blind_mixed=Blind Research. No specific direction set.
+tech_pick_blind_done=Direction set to %s.
+tech_pick_status=Current direction: %s.
+tech_pick_status_mixed=No specific direction set.
+dl_concept_no_text=No description available.
+
+# Faction Selection
+faction_help=Up, Down: choose faction. Enter: play. G: edit group. I: faction info. R: random group. Escape: cancel. Ctrl+F1: help.
+faction_no_info=No faction info available.
+
+# World Map Actions
+research_priorities=Research priorities.
+group_dialog=Group dialog.
+grid_on=Grid on.
+grid_off=Grid off.
+terrain_flat_on=Flat terrain on.
+terrain_flat_off=Flat terrain off.
+centered=Centered.
+monuments_info=Monuments. Visual display of your faction's achievements. Not yet accessible.
+hall_of_fame_info=Hall of Fame. List of completed games. Not yet accessible.
+
+# Monuments (F9)
+monument_open=Monuments, %d of %d achieved. Up/Down: navigate, S: summary, Escape: close.
+monument_closed=Monuments closed.
+monument_item_achieved=%d of %d: %s, Turn %d.
+monument_item_locked=%d of %d: %s, not achieved.
+monument_summary=%d of %d achievements unlocked.
+monument_help=Up/Down: Browse achievements. Home/End: First/Last. S: Summary. Escape: Close. Ctrl+F1: This help.
+monument_type_0=Colony Founded
+monument_type_1=Technology Discovered
+monument_type_2=Secrets of Technology
+monument_type_3=Prototype Built
+monument_type_4=Facility Built
+monument_type_5=Secret Project Completed
+monument_type_6=Enemy Destroyed
+monument_type_7=Base Conquered
+monument_type_8=Naval Unit Built
+monument_type_9=Air Unit Built
+monument_type_10=Native Life Bred
+monument_type_11=First in Space
+monument_type_12=Preserve Built
+monument_type_13=Planet Unified
+monument_type_14=Winning by Transcendence
+monument_type_15=Faction Eliminated
+
+# Runtime Toggles
+thinker_ai_on=Thinker AI enabled.
+thinker_ai_off=Thinker AI disabled. Using original game AI.
+accessibility_on=Screen reader on.
+accessibility_off=Screen reader off.
+help_toggle_ai=Ctrl+Shift+T: toggle Thinker AI
+help_toggle_sr=Ctrl+Shift+A: toggle screen reader
+
+# Game Settings Editor (Ctrl+F10)
+gsettings_open=Game Settings. Tab: switch category. Up/Down: navigate. Left/Right: change value. Enter: save. Escape: cancel.
+gsettings_saved=Settings saved.
+gsettings_cancelled=Settings cancelled.
+gsettings_help=Tab/Shift+Tab: Switch category. Up/Down: Navigate settings. Left/Right: Change value. Enter/Space: Toggle (Rules). D: Description. I: Faction info. S: Summary. Enter: Save and close. Escape: Cancel. Ctrl+F1: This help.
+gsettings_cat_fmt=Category %d of %d: %s, %d settings
+gsettings_item_fmt=%d of %d: %s: %s
+gsettings_toggle_fmt=%d of %d: %s: %s
+gsettings_summary_fmt=Difficulty %s, %s, Map %s, %d rules active
+gsettings_cat_general=General
+gsettings_cat_faction=Faction
+gsettings_cat_map=Map
+gsettings_cat_rules=Rules
+gsettings_difficulty=Difficulty
+gsettings_faction=Faction
+gsettings_map_size=Planet Size
+gsettings_ocean=Ocean Coverage
+gsettings_land=Land Coverage
+gsettings_erosion=Erosion
+gsettings_clouds=Cloud Cover
+gsettings_natives=Native Life
+gsettings_land_sparse=Sparse
+gsettings_land_avg=Average
+gsettings_land_dense=Dense
+gsettings_on=On
+gsettings_off=Off
+gsettings_rule_conquest=Conquest Victory
+gsettings_rule_economic=Economic Victory
+gsettings_rule_diplomatic=Diplomatic Victory
+gsettings_rule_transcendence=Transcendence Victory
+gsettings_rule_cooperative=Cooperative Victory
+gsettings_rule_do_or_die=Do or Die
+gsettings_rule_look_first=Look First
+gsettings_rule_tech_stagnation=Tech Stagnation
+gsettings_rule_intense_rivalry=Intense Rivalry
+gsettings_rule_time_warp=Time Warp
+gsettings_rule_no_unity_survey=No Unity Survey
+gsettings_rule_blind_research=Blind Research
+gsettings_rule_no_unity_scatter=No Unity Scattering
+gsettings_rule_spoils_of_war=Spoils of War
+gsettings_rule_bell_curve=Bell Curve
+gsettings_rule_desc_conquest=Win by conquering all other factions.
+gsettings_rule_desc_economic=Win by cornering the Global Energy Market.
+gsettings_rule_desc_diplomatic=Win by being elected Planetary Governor or Supreme Leader.
+gsettings_rule_desc_transcendence=Win by completing the Ascent to Transcendence.
+gsettings_rule_desc_cooperative=Allied factions share victory.
+gsettings_rule_desc_do_or_die=Eliminated factions cannot restart.
+gsettings_rule_desc_look_first=Explore the map before choosing a landing site.
+gsettings_rule_desc_tech_stagnation=Research slows as you learn more technologies.
+gsettings_rule_desc_intense_rivalry=More aggressive AI behavior.
+gsettings_rule_desc_time_warp=Accelerate start by skipping early turns.
+gsettings_rule_desc_no_unity_survey=No initial map survey from orbit.
+gsettings_rule_desc_blind_research=Cannot choose specific technologies to research.
+gsettings_rule_desc_no_unity_scatter=No supply pods scattered from Unity wreckage.
+gsettings_rule_desc_spoils_of_war=Capture technology when conquering enemy bases.
+gsettings_rule_desc_bell_curve=Combat results follow a bell curve distribution.
+gsettings_no_desc=No description available.
+gsettings_press_d=Press D for details.
+gsettings_faction_info=Press I for faction info.
+
+# Unit List (U key)
+unit_list_open=Unit List, %d units. Up/Down: browse, Enter: select, Escape: close.
+unit_list_fmt=%d of %d: %s at (%d, %d)
+unit_list_moves=%d of %d moves
+unit_list_health=health %d of %d
+unit_list_home=home base: %s
+unit_list_selected=Selected %s
+unit_list_empty=No units available.
+unit_list_help=Up/Down: Browse. Enter: Select and activate unit. Escape: Close. Ctrl+F1: This help.
+order_idle=idle
+order_hold=hold
+order_sentry=sentry
+order_explore=explore
+order_goto=go to
+order_convoy=convoy
+
+# Enemy Unit List (Shift+U)
+enemy_list_open=Foreign Units, %d visible. Up/Down: browse, Enter: jump to unit, Escape: close.
+enemy_list_fmt=%d of %d: %s, %s (%s) at (%d, %d)
+enemy_list_native=Native
+enemy_list_empty=No foreign units visible.
+enemy_list_help=Up/Down: Browse. Enter: Jump to unit on map. Escape: Close. Ctrl+F1: This help.
+enemy_list_jump=Jumped to %s at (%d, %d)
+enemy_list_triad_land=Land
+enemy_list_triad_sea=Sea
+enemy_list_triad_air=Air
+
+# Stack Cycling (Tab)
+tab_cycle_fmt=%s, %d of %d on tile
+tab_cycle_none=No own units at cursor.
+
+# Net Setup Settings (Ctrl+Shift+F10)
+netsettings_open=Lobby Settings Editor. Tab: categories, Up/Down: navigate, Left/Right: change. Enter: save, Escape: cancel.
+netsettings_saved=Settings applied.
+netsettings_cancelled=Settings discarded.
+netsettings_help=Tab/Shift+Tab: Switch category. Up/Down: Navigate items. Left/Right: Change value or toggle. Space: Toggle checkbox. S: Summary. Enter: Save and close. Escape: Cancel. Ctrl+F1: This help.
+netsettings_cat_fmt=Category %d of %d: %s, %d items
+netsettings_cat_settings=Settings
+netsettings_cat_rules=Rules
+netsettings_summary_fmt=Difficulty: %s, Planet: %s. %d settings changed, %d rules changed.
+netsettings_time_none=None
+netsettings_time_other=Custom

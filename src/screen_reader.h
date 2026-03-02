@@ -26,8 +26,12 @@ bool sr_silence();
 // Check if screen reader is available
 bool sr_is_available();
 
-// Check if all SR features are disabled (no_hooks.txt)
+// Check if all SR features are disabled (no_hooks.txt or runtime toggle)
 bool sr_all_disabled();
+
+// Runtime toggle for accessibility (Ctrl+Shift+A)
+void sr_set_disabled(bool disabled);
+bool sr_get_disabled();
 
 // Install hooks on Buffer_write_l family to capture game text
 bool sr_install_text_hooks();
@@ -38,13 +42,16 @@ const char* sr_get_last_text();
 // Clear the captured text buffer
 void sr_clear_text();
 
-// Called by hooks to record drawn text (y = vertical screen position, -1 if unknown)
-void sr_record_text(const char* text, int y = -1);
+// Called by hooks to record drawn text (x,y = screen position, -1 if unknown)
+// buf = Buffer pointer that text was drawn to (for identifying child buffers)
+void sr_record_text(const char* text, int x = -1, int y = -1, void* buf = nullptr);
 
 // Individual item tracking (for dialog/menu navigation)
 int sr_item_count();
 const char* sr_item_get(int index);
+int sr_item_get_x(int index);
 int sr_item_get_y(int index);
+void* sr_item_get_buf(int index);
 void sr_items_clear();
 
 // Timestamp of last text capture (for deferred announce)
@@ -56,7 +63,12 @@ bool sr_snapshot_ready();
 int sr_snapshot_count();
 const char* sr_snapshot_get(int index);
 int sr_snapshot_get_y(int index);
+void* sr_snapshot_get_buf(int index);
 void sr_snapshot_consume();
+
+// Force save current items to snapshot and clear all buffers.
+// Used by multiplayer handler to get fresh capture data via forced redraw.
+void sr_force_snapshot();
 
 // Read popup body text from a game text file (filename.txt, #LABEL)
 bool sr_read_popup_text(const char* filename, const char* label,
@@ -88,6 +100,7 @@ extern DWORD sr_tutorial_announce_time;
 
 // Check if a popup hook is currently active (blocks duplicate announcements)
 bool sr_popup_is_active();
+void sr_popup_set_active(bool active);
 
 // Number input modal: check if active, process keys from ModWinProc
 bool sr_is_number_input_active();
@@ -101,6 +114,17 @@ void sr_fb_on_text_captured(const char* text); // announce file/folder with type
 bool sr_debug_active();
 void sr_debug_toggle();
 void sr_debug_log(const char* fmt, ...);
+
+// Netsetup coordinate diagnostic mode: when true, hooks log x,y for every text render
+extern bool sr_netsetup_log_coords;
+
+// Multiplayer no-dedup: when true, skip strstr dedup in sr_record_text
+// so that repeated player names ("Computer") at different y-coords are all captured.
+extern bool sr_mp_no_dedup;
+
+// Multiplayer Start Game: set true before GraphicWin_close to signal
+// that create_game should return success (game start, not cancel).
+extern bool sr_net_start_requested;
 
 // Convert Windows-1252 (ANSI) game text to UTF-8.
 // Used for all text originating from the game engine (Buffer_write hooks,

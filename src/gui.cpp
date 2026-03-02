@@ -8,6 +8,19 @@
 #include "diplo_handler.h"
 #include "governor_handler.h"
 #include "message_handler.h"
+#include "multiplayer_handler.h"
+#include "council_handler.h"
+#include "status_handler.h"
+#include "labs_handler.h"
+#include "projects_handler.h"
+#include "orbital_handler.h"
+#include "military_handler.h"
+#include "score_handler.h"
+#include "monument_handler.h"
+#include "datalinks_handler.h"
+#include "faction_select_handler.h"
+#include "game_settings_handler.h"
+#include "netsetup_settings_handler.h"
 #include "localization.h"
 #include "world_map_handler.h"
 #include "menu_handler.h"
@@ -735,6 +748,19 @@ LRESULT WINAPI ModWinProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         }
     }
 
+    // === Runtime accessibility toggle (Ctrl+Shift+A) ===
+    // When disabled, only the re-enable hotkey is checked — all other
+    // accessibility code is skipped and keys pass through to the game.
+    if (sr_get_disabled()) {
+        if (msg == WM_KEYDOWN && wParam == 'A' && ctrl_key_down() && shift_key_down()) {
+            sr_set_disabled(false);
+            sr_output(loc(SR_ACCESSIBILITY_ON), true);
+            debug("SR: accessibility re-enabled via Ctrl+Shift+A\n");
+            return 0;
+        }
+        return WinProc(hwnd, msg, wParam, lParam);
+    }
+
     // === Screen reader: unified announce system ===
 
     // Early in_menu check for HUD filter (full in_menu computed later too)
@@ -786,47 +812,117 @@ LRESULT WINAPI ModWinProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             sr_prev_popup = cur_popup;
         }
 
+        // --- Game-end detection: announce victory type and score screen ---
+        static bool sr_prev_game_done = false;
+        bool cur_game_done = (*GameState & STATE_GAME_DONE) != 0;
+        if (cur_game_done && !sr_prev_game_done) {
+            const char* victory_msg;
+            if (!is_alive(*CurrentPlayerFaction)) {
+                victory_msg = loc(SR_DEFEAT);
+            } else if (*GameState & STATE_VICTORY_CONQUER) {
+                victory_msg = loc(SR_VICTORY_CONQUEST);
+            } else if (*GameState & STATE_VICTORY_DIPLOMATIC) {
+                victory_msg = loc(SR_VICTORY_DIPLOMATIC);
+            } else if (*GameState & STATE_VICTORY_ECONOMIC) {
+                victory_msg = loc(SR_VICTORY_ECONOMIC);
+            } else if (voice_of_planet()) {
+                victory_msg = loc(SR_VICTORY_TRANSCENDENCE);
+            } else {
+                victory_msg = loc(SR_GAME_OVER);
+            }
+            sr_debug_log("GAME-END: %s (GameState=0x%X)", victory_msg, *GameState);
+            sr_output(victory_msg, false);
+        }
+        sr_prev_game_done = cur_game_done;
+
         // --- Multiplayer Setup (NetWin) transition detection ---
         static bool sr_netsetup_was_active = false;
         if (in_netsetup && !sr_netsetup_was_active) {
-            sr_output(loc(SR_NETSETUP_OPEN), true);
+            MultiplayerHandler::OnOpen();
             sr_announced[0] = '\0';
             sr_debug_log("ANNOUNCE-SCREEN: Multiplayer Setup");
-            // Dump NetWin child windows for reverse-engineering
+            // Enable coordinate logging in Buffer_write hooks
+            sr_netsetup_log_coords = true;
+            // Detailed NetWin structure dump for reverse engineering
             if (NetWin) {
-                sr_debug_log("NETWIN ptr=%p children=%d caption=[%s] rect=(%d,%d)-(%d,%d)",
-                    (void*)NetWin, NetWin->iChildCount,
-                    NetWin->pszCaption ? NetWin->pszCaption : "null",
+                // Vtable pointer identifies actual class type
+                int* raw = (int*)NetWin;
+                sr_debug_log("NETWIN vtable=%p addr=%p childCount=%d caption=[%s]",
+                    (void*)raw[0], (void*)NetWin, NetWin->iChildCount,
+                    NetWin->pszCaption ? NetWin->pszCaption : "(null)");
+                sr_debug_log("NETWIN rect=(%d,%d,%d,%d) flags=0x%X",
                     NetWin->rRect1.left, NetWin->rRect1.top,
-                    NetWin->rRect1.right, NetWin->rRect1.bottom);
-                for (int ci = 0; ci < NetWin->iChildCount && ci < 30; ci++) {
+                    NetWin->rRect1.right, NetWin->rRect1.bottom,
+                    NetWin->iFlags);
+                sr_debug_log("NETWIN scroll_v=%p scroll_h=%p",
+                    (void*)NetWin->scroll_vert, (void*)NetWin->scroll_horz);
+                sr_debug_log("NETWIN oChildList: count=%d current=%d",
+                    NetWin->oChildList.iCount, NetWin->oChildList.iCurrent);
+                // Check if NetWin has CWinFonted-like fields (SpotList at 0xA2C)
+                int winBaseInts = 0x444 / 4;
+                if (!IsBadReadPtr(raw + 0xA2C/4, 12)) {
+                    int* spotListPtr = &raw[0xA2C/4];
+                    sr_debug_log("NETWIN @0xA2C (SpotList?): %p max=%d cur=%d",
+                        (void*)spotListPtr[0], spotListPtr[1], spotListPtr[2]);
+                }
+                // Dump each child window in detail
+                int max_dump = NetWin->iChildCount;
+                if (max_dump > 20) max_dump = 20;
+                for (int ci = 0; ci < max_dump; ci++) {
                     Win* child = NetWin->apoChildren[ci];
-                    if (!child) continue;
-                    sr_debug_log("  CHILD[%d] ptr=%p ch=%d cap=[%s] rect=(%d,%d)-(%d,%d) vis=%d",
-                        ci, (void*)child, child->iChildCount,
-                        child->pszCaption ? child->pszCaption : "null",
+                    if (!child) {
+                        sr_debug_log("  CHILD[%d] = NULL", ci);
+                        continue;
+                    }
+                    int* cr = (int*)child;
+                    sr_debug_log("  CHILD[%d] vtable=%p addr=%p childCount=%d flags=0x%X",
+                        ci, (void*)cr[0], (void*)child, child->iChildCount, child->iFlags);
+                    sr_debug_log("    rect=(%d,%d,%d,%d) caption=[%s]",
                         child->rRect1.left, child->rRect1.top,
                         child->rRect1.right, child->rRect1.bottom,
-                        Win_is_visible(child));
-                    // Dump raw memory after Win base (0x444) to detect type
-                    int* raw = (int*)child;
-                    sr_debug_log("    raw[0x98]=%08x [0xA4]=%08x [0x444]=%08x [0x448]=%08x",
-                        raw[0x98/4], raw[0xA4/4], raw[0x444/4], raw[0x448/4]);
-                    for (int gi = 0; gi < child->iChildCount && gi < 10; gi++) {
-                        Win* gc = child->apoChildren[gi];
-                        if (!gc) continue;
-                        sr_debug_log("    GC[%d.%d] ptr=%p ch=%d cap=[%s] rect=(%d,%d)-(%d,%d) vis=%d",
-                            ci, gi, (void*)gc, gc->iChildCount,
-                            gc->pszCaption ? gc->pszCaption : "null",
-                            gc->rRect1.left, gc->rRect1.top,
-                            gc->rRect1.right, gc->rRect1.bottom,
-                            Win_is_visible(gc));
+                        child->pszCaption ? child->pszCaption : "(null)");
+                    // Try BaseButton name (offset 0xA7C)
+                    char* btn_name = (char*)cr[0xA7C/4];
+                    if (btn_name && (unsigned int)btn_name > 0x10000
+                        && (unsigned int)btn_name < 0x7FFFFFFF
+                        && !IsBadReadPtr(btn_name, 4)
+                        && btn_name[0] >= 0x20 && btn_name[0] < 0x7F) {
+                        sr_debug_log("    btn_name=[%s]", btn_name);
                     }
+                }
+                // Game state during setup
+                sr_debug_log("NETWIN-STATE: GameRules=0x%X GameMoreRules=0x%X GameState=0x%X",
+                    *GameRules, *GameMoreRules, *GameState);
+                sr_debug_log("NETWIN-STATE: DiffLevel=%d MapSize=%d Ocean=%d Erosion=%d Native=%d Cloud=%d",
+                    *DiffLevel, *MapSizePlanet, *MapOceanCoverage,
+                    *MapErosiveForces, *MapNativeLifeForms, *MapCloudCover);
+                sr_debug_log("NETWIN-STATE: MultiplayerActive=%d PbemActive=%d",
+                    *MultiplayerActive, *PbemActive);
+                sr_debug_log("NETWIN-STATE: DialogChoices=0x%X DialogToggle=0x%X",
+                    *DialogChoices, *DialogToggle);
+                // Safe raw memory dump with IsBadReadPtr check
+                // Dump 512 bytes (128 ints) beyond Win base (0x444)
+                for (int blk = 0; blk < 8; blk++) {
+                    int off = winBaseInts + blk * 16;
+                    if (IsBadReadPtr(raw + off, 64)) {
+                        sr_debug_log("NETWIN-RAW +0x%03X: <unreadable>", off * 4);
+                        break;
+                    }
+                    char hexline[512];
+                    int pos = snprintf(hexline, sizeof(hexline),
+                        "NETWIN-RAW +0x%03X:", (off * 4));
+                    for (int j = 0; j < 16 && pos < 480; j++) {
+                        pos += snprintf(hexline + pos, sizeof(hexline) - pos,
+                            " %08X", (unsigned int)raw[off + j]);
+                    }
+                    sr_debug_log("%s", hexline);
                 }
             }
         } else if (!in_netsetup && sr_netsetup_was_active) {
+            MultiplayerHandler::OnClose();
             sr_debug_log("SCREEN: Multiplayer Setup closed");
             sr_announced[0] = '\0';
+            sr_netsetup_log_coords = false;
         }
         sr_netsetup_was_active = in_netsetup;
 
@@ -858,6 +954,11 @@ LRESULT WINAPI ModWinProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
         // Diplomacy handler: detect session open/close
         DiplomacyHandler::OnTimer();
+
+        // Multiplayer setup: detect player list changes
+        if (in_netsetup) {
+            MultiplayerHandler::OnTimer();
+        }
 
         // --- Key tracking: reset capture on every significant keypress ---
         if (msg == WM_KEYDOWN) {
@@ -927,6 +1028,16 @@ LRESULT WINAPI ModWinProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             || DesignHandler::IsActive()
             || GovernorHandler::IsActive()
             || MessageHandler::IsActive()
+            || MultiplayerHandler::IsActive()
+            || StatusHandler::IsActive()
+            || LabsHandler::IsActive()
+            || ProjectsHandler::IsActive()
+            || OrbitalHandler::IsActive()
+            || MilitaryHandler::IsActive()
+            || ScoreHandler::IsActive()
+            || MonumentHandler::IsActive()
+            || DatalinksHandler::IsActive()
+            || NetSetupSettingsHandler::IsActive()
             || sr_is_number_input_active();
         if (sr_modal_active || sr_file_browser_active()) {
             sr_snapshot_consume();
@@ -943,6 +1054,8 @@ LRESULT WINAPI ModWinProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             } else if (cur_win == GW_World) {
                 // World map text (landmarks, info panel) handled by Trigger 4 whitelist
                 sr_debug_log("SNAP-DISCARD (world map)");
+            } else if (FactionSelectHandler::IsActive()) {
+                sr_debug_log("SNAP-DISCARD (faction select)");
             } else if (sr_arrow_active) {
                 sr_debug_log("SNAP-DISCARD (arrow)");
             } else {
@@ -972,7 +1085,7 @@ LRESULT WINAPI ModWinProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         // HUD data arrives character-by-character and prevents sr_stable_since
         // from ever settling. This trigger ignores ongoing HUD captures.
         if (sr_arrow_active && sr_arrow_time > 0 && !on_world_map
-            && !sr_modal_active) {
+            && !sr_modal_active && !FactionSelectHandler::IsActive()) {
             int count = sr_item_count();
             DWORD elapsed = now - sr_arrow_time;
             if ((count >= 2 && elapsed > 50) || (count == 1 && elapsed > 200)) {
@@ -1057,7 +1170,7 @@ LRESULT WINAPI ModWinProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         if (sr_stable_since > 0 && (now - sr_stable_since) > 300
             && sr_item_count() > 0 && !on_world_map && !sr_arrow_active
             && !in_menu && !sr_modal_active && !sr_file_browser_active()
-            && cur_win != GW_Base) {
+            && cur_win != GW_Base && !FactionSelectHandler::IsActive()) {
             int count = sr_item_count();
             char buf[2048], all[2048];
             if (sr_build_announce(sr_item_get, count, sr_announced,
@@ -1097,6 +1210,8 @@ LRESULT WINAPI ModWinProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         bool in_popup_input = sr_is_available()
             && !sr_is_number_input_active()
             && !BaseScreenHandler::IsRenameActive()
+            && !MultiplayerHandler::IsActive()
+            && !GameSettingsHandler::IsActive()
             && (sr_popup_is_active() || *WinModalState != 0);
 
         // Clear shadow buffer when popup input state ends
@@ -1163,6 +1278,39 @@ LRESULT WINAPI ModWinProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             set_windowed(false);
         }
 
+    // Screen reader: StatusHandler modal — must be BEFORE all other key handlers
+    // so that keys dispatched from our PeekMessage loop are not consumed by
+    // world map, base screen, or other handlers.
+    } else if ((msg == WM_KEYDOWN || msg == WM_CHAR) && StatusHandler::IsActive()) {
+        if (msg == WM_KEYDOWN) {
+            StatusHandler::Update(msg, wParam);
+        }
+        return 0;
+
+    } else if ((msg == WM_KEYDOWN || msg == WM_CHAR)
+    && (LabsHandler::IsActive() || ProjectsHandler::IsActive()
+        || OrbitalHandler::IsActive() || MilitaryHandler::IsActive()
+        || ScoreHandler::IsActive() || MonumentHandler::IsActive()
+        || DatalinksHandler::IsActive())) {
+        if (msg == WM_KEYDOWN) {
+            if (LabsHandler::IsActive()) {
+                LabsHandler::Update(msg, wParam);
+            } else if (ProjectsHandler::IsActive()) {
+                ProjectsHandler::Update(msg, wParam);
+            } else if (OrbitalHandler::IsActive()) {
+                OrbitalHandler::Update(msg, wParam);
+            } else if (MilitaryHandler::IsActive()) {
+                MilitaryHandler::Update(msg, wParam);
+            } else if (ScoreHandler::IsActive()) {
+                ScoreHandler::Update(msg, wParam);
+            } else if (MonumentHandler::IsActive()) {
+                MonumentHandler::Update(msg, wParam);
+            } else if (DatalinksHandler::IsActive()) {
+                DatalinksHandler::Update(msg, wParam);
+            }
+        }
+        return 0;
+
     } else if (msg == WM_WINDOWED && !conf.reduced_mode) {
         RECT window_rect;
         WINDOWPLACEMENT wp;
@@ -1215,13 +1363,28 @@ LRESULT WINAPI ModWinProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         sr_number_input_update(msg, wParam);
         return 0;
 
+    // Screen reader: Multiplayer setup handler (non-modal, yields to popup list)
+    // Only consume keys that the handler actually handles (returns true).
+    // Keys like Escape pass through to the game.
+    } else if ((msg == WM_KEYDOWN || msg == WM_CHAR) && sr_is_available()
+    && MultiplayerHandler::IsActive() && !sr_popup_list.active) {
+        static bool sr_mp_last_consumed = false;
+        if (msg == WM_KEYDOWN) {
+            sr_mp_last_consumed = MultiplayerHandler::Update(msg, wParam);
+            if (sr_mp_last_consumed) return 0;
+            // If Update returned false, let key pass through to game
+        } else if (msg == WM_CHAR && sr_mp_last_consumed) {
+            return 0; // consume WM_CHAR for keys we handled
+        }
+
     // Screen reader: Modal handlers (SocialEng, Prefs, Specialist) intercept ALL
     // messages when active. WM_CHAR must also be consumed to prevent the game's
     // WinProc from seeing translated keypresses inside our modal loop.
     } else if ((msg == WM_KEYDOWN || msg == WM_CHAR) && sr_is_available()
     && (SocialEngHandler::IsActive() || PrefsHandler::IsActive()
         || SpecialistHandler::IsActive() || DesignHandler::IsActive()
-        || GovernorHandler::IsActive())) {
+        || GovernorHandler::IsActive() || StatusHandler::IsActive()
+        || GameSettingsHandler::IsActive() || NetSetupSettingsHandler::IsActive())) {
         if (msg == WM_KEYDOWN) {
             if (SocialEngHandler::IsActive()) {
                 SocialEngHandler::Update(msg, wParam);
@@ -1231,6 +1394,12 @@ LRESULT WINAPI ModWinProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                 DesignHandler::Update(msg, wParam);
             } else if (GovernorHandler::IsActive()) {
                 GovernorHandler::Update(msg, wParam);
+            } else if (StatusHandler::IsActive()) {
+                StatusHandler::Update(msg, wParam);
+            } else if (GameSettingsHandler::IsActive()) {
+                GameSettingsHandler::Update(msg, wParam);
+            } else if (NetSetupSettingsHandler::IsActive()) {
+                NetSetupSettingsHandler::Update(msg, wParam);
             } else {
                 SpecialistHandler::Update(msg, wParam);
             }
@@ -1461,6 +1630,93 @@ LRESULT WINAPI ModWinProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             console_world_generate(ParseNumTable[0]);
         }
 
+    // Screen reader: Faction selection (Ctrl+F1 help)
+    } else if (msg == WM_KEYDOWN && sr_is_available()
+    && FactionSelectHandler::HandleKey(hwnd, msg, wParam)) {
+        return 0;
+
+    // Screen reader: Council key handling (S/Tab vote summary, Ctrl+F1 help)
+    } else if (msg == WM_KEYDOWN && sr_is_available()
+    && CouncilHandler::HandleKey(msg, wParam)) {
+        return 0;
+
+    // Screen reader: F3 = energy allocation (via SocialEngHandler alloc mode)
+    } else if (msg == WM_KEYDOWN && wParam == VK_F3 && !ctrl_key_down()
+    && !shift_key_down() && sr_is_available()
+    && current_window() == GW_World && !*GameHalted) {
+        SocialEngHandler::RunModalAlloc();
+        return 0;
+
+    // Screen reader: F4 = accessible base operations list
+    } else if (msg == WM_KEYDOWN && wParam == VK_F4 && !ctrl_key_down()
+    && !shift_key_down() && sr_is_available()
+    && current_window() == GW_World && !*GameHalted) {
+        StatusHandler::RunModal();
+        return 0;
+
+    // Screen reader: F1 = accessible Datalinks browser
+    } else if (msg == WM_KEYDOWN && wParam == VK_F1 && !ctrl_key_down()
+    && !shift_key_down() && sr_is_available()
+    && current_window() == GW_World && !*GameHalted) {
+        DatalinksHandler::RunModal();
+        return 0;
+
+    // Screen reader: F2 = research/labs status
+    } else if (msg == WM_KEYDOWN && wParam == VK_F2 && !ctrl_key_down()
+    && !shift_key_down() && sr_is_available()
+    && current_window() == GW_World && !*GameHalted) {
+        LabsHandler::RunModal();
+        return 0;
+
+    // Screen reader: F5 = secret projects status
+    } else if (msg == WM_KEYDOWN && wParam == VK_F5 && !ctrl_key_down()
+    && !shift_key_down() && sr_is_available()
+    && current_window() == GW_World && !*GameHalted) {
+        ProjectsHandler::RunModal();
+        return 0;
+
+    // Screen reader: F6 = orbital status
+    } else if (msg == WM_KEYDOWN && wParam == VK_F6 && !ctrl_key_down()
+    && !shift_key_down() && sr_is_available()
+    && current_window() == GW_World && !*GameHalted) {
+        OrbitalHandler::RunModal();
+        return 0;
+
+    // Screen reader: F7 = military status
+    } else if (msg == WM_KEYDOWN && wParam == VK_F7 && !ctrl_key_down()
+    && !shift_key_down() && sr_is_available()
+    && current_window() == GW_World && !*GameHalted) {
+        MilitaryHandler::RunModal();
+        return 0;
+
+    // Screen reader: F8 = score/rankings
+    } else if (msg == WM_KEYDOWN && wParam == VK_F8 && !ctrl_key_down()
+    && !shift_key_down() && sr_is_available()
+    && current_window() == GW_World && !*GameHalted) {
+        ScoreHandler::RunModal();
+        return 0;
+
+    // Screen reader: F9 = monuments
+    } else if (msg == WM_KEYDOWN && wParam == VK_F9 && !ctrl_key_down()
+    && !shift_key_down() && sr_is_available()
+    && current_window() == GW_World && !*GameHalted) {
+        MonumentHandler::RunModal();
+        return 0;
+
+    // Screen reader: Ctrl+F10 = game settings editor (main menu only)
+    } else if (msg == WM_KEYDOWN && wParam == VK_F10 && ctrl_key_down()
+    && !shift_key_down() && sr_is_available()
+    && current_window() == GW_None && *PopupDialogState == 0) {
+        GameSettingsHandler::RunModal();
+        return 0;
+
+    // Screen reader: Ctrl+Shift+F10 = multiplayer lobby settings editor
+    } else if (msg == WM_KEYDOWN && wParam == VK_F10 && ctrl_key_down()
+    && shift_key_down() && sr_is_available()
+    && MultiplayerHandler::IsActive()) {
+        NetSetupSettingsHandler::RunModal();
+        return 0;
+
     // Screen reader: Diplomacy key handling (S/Tab summary, Ctrl+F1 help)
     } else if (msg == WM_KEYDOWN && sr_is_available()
     && DiplomacyHandler::HandleKey(msg, wParam)) {
@@ -1510,6 +1766,33 @@ LRESULT WINAPI ModWinProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     // Screen reader: Ctrl+F12 = toggle debug logging
     } else if (msg == WM_KEYDOWN && wParam == VK_F12 && ctrl_key_down() && sr_is_available()) {
         sr_debug_toggle();
+
+    // Screen reader: Ctrl+Shift+A = toggle all accessibility features
+    } else if (msg == WM_KEYDOWN && wParam == 'A' && ctrl_key_down()
+    && shift_key_down() && sr_is_available()) {
+        sr_output(loc(SR_ACCESSIBILITY_OFF), true);
+        sr_set_disabled(true);
+        debug("SR: accessibility disabled via Ctrl+Shift+A\n");
+        return 0;
+
+    // Screen reader: Ctrl+Shift+T = toggle Thinker AI
+    } else if (msg == WM_KEYDOWN && wParam == 'T' && ctrl_key_down()
+    && shift_key_down() && sr_is_available()
+    && current_window() == GW_World && !*GameHalted) {
+        static int original_factions_enabled = -1;
+        if (original_factions_enabled < 0) {
+            original_factions_enabled = conf.factions_enabled;
+        }
+        if (conf.factions_enabled > 0) {
+            conf.factions_enabled = 0;
+            sr_output(loc(SR_THINKER_AI_OFF), true);
+            debug("SR: Thinker AI disabled (was %d)\n", original_factions_enabled);
+        } else {
+            conf.factions_enabled = original_factions_enabled;
+            sr_output(loc(SR_THINKER_AI_ON), true);
+            debug("SR: Thinker AI enabled (%d)\n", conf.factions_enabled);
+        }
+        return 0;
 
     } else if (msg == WM_CHAR && wParam == 'l' && alt_key_down() && is_editor
     && *ReplayEventSize > 0) {
@@ -1650,6 +1933,24 @@ int __cdecl mod_Win_init_class(const char* lpWindowName)
     int value = Win_init_class(lpWindowName);
     set_video_mode(0);
     return value;
+}
+
+/*
+Hook for AlphaNet_setup's call to create_game (0x4E2E50).
+When sr_net_start_requested is set (by MultiplayerHandler Start button),
+override the return value to 1 (success) so AlphaNet_setup proceeds
+with game start instead of returning to the main menu.
+*/
+int __thiscall mod_create_game(void* This) {
+    typedef int (__thiscall *FCreateGame)(void*);
+    FCreateGame orig_create_game = (FCreateGame)0x4E2E50;
+    int result = orig_create_game(This);
+    if (sr_net_start_requested) {
+        sr_net_start_requested = false;
+        sr_debug_log("NETSETUP: create_game hook override %d -> 1", result);
+        return 1;
+    }
+    return result;
 }
 
 void __cdecl mod_amovie_project(const char* name)
@@ -2657,6 +2958,14 @@ void* This, const char* filename, const char* label, int a4, int a5, int a6, int
     if (filename && label) {
         sr_debug_log("BASEPOP file=%s label=%s popup_active=%d",
             filename, label, sr_popup_is_active());
+        // Detect faction selection screen: BLURB label from faction files
+        // Note: OnBlurbDetected (with text) is called in mod_BasePop_end
+        if (_stricmp(label, "BLURB") == 0 && current_window() == GW_None) {
+            // Nothing here — handler activates in OnBlurbDetected
+        } else if (FactionSelectHandler::IsActive()) {
+            // Any non-BLURB popup means we left the faction select screen
+            FactionSelectHandler::OnNonBlurbPopup();
+        }
     }
     // Clear stale popup list from previous BasePop_start dialog.
     // Only when not inside a popp/popb wrapper (which handles its own list).
@@ -2664,6 +2973,10 @@ void* This, const char* filename, const char* label, int a4, int a5, int a6, int
         sr_popup_list_clear();
     }
     if (!sr_popup_is_active() && sr_is_available() && filename && label) {
+        // Suppress multiplayer sync progress popups (rapid-fire, not useful)
+        if (strncmp(label, "SYNCH", 5) == 0) {
+            return BasePop_start(This, filename, label, a4, a5, a6, a7);
+        }
         const char* menu = sr_menu_name(label);
         if (menu) {
             // Menu: announce just the name (or read #caption from file)
@@ -2684,7 +2997,17 @@ void* This, const char* filename, const char* label, int a4, int a5, int a6, int
             // Dialog: announce full popup text (caption + body)
             char buf[2048];
             if (sr_read_popup_text(filename, label, buf, sizeof(buf))) {
-                sr_output(buf, true);
+                // Faction select: handler builds "FactionName. BLURB" announcement
+                if (_stricmp(label, "BLURB") == 0
+                    && current_window() == GW_None) {
+                    char combined[2048];
+                    if (FactionSelectHandler::OnBlurbDetected(
+                            filename, buf, combined, sizeof(combined))) {
+                        sr_output(combined, true);
+                    }
+                } else {
+                    sr_output(buf, true);
+                }
             }
             // File browser confirmation dialogs: append key hint
             // (buttons are not arrow-navigable, Enter=OK, Escape=Cancel)
@@ -2765,6 +3088,7 @@ void __thiscall Console_arty_cursor_on(Console* This, int cursor_type, int veh_i
     int veh_range = arty_range(Vehs[veh_id].unit_id);
     Console_cursor_on(This, cursor_type, veh_range);
 }
+
 
 
 
