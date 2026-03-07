@@ -1,5 +1,70 @@
+# SmacAccess Changelog
 
-# Thinker mod release changelog
+SmacAccess is a fork of [Thinker Mod](https://github.com/induktio/thinker) by induktio.
+All Thinker features are included. The changelog below covers SmacAccess additions first,
+followed by the upstream Thinker changelog for reference.
+
+---
+
+## SmacAccess v0.1.0-alpha (2026-03-07)
+
+First public alpha release.
+
+### Screen Reader Integration
+- All menus, dialogs, and popups announced via NVDA, JAWS, or other screen readers (via Tolk)
+- Consistent announcement patterns: position in lists, status changes, action confirmations
+- Localization support (English and German included)
+- Speech history browser (Ctrl+Shift+F11/F12)
+
+### World Map
+- Virtual exploration cursor with terrain, features, units, bases, resource yields
+- Scanner mode: jump between points of interest (10 filter categories)
+- Step-by-step unit movement with tile and movement point feedback
+- Foreign unit list (Shift+U) with combat odds
+- Terraform order announcements for formers
+- Combat result announcements (melee, artillery, interception, promotion)
+
+### Base Screen
+- 7 navigable sections (Overview, Resources, Production, Economy, Facilities, Status, Units)
+- Production picker with facility/unit/project details
+- Production queue management (Ctrl+Q)
+- Specialist management (Ctrl+W)
+- Facility demolition (Ctrl+D)
+- Governor priorities (Ctrl+G)
+
+### Game Screens and Dialogs
+- Main menu, game setup, faction selection with faction info (I key)
+- Social Engineering modal (E key)
+- Research selection (Shift+R) with blind research support
+- Design Workshop (Shift+D) with rename/obsolete/upgrade
+- Preferences handler (Ctrl+P)
+- F1-F5 status screens (budget, society, energy, research, military)
+- Datalinks browser (F6)
+- Diplomacy via F12 Commlink
+- Planetary Council voting (K in Commlink)
+- File browser for load/save dialogs
+- Number input dialogs
+- Interlude story text with full narrative
+- Context help (Ctrl+F1) for current unit/terrain
+
+### Menu Bar
+- Full menu bar navigation (Alt + arrow keys)
+- Thinker settings menu (Ctrl+T)
+
+### Game Event Diary
+- Logs game events to Logs/game_events.txt (combat, base events, diplomacy, tech, production)
+- Debug logging to Logs/ directory with timestamped session files
+
+### Technical
+- Based on Thinker Mod v5.3 by induktio
+- All Thinker AI and gameplay features included
+- German game data files (smac_mod/de/) for SMAC-in-SMACX mode
+
+---
+
+# Thinker Mod Upstream Changelog
+
+The following is the original Thinker Mod changelog by induktio for reference.
 
 ## Version 5.3 (2025-11-26)
 * Add option base_event_turns to adjust duration for base specific random events (Bumper Crops and others).
