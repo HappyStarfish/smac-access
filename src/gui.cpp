@@ -729,6 +729,148 @@ static bool sr_is_hud_noise(const char* text, bool in_menu_early) {
 // Saved popup object pointer for editbox field switching
 static void* sr_editbox_popup = NULL;
 
+/// Dispatch keyboard input to whichever analysis screen handler is active.
+/// Returns true if a handler consumed the key.
+static bool dispatch_analysis_handler(UINT msg, WPARAM wParam) {
+    struct AnalysisHandler {
+        bool (*isActive)();
+        bool (*update)(UINT, WPARAM);
+    };
+    static const AnalysisHandler handlers[] = {
+        {LabsHandler::IsActive,      LabsHandler::Update},
+        {ProjectsHandler::IsActive,  ProjectsHandler::Update},
+        {OrbitalHandler::IsActive,   OrbitalHandler::Update},
+        {MilitaryHandler::IsActive,  MilitaryHandler::Update},
+        {ScoreHandler::IsActive,     ScoreHandler::Update},
+        {MonumentHandler::IsActive,  MonumentHandler::Update},
+        {DatalinksHandler::IsActive, DatalinksHandler::Update},
+    };
+    for (const auto& h : handlers) {
+        if (h.isActive()) {
+            if (msg == WM_KEYDOWN) {
+                h.update(msg, wParam);
+            }
+            return true; // consume WM_KEYDOWN and WM_CHAR
+        }
+    }
+    return false;
+}
+
+/// Handle F-key modal shortcuts on world map and main menu.
+/// Returns true if the key was consumed.
+static bool handle_fkey_modals(UINT msg, WPARAM wParam) {
+    if (msg != WM_KEYDOWN || !sr_is_available()) return false;
+    bool ctrl = ctrl_key_down();
+    bool shift = shift_key_down();
+
+    // World map F-key modals (F1-F9, no modifiers)
+    if (!ctrl && !shift && current_window() == GW_World && !*GameHalted) {
+        switch (wParam) {
+            case VK_F1: DatalinksHandler::RunModal(); return true;
+            case VK_F2: LabsHandler::RunModal(); return true;
+            case VK_F3: SocialEngHandler::RunModalAlloc(); return true;
+            case VK_F4: StatusHandler::RunModal(); return true;
+            case VK_F5: ProjectsHandler::RunModal(); return true;
+            case VK_F6: OrbitalHandler::RunModal(); return true;
+            case VK_F7: MilitaryHandler::RunModal(); return true;
+            case VK_F8: ScoreHandler::RunModal(); return true;
+            case VK_F9: MonumentHandler::RunModal(); return true;
+            default: break;
+        }
+    }
+    // Ctrl+F10 = game settings (main menu only)
+    if (wParam == VK_F10 && ctrl && !shift
+        && current_window() == GW_None && *PopupDialogState == 0) {
+        GameSettingsHandler::RunModal();
+        return true;
+    }
+    // Ctrl+Shift+F10 = multiplayer lobby settings
+    if (wParam == VK_F10 && ctrl && shift && MultiplayerHandler::IsActive()) {
+        NetSetupSettingsHandler::RunModal();
+        return true;
+    }
+    return false;
+}
+
+/// Handle screen reader utility hotkeys (silence, history, toggles).
+/// Returns true if the key was consumed.
+static bool handle_sr_utility_keys(UINT msg, WPARAM wParam) {
+    if (msg != WM_KEYDOWN || !sr_is_available()) return false;
+    bool ctrl = ctrl_key_down();
+    bool shift = shift_key_down();
+
+    // Ctrl+Shift+R = silence speech
+    if (wParam == 'R' && ctrl && shift) {
+        sr_debug_log("CTRL+SHIFT+R: silence");
+        sr_silence();
+        return true;
+    }
+    // F12 = accessible commlink dialog
+    if (wParam == VK_F12 && !ctrl && !shift
+        && current_window() == GW_World && !*GameHalted) {
+        DiplomacyHandler::RunCommlink();
+        return true;
+    }
+    // Ctrl+F12 = toggle debug logging
+    if (wParam == VK_F12 && ctrl && !shift) {
+        sr_debug_toggle();
+        return true;
+    }
+    // Ctrl+Shift+F11/F12 = speech history browser
+    if ((wParam == VK_F11 || wParam == VK_F12) && ctrl && shift) {
+        static int hist_pos = 0;
+        if (wParam == VK_F12) {
+            hist_pos = 0;
+        } else {
+            hist_pos++;
+        }
+        int total = sr_history_count();
+        sr_history_set_browsing(true);
+        if (total == 0) {
+            sr_output(loc(SR_HISTORY_EMPTY), true);
+        } else if (hist_pos >= total) {
+            hist_pos = total - 1;
+            sr_output(loc(SR_HISTORY_OLDEST), true);
+        } else {
+            const char* entry = sr_history_get(hist_pos);
+            if (entry) {
+                char buf[600];
+                snprintf(buf, sizeof(buf), loc(SR_HISTORY_FMT),
+                    hist_pos + 1, total, entry);
+                sr_output(buf, true);
+            }
+        }
+        sr_history_set_browsing(false);
+        return true;
+    }
+    // Ctrl+Shift+A = toggle all accessibility features
+    if (wParam == 'A' && ctrl && shift) {
+        sr_output(loc(SR_ACCESSIBILITY_OFF), true);
+        sr_set_disabled(true);
+        debug("SR: accessibility disabled via Ctrl+Shift+A\n");
+        return true;
+    }
+    // Ctrl+Shift+T = toggle Thinker AI
+    if (wParam == 'T' && ctrl && shift
+        && current_window() == GW_World && !*GameHalted) {
+        static int original_factions_enabled = -1;
+        if (original_factions_enabled < 0) {
+            original_factions_enabled = conf.factions_enabled;
+        }
+        if (conf.factions_enabled > 0) {
+            conf.factions_enabled = 0;
+            sr_output(loc(SR_THINKER_AI_OFF), true);
+            debug("SR: Thinker AI disabled (was %d)\n", original_factions_enabled);
+        } else {
+            conf.factions_enabled = original_factions_enabled;
+            sr_output(loc(SR_THINKER_AI_ON), true);
+            debug("SR: Thinker AI enabled (%d)\n", conf.factions_enabled);
+        }
+        return true;
+    }
+    return false;
+}
+
 LRESULT WINAPI ModWinProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     const bool debug_cmd = DEBUG && !*GameHalted && msg == WM_CHAR;
@@ -1354,27 +1496,7 @@ LRESULT WINAPI ModWinProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         return 0;
 
     } else if ((msg == WM_KEYDOWN || msg == WM_CHAR)
-    && (LabsHandler::IsActive() || ProjectsHandler::IsActive()
-        || OrbitalHandler::IsActive() || MilitaryHandler::IsActive()
-        || ScoreHandler::IsActive() || MonumentHandler::IsActive()
-        || DatalinksHandler::IsActive())) {
-        if (msg == WM_KEYDOWN) {
-            if (LabsHandler::IsActive()) {
-                LabsHandler::Update(msg, wParam);
-            } else if (ProjectsHandler::IsActive()) {
-                ProjectsHandler::Update(msg, wParam);
-            } else if (OrbitalHandler::IsActive()) {
-                OrbitalHandler::Update(msg, wParam);
-            } else if (MilitaryHandler::IsActive()) {
-                MilitaryHandler::Update(msg, wParam);
-            } else if (ScoreHandler::IsActive()) {
-                ScoreHandler::Update(msg, wParam);
-            } else if (MonumentHandler::IsActive()) {
-                MonumentHandler::Update(msg, wParam);
-            } else if (DatalinksHandler::IsActive()) {
-                DatalinksHandler::Update(msg, wParam);
-            }
-        }
+    && dispatch_analysis_handler(msg, wParam)) {
         return 0;
 
     } else if (msg == WM_WINDOWED && !conf.reduced_mode) {
@@ -1719,81 +1841,8 @@ LRESULT WINAPI ModWinProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     && CouncilHandler::HandleKey(msg, wParam)) {
         return 0;
 
-    // Screen reader: F3 = energy allocation (via SocialEngHandler alloc mode)
-    } else if (msg == WM_KEYDOWN && wParam == VK_F3 && !ctrl_key_down()
-    && !shift_key_down() && sr_is_available()
-    && current_window() == GW_World && !*GameHalted) {
-        SocialEngHandler::RunModalAlloc();
-        return 0;
-
-    // Screen reader: F4 = accessible base operations list
-    } else if (msg == WM_KEYDOWN && wParam == VK_F4 && !ctrl_key_down()
-    && !shift_key_down() && sr_is_available()
-    && current_window() == GW_World && !*GameHalted) {
-        StatusHandler::RunModal();
-        return 0;
-
-    // Screen reader: F1 = accessible Datalinks browser
-    } else if (msg == WM_KEYDOWN && wParam == VK_F1 && !ctrl_key_down()
-    && !shift_key_down() && sr_is_available()
-    && current_window() == GW_World && !*GameHalted) {
-        DatalinksHandler::RunModal();
-        return 0;
-
-    // Screen reader: F2 = research/labs status
-    } else if (msg == WM_KEYDOWN && wParam == VK_F2 && !ctrl_key_down()
-    && !shift_key_down() && sr_is_available()
-    && current_window() == GW_World && !*GameHalted) {
-        LabsHandler::RunModal();
-        return 0;
-
-    // Screen reader: F5 = secret projects status
-    } else if (msg == WM_KEYDOWN && wParam == VK_F5 && !ctrl_key_down()
-    && !shift_key_down() && sr_is_available()
-    && current_window() == GW_World && !*GameHalted) {
-        ProjectsHandler::RunModal();
-        return 0;
-
-    // Screen reader: F6 = orbital status
-    } else if (msg == WM_KEYDOWN && wParam == VK_F6 && !ctrl_key_down()
-    && !shift_key_down() && sr_is_available()
-    && current_window() == GW_World && !*GameHalted) {
-        OrbitalHandler::RunModal();
-        return 0;
-
-    // Screen reader: F7 = military status
-    } else if (msg == WM_KEYDOWN && wParam == VK_F7 && !ctrl_key_down()
-    && !shift_key_down() && sr_is_available()
-    && current_window() == GW_World && !*GameHalted) {
-        MilitaryHandler::RunModal();
-        return 0;
-
-    // Screen reader: F8 = score/rankings
-    } else if (msg == WM_KEYDOWN && wParam == VK_F8 && !ctrl_key_down()
-    && !shift_key_down() && sr_is_available()
-    && current_window() == GW_World && !*GameHalted) {
-        ScoreHandler::RunModal();
-        return 0;
-
-    // Screen reader: F9 = monuments
-    } else if (msg == WM_KEYDOWN && wParam == VK_F9 && !ctrl_key_down()
-    && !shift_key_down() && sr_is_available()
-    && current_window() == GW_World && !*GameHalted) {
-        MonumentHandler::RunModal();
-        return 0;
-
-    // Screen reader: Ctrl+F10 = game settings editor (main menu only)
-    } else if (msg == WM_KEYDOWN && wParam == VK_F10 && ctrl_key_down()
-    && !shift_key_down() && sr_is_available()
-    && current_window() == GW_None && *PopupDialogState == 0) {
-        GameSettingsHandler::RunModal();
-        return 0;
-
-    // Screen reader: Ctrl+Shift+F10 = multiplayer lobby settings editor
-    } else if (msg == WM_KEYDOWN && wParam == VK_F10 && ctrl_key_down()
-    && shift_key_down() && sr_is_available()
-    && MultiplayerHandler::IsActive()) {
-        NetSetupSettingsHandler::RunModal();
+    // Screen reader: F-key modals (F1-F9, Ctrl+F10, Ctrl+Shift+F10)
+    } else if (handle_fkey_modals(msg, wParam)) {
         return 0;
 
     // Screen reader: Diplomacy key handling (S/Tab summary, Ctrl+F1 help)
@@ -1830,78 +1879,8 @@ LRESULT WINAPI ModWinProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         sr_output(loc(SR_CHAT_OPEN), true);
         // Don't return 0 — let key pass through to game's native handler
 
-    // Screen reader: Ctrl+Shift+R = silence speech
-    } else if (msg == WM_KEYDOWN && wParam == 'R' && ctrl_key_down()
-    && shift_key_down() && sr_is_available()) {
-        sr_debug_log("CTRL+SHIFT+R: silence");
-        sr_silence();
-
-    // Screen reader: F12 = accessible commlink dialog (intercept before game)
-    } else if (msg == WM_KEYDOWN && wParam == VK_F12 && !ctrl_key_down()
-    && !shift_key_down() && sr_is_available()
-    && current_window() == GW_World && !*GameHalted) {
-        DiplomacyHandler::RunCommlink();
-        return 0;
-
-    // Screen reader: Ctrl+F12 = toggle debug logging
-    } else if (msg == WM_KEYDOWN && wParam == VK_F12 && ctrl_key_down()
-    && !shift_key_down() && sr_is_available()) {
-        sr_debug_toggle();
-
-    // Screen reader: Ctrl+Shift+F11/F12 = speech history browser
-    // Ctrl+Shift+F12 = most recent entry, Ctrl+Shift+F11 = go backwards
-    } else if (msg == WM_KEYDOWN && shift_key_down() && ctrl_key_down()
-    && (wParam == VK_F11 || wParam == VK_F12) && sr_is_available()) {
-        static int hist_pos = 0;
-        if (wParam == VK_F12) {
-            hist_pos = 0; // jump to newest
-        } else {
-            hist_pos++; // go backwards
-        }
-        int total = sr_history_count();
-        sr_history_set_browsing(true);
-        if (total == 0) {
-            sr_output(loc(SR_HISTORY_EMPTY), true);
-        } else if (hist_pos >= total) {
-            hist_pos = total - 1;
-            sr_output(loc(SR_HISTORY_OLDEST), true);
-        } else {
-            const char* entry = sr_history_get(hist_pos);
-            if (entry) {
-                char buf[600];
-                snprintf(buf, sizeof(buf), loc(SR_HISTORY_FMT),
-                    hist_pos + 1, total, entry);
-                sr_output(buf, true);
-            }
-        }
-        sr_history_set_browsing(false);
-        return 0;
-
-    // Screen reader: Ctrl+Shift+A = toggle all accessibility features
-    } else if (msg == WM_KEYDOWN && wParam == 'A' && ctrl_key_down()
-    && shift_key_down() && sr_is_available()) {
-        sr_output(loc(SR_ACCESSIBILITY_OFF), true);
-        sr_set_disabled(true);
-        debug("SR: accessibility disabled via Ctrl+Shift+A\n");
-        return 0;
-
-    // Screen reader: Ctrl+Shift+T = toggle Thinker AI
-    } else if (msg == WM_KEYDOWN && wParam == 'T' && ctrl_key_down()
-    && shift_key_down() && sr_is_available()
-    && current_window() == GW_World && !*GameHalted) {
-        static int original_factions_enabled = -1;
-        if (original_factions_enabled < 0) {
-            original_factions_enabled = conf.factions_enabled;
-        }
-        if (conf.factions_enabled > 0) {
-            conf.factions_enabled = 0;
-            sr_output(loc(SR_THINKER_AI_OFF), true);
-            debug("SR: Thinker AI disabled (was %d)\n", original_factions_enabled);
-        } else {
-            conf.factions_enabled = original_factions_enabled;
-            sr_output(loc(SR_THINKER_AI_ON), true);
-            debug("SR: Thinker AI enabled (%d)\n", conf.factions_enabled);
-        }
+    // Screen reader: utility keys (silence, history, toggles, commlink, debug)
+    } else if (handle_sr_utility_keys(msg, wParam)) {
         return 0;
 
     } else if (msg == WM_CHAR && wParam == 'l' && alt_key_down() && is_editor
@@ -3069,6 +3048,16 @@ void* This, const char* filename, const char* label, int a4, int a5, int a6, int
     if (filename && label) {
         sr_debug_log("BASEPOP file=%s label=%s popup_active=%d",
             filename, label, sr_popup_is_active());
+        if (CouncilHandler::IsActive()) {
+            CouncilHandler::OnPopupOpened();
+        }
+        // Detect AI-called council: CALLSCOUNCIL popup appears when an AI
+        // faction calls a council vote. Activate council tracking so our
+        // hooks handle the human player's vote.
+        if (_stricmp(label, "CALLSCOUNCIL") == 0 && !CouncilHandler::IsActive()) {
+            sr_debug_log("BASEPOP: AI called council (CALLSCOUNCIL), activating");
+            CouncilHandler::OnAICouncilCalled();
+        }
         // Save popup pointer for editbox dialogs (NETCONNECT_CREATE/JOIN)
         if (_stricmp(label, "NETCONNECT_CREATE") == 0
             || _stricmp(label, "NETCONNECT_JOIN") == 0) {
@@ -3092,6 +3081,12 @@ void* This, const char* filename, const char* label, int a4, int a5, int a6, int
     if (!sr_popup_is_active() && sr_is_available() && filename && label) {
         // Suppress multiplayer sync progress popups (rapid-fire, not useful)
         if (strncmp(label, "SYNCH", 5) == 0) {
+            return BasePop_start(This, filename, label, a4, a5, a6, a7);
+        }
+        // Suppress COUNCILISSUES popup for AI-called councils.
+        // The AI's proposal selection is not relevant to the human player.
+        if (_stricmp(label, "COUNCILISSUES") == 0
+            && CouncilHandler::IsActive() && !CouncilHandler::IsCallerHuman()) {
             return BasePop_start(This, filename, label, a4, a5, a6, a7);
         }
         const char* menu = sr_menu_name(label);

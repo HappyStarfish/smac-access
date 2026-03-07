@@ -9,7 +9,6 @@
 #include "screen_reader.h"
 #include "localization.h"
 #include "modal_utils.h"
-#include "gui.h"
 
 static bool _active = false;
 static bool _wantClose = false;

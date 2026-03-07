@@ -6,7 +6,6 @@
 
 #include "gui.h"
 #include "base.h"
-#include "base_handler.h"
 #include "governor_handler.h"
 #include "screen_reader.h"
 #include "localization.h"

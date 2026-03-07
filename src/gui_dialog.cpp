@@ -1,5 +1,6 @@
 
 #include "gui_dialog.h"
+#include "screen_reader.h"
 
 
 void parse_gen_name(int faction_id, size_t title_value, size_t name_value)
@@ -76,6 +77,12 @@ int __cdecl tech_achieved_pop3(const char* filename, const char* label, int a3)
 {
     if (*DiploWinState) {
         return 0;
+    }
+    // Fix $TECH0 resolution: mod_random_events may leave parse_says slot 0
+    // set to a base name. Restore it to the correct tech name before popup.
+    int tech_id = sr_current_tech_achieved_id;
+    if (tech_id >= 0 && tech_id < MaxTechnologyNum && Tech[tech_id].name) {
+        parse_says(0, Tech[tech_id].name, -1, -1);
     }
     return X_pop3(filename, label, a3);
 }

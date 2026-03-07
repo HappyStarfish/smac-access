@@ -143,6 +143,10 @@ void sr_history_set_browsing(bool active);
 extern uint32_t sr_pending_setup_rules;
 extern bool sr_pending_setup_rules_set;
 
+// Current tech_id being processed by tech_achieved. -1 when not active.
+// Used by tech_achieved_pop3 to fix $TECH0 variable resolution.
+extern int sr_current_tech_achieved_id;
+
 // Convert Windows-1252 (ANSI) game text to UTF-8.
 // Used for all text originating from the game engine (Buffer_write hooks,
 // game data arrays like Bases[].name, Facility[].name, etc.)

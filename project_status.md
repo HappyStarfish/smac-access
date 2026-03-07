@@ -91,6 +91,11 @@
 7. ~~**Umlauts broken with German language patch**~~: RESOLVED (2026-02-25). Game text (Windows-1252) was passed to sr_output(CP_UTF8) without conversion. Fixed with ANSI→UTF-8 conversion at all entry points.
 9. **Diplomatie-Handler zu indirekt**: Aktueller DiplomacyHandler beobachtet nur (OnTimer treaty-polling, S/Tab Zusammenfassung). Spielinterne Tasten (P Propose, V Vendetta, E etc.) werden von communicate()-Modalloop konsumiert bevor WinProc sie sieht → keine direkte Rückmeldung. S-Taste Fix (sr_consumed_key_char) und Treaty-Polling funktionieren, aber für echte Accessibility muss ein tieferer Ansatz her. Optionen: (a) communicate() reverse-engineeren und Aktionstasten direkt hooken, (b) set_treaty/diplo_status Schreibzugriffe hooken für sofortige Ansagen, (c) voller Diplomatie-Handler mit eigener Modalloop (wie SocialEng) der communicate() ersetzt. Aufwand: groß.
 8. **Game diary (game_events.txt) unvollständig**: Aktuell loggt nur MessageHandler::OnMessage (Spieler-Popups) + SE-Änderungen + Eliminierungen + Rundenseparator. Viele Events fehlen (Forschung, Produktion, Kampf, Basengründung, Drohnenaufstände). Neuer Ansatz nötig — entweder tiefere Hooks in die Spielmechanik oder Auswertung der Spieltextausgabe. Manuelle game_log()-Aufrufe in Einzelfunktionen haben nicht funktioniert (falsche Filterung, unvollständig).
+10. **Pattern-C-Handler (Shared Control) müssen umgebaut werden**: Analyse ergab, dass Handler die eigenen State + simulierte Clicks/PostMessage mischen (Pattern C) immer brechen, weil SMACX GetAsyncKeyState-Polling nutzt statt WinProc-Messages. Zwei Handler noch betroffen:
+    - **multiplayer_handler.cpp**: simulate_click() für NetWin-Settings. Später auf Pattern A (direkter Speicherzugriff) oder AlphaIniPref-Writes umbauen.
+    - **netsetup_settings_handler.cpp**: WinProc-Injection für Popup-Navigation. Später auf Pattern A (Full Modal) umbauen.
+    - ~~**council_handler.cpp**: Vote-Screen~~ — GELÖST (2026-03-07). Komplett auf Pattern A (Full Modal) umgebaut: Gouverneurswahl via 0x602600 Hook, Antragsabstimmung via 0x427230 Hook. Buy-Votes-Diplomatie wird übersprungen (siehe 0s).
+    - ~~**Rules (sr_intercept_rules_popup)**~~: FIXED (2026-03-07). Umgebaut auf Pattern A mit Deferred Memory Write in init_world_config().
 
 ## Resolved Issues
 
@@ -180,6 +185,29 @@ Filters from triggers 1-3:
 - docs/game-api.md — Game API documentation
 
 ## Notes for Next Session
+
+### Low-Risk Refactoring — Done (2026-03-07)
+
+1. **Unused includes entfernt** (7 Dateien): base_handler, governor_handler, status_handler, labs_handler, design_handler, projects_handler, monument_handler
+2. **gui.cpp: ModWinProc entlastet** (~150 Zeilen in 3 Hilfsfunktionen):
+   - `handle_fkey_modals()` — F1-F9 + Ctrl+F10 + Ctrl+Shift+F10 als switch
+   - `handle_sr_utility_keys()` — Silence, History, Toggles, Commlink, Debug
+   - `dispatch_analysis_handler()` — 7 Analysis-Screens als Tabelle
+3. **localization.h** — `// ===== ... =====` Trennlinien für alle ~65 Abschnitte
+4. **screen_reader.cpp Aufteilung zurückgestellt** — statische Variablen zu stark geteilt, riskant ohne intensive Tests
+
+### Council Handler — Pending Test (2026-03-07)
+
+**Deployed but not yet tested:**
+1. **AI-einberufener Rat**: CALLSCOUNCIL-Erkennung in mod_BasePop_start → OnAICouncilCalled(). Soll Council-Modus aktivieren wenn KI den Rat einberuft und Mensch abstimmen muss.
+2. **Kein AI-Spam mehr**: OnCouncilOpen() nur noch für menschliche Aufrufer aktiv. AI-Fraktionen lösen kein Council-Tracking mehr aus.
+3. **Ergebnis-Ansage**: "Antrag: Angenommen/Abgelehnt, X zu Y" bei Council-Ende. AI-Stimmen via council_get_vote() berechnet.
+4. **Popup-Flag-System**: COUNCILISSUES/COUNCILRECENTPROP werden korrekt durchgelassen statt als Gouverneurswahl interpretiert.
+
+**Testen:**
+- Selbst Council einberufen → Gouverneurswahl + Antragsabstimmung + Ergebnis hören
+- Warten bis KI Council einberuft → prüfen ob Abstimmung funktioniert
+- Prüfen ob kein "Unterhändler"-Spam mehr kommt
 
 ### Combat & Terraform Announcements — Done (2026-03-06)
 
@@ -487,6 +515,7 @@ Four bugs fixed in this session:
 
 ### Pending Tests
 
+0z3. **$TECH0 Variable Fix in tech_achieved Popups** — Added 2026-03-07. Bug: Technologie-Entdeckungs-Popups (z.B. TREETIME in tutor.txt) zeigten den Basisnamen statt den Technologienamen, weil mod_random_events in game.cpp parse_says(0, base->name) global setzt und tech_achieved den Slot nicht zurücksetzt. Fix: Inline-Hook auf tech_achieved (0x5BB000) speichert tech_id in sr_current_tech_achieved_id, tech_achieved_pop3 setzt parse_says(0, Tech[tech_id].name) vor jedem Popup. Tech-Namen kommen aus alphax.txt und sind deutsch lokalisiert. Dateien: screen_reader.cpp (Hook), screen_reader.h (extern), gui_dialog.cpp (parse_says Fix). Test: Technologie erforschen die Terraforming freischaltet (z.B. Centauri-Ökologie für Wälder). Popup sollte den richtigen Tech-Namen statt des Basisnamens zeigen.
 0z2. **Debug Logging + Game Event Diary** — Added 2026-03-07. (1) All SR logs now write to `<GameDir>/Logs/` instead of `%TEMP%`. Session log file has timestamp in name: `access_log_2026-03-07_14-30-45.log`. Each line gets `[HH:MM:SS]` prefix. Hook log: `access_hooks.log`. (2) Game event diary (`game_events.txt` in Logs/) now logs: base founded/captured/lost/destroyed, combat results, unit disbanded, tech discovered, diplomacy changes (pact/treaty/truce/vendetta/commlink on/off), interludes, production completion, atrocities. All from player perspective (only human-faction events, except combat which logs both sides if player involved). Test: Play a few turns, check `Logs/game_events.txt` for sensible entries. Check `Logs/access_log_*.log` exists. Toggle Ctrl+F12 debug → check log entries appear in same session file.
 0y. **Combat faction names + Terraform remove** — Added 2026-03-06. (1) Combat announcements now include enemy faction name ("Scout Patrol, University"). Applies to melee, defense, artillery. (2) Terraform: ORDER_REMOVE_FUNGUS says "Removing" instead of "Building". Test: Attack enemy → result should include faction name. Select former on fungus → press F → should say "Removing Fungus/Xenofungus". Select former elsewhere → press F (farm) → should still say "Building Farm".
 0x. **Diplomacy popup text ordering** — Added 2026-03-06. Popup hook prepends "Diplomatie mit [Fraktion]" before dialog text, OnTimer skips duplicate. Test: Open diplomacy → first popup should say "Diplomatie mit X. [dialog text]. Weiter mit Eingabe." without interruption.
@@ -494,7 +523,19 @@ Four bugs fixed in this session:
 0v. **Combat Accessibility** — Added 2026-03-02. Three features: (1) Automatic combat result announcements in mod_battle_fight_2 — melee results (victory/defeat/defense/draw/retreat/capture), artillery bombardment results (units hit + damage per unit), interceptor announcements, promotion announcements, nerve gas warning. (2) Combat odds in Shift+U enemy list — when player has a selected combat unit, odds are appended to each enemy entry (Favorable/Unfavorable/Even). (3) C key in Shift+U for detailed combat preview (weapon, morale, HP, odds). Files: veh_combat.cpp (SR code in mod_battle_fight_2), world_map_handler.cpp (Shift+U enhancement), localization.h/cpp, en.txt, de.txt. 23 new loc strings. Test: Attack enemy → hear result. Use artillery → hear bombardment. Open Shift+U with combat unit selected → hear odds. Press C → hear detailed preview.
 0u. **Faction Selection Keyboard Access** — WIP (2026-03-01). Handler erkennt Fraktionsauswahl per BLURB-Detection. Fraktionsname wird vor BLURB-Text vorgelesen. Tasten: Enter (spielen), G (Gruppe bearbeiten), I (Info), R (Zufallsgruppe), Ctrl+F1 (Hilfe). Dateien: faction_select_handler.h/cpp. Änderungen V3 (2026-03-01): (1) I-Taste liest DATALINKS1+DATALINKS2 direkt aus Fraktionsdatei per sr_read_popup_text() statt INFO-Button-Klick (vermeidet unerreichbares DATALINKS-Popup). (2) ScanButtons() wird bei JEDEM OnBlurbDetected() aufgerufen statt nur beim ersten Mal (_buttonsScanned Guard entfernt) — fix für Buttons die nach Screen-Wechsel nicht mehr funktionieren. (3) BTN_INFO aus enum/MatchButton entfernt. (4) Hilfetext um G/I/R erweitert. Neuer Loc-String SR_FACTION_NO_INFO. **PROBLEM: I-Taste funktioniert gar nicht (kein Effekt).** Nächste Sitzung debuggen — prüfen ob HandleKey überhaupt aufgerufen wird, ob _lastBlurbFile gesetzt ist, ob sr_read_popup_text die Datei findet. Ctrl+F12 Debug-Log prüfen.
 0t. **Research Selection Modal (Shift+R)** — TESTED OK (2026-03-01). Dual-mode: Blind Research ON shows 4 directions, OFF shows specific techs. Announces blind status + current direction on open. Intro text from #TECHRANDOM. All opening messages queued. ANSI→UTF-8 fixed (no double conversion). Enter key no longer leaks to game.
-0s. **Council Handler (Planetary Council Accessibility)** — Updated 2026-03-07. Hook enabled, K in F12 Commlink calls council (TESTED OK). GOVVOTE popup_list from eligible() factions. Vote result detection (BESTÄTIGT/GEWÄHLT etc.). 14 loc strings (en+de). Vote screen: popup_list aus MFactions+council_votes() gebaut (Navigation mit Pfeiltasten GETESTET OK — Liste sauber, eliminierte Fraktionen korrekt ausgeschlossen). **Klick-Simulation: PostMessage und WinProc() funktionieren NICHT** (Spiel nutzt GetAsyncKeyState für Maus). Aktuell: SendInput implementiert (physischer Mausklick), **NOCH NICHT GETESTET**. Fixes: in_menu-Erkennung schließt Council aus, MenuHandler::OnArrowKey leitet Council-Pfeiltasten nicht um, separate Council-Arrow-Behandlung in gui.cpp. **Noch zu testen:** SendInput-Klick bei Enter auf Vote-Screen, Wahlergebnis-Ansage nach Stimmabgabe, S/Tab Stimmübersicht während Council, Strg+F1 Hilfe.
+0s. **Council Handler (Planetary Council Accessibility)** — **DURCHBRUCH 2026-03-07**. Beide Council-Abstimmungstypen sind jetzt per Tastatur bedienbar:
+    - **Gouverneurswahl**: Inline-Hook auf 0x602600 (gfx event loop). Unser Hook fängt den Blocking-Call ab und zeigt ein tastaturgesteuertes Modal mit allen wählbaren Kandidaten (Enthaltung + eligible Fraktionen mit Stimmzahlen). GETESTET OK.
+    - **Antragsabstimmung** (Repeal UN Charter, Global Trade Pact, etc.): Inline-Hook auf 0x427230 (buy-votes/vote-interaction). Diese Funktion nutzt einen ANDEREN Blocking-Mechanismus als 0x602600 (nicht identifiziert). Unser Hook überspringt die Originalfunktion komplett und zeigt ein Ja/Nein/Enthaltung-Modal. Stimme wird direkt in CouncilWin->votes[faction] geschrieben. GETESTET OK.
+    - **Übersprungene Funktion: Buy-Votes-Diplomatie** (0x427230): Normalerweise können KI-Fraktionen dem Spieler Bestechungsangebote machen ("Stimm für mich, ich gebe dir Technologie X"). Diese Phase wird komplett übersprungen, weil:
+      (a) Die Funktion einen unbekannten Blocking-Mechanismus nutzt (nicht 0x602600, kein PeekMessage/GetMessage, möglicherweise custom polling loop)
+      (b) Wir den Mechanismus nach extensivem Reverse Engineering nicht identifizieren konnten
+      (c) Der Spieler trotzdem abstimmen kann — nur die Bestechungs-Verhandlungen fehlen
+    - **Singleplayer-Auswirkung**: Minimal. KI-Bestechungen ändern selten das Ergebnis drastisch. Der Spieler verliert nur die Möglichkeit, Bestechungsangebote anzunehmen/abzulehnen.
+    - **Multiplayer-Lücke**: Andere menschliche Spieler können dem Spieler keine Stimmkauf-Angebote machen. Für Multiplayer müsste die Buy-Votes-Phase als eigener zugänglicher Dialog nachgebaut werden (Pattern A Modal mit Angebotsliste).
+    - ~~**Noch offen**: Antragsname im Modal anzeigen~~ — GELÖST (2026-03-07). Proposal[arg2].name wird via sr_game_str() im Modal angezeigt.
+    - **Ergebnis-Ansage** (2026-03-07): Nach Abstimmung wird Ergebnis mit Stimmzahlen angesagt ("Antrag: Angenommen, 12 zu 8" / "Proposal: Failed, 5 to 15"). AI-Stimmen via council_get_vote() berechnet. Ergebnis wird in OnCouncilClose() zusammen mit "Rat beendet" ausgegeben.
+    - **AI-einberufener Rat** (2026-03-07): CALLSCOUNCIL-Popup in mod_BasePop_start erkannt → OnAICouncilCalled() aktiviert Council-Tracking für menschliche Abstimmung. OnCouncilOpen() nur noch für menschliche Aufrufer aktiv (kein AI-Spam mehr). Popup-Flag-System (OnPopupOpened/ConsumePopupFlag) statt Counter für korrekte Popup-Durchleitung. DEPLOYED, TESTEN AUSSTEHEND.
+    - Sonstige Features: K in F12 Commlink ruft Council (GETESTET OK). S/Tab Stimmübersicht. Ctrl+F1 Hilfe. ~22 loc strings (en+de).
 0r. **Enhanced Tile Announcements v2** — Added 2026-02-28. Five enhancements to sr_announce_tile(): (1) Foreign units show faction prefix ("Spartan Scout Patrol"), (2) Foreign territory shows diplo status ("Territory: Spartans (Treaty of Friendship)"), (3) Formers show terraform order ("Former, building Road"), (4) Worked tiles in base radius show ", worked", (5) Used monoliths show "(used)". Test all 5 on world map.
 0q. **Game-End Accessibility (Siegtyp, Replay, Score)** — Added 2026-02-28. Drei Features: (1) Siegtyp-Ansage bei STATE_GAME_DONE (Conquest/Diplomatic/Economic/Transcendence/Defeat/Game Over), (2) Replay-Karte Ansage ("Visuelle Animation, Escape zum Fortfahren"), (3) Score-Screen Text kommt durch bestehendes Text-Capture. Testen: Spiel beenden (Cheat/Szenario), prüfen ob Siegtyp angesagt wird, ob Replay-Karte angesagt wird, ob Score-Texte lesbar sind.
 0p. **Design Workshop: Rename/Obsolete/Upgrade (R/O/U)** — Added 2026-02-28. R: rename unit inline. O: toggle obsolete. U: upgrade with double-press confirm. Rename+Obsolete testable sofort. Upgrade braucht Late-Game mit Custom-Designs.

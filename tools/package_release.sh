@@ -35,9 +35,11 @@ cp "$BUILD_DIR/thinker.dll" "$STAGING/"
 cp "$BUILD_DIR/thinker.exe" "$STAGING/"
 echo "  + thinker.dll, thinker.exe"
 
-# Configuration
+# Configuration (patched for SmacAccess defaults)
 cp docs/thinker.ini "$STAGING/"
-echo "  + thinker.ini"
+sed -i 's/^DisableOpeningMovie=1/DisableOpeningMovie=0/' "$STAGING/thinker.ini"
+sed -i 's/^smac_only=0/smac_only=1/' "$STAGING/thinker.ini"
+echo "  + thinker.ini (patched: DisableOpeningMovie=0, smac_only=1)"
 
 # Menu definitions (required by Thinker at startup)
 if [ -f docs/modmenu.txt ]; then

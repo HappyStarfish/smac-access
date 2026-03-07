@@ -12,7 +12,6 @@
 #include "modal_utils.h"
 #include "gui.h"
 #include "base.h"
-#include "map.h"
 
 static bool _active = false;
 static bool _wantClose = false;
@@ -84,13 +83,13 @@ static void AnnounceDetail(int index) {
     // Status string: golden age, drone riots, nerve staple
     char status[128] = "";
     if (b.state_flags & BSTATE_GOLDEN_AGE_ACTIVE) {
-        snprintf(status, sizeof(status), "Golden Age.");
+        snprintf(status, sizeof(status), "%s", loc(SR_FMT_GOLDEN_AGE));
     } else if (b.state_flags & BSTATE_DRONE_RIOTS_ACTIVE) {
-        snprintf(status, sizeof(status), "Drone Riots!");
+        snprintf(status, sizeof(status), "%s", loc(SR_FMT_DRONE_RIOTS));
     }
     if (b.nerve_staple_turns_left > 0) {
         char ns[64];
-        snprintf(ns, sizeof(ns), " Nerve staple: %d turns.", (int)b.nerve_staple_turns_left);
+        snprintf(ns, sizeof(ns), loc(SR_FMT_NERVE_STAPLE), (int)b.nerve_staple_turns_left);
         strncat(status, ns, sizeof(status) - strlen(status) - 1);
     }
 

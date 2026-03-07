@@ -10,7 +10,6 @@
 #include "localization.h"
 #include "modal_utils.h"
 #include "gui.h"
-#include "faction.h"
 
 static bool _active = false;
 static bool _wantClose = false;

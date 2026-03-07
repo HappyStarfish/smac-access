@@ -16,34 +16,36 @@
 #include "screen_reader.h"
 #include "localization.h"
 
-// phWnd defined in gui.cpp
-extern HWND* phWnd;
-
 namespace CouncilHandler {
 
 static bool _councilActive = false;
 static int _councilFaction = -1;
 static bool _wasHuman = false;
 static char _lastResult[256] = {};
+static char _proposalResult[512] = {};
+static bool _popupPending = false;
 
-// Vote screen click targets (x coordinates per popup_list entry)
-static int _voteClickX[SR_POPUP_LIST_MAX] = {};
-static bool _voteListBuilt = false;
 
 bool IsActive() {
     return _councilActive;
 }
 
 void OnCouncilOpen(int faction_id) {
-    _councilActive = true;
-    _councilFaction = faction_id;
     _wasHuman = is_human(faction_id);
     _lastResult[0] = '\0';
+    _popupPending = false;
 
+    // Only activate council tracking for human players calling council.
+    // AI factions call call_council every turn (to check if they want to call it),
+    // so we must NOT set active for those — it would fire constantly.
     if (!_wasHuman || !sr_is_available()) {
+        _councilActive = false;
         sr_debug_log("COUNCIL OnOpen: skipped (human=%d sr=%d)", _wasHuman, sr_is_available());
         return;
     }
+
+    _councilActive = true;
+    _councilFaction = faction_id;
 
     sr_debug_log("COUNCIL OnOpen: announcing for faction %d", faction_id);
 
@@ -73,11 +75,24 @@ void OnCouncilClose() {
     _councilFaction = -1;
     _wasHuman = false;
     _lastResult[0] = '\0';
-    _voteListBuilt = false;
-    if (sr_popup_list.active) sr_popup_list_clear();
 
     if (wasHuman && sr_is_available()) {
-        sr_output(loc(SR_COUNCIL_CLOSED), true);
+        if (_proposalResult[0]) {
+            // Announce result + "Council ended" together
+            char buf[768];
+            snprintf(buf, sizeof(buf), "%s %s", _proposalResult, loc(SR_COUNCIL_CLOSED));
+            sr_output(buf, true);
+        } else {
+            sr_output(loc(SR_COUNCIL_CLOSED), true);
+        }
+        _proposalResult[0] = '\0';
+    }
+}
+
+void SetProposalResult(const char* result) {
+    if (result) {
+        strncpy(_proposalResult, result, sizeof(_proposalResult) - 1);
+        _proposalResult[sizeof(_proposalResult) - 1] = '\0';
     }
 }
 
@@ -164,49 +179,8 @@ void AnnouncePreCouncilInfo() {
 }
 
 void OnGovVotePopup() {
-    if (!sr_is_available()) return;
-
-    // Build popup_list: Abstain first, then eligible faction leaders
-    sr_popup_list_clear();
-    strncpy(sr_popup_list.label, "GOVVOTE", sizeof(sr_popup_list.label) - 1);
-
-    // Item 0: Abstain
-    strncpy(sr_popup_list.items[0], loc(SR_COUNCIL_ABSTAIN),
-            sizeof(sr_popup_list.items[0]) - 1);
-    sr_popup_list.count = 1;
-
-    // Add eligible factions in order (1..MaxPlayerNum)
-    for (int i = 1; i < MaxPlayerNum; i++) {
-        if (!is_alive(i) || is_alien(i)) continue;
-        if (!eligible(i)) continue;
-        if (sr_popup_list.count >= SR_POPUP_LIST_MAX) break;
-
-        const char* name = sr_game_str(MFactions[i].adj_name_faction);
-        strncpy(sr_popup_list.items[sr_popup_list.count], name,
-                sizeof(sr_popup_list.items[0]) - 1);
-        sr_popup_list.items[sr_popup_list.count][sizeof(sr_popup_list.items[0]) - 1] = '\0';
-        sr_popup_list.count++;
-    }
-
-    sr_popup_list.index = 0;
-    sr_popup_list.active = true;
-
-    // Build candidates summary for announcement
-    char names[512] = {};
-    int pos = 0;
-    for (int i = 0; i < sr_popup_list.count; i++) {
-        if (pos > 0) {
-            pos += snprintf(names + pos, sizeof(names) - pos, ", ");
-        }
-        pos += snprintf(names + pos, sizeof(names) - pos, "%s",
-                        sr_popup_list.items[i]);
-    }
-
-    char buf[1024];
-    snprintf(buf, sizeof(buf), loc(SR_COUNCIL_CANDIDATES), names);
-    sr_output(buf, true);
-
-    sr_debug_log("COUNCIL GOVVOTE: %d candidates built", sr_popup_list.count);
+    // No longer needed — vote selection is handled by sr_council_vote_modal
+    // (Pattern A hook at 0x52D419). Kept as stub for any remaining callers.
 }
 
 // Result keyword patterns (case-insensitive matching)
@@ -276,83 +250,8 @@ void CheckAndAnnounceResults() {
 }
 
 void TryBuildVoteList() {
-    if (!_councilActive || !_wasHuman || !sr_is_available()) return;
-    if (sr_popup_list.active) return; // already have a list
-
-    int count = sr_item_count();
-    if (count < 5) return;
-
-    // Detect vote screen: look for "STIMMEN" or "VOTES" in items
-    bool is_vote_screen = false;
-    for (int i = 0; i < count; i++) {
-        const char* it = sr_item_get(i);
-        if (!it) continue;
-        if (strstr(it, "STIMMEN") || strstr(it, "VOTES")) {
-            is_vote_screen = true;
-            break;
-        }
-    }
-    if (!is_vote_screen) return;
-
-    // Build popup_list from game state (reliable, language-independent)
-    sr_popup_list_clear();
-    strncpy(sr_popup_list.label, "COUNCILVOTE", sizeof(sr_popup_list.label) - 1);
-
-    int player_id = MapWin->cOwner;
-
-    for (int i = 1; i < MaxPlayerNum; i++) {
-        if (!is_alive(i) || is_alien(i)) continue;
-        if (sr_popup_list.count >= SR_POPUP_LIST_MAX - 1) break;
-
-        int votes = council_votes(i);
-        const char* title = sr_game_str(MFactions[i].title_leader);
-        const char* name = sr_game_str(MFactions[i].name_leader);
-
-        // Find this faction's x-coordinate from captured text
-        int click_x = -1;
-        for (int j = 0; j < count; j++) {
-            const char* it = sr_item_get(j);
-            int jx = sr_item_get_x(j);
-            int jy = sr_item_get_y(j);
-            if (!it || jx < 0 || jx > 10000 || jy < 140) continue;
-            // Match by leader name (case-insensitive substring)
-            if (sr_contains_ci(it, MFactions[i].name_leader)) {
-                click_x = jx;
-                break;
-            }
-        }
-
-        char entry[256];
-        if (i == player_id) {
-            snprintf(entry, sizeof(entry), "%s %s: %d (%s)",
-                title, name, votes, loc(SR_COUNCIL_YOUR_FACTION));
-        } else {
-            snprintf(entry, sizeof(entry), "%s %s: %d", title, name, votes);
-        }
-        int idx = sr_popup_list.count;
-        strncpy(sr_popup_list.items[idx], entry, sizeof(sr_popup_list.items[0]) - 1);
-        sr_popup_list.items[idx][sizeof(sr_popup_list.items[0]) - 1] = '\0';
-        _voteClickX[idx] = click_x;
-        sr_popup_list.count++;
-    }
-
-    if (sr_popup_list.count > 0) {
-        sr_popup_list.index = 0;
-        sr_popup_list.active = true;
-        _voteListBuilt = true;
-
-        sr_debug_log("COUNCIL VOTE LIST: %d factions", sr_popup_list.count);
-        for (int i = 0; i < sr_popup_list.count; i++) {
-            sr_debug_log("  [%d] click_x=%d: %s", i, _voteClickX[i],
-                sr_popup_list.items[i]);
-        }
-
-        // Announce first item
-        char buf[300];
-        snprintf(buf, sizeof(buf), loc(SR_POPUP_LIST_FMT),
-            1, sr_popup_list.count, sr_popup_list.items[0]);
-        sr_output(buf, true);
-    }
+    // No longer needed — vote selection is handled by sr_council_vote_modal
+    // (Pattern A hook at 0x52D419). Kept as stub for any remaining callers.
 }
 
 bool HandleKey(UINT msg, WPARAM wParam) {
@@ -372,55 +271,31 @@ bool HandleKey(UINT msg, WPARAM wParam) {
         return true;
     }
 
-    // Enter on vote list → simulate click on selected faction column
-    if (wParam == VK_RETURN && _voteListBuilt && sr_popup_list.active
-        && sr_popup_list.count > 0 && !ctrl_key_down()) {
-        int idx = sr_popup_list.index;
-        if (idx >= 0 && idx < sr_popup_list.count) {
-            int click_x = _voteClickX[idx] + 25; // center of column
-            int click_y = 200; // middle of faction area
-            sr_debug_log("COUNCIL VOTE CLICK: idx=%d buf_x=%d buf_y=%d", idx, click_x, click_y);
-
-            // Convert buffer coords to screen coords for SendInput
-            POINT pt = { click_x, click_y };
-            ClientToScreen(*phWnd, &pt);
-            int screen_w = GetSystemMetrics(SM_CXSCREEN);
-            int screen_h = GetSystemMetrics(SM_CYSCREEN);
-            LONG abs_x = (pt.x * 65536 + screen_w / 2) / screen_w;
-            LONG abs_y = (pt.y * 65536 + screen_h / 2) / screen_h;
-            sr_debug_log("COUNCIL VOTE CLICK: screen=(%ld,%ld) abs=(%ld,%ld)",
-                pt.x, pt.y, abs_x, abs_y);
-
-            // Save cursor, move + click, restore
-            POINT old_cursor;
-            GetCursorPos(&old_cursor);
-
-            INPUT inputs[3] = {};
-            // Move
-            inputs[0].type = INPUT_MOUSE;
-            inputs[0].mi.dx = abs_x;
-            inputs[0].mi.dy = abs_y;
-            inputs[0].mi.dwFlags = MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE;
-            // Click down
-            inputs[1].type = INPUT_MOUSE;
-            inputs[1].mi.dx = abs_x;
-            inputs[1].mi.dy = abs_y;
-            inputs[1].mi.dwFlags = MOUSEEVENTF_LEFTDOWN | MOUSEEVENTF_ABSOLUTE;
-            // Click up
-            inputs[2].type = INPUT_MOUSE;
-            inputs[2].mi.dx = abs_x;
-            inputs[2].mi.dy = abs_y;
-            inputs[2].mi.dwFlags = MOUSEEVENTF_LEFTUP | MOUSEEVENTF_ABSOLUTE;
-
-            SendInput(3, inputs, sizeof(INPUT));
-            SetCursorPos(old_cursor.x, old_cursor.y);
-            sr_popup_list_clear();
-            _voteListBuilt = false;
-        }
-        return true;
-    }
-
     return false;
+}
+
+void OnPopupOpened() {
+    if (_councilActive) {
+        _popupPending = true;
+    }
+}
+
+bool ConsumePopupFlag() {
+    bool was = _popupPending;
+    _popupPending = false;
+    return was;
+}
+
+bool IsCallerHuman() {
+    return _councilActive && _councilFaction > 0 && is_human(_councilFaction);
+}
+
+void OnAICouncilCalled() {
+    _councilActive = true;
+    _popupPending = true; // The CALLSCOUNCIL popup itself uses 0x602600
+    _wasHuman = false;
+    // _councilFaction stays as the AI faction
+    sr_debug_log("COUNCIL: AI council activated, faction=%d", _councilFaction);
 }
 
 } // namespace CouncilHandler

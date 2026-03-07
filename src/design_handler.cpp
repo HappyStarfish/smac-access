@@ -9,7 +9,6 @@
 
 #include "design_handler.h"
 #include "engine.h"
-#include "faction.h"
 #include "gui.h"
 #include "modal_utils.h"
 #include "screen_reader.h"
@@ -682,7 +681,7 @@ static bool handle_list_key(WPARAM wParam) {
             if (slot < 0) {
                 // No empty slots — cannot edit
                 char buf[256];
-                snprintf(buf, sizeof(buf), "Cannot: no empty prototype slots");
+                snprintf(buf, sizeof(buf), "%s", loc(SR_DESIGN_NO_SLOTS));
                 sr_output(buf, true);
                 return true;
             }
@@ -715,7 +714,7 @@ static bool handle_list_key(WPARAM wParam) {
             int slot = find_empty_slot();
             if (slot < 0) {
                 char buf[256];
-                snprintf(buf, sizeof(buf), "Cannot: no empty prototype slots");
+                snprintf(buf, sizeof(buf), "%s", loc(SR_DESIGN_NO_SLOTS));
                 sr_output(buf, true);
                 return true;
             }

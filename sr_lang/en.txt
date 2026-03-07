@@ -418,7 +418,7 @@ arty_help=Up/Down: browse targets. C: cursor position. Enter: fire. Escape: canc
 help_cursor_to_unit=Ctrl+Space: Jump cursor to unit
 
 # Faction Status (Ctrl+F3)
-status_header=Turn %d, Year %d M.Y.
+status_header=Year %d M.Y.
 status_credits=%d energy credits.
 status_alloc=Econ %d%%, Psych %d%%, Labs %d%%.
 status_income=Commerce: %d. Gross: %d. Maintenance: %d. Net: %d.
@@ -428,7 +428,7 @@ status_bases=%d bases, %d population.
 status_help=Ctrl+F3: Faction status.
 
 # Diplomacy
-diplo_open=Diplomacy with %s. S or Tab: Summary with profile. Ctrl+F1: Help.
+diplo_open=Diplomacy with %s.
 diplo_closed=Diplomacy ended.
 diplo_help=S or Tab: Summary with leader profile, treaty, patience. Popup options navigate with arrows. Ctrl+F1: This help.
 diplo_summary=%s. %s. %s. %s. %s. %s
@@ -464,7 +464,7 @@ input_number_done=Entered %d.
 cursor_to_unit=Cursor at unit.
 
 # Turn Info
-new_turn=Turn %d, Year %d M.Y.
+new_turn=Year %d M.Y.
 unit_skipped=Skipped. Next unit: %s
 unit_damaged=Damaged: %d of %d HP
 
@@ -813,6 +813,14 @@ council_abstain=Abstain
 council_candidates=Candidates: %s. Up/Down: navigate, Enter: vote.
 council_result=Result: %s
 council_your_faction=you
+council_vote_prompt=Vote: %s. Up/Down: navigate, Enter: confirm, Escape: abstain.
+council_vote_selected=Voted for %s.
+council_proposal_prompt=Proposal vote: %s. Up/Down to choose, Enter to confirm.
+council_proposal_yes=Yes
+council_proposal_no=No
+council_proposal_voted=Voted: %s.
+council_result_passed=%s: Passed, %d to %d.
+council_result_failed=%s: Failed, %d to %d.
 
 # Base Operations (F4)
 baseops_open=Base Operations, %d bases. Up/Down: navigate, S: summary, D: detail, Ctrl+F1: help.
@@ -1206,3 +1214,8 @@ council_result=Result: %s
 # Ctrl+Tab cycle through movable units
 cycle_movable_fmt=%s at (%d,%d), %d of %d moves, unit %d of %d
 cycle_movable_none=No units with movement points.
+
+# Hardcoded string fixes
+design_no_slots=Cannot: no empty prototype slots
+combat_psi=Psi
+combat_atk_def=Atk %d Def %d

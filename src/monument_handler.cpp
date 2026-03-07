@@ -10,7 +10,6 @@
 #include "localization.h"
 #include "modal_utils.h"
 #include "gui.h"
-#include "faction.h"
 #include "patch.h"
 
 // =========================================================================

@@ -418,7 +418,7 @@ arty_help=Hoch/Runter: Ziele durchblättern. C: Cursorposition. Eingabe: Feuern.
 help_cursor_to_unit=Strg+Leertaste: Cursor zur Einheit springen
 
 # Fraktionsstatus (Strg+F3)
-status_header=Runde %d, Jahr %d n.M.
+status_header=Jahr %d n.M.
 status_credits=%d Energieguthaben.
 status_alloc=Wirtschaft %d%%, Psyche %d%%, Forschung %d%%.
 status_income=Handel: %d. Brutto: %d. Unterhalt: %d. Netto: %d.
@@ -428,7 +428,7 @@ status_bases=%d Basen, %d Bevölkerung.
 status_help=Strg+F3: Fraktionsstatus.
 
 # Diplomatie
-diplo_open=Diplomatie mit %s. S oder Tab: Zusammenfassung mit Profil. Strg+F1: Hilfe.
+diplo_open=Diplomatie mit %s.
 diplo_closed=Diplomatie beendet.
 diplo_help=S oder Tab: Zusammenfassung mit Anführerprofil, Vertragsstatus, Geduld. Popup-Optionen mit Pfeiltasten navigieren. Strg+F1: Diese Hilfe.
 diplo_summary=%s. %s. %s. %s. %s. %s
@@ -464,7 +464,7 @@ input_number_done=%d eingegeben.
 cursor_to_unit=Cursor bei Einheit.
 
 # Zuginformation
-new_turn=Zug %d, Jahr %d M.Y.
+new_turn=Jahr %d n.M.
 unit_skipped=Übersprungen. Nächste Einheit: %s
 unit_damaged=Beschädigt: %d von %d HP
 
@@ -813,6 +813,14 @@ council_abstain=Enthaltung
 council_candidates=Kandidaten: %s. Hoch/Runter: navigieren, Eingabe: wählen.
 council_result=Ergebnis: %s
 council_your_faction=du
+council_vote_prompt=Abstimmung: %s. Hoch/Runter: navigieren, Eingabe: bestätigen, Escape: enthalten.
+council_vote_selected=Gestimmt für %s.
+council_proposal_prompt=Antragsabstimmung: %s. Hoch/Runter: wählen, Eingabe: bestätigen.
+council_proposal_yes=Ja
+council_proposal_no=Nein
+council_proposal_voted=Gestimmt: %s.
+council_result_passed=%s: Angenommen, %d zu %d.
+council_result_failed=%s: Abgelehnt, %d zu %d.
 
 # Basisoperationen (F4)
 baseops_open=Basisoperationen, %d Basen. Hoch/Runter: navigieren, S: Zusammenfassung, D: Detail, Strg+F1: Hilfe.
@@ -1206,3 +1214,8 @@ council_result=Ergebnis: %s
 # Strg+Tab: Einheiten mit Bewegungspunkten durchschalten
 cycle_movable_fmt=%s bei (%d,%d), %d von %d Bewegung, Einheit %d von %d
 cycle_movable_none=Keine Einheiten mit Bewegungspunkten.
+
+# Hardcodierte Strings behoben
+design_no_slots=Nicht möglich: keine freien Prototyp-Plätze
+combat_psi=Psi
+combat_atk_def=Ang %d Ver %d

@@ -8,7 +8,6 @@
 #include "base_handler.h"
 #include "screen_reader.h"
 #include "localization.h"
-#include "map.h"
 
 // Helper: convert game production name to UTF-8
 static const char* sr_prod(int item_id) {

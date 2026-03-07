@@ -405,7 +405,7 @@ static void sr_announce_tile(int x, int y) {
     if (!sq->is_visible(faction)) {
         pos += snprintf(buf + pos, sizeof(buf) - pos, "%s", loc(SR_TILE_UNEXPLORED));
         sr_debug_log("TILE-ANNOUNCE (%d,%d): %s", x, y, buf);
-        sr_output(buf, true);
+        sr_output(buf, false);
         return;
     }
 
@@ -454,7 +454,7 @@ static void sr_announce_tile(int x, int y) {
     if (n > 0) pos += snprintf(buf + pos, sizeof(buf) - pos, ". %s", part);
 
     sr_debug_log("TILE-ANNOUNCE (%d,%d): %s", x, y, buf);
-    sr_output(buf, true);
+    sr_output(buf, false);
 }
 
 /// Check if tile (x,y) matches the current scanner filter for given faction.
@@ -586,8 +586,8 @@ void OnTimer(DWORD now, bool on_world_map, GameWinState cur_win, int cur_popup,
     (void)cur_win;
     (void)cur_popup;
 
-    // Announce world map transition (spoken)
-    if (on_world_map && !sr_prev_on_world_map) {
+    // Announce world map transition (spoken), but not during council
+    if (on_world_map && !sr_prev_on_world_map && !CouncilHandler::IsActive()) {
         sr_debug_log("ANNOUNCE-SCREEN: World Map");
         sr_output(loc(SR_WORLD_MAP), true);
         sr_announced[0] = '\0';
@@ -644,16 +644,18 @@ void OnTimer(DWORD now, bool on_world_map, GameWinState cur_win, int cur_popup,
         }
     }
 
-    // Turn change detection: announce new turn with year (queued)
+    // Turn change detection: announce year (queued)
     if (on_world_map) {
         int cur_turn = *CurrentTurn;
         if (cur_turn != sr_prev_turn) {
             sr_prev_turn = cur_turn;
-            char turn_buf[128];
-            snprintf(turn_buf, sizeof(turn_buf),
-                loc(SR_NEW_TURN), cur_turn, *CurrentMissionYear);
-            sr_debug_log("NEW-TURN: %s", turn_buf);
-            sr_output(turn_buf, false);
+            if (cur_turn > 0) {
+                char turn_buf[128];
+                snprintf(turn_buf, sizeof(turn_buf),
+                    loc(SR_NEW_TURN), *CurrentMissionYear);
+                sr_debug_log("NEW-TURN: %s", turn_buf);
+                sr_output(turn_buf, false);
+            }
         }
     }
 
@@ -2361,10 +2363,11 @@ bool HandleKey(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             int def = v->defense_value();
             if (atk < 0) {
                 // Psi unit — no numeric attack/defense
-                pos += snprintf(buf + pos, sizeof(buf) - pos, ", Psi");
+                pos += snprintf(buf + pos, sizeof(buf) - pos, ", %s", loc(SR_COMBAT_PSI));
             } else {
-                pos += snprintf(buf + pos, sizeof(buf) - pos,
-                    ", Atk %d Def %d", atk, def);
+                char atkdef[64];
+                snprintf(atkdef, sizeof(atkdef), loc(SR_COMBAT_ATK_DEF), atk, def);
+                pos += snprintf(buf + pos, sizeof(buf) - pos, ", %s", atkdef);
             }
 
             // Triad: "Land" / "Sea" / "Air"
@@ -3072,9 +3075,9 @@ bool HandleKey(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         char buf[1024];
         int pos = 0;
 
-        // Turn and year (orientation)
+        // Year (orientation)
         pos += snprintf(buf + pos, sizeof(buf) - pos,
-            loc(SR_STATUS_HEADER), *CurrentTurn, *CurrentMissionYear);
+            loc(SR_STATUS_HEADER), *CurrentMissionYear);
         pos += snprintf(buf + pos, sizeof(buf) - pos, " ");
 
         // Energy credits (changes every turn)
@@ -3211,7 +3214,7 @@ bool HandleKey(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         }
 
         if (n > 0) {
-            sr_output(detail, true);
+            sr_output(detail, false);
         }
         return true;
     }

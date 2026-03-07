@@ -16,6 +16,23 @@ void OnCouncilOpen(int faction_id);
 /// Called from inline hook when call_council returns.
 void OnCouncilClose();
 
+/// Store proposal result text to announce during OnCouncilClose.
+void SetProposalResult(const char* result);
+
+/// Mark that a game popup (COUNCILISSUES, COUNCILRECENTPROP, etc.) was just opened.
+/// The GFX hook checks this to pass through popups instead of intercepting them.
+void OnPopupOpened();
+
+/// Check and clear the popup flag. Returns true if a popup was pending.
+bool ConsumePopupFlag();
+
+/// Returns true if the calling faction is human (player called the council).
+bool IsCallerHuman();
+
+/// Called when CALLSCOUNCIL popup detected — AI faction called the council.
+/// Activates council tracking so hooks work for the human voter.
+void OnAICouncilCalled();
+
 /// Announce vote counts for all living factions.
 void AnnounceVoteSummary();
 

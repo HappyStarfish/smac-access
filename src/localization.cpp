@@ -411,7 +411,7 @@ static const char* sr_defaults[SR_COUNT] = {
     /* SR_AIRDROP_CURSOR_INVALID */ "Cannot drop at cursor: invalid target.",
 
     // Diplomacy
-    /* SR_DIPLO_OPEN         */ "Diplomacy with %s. S or Tab: Summary with profile. Ctrl+F1: Help.",
+    /* SR_DIPLO_OPEN         */ "Diplomacy with %s.",
     /* SR_DIPLO_CLOSED       */ "Diplomacy ended.",
     /* SR_DIPLO_HELP         */ "S or Tab: Summary with leader profile, treaty, patience. Popup options navigate with arrows. Ctrl+F1: This help.",
     /* SR_DIPLO_SUMMARY      */ "%s. %s. %s. %s. %s. %s",
@@ -441,7 +441,7 @@ static const char* sr_defaults[SR_COUNT] = {
     /* SR_CURSOR_TO_UNIT    */ "Cursor at unit.",
 
     // Turn Info
-    /* SR_NEW_TURN          */ "Turn %d, Year %d M.Y.",
+    /* SR_NEW_TURN          */ "Year %d M.Y.",
     /* SR_UNIT_SKIPPED      */ "Skipped. Next unit: %s",
     /* SR_UNIT_DAMAGED      */ "Damaged: %d of %d HP",
 
@@ -653,7 +653,7 @@ static const char* sr_defaults[SR_COUNT] = {
     /* SR_HELP_CURSOR_TO_UNIT */ "Ctrl+Space: Jump cursor to unit",
 
     // Faction Status (Ctrl+F3)
-    /* SR_STATUS_HEADER       */ "Turn %d, Year %d M.Y.",
+    /* SR_STATUS_HEADER       */ "Year %d M.Y.",
     /* SR_STATUS_CREDITS      */ "%d energy credits.",
     /* SR_STATUS_ALLOC        */ "Econ %d%%, Psych %d%%, Labs %d%%.",
     /* SR_STATUS_INCOME       */ "Commerce: %d. Gross: %d. Maintenance: %d. Net: %d.",
@@ -830,6 +830,14 @@ static const char* sr_defaults[SR_COUNT] = {
     /* SR_COUNCIL_CANDIDATES    */ "Candidates: %s. Up/Down: navigate, Enter: vote.",
     /* SR_COUNCIL_RESULT        */ "Result: %s",
     /* SR_COUNCIL_YOUR_FACTION  */ "you",
+    /* SR_COUNCIL_VOTE_PROMPT   */ "Vote: %s. Up/Down: navigate, Enter: confirm, Escape: abstain.",
+    /* SR_COUNCIL_VOTE_SELECTED */ "Voted for %s.",
+    /* SR_COUNCIL_PROPOSAL_PROMPT */ "Proposal vote: %s. Up/Down to choose, Enter to confirm.",
+    /* SR_COUNCIL_PROPOSAL_YES    */ "Yes",
+    /* SR_COUNCIL_PROPOSAL_NO     */ "No",
+    /* SR_COUNCIL_PROPOSAL_VOTED  */ "Voted: %s.",
+    /* SR_COUNCIL_RESULT_PASSED   */ "%s: Passed, %d to %d.",
+    /* SR_COUNCIL_RESULT_FAILED   */ "%s: Failed, %d to %d.",
 
     // Base Operations Status (F4)
     /* SR_BASEOPS_OPEN          */ "Base Operations, %d bases. Up/Down: navigate, S: summary, D: detail, Ctrl+F1: help.",
@@ -1220,6 +1228,10 @@ static const char* sr_defaults[SR_COUNT] = {
     // Ctrl+Tab cycle through movable units
     /* SR_CYCLE_MOVABLE_FMT         */ "%s at (%d,%d), %d of %d moves, unit %d of %d",
     /* SR_CYCLE_MOVABLE_NONE        */ "No units with movement points.",
+    // Hardcoded string fixes
+    /* SR_DESIGN_NO_SLOTS           */ "Cannot: no empty prototype slots",
+    /* SR_COMBAT_PSI                */ "Psi",
+    /* SR_COMBAT_ATK_DEF            */ "Atk %d Def %d",
 };
 
 // Key names matching the enum order (for file parsing)
@@ -1522,7 +1534,10 @@ static const char* sr_keys[SR_COUNT] = {
     "council_governor", "council_no_governor",
     "council_can_call", "council_cannot_call",
     "council_abstain", "council_candidates", "council_result",
-    "council_your_faction",
+    "council_your_faction", "council_vote_prompt", "council_vote_selected",
+    "council_proposal_prompt", "council_proposal_yes", "council_proposal_no",
+    "council_proposal_voted",
+    "council_result_passed", "council_result_failed",
     // Base Operations Status (F4)
     "baseops_open", "baseops_closed", "baseops_base_fmt", "baseops_base_fmt_stall",
     "baseops_summary", "baseops_help", "baseops_empty", "baseops_detail",
@@ -1677,6 +1692,7 @@ static const char* sr_keys[SR_COUNT] = {
     "setup_rules_help",
     // Ctrl+Tab cycle through movable units
     "cycle_movable_fmt", "cycle_movable_none",
+    "design_no_slots", "combat_psi", "combat_atk_def",
 };
 
 // Loaded strings (dynamically allocated, or NULL = use default)

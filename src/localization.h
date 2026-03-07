@@ -8,13 +8,13 @@
 #pragma once
 
 enum SrStr {
-    // General
+    // ===== General =====
     SR_MOD_LOADED,
     SR_DEBUG_ON,
     SR_DEBUG_OFF,
     SR_NO_TEXT,
 
-    // World Map
+    // ===== World Map =====
     SR_MAP_EDGE,
     SR_WORLD_MAP,
     SR_DESIGN_WORKSHOP,
@@ -62,7 +62,7 @@ enum SrStr {
     SR_MONOLITH_USED,
     SR_TILE_UNEXPLORED,
 
-    // Scanner
+    // ===== Scanner =====
     SR_SCAN_ALL,
     SR_SCAN_OWN_BASES,
     SR_SCAN_ENEMY_BASES,
@@ -80,7 +80,7 @@ enum SrStr {
     SR_UNIT_AT,
     SR_MORE_UNITS,
 
-    // Base Screen
+    // ===== Base Screen =====
     SR_BASE_SCREEN,
     SR_SEC_OVERVIEW,
     SR_SEC_RESOURCES,
@@ -105,7 +105,7 @@ enum SrStr {
     SR_FMT_NERVE_STAPLE,
     SR_FMT_BASE_OPEN,
 
-    // Base Screen (enhanced)
+    // ===== Base Screen (enhanced) =====
     SR_SEC_UNITS,
     SR_FMT_OVERVIEW_V2,
     SR_FMT_RESOURCES_V2,
@@ -122,7 +122,7 @@ enum SrStr {
     SR_FMT_FACTION_CREDITS,
     SR_FMT_FACILITIES_COUNT,
 
-    // Movement & Navigation
+    // ===== Movement & Navigation =====
     SR_MOVEMENT_POINTS,
     SR_CANNOT_MOVE,
     SR_CANNOT_MOVE_NO_MP,
@@ -132,7 +132,7 @@ enum SrStr {
     SR_CANNOT_MOVE_EDGE,
     SR_NO_BASE_HERE,
 
-    // Context Help (Ctrl+F1)
+    // ===== Context Help (Ctrl+F1) =====
     SR_HELP_HEADER,
     SR_HELP_MOVE,
     SR_HELP_EXPLORE,
@@ -163,12 +163,12 @@ enum SrStr {
     SR_HELP_PROBE,
     SR_HELP_AIRDROP,
 
-    // Hurry feedback
+    // ===== Hurry feedback =====
     SR_HURRY_OK,
     SR_HURRY_NO_CREDITS,
     SR_HURRY_CANNOT,
 
-    // Production Picker
+    // ===== Production Picker =====
     SR_PROD_PICKER_OPEN,
     SR_PROD_PICKER_ITEM,
     SR_PROD_PICKER_SELECT,
@@ -181,7 +181,7 @@ enum SrStr {
     SR_PROD_DETAIL_UNIT,
     SR_UNIT_ABILITIES,
 
-    // Queue Management
+    // ===== Queue Management =====
     SR_QUEUE_OPEN,
     SR_QUEUE_OPEN_ONE,
     SR_QUEUE_ITEM,
@@ -195,7 +195,7 @@ enum SrStr {
     SR_QUEUE_CLOSED,
     SR_QUEUE_EMPTY,
 
-    // Menu Bar (world map)
+    // ===== Menu Bar (world map) =====
     SR_MENU_GAME,
     SR_MENU_HQ,
     SR_MENU_NETWORK,
@@ -211,7 +211,7 @@ enum SrStr {
     SR_MENU_ITEM_NOHK,
     SR_MENU_NAV_FMT,
 
-    // Popup Menus
+    // ===== Popup Menus =====
     SR_MENU_MAIN,           // "Main Menu"
     SR_MENU_MAP_MENU,       // "Map Menu"
     SR_MENU_MULTIPLAYER,    // "Multiplayer"
@@ -232,11 +232,11 @@ enum SrStr {
     SR_FILE_SAVE_CANCELLED, // "Save cancelled"
     SR_FILE_HELP,           // help text
 
-    // Popup list navigation
+    // ===== Popup list navigation =====
     SR_POPUP_LIST_FMT,      // "%d of %d: %s"
     SR_POPUP_CONTINUE,      // "Enter to continue"
 
-    // Social Engineering
+    // ===== Social Engineering =====
     SR_SOCENG_TITLE,
     SR_SOCENG_CATEGORY_FMT,
     SR_SOCENG_MODEL_FMT,
@@ -252,7 +252,7 @@ enum SrStr {
     SR_SOCENG_HELP,
     SR_SOCENG_CLOSED,
 
-    // Preferences Handler
+    // ===== Preferences Handler =====
     SR_PREF_TITLE,
     SR_PREF_TAB_FMT,
     SR_PREF_OPTION_FMT,
@@ -353,7 +353,7 @@ enum SrStr {
     SR_PREF_GRID_OCEAN,
     SR_PREF_SHOW_GOTO_PATH,
 
-    // Specialist Management (Ctrl+W)
+    // ===== Specialist Management (Ctrl+W) =====
     SR_SPEC_OPEN,
     SR_SPEC_CLOSE,
     SR_SPEC_WORKER,
@@ -371,7 +371,7 @@ enum SrStr {
     SR_SPEC_NO_OTHER_TYPE,
     SR_SPEC_WORKER_NO_TYPE,
 
-    // Facility Demolition (Ctrl+D)
+    // ===== Facility Demolition (Ctrl+D) =====
     SR_DEMOLITION_OPEN,
     SR_DEMOLITION_ITEM,
     SR_DEMOLITION_DETAIL,
@@ -381,7 +381,7 @@ enum SrStr {
     SR_DEMOLITION_EMPTY,
     SR_DEMOLITION_CANCEL,
 
-    // Targeting Mode & Go to Base
+    // ===== Targeting Mode & Go to Base =====
     SR_TARGETING_MODE,
     SR_TARGETING_CANCEL,
     SR_GO_TO_BASE,
@@ -408,7 +408,7 @@ enum SrStr {
     SR_AIRDROP_CURSOR_CONFIRM,
     SR_AIRDROP_CURSOR_INVALID,
 
-    // Diplomacy
+    // ===== Diplomacy =====
     SR_DIPLO_OPEN,
     SR_DIPLO_CLOSED,
     SR_DIPLO_HELP,
@@ -436,20 +436,20 @@ enum SrStr {
     SR_DIPLO_PROFILE_FEMALE,
     SR_DIPLO_STATUS_CHANGED,
 
-    // Cursor / Numpad
+    // ===== Cursor / Numpad =====
     SR_CURSOR_TO_UNIT,
 
-    // Turn Info
+    // ===== Turn Info =====
     SR_NEW_TURN,
     SR_UNIT_SKIPPED,
     SR_UNIT_DAMAGED,
 
-    // Input dialogs
+    // ===== Input dialogs =====
     SR_INPUT_NUMBER,
     SR_INPUT_NUMBER_EMPTY,
     SR_INPUT_NUMBER_DONE,
 
-    // Design Workshop
+    // ===== Design Workshop =====
     SR_DESIGN_PROTO_LIST,
     SR_DESIGN_PROTO_FMT,
     SR_DESIGN_CATEGORY,
@@ -487,19 +487,19 @@ enum SrStr {
     SR_DESIGN_UPGRADE_COST,
     SR_DESIGN_OBSOLETE_STATUS,
 
-    // Terraform Status
+    // ===== Terraform Status =====
     SR_TERRAFORM_ORDER,
     SR_TERRAFORM_STATUS,
     SR_TERRAFORM_COMPLETE,
     SR_TERRAFORM_ORDER_REMOVE,
     SR_TERRAFORM_STATUS_REMOVE,
 
-    // Nerve Staple (Ctrl+N)
+    // ===== Nerve Staple (Ctrl+N) =====
     SR_NERVE_STAPLE_CONFIRM,
     SR_NERVE_STAPLE_DONE,
     SR_NERVE_STAPLE_CANNOT,
 
-    // Base Rename (F2)
+    // ===== Base Rename (F2) =====
     SR_RENAME_OPEN,
     SR_RENAME_CHAR_FMT,
     SR_RENAME_DONE,
@@ -511,7 +511,7 @@ enum SrStr {
     SR_FMT_BASE_OPEN_MOOD,
     SR_FMT_BASE_OPEN_PROD,
 
-    // Governor Configuration (Ctrl+G)
+    // ===== Governor Configuration (Ctrl+G) =====
     SR_GOV_TITLE,
     SR_GOV_OPTION_FMT,
     SR_GOV_ON,
@@ -527,7 +527,7 @@ enum SrStr {
     SR_GOV_PRIORITY_BUILD,
     SR_GOV_PRIORITY_CONQUER,
 
-    // Social Engineering (extended)
+    // ===== Social Engineering (extended) =====
     SR_SOCENG_TOTAL_EFFECTS,
     SR_SOCENG_NO_TOTAL_EFFECT,
     SR_SOCENG_ALLOC_FMT,
@@ -553,7 +553,7 @@ enum SrStr {
     SR_SOCENG_EFF_INDUSTRY,
     SR_SOCENG_EFF_RESEARCH,
 
-    // Garrison List (Ctrl+U)
+    // ===== Garrison List (Ctrl+U) =====
     SR_GARRISON_OPEN,
     SR_GARRISON_ITEM,
     SR_GARRISON_DETAIL,
@@ -562,7 +562,7 @@ enum SrStr {
     SR_GARRISON_EMPTY,
     SR_GARRISON_CLOSE,
 
-    // Message Log (Ctrl+M)
+    // ===== Message Log (Ctrl+M) =====
     SR_MSG_OPEN,
     SR_MSG_ITEM,
     SR_MSG_ITEM_LOC,
@@ -573,16 +573,16 @@ enum SrStr {
     SR_MSG_HELP,
     SR_MSG_NOTIFICATION,
 
-    // Time Controls (Shift+T)
+    // ===== Time Controls (Shift+T) =====
     SR_TC_OPEN,
     SR_TC_ITEM,
     SR_TC_SET,
     SR_TC_CANCELLED,
 
-    // Chat (Ctrl+C)
+    // ===== Chat (Ctrl+C) =====
     SR_CHAT_OPEN,
 
-    // Base Screen: Resources/Economy/Status V3
+    // ===== Base Screen: Resources/Economy/Status V3 =====
     SR_FMT_RESOURCES_V3,
     SR_FMT_STARVATION,
     SR_FMT_LOW_MINERALS,
@@ -594,7 +594,7 @@ enum SrStr {
     SR_FMT_UNDEFENDED,
     SR_FMT_POLICE_UNITS,
 
-    // Supported Units (Ctrl+Shift+S)
+    // ===== Supported Units (Ctrl+Shift+S) =====
     SR_SUPPORT_OPEN,
     SR_SUPPORT_ITEM,
     SR_SUPPORT_DETAIL,
@@ -626,19 +626,19 @@ enum SrStr {
     SR_TILE_UNAVAIL_VEHICLE,
     SR_TILE_UNAVAIL_UNEXPLORED,
 
-    // Patrol (P key)
+    // ===== Patrol (P key) =====
     SR_PATROL_CONFIRM,
     SR_PATROL_CANNOT,
     SR_PATROL_PROMPT,
 
-    // Road/Tube to cursor (Ctrl+R / Ctrl+T)
+    // ===== Road/Tube to cursor (Ctrl+R / Ctrl+T) =====
     SR_ROAD_TO_CONFIRM,
     SR_ROAD_TO_PROMPT,
     SR_TUBE_TO_CONFIRM,
     SR_TUBE_TO_PROMPT,
     SR_ROAD_TO_CANNOT,
 
-    // Artillery (F key)
+    // ===== Artillery (F key) =====
     SR_ARTY_CANNOT,
     SR_ARTY_NO_TARGETS,
     SR_ARTY_OPEN,
@@ -651,7 +651,7 @@ enum SrStr {
     // World Map Help (additional)
     SR_HELP_CURSOR_TO_UNIT,
 
-    // Faction Status (Ctrl+F3)
+    // ===== Faction Status (Ctrl+F3) =====
     SR_STATUS_HEADER,
     SR_STATUS_CREDITS,
     SR_STATUS_ALLOC,
@@ -661,12 +661,12 @@ enum SrStr {
     SR_STATUS_BASES,
     SR_STATUS_HELP,
 
-    // Resource Bonuses (tile announcement)
+    // ===== Resource Bonuses (tile announcement) =====
     SR_BONUS_NUTRIENT,
     SR_BONUS_MINERAL,
     SR_BONUS_ENERGY,
 
-    // Landmarks (tile announcement)
+    // ===== Landmarks (tile announcement) =====
     SR_LANDMARK_CRATER,
     SR_LANDMARK_VOLCANO,
     SR_LANDMARK_JUNGLE,
@@ -684,11 +684,11 @@ enum SrStr {
     SR_LANDMARK_UNITY,
     SR_LANDMARK_FOSSIL,
 
-    // Move/View Mode (V key)
+    // ===== Move/View Mode (V key) =====
     SR_MODE_MOVE,
     SR_MODE_VIEW,
 
-    // Multiplayer Setup (NetWin)
+    // ===== Multiplayer Setup (NetWin) =====
     SR_NETSETUP_OPEN,
     SR_NETSETUP_HELP,
     SR_NETSETUP_ZONE_SETTINGS,
@@ -765,7 +765,7 @@ enum SrStr {
     SR_NETSETUP_GT_LOAD_MAP,
     SR_NETSETUP_START_NO_PLAYERS,
 
-    // Unit Action Menu (Shift+F10)
+    // ===== Unit Action Menu (Shift+F10) =====
     SR_ACT_MENU_OPEN,
     SR_ACT_MENU_ITEM,
     SR_ACT_MENU_CANCEL,
@@ -799,7 +799,7 @@ enum SrStr {
     SR_ACT_DONE_EXPLORE,
     SR_ACT_DONE_UNLOAD,
 
-    // Automation (Shift+A)
+    // ===== Automation (Shift+A) =====
     SR_AUTO_OPEN,
     SR_AUTO_ITEM,
     SR_AUTO_CONFIRM,
@@ -814,7 +814,7 @@ enum SrStr {
     SR_AUTO_FUNGUS,
     SR_AUTO_SENSOR,
 
-    // Planetary Council
+    // ===== Planetary Council =====
     SR_COUNCIL_OPEN,
     SR_COUNCIL_CLOSED,
     SR_COUNCIL_HELP,
@@ -829,8 +829,16 @@ enum SrStr {
     SR_COUNCIL_CANDIDATES,
     SR_COUNCIL_RESULT,
     SR_COUNCIL_YOUR_FACTION,
+    SR_COUNCIL_VOTE_PROMPT,     // "Vote: %s. Up/Down: navigate, Enter: confirm, Escape: abstain."
+    SR_COUNCIL_VOTE_SELECTED,   // "Voted for %s."
+    SR_COUNCIL_PROPOSAL_PROMPT, // "Proposal: %s. Yes / No / Abstain."
+    SR_COUNCIL_PROPOSAL_YES,    // "Yes"
+    SR_COUNCIL_PROPOSAL_NO,     // "No"
+    SR_COUNCIL_PROPOSAL_VOTED,  // "Voted: %s"
+    SR_COUNCIL_RESULT_PASSED,   // "%s: Passed, %d to %d."
+    SR_COUNCIL_RESULT_FAILED,   // "%s: Failed, %d to %d."
 
-    // Base Operations Status (F4)
+    // ===== Base Operations Status (F4) =====
     SR_BASEOPS_OPEN,        // "Base Operations, %d bases"
     SR_BASEOPS_CLOSED,      // "Base Operations closed"
     SR_BASEOPS_BASE_FMT,    // "%s, %d of %d: Pop %d, Nutrients %+d, Minerals %+d, Energy %+d, Building %s, %d turns"
@@ -840,7 +848,7 @@ enum SrStr {
     SR_BASEOPS_EMPTY,       // "No bases"
     SR_BASEOPS_DETAIL,      // detail info for D key
 
-    // Labs Status (F2)
+    // ===== Labs Status (F2) =====
     SR_LABS_OPEN,
     SR_LABS_CLOSED,
     SR_LABS_SUMMARY,
@@ -850,7 +858,7 @@ enum SrStr {
     SR_LABS_NO_BASES,
     SR_LABS_HELP,
 
-    // Secret Projects (F5)
+    // ===== Secret Projects (F5) =====
     SR_PROJECTS_OPEN,
     SR_PROJECTS_CLOSED,
     SR_PROJECTS_BUILT,
@@ -860,7 +868,7 @@ enum SrStr {
     SR_PROJECTS_EMPTY,
     SR_PROJECTS_HELP,
 
-    // Orbital Status (F6)
+    // ===== Orbital Status (F6) =====
     SR_ORBITAL_OPEN,
     SR_ORBITAL_CLOSED,
     SR_ORBITAL_SUMMARY,
@@ -868,7 +876,7 @@ enum SrStr {
     SR_ORBITAL_FACTION,
     SR_ORBITAL_HELP,
 
-    // Military Status (F7)
+    // ===== Military Status (F7) =====
     SR_MILITARY_OPEN,
     SR_MILITARY_CLOSED,
     SR_MILITARY_SUMMARY,
@@ -880,7 +888,7 @@ enum SrStr {
     SR_MILITARY_RANK_ENTRY,
     SR_MILITARY_HELP,
 
-    // Score/Rankings (F8)
+    // ===== Score/Rankings (F8) =====
     SR_SCORE_OPEN,
     SR_SCORE_CLOSED,
     SR_SCORE_FACTION,
@@ -888,7 +896,7 @@ enum SrStr {
     SR_SCORE_EMPTY,
     SR_SCORE_HELP,
 
-    // Game End
+    // ===== Game End =====
     SR_VICTORY_CONQUEST,
     SR_VICTORY_DIPLOMATIC,
     SR_VICTORY_ECONOMIC,
@@ -897,7 +905,7 @@ enum SrStr {
     SR_GAME_OVER,
     SR_REPLAY_SCREEN,
 
-    // World Map Actions
+    // ===== World Map Actions =====
     SR_RESEARCH_PRIORITIES,
     SR_GROUP_DIALOG,
     SR_GRID_ON,
@@ -908,7 +916,7 @@ enum SrStr {
     SR_MONUMENTS_INFO,
     SR_HALL_OF_FAME_INFO,
 
-    // Monuments (F9)
+    // ===== Monuments (F9) =====
     SR_MONUMENT_OPEN,
     SR_MONUMENT_CLOSED,
     SR_MONUMENT_ITEM_ACHIEVED,
@@ -932,7 +940,7 @@ enum SrStr {
     SR_MONUMENT_TYPE_14,
     SR_MONUMENT_TYPE_15,
 
-    // Runtime Toggles
+    // ===== Runtime Toggles =====
     SR_THINKER_AI_ON,
     SR_THINKER_AI_OFF,
     SR_ACCESSIBILITY_ON,
@@ -940,7 +948,7 @@ enum SrStr {
     SR_HELP_TOGGLE_AI,
     SR_HELP_TOGGLE_SR,
 
-    // Datalinks (F1)
+    // ===== Datalinks (F1) =====
     SR_DL_OPEN,
     SR_DL_CLOSED,
     SR_DL_HELP,
@@ -992,11 +1000,11 @@ enum SrStr {
     SR_DL_DETAIL_CONCEPT,
     SR_DL_CONCEPT_NO_TEXT,
 
-    // Faction Selection
+    // ===== Faction Selection =====
     SR_FACTION_HELP,
     SR_FACTION_NO_INFO,
 
-    // Tech pick (research selection)
+    // ===== Tech pick (research selection) =====
     SR_TECH_PICK_TITLE,
     SR_TECH_PICK_ITEM,
     SR_TECH_PICK_HELP,
@@ -1008,7 +1016,7 @@ enum SrStr {
     SR_TECH_PICK_STATUS,
     SR_TECH_PICK_STATUS_MIXED,
 
-    // Game Settings Editor (Ctrl+F10)
+    // ===== Game Settings Editor (Ctrl+F10) =====
     SR_GSETTINGS_OPEN,
     SR_GSETTINGS_SAVED,
     SR_GSETTINGS_CANCELLED,
@@ -1076,7 +1084,7 @@ enum SrStr {
     SR_GSETTINGS_PRESS_D,
     SR_GSETTINGS_FACTION_INFO,
 
-    // Unit List (U key)
+    // ===== Unit List (U key) =====
     SR_UNIT_LIST_OPEN,
     SR_UNIT_LIST_FMT,
     SR_UNIT_LIST_MOVES,
@@ -1092,7 +1100,7 @@ enum SrStr {
     SR_ORDER_GOTO,
     SR_ORDER_CONVOY,
 
-    // Enemy Unit List (Shift+U)
+    // ===== Enemy Unit List (Shift+U) =====
     SR_ENEMY_LIST_OPEN,
     SR_ENEMY_LIST_FMT,
     SR_ENEMY_LIST_NATIVE,
@@ -1107,11 +1115,11 @@ enum SrStr {
     SR_ENEMY_LIST_DETAIL_LIMITED,
     SR_UNIT_LIST_FOCUSED,
 
-    // Stack Cycling (Tab)
+    // ===== Stack Cycling (Tab) =====
     SR_TAB_CYCLE_FMT,
     SR_TAB_CYCLE_NONE,
 
-    // Net Setup Settings (Ctrl+Shift+F10)
+    // ===== Net Setup Settings (Ctrl+Shift+F10) =====
     SR_NETSETTINGS_OPEN,
     SR_NETSETTINGS_SAVED,
     SR_NETSETTINGS_CANCELLED,
@@ -1131,7 +1139,7 @@ enum SrStr {
     SR_MILITARY_UNIT_DETAIL,
     SR_SCORE_DETAIL,
 
-    // Combat Results
+    // ===== Combat Results =====
     SR_COMBAT_VICTORY,
     SR_COMBAT_DEFEAT,
     SR_COMBAT_DEFENSE_WIN,
@@ -1162,10 +1170,10 @@ enum SrStr {
     // Destroy Improvements (D key)
     SR_ACT_DONE_DESTROY,
 
-    // Scenario Editor
+    // ===== Scenario Editor =====
     SR_EDITOR_NOT_ACCESSIBLE,
 
-    // Thinker Menu (Alt+T)
+    // ===== Thinker Menu (Alt+T) =====
     SR_TMENU_TITLE,
     SR_TMENU_ITEM_FMT,
     SR_TMENU_STATS,
@@ -1202,14 +1210,14 @@ enum SrStr {
     SR_TMENU_OPT_TREATY_POPUP,
     SR_TMENU_OPT_AUTO_MINIMISE,
 
-    // Tile Detail Query (number keys 1-8)
+    // ===== Tile Detail Query (number keys 1-8) =====
     SR_DETAIL_NO_UNITS,
     SR_DETAIL_NO_BASE,
     SR_DETAIL_NO_IMPROVEMENTS,
     SR_DETAIL_NO_LANDMARKS,
     SR_DETAIL_NO_WORK,
 
-    // Speech History
+    // ===== Speech History =====
     SR_HISTORY_EMPTY,
     SR_HISTORY_OLDEST,
     SR_HISTORY_FMT,
@@ -1223,6 +1231,11 @@ enum SrStr {
     // Ctrl+Tab cycle through movable units
     SR_CYCLE_MOVABLE_FMT,
     SR_CYCLE_MOVABLE_NONE,
+
+    // ===== Hardcoded string fixes =====
+    SR_DESIGN_NO_SLOTS,
+    SR_COMBAT_PSI,
+    SR_COMBAT_ATK_DEF,
 
     SR_COUNT
 };
