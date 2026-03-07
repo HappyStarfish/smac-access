@@ -45,6 +45,7 @@ static_assert(DefaultMorePref == 0x327168, "");
 static_assert(DefaultWarnPref == 0x3C3A9, "");
 static_assert(DefaultRules == 0x1A0E, "");
 
+void smac_mod_init_paths();
 int __cdecl tech_name(char* name);
 int __cdecl chas_name(char* name);
 int __cdecl weap_name(char* name);

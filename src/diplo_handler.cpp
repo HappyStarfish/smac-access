@@ -15,6 +15,7 @@ namespace DiplomacyHandler {
 
 static bool _wasActive = false;
 static int _lastFaction = -1;
+static int _lastTreatyBits = -1;
 
 bool IsActive() {
     return *DiploWinState != 0;
@@ -49,7 +50,7 @@ static const char* get_patience_str(int player, int other) {
     return loc(SR_DIPLO_PATIENCE_OK);
 }
 
-/// Build a relationship summary string for S/Tab.
+/// Build a relationship summary string for S/Tab, including profile info.
 static void build_summary(int player, int other, char* buf, int bufsize) {
     if (other < 0 || other >= MaxPlayerNum
         || player < 0 || player >= MaxPlayerNum) {
@@ -57,12 +58,39 @@ static void build_summary(int player, int other, char* buf, int bufsize) {
         return;
     }
 
+    MFaction& mf = MFactions[other];
+
+    // Leader + faction name
+    char leader[128];
+    snprintf(leader, sizeof(leader), "%s %s, %s",
+        sr_game_str(mf.title_leader),
+        sr_game_str(mf.name_leader),
+        sr_game_str(mf.formal_name_faction));
+
     const char* treaty = get_treaty_status(player, other);
 
     // Patience
     char patience_buf[128];
     snprintf(patience_buf, sizeof(patience_buf),
              loc(SR_DIPLO_PATIENCE), get_patience_str(player, other));
+
+    // Social priority
+    char priority[128] = "";
+    if (mf.soc_priority_category >= 0 && mf.soc_priority_category < 4
+        && mf.soc_priority_model >= 0 && mf.soc_priority_model < 4) {
+        snprintf(priority, sizeof(priority), loc(SR_DIPLO_PROFILE_PRIORITY),
+            sr_game_str(SocialField[mf.soc_priority_category].field_name),
+            sr_game_str(SocialField[mf.soc_priority_category].soc_name[mf.soc_priority_model]));
+    }
+
+    // Social opposition
+    char opposition[128] = "";
+    if (mf.soc_opposition_category >= 0 && mf.soc_opposition_category < 4
+        && mf.soc_opposition_model >= 0 && mf.soc_opposition_model < 4) {
+        snprintf(opposition, sizeof(opposition), loc(SR_DIPLO_PROFILE_OPPOSITION),
+            sr_game_str(SocialField[mf.soc_opposition_category].field_name),
+            sr_game_str(SocialField[mf.soc_opposition_category].soc_name[mf.soc_opposition_model]));
+    }
 
     // Extra info (surrendered, infiltrator)
     char extra[256];
@@ -79,13 +107,19 @@ static void build_summary(int player, int other, char* buf, int bufsize) {
             snprintf(extra, sizeof(extra), "%s", loc(SR_DIPLO_INFILTRATOR));
         }
     }
-    if (!extra[0]) {
-        // If no extra info, put an empty string
-        extra[0] = '\0';
-    }
 
     snprintf(buf, bufsize, loc(SR_DIPLO_SUMMARY),
-             treaty, patience_buf, extra);
+             leader, treaty, patience_buf, priority, opposition, extra);
+}
+
+/// Get combined treaty bits between player and other faction.
+static int get_treaty_bits(int player, int other) {
+    if (player < 0 || player >= MaxPlayerNum
+        || other < 0 || other >= MaxPlayerNum) {
+        return 0;
+    }
+    return Factions[player].diplo_status[other]
+         & (DIPLO_PACT | DIPLO_TREATY | DIPLO_TRUCE | DIPLO_VENDETTA);
 }
 
 void OnTimer() {
@@ -96,10 +130,14 @@ void OnTimer() {
         int faction2 = *diplo_second_faction;
         _lastFaction = faction2;
         if (faction2 >= 0 && faction2 < MaxPlayerNum) {
-            char buf[512];
-            snprintf(buf, sizeof(buf), loc(SR_DIPLO_OPEN),
-                     sr_game_str(MFactions[faction2].adj_name_faction));
-            sr_output(buf, true);
+            // Skip announcement if popup hook already prepended diplomacy context
+            if (!sr_popup_is_active()) {
+                char buf[512];
+                snprintf(buf, sizeof(buf), loc(SR_DIPLO_OPEN),
+                         sr_game_str(MFactions[faction2].adj_name_faction));
+                sr_output(buf, true);
+            }
+            _lastTreatyBits = get_treaty_bits(MapWin->cOwner, faction2);
             sr_debug_log("DIPLO-OPEN faction=%d name=%s\n",
                          faction2, MFactions[faction2].adj_name_faction);
         }
@@ -108,6 +146,19 @@ void OnTimer() {
         sr_output(loc(SR_DIPLO_CLOSED), true);
         sr_debug_log("DIPLO-CLOSE\n");
         _lastFaction = -1;
+        _lastTreatyBits = -1;
+    } else if (active && _wasActive && _lastFaction >= 0) {
+        // Diplomacy still active — check for treaty status changes
+        int player = MapWin->cOwner;
+        int bits = get_treaty_bits(player, _lastFaction);
+        if (bits != _lastTreatyBits) {
+            _lastTreatyBits = bits;
+            const char* status = get_treaty_status(player, _lastFaction);
+            char buf[256];
+            snprintf(buf, sizeof(buf), loc(SR_DIPLO_STATUS_CHANGED), status);
+            sr_output(buf, true);
+            sr_debug_log("DIPLO-STATUS changed to: %s (bits=0x%x)\n", status, bits);
+        }
     }
 
     _wasActive = active;
@@ -226,6 +277,19 @@ void RunCommlink() {
                     int fid = entries[index].id;
                     build_summary(player, fid, buf, sizeof(buf));
                     if (buf[0]) sr_output(buf, true);
+                } else if (k == 'K') {
+                    // Call Planetary Council
+                    if (can_call_council(player, 0)) {
+                        want_close = true;
+                        // Drain input, then call council
+                        MSG drain2;
+                        while (PeekMessage(&drain2, NULL, WM_CHAR, WM_CHAR, PM_REMOVE)) {}
+                        while (PeekMessage(&drain2, NULL, WM_KEYUP, WM_KEYUP, PM_REMOVE)) {}
+                        call_council(player);
+                        return;
+                    } else {
+                        sr_output(loc(SR_COUNCIL_CANNOT_CALL), true);
+                    }
                 }
             }
         } else {

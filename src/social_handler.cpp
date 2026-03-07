@@ -33,10 +33,12 @@ static int _allocSlider = 0;  // 0: Economy, 1: Psych, 2: Labs
 static int _savedAllocPsych = 0; // saved for cancel in alloc-only mode
 static int _savedAllocLabs = 0;
 
-// Effect names matching CSocialEffect field order
-static const char* effect_names[] = {
-    "Economy", "Efficiency", "Support", "Talent", "Morale",
-    "Police", "Growth", "Planet", "Probe", "Industry", "Research"
+// Effect name localization keys matching CSocialEffect field order
+static const SrStr effect_str_ids[] = {
+    SR_SOCENG_EFF_ECONOMY, SR_SOCENG_EFF_EFFICIENCY, SR_SOCENG_EFF_SUPPORT,
+    SR_SOCENG_EFF_TALENT, SR_SOCENG_EFF_MORALE, SR_SOCENG_EFF_POLICE,
+    SR_SOCENG_EFF_GROWTH, SR_SOCENG_EFF_PLANET, SR_SOCENG_EFF_PROBE,
+    SR_SOCENG_EFF_INDUSTRY, SR_SOCENG_EFF_RESEARCH
 };
 
 // Slider name lookup
@@ -68,7 +70,7 @@ static void build_effects_string(int cat, int model, char* buf, int bufsize) {
                 pos += snprintf(tmp + pos, sizeof(tmp) - pos, ", ");
             }
             pos += snprintf(tmp + pos, sizeof(tmp) - pos, "%s %+d",
-                effect_names[i], vals[i]);
+                loc(effect_str_ids[i]), vals[i]);
             any = true;
         }
     }
@@ -105,7 +107,7 @@ static void build_total_effects_string(char* buf, int bufsize) {
                 pos += snprintf(tmp + pos, sizeof(tmp) - pos, ", ");
             }
             pos += snprintf(tmp + pos, sizeof(tmp) - pos, "%s %+d",
-                effect_names[i], vals[i]);
+                loc(effect_str_ids[i]), vals[i]);
             any = true;
         }
     }

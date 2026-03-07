@@ -65,6 +65,7 @@ scan_pods=Scanner: Pods and Monoliths
 scan_improvements=Scanner: Improvements
 scan_nature=Scanner: Terrain and Nature
 scan_not_found=Scanner: Nothing found
+scan_no_more=Scanner: No more found
 
 base_at=. Base: %s
 unit_at=. Unit: %s
@@ -215,6 +216,12 @@ file_folder=Folder
 file_item_fmt=%d of %d: %s, %s
 file_parent_dir=Parent directory
 file_overwrite_hint=Enter to confirm, Escape to cancel.
+file_nav_hint=Up/Down: navigate, Enter: select, Backspace: parent, Escape: cancel.
+file_empty_dir=Empty directory.
+file_at_root=Already at top level.
+file_load_cancelled=Load cancelled.
+file_save_cancelled=Save cancelled.
+file_help=Up/Down: navigate files. Enter: open folder or select file. Backspace: parent directory. Home/End: first/last. Escape: cancel. Ctrl+F1: this help.
 
 # Popup List Navigation
 popup_list_fmt=%d of %d: %s
@@ -421,10 +428,10 @@ status_bases=%d bases, %d population.
 status_help=Ctrl+F3: Faction status.
 
 # Diplomacy
-diplo_open=Diplomacy with %s
+diplo_open=Diplomacy with %s. S or Tab: Summary with profile. Ctrl+F1: Help.
 diplo_closed=Diplomacy ended.
-diplo_help=S or Tab: Relationship summary. Ctrl+F1: Help. Popup options navigate with arrows.
-diplo_summary=%s. %s. %s
+diplo_help=S or Tab: Summary with leader profile, treaty, patience. Popup options navigate with arrows. Ctrl+F1: This help.
+diplo_summary=%s. %s. %s. %s. %s. %s
 diplo_status_pact=Pact
 diplo_status_treaty=Treaty of Friendship
 diplo_status_truce=Truce
@@ -437,10 +444,16 @@ diplo_patience_ok=patient
 diplo_surrendered=Has surrendered
 diplo_infiltrator=We have infiltrator
 diplo_netmsg=%s
-diplo_commlink_open=Commlink: %d factions. Up/Down to browse, Enter to contact, Escape to cancel.
+diplo_commlink_open=Commlink: %d factions. Up/Down to browse, Enter to contact, K for Council, Escape to cancel.
 diplo_commlink_item=%d of %d: %s, %s, %d votes
 diplo_commlink_empty=No factions with commlink.
 diplo_commlink_contact=Contacting %s
+diplo_profile=Profile: %s %s, %s. %s. %s. %s
+diplo_profile_priority=Priority: %s %s
+diplo_profile_opposition=Opposition: %s %s
+diplo_profile_male=Male
+diplo_profile_female=Female
+diplo_status_changed=Diplomatic status: %s
 
 # Input Dialogs
 input_number=Number input. Default: %d. Type digits, Enter to confirm, Escape for default.
@@ -497,6 +510,8 @@ design_obsolete_status= (obsolete)
 terraform_order=Building %s, %d turns
 terraform_status=Building %s, %d of %d turns
 terraform_complete=%s completed
+terraform_order_remove=Removing %s, %d turns
+terraform_status_remove=Removing %s, %d of %d turns
 
 # Nerve Staple (Ctrl+N)
 nerve_staple_confirm=Press Ctrl+N again to nerve staple %s.
@@ -543,6 +558,19 @@ soceng_alloc_psych=Psych
 soceng_alloc_labs=Labs
 soceng_alloc_mode_open=Energy allocation. %s Up/Down: select slider, Left/Right: adjust. Enter: confirm, Escape: cancel.
 soceng_alloc_mode_closed=Energy allocation closed.
+
+# Social Engineering effect names
+soceng_eff_economy=Economy
+soceng_eff_efficiency=Efficiency
+soceng_eff_support=Support
+soceng_eff_talent=Talent
+soceng_eff_morale=Morale
+soceng_eff_police=Police
+soceng_eff_growth=Growth
+soceng_eff_planet=Planet
+soceng_eff_probe=Probe
+soceng_eff_industry=Industry
+soceng_eff_research=Research
 
 # Garrison List (Ctrl+U)
 garrison_open=Garrison: %d units. Up/Down: navigate, D: details, Enter: activate, B: home base, H: hurry, Escape: close.
@@ -781,6 +809,10 @@ council_governor=Governor: %s
 council_no_governor=No Governor.
 council_can_call=You can call the Planetary Council.
 council_cannot_call=Cannot call the Planetary Council.
+council_abstain=Abstain
+council_candidates=Candidates: %s. Up/Down: navigate, Enter: vote.
+council_result=Result: %s
+council_your_faction=you
 
 # Base Operations (F4)
 baseops_open=Base Operations, %d bases. Up/Down: navigate, S: summary, D: detail, Ctrl+F1: help.
@@ -1149,3 +1181,28 @@ detail_no_work=Not in base radius
 history_empty=No speech history
 history_oldest=Oldest entry
 history_fmt=%d of %d: %s
+
+# Name/Gender popup
+name_gender_hint=Tab: Change gender
+
+# Setup rules checkbox popup
+setup_rules_help=Up/Down: Navigate. Space: Toggle rule. Enter: Accept. Escape: Cancel. Ctrl+F1: This help.
+
+# Planetary Council
+council_open=Planetary Council, %s. %s
+council_closed=Council ended.
+council_help=S or Tab: Vote summary. Ctrl+F1: Help. Game handles navigation and voting.
+council_vote_line=%s: %d votes
+council_total=Total: %d votes. Majority: %d.
+council_your_votes=Your votes: %d of %d.
+council_governor=Governor: %s
+council_no_governor=No Governor.
+council_can_call=You can call the Planetary Council.
+council_cannot_call=Cannot call the Planetary Council.
+council_abstain=Abstain
+council_candidates=Candidates: %s. Up/Down: navigate, Enter: vote.
+council_result=Result: %s
+
+# Ctrl+Tab cycle through movable units
+cycle_movable_fmt=%s at (%d,%d), %d of %d moves, unit %d of %d
+cycle_movable_none=No units with movement points.

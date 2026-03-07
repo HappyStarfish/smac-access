@@ -71,8 +71,9 @@ void sr_snapshot_consume();
 void sr_force_snapshot();
 
 // Read popup body text from a game text file (filename.txt, #LABEL)
+// If substitute=false, skip game variable substitution (caller handles it).
 bool sr_read_popup_text(const char* filename, const char* label,
-                        char* buf, int bufsize);
+                        char* buf, int bufsize, bool substitute = true);
 
 // Defer announce: text capture continues but gui.cpp should skip announce triggers.
 // Used by blocking hooks (planetfall) that announce all text after return.
@@ -86,6 +87,7 @@ void sr_defer_set(bool active);
 #define SR_POPUP_LIST_MAX 16
 struct SrPopupList {
     char items[SR_POPUP_LIST_MAX][256];
+    char label[64];   // dialog label (e.g. "NETCONNECT_CREATE")
     int count;
     int index;      // current selection (0-based)
     bool active;
@@ -115,6 +117,10 @@ bool sr_debug_active();
 void sr_debug_toggle();
 void sr_debug_log(const char* fmt, ...);
 
+// Returns path to Logs/ subdirectory in game folder (with trailing backslash).
+// Creates the directory if it doesn't exist. Returns empty string on failure.
+const char* sr_get_log_dir();
+
 // Netsetup coordinate diagnostic mode: when true, hooks log x,y for every text render
 extern bool sr_netsetup_log_coords;
 
@@ -131,6 +137,11 @@ void sr_history_add(const char* text);
 int sr_history_count();
 const char* sr_history_get(int offset); // 0 = newest, 1 = second newest, ...
 void sr_history_set_browsing(bool active);
+
+// Pending setup rules from accessible RULES modal.
+// Set by sr_intercept_rules_popup, applied in init_world_config.
+extern uint32_t sr_pending_setup_rules;
+extern bool sr_pending_setup_rules_set;
 
 // Convert Windows-1252 (ANSI) game text to UTF-8.
 // Used for all text originating from the game engine (Buffer_write hooks,

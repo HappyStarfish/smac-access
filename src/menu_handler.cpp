@@ -4,6 +4,7 @@
 #include "gui.h"
 #include "screen_reader.h"
 #include "localization.h"
+#include "council_handler.h"
 
 #include <cstdarg>
 #include <cstdio>
@@ -212,7 +213,8 @@ void McLog(const char* fmt, ...) {
 
 bool OnArrowKey(WPARAM dir, DWORD now, bool on_world_map, GameWinState cur_win,
                 bool& sr_arrow_active, WPARAM& sr_arrow_dir, DWORD& sr_arrow_time) {
-    if (on_world_map || cur_win == GW_Base || cur_win == GW_Design) {
+    if (on_world_map || cur_win == GW_Base || cur_win == GW_Design
+        || CouncilHandler::IsActive()) {
         return false;
     }
 

@@ -17,7 +17,7 @@ tab_resources=Ressourcen
 tab_citizens=Bevölkerung
 tab_production=Produktion
 terrain_ocean=Ozean
-terrain_shelf=Schelf
+terrain_shelf=Flachwasser
 terrain_rocky=Felsig
 terrain_rolling=Hügelig
 terrain_flat=Flach
@@ -65,6 +65,7 @@ scan_pods=Scanner: Kapseln und Monolithen
 scan_improvements=Scanner: Verbesserungen
 scan_nature=Scanner: Terrain und Natur
 scan_not_found=Scanner: Nichts gefunden
+scan_no_more=Scanner: Keine weiteren gefunden
 
 base_at=. Basis: %s
 unit_at=. Einheit: %s
@@ -215,6 +216,12 @@ file_folder=Ordner
 file_item_fmt=%d von %d: %s, %s
 file_parent_dir=Übergeordneter Ordner
 file_overwrite_hint=Eingabe zum Bestätigen, Escape zum Abbrechen.
+file_nav_hint=Hoch/Runter: navigieren, Eingabe: auswählen, Rücktaste: Ordner hoch, Escape: abbrechen.
+file_empty_dir=Leerer Ordner.
+file_at_root=Bereits auf oberster Ebene.
+file_load_cancelled=Laden abgebrochen.
+file_save_cancelled=Speichern abgebrochen.
+file_help=Hoch/Runter: Dateien navigieren. Eingabe: Ordner öffnen oder Datei wählen. Rücktaste: Ordner hoch. Pos1/Ende: erste/letzte. Escape: abbrechen. Strg+F1: diese Hilfe.
 
 # Popup-Listennavigation
 popup_list_fmt=%d von %d: %s
@@ -421,10 +428,10 @@ status_bases=%d Basen, %d Bevölkerung.
 status_help=Strg+F3: Fraktionsstatus.
 
 # Diplomatie
-diplo_open=Diplomatie mit %s
+diplo_open=Diplomatie mit %s. S oder Tab: Zusammenfassung mit Profil. Strg+F1: Hilfe.
 diplo_closed=Diplomatie beendet.
-diplo_help=S oder Tab: Beziehungszusammenfassung. Strg+F1: Hilfe. Popup-Optionen mit Pfeiltasten navigieren.
-diplo_summary=%s. %s. %s
+diplo_help=S oder Tab: Zusammenfassung mit Anführerprofil, Vertragsstatus, Geduld. Popup-Optionen mit Pfeiltasten navigieren. Strg+F1: Diese Hilfe.
+diplo_summary=%s. %s. %s. %s. %s. %s
 diplo_status_pact=Pakt
 diplo_status_treaty=Freundschaftsvertrag
 diplo_status_truce=Waffenstillstand
@@ -437,10 +444,16 @@ diplo_patience_ok=geduldig
 diplo_surrendered=Hat kapituliert
 diplo_infiltrator=Wir haben Infiltrator
 diplo_netmsg=%s
-diplo_commlink_open=Kommlink: %d Fraktionen. Hoch/Runter zum Blättern, Eingabe zum Kontaktieren, Escape zum Abbrechen.
+diplo_commlink_open=Kommlink: %d Fraktionen. Hoch/Runter: blättern, Eingabe: kontaktieren, K: Konzil, Escape: abbrechen.
 diplo_commlink_item=%d von %d: %s, %s, %d Stimmen
 diplo_commlink_empty=Keine Fraktionen mit Kommlink.
 diplo_commlink_contact=Kontaktiere %s
+diplo_profile=Profil: %s %s, %s. %s. %s. %s
+diplo_profile_priority=Priorität: %s %s
+diplo_profile_opposition=Opposition: %s %s
+diplo_profile_male=Männlich
+diplo_profile_female=Weiblich
+diplo_status_changed=Diplomatischer Status: %s
 
 # Eingabedialoge
 input_number=Zahleneingabe. Vorgabe: %d. Ziffern eingeben, Enter bestätigt, Escape für Vorgabe.
@@ -497,6 +510,8 @@ design_obsolete_status= (veraltet)
 terraform_order=%s wird gebaut, %d Runden
 terraform_status=%s wird gebaut, %d von %d Runden
 terraform_complete=%s fertiggestellt
+terraform_order_remove=%s wird entfernt, %d Runden
+terraform_status_remove=%s wird entfernt, %d von %d Runden
 
 # Nervenklammer (Strg+N)
 nerve_staple_confirm=Erneut Strg+N drücken um %s zu klammern.
@@ -543,6 +558,19 @@ soceng_alloc_psych=Psycho
 soceng_alloc_labs=Labor
 soceng_alloc_mode_open=Energieverteilung. %s Hoch/Runter: Regler wählen, Links/Rechts: ändern. Eingabe: bestätigen, Escape: abbrechen.
 soceng_alloc_mode_closed=Energieverteilung geschlossen.
+
+# Gesellschaftsform Effektnamen
+soceng_eff_economy=Wirtschaft
+soceng_eff_efficiency=Effizienz
+soceng_eff_support=Unterstützung
+soceng_eff_talent=Talent
+soceng_eff_morale=Moral
+soceng_eff_police=Polizei
+soceng_eff_growth=Wachstum
+soceng_eff_planet=Planet
+soceng_eff_probe=Sonde
+soceng_eff_industry=Industrie
+soceng_eff_research=Forschung
 
 # Garnison (Strg+U)
 garrison_open=Garnison: %d Einheiten. Hoch/Runter: navigieren, D: Details, Eingabe: aktivieren, B: Heimatbasis, H: Beschleunigen, Escape: schließen.
@@ -781,6 +809,10 @@ council_governor=Gouverneur: %s
 council_no_governor=Kein Gouverneur.
 council_can_call=Du kannst den Planetarischen Rat einberufen.
 council_cannot_call=Planetarischer Rat kann nicht einberufen werden.
+council_abstain=Enthaltung
+council_candidates=Kandidaten: %s. Hoch/Runter: navigieren, Eingabe: wählen.
+council_result=Ergebnis: %s
+council_your_faction=du
 
 # Basisoperationen (F4)
 baseops_open=Basisoperationen, %d Basen. Hoch/Runter: navigieren, S: Zusammenfassung, D: Detail, Strg+F1: Hilfe.
@@ -1149,3 +1181,28 @@ detail_no_work=Nicht im Basisradius
 history_empty=Kein Sprachverlauf
 history_oldest=Ältester Eintrag
 history_fmt=%d von %d: %s
+
+# Namens-/Geschlechtsdialog
+name_gender_hint=Tab: Geschlecht ändern
+
+# Setup-Regeln Checkbox-Popup
+setup_rules_help=Hoch/Runter: Navigieren. Leertaste: Regel umschalten. Enter: Übernehmen. Escape: Abbrechen. Strg+F1: Diese Hilfe.
+
+# Planetarer Rat
+council_open=Planetarer Rat, %s. %s
+council_closed=Rat beendet.
+council_help=S oder Tab: Stimmübersicht. Strg+F1: Hilfe. Spiel steuert Navigation und Abstimmung.
+council_vote_line=%s: %d Stimmen
+council_total=Gesamt: %d Stimmen. Mehrheit: %d.
+council_your_votes=Deine Stimmen: %d von %d.
+council_governor=Gouverneur: %s
+council_no_governor=Kein Gouverneur.
+council_can_call=Du kannst den Planetaren Rat einberufen.
+council_cannot_call=Planetarer Rat kann nicht einberufen werden.
+council_abstain=Enthaltung
+council_candidates=Kandidaten: %s. Hoch/Runter: Navigieren, Enter: Abstimmen.
+council_result=Ergebnis: %s
+
+# Strg+Tab: Einheiten mit Bewegungspunkten durchschalten
+cycle_movable_fmt=%s bei (%d,%d), %d von %d Bewegung, Einheit %d von %d
+cycle_movable_none=Keine Einheiten mit Bewegungspunkten.

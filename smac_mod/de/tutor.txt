@@ -1,0 +1,1600 @@
+;
+;   Sid Meier's ALPHA CENTAURI
+;
+;   Tutorial dialog boxes
+;
+;   Copyright (c) 1997, 1998 by Firaxis Games, Inc.
+;
+
+#LANDFALL
+#xs 300
+#button TOUR
+Ihre Koloniekapsel hat eine Bruchlandung auf Alpha Centauri gemacht. Die
+Vorräte wurden dazu verwendet, Ihre erste Basis zu bauen: $BASENAME0.
+Sie können mit der aktiven Einheit $UNITNAME1 die Umgebung erkunden.
+Im Notfall ist sie auch zu Verteidigungszwecken einsetzbar.
+^
+Falls Sie Alpha Centauri zum ersten Mal spielen und das Interface
+genauer kennenlernen wollen, klicken Sie auf die Taste {TOUR}.
+
+#DIRECTIONS
+Nordost
+Ost (d.h. Rechts)
+Südost
+Süd (d.h. Ab)
+Südwest
+West (d.h. Links)
+Nordwest
+Nord (d.h. Auf)
+
+#TOUR1
+#xs 300
+Die Statusanzeige einer Einheit blinkt auf, wenn sie bewegt werden
+kann. {$UNITNAME0} kann zur Erkundung verwendet werden.
+
+#TOUR1A
+#xs 300
+Die Statusanzeige einer Einheit blinkt auf, wenn sie bewegt werden
+kann. {$UNITNAME0} kann zur Erkundung verwendet werden.
+
+#TOUR1B
+#xs 400
+Wenn Sie an der Reihe sind, leuchten an Ihren Spielfiguren oder
+'Einheiten' die Statusanzeigen auf, so daß Sie wissen, daß Sie diese
+Einheiten bewegen können. Wenn keine Statusanzeigen blinken, leuchtet
+statt dessen ein Cursor auf; in diesem Falle können Sie wieder auf die
+Einheiten umschalten, indem Sie die Taste 'V' drücken (tun Sie das noch
+nicht; warten Sie, bis die Tour abgeschlossen ist).
+
+#TOUR2
+#xs 300
+Sie können Einheiten mittels der Pfeiltasten oder der Maus bewegen.
+Durch Drücken der LEERTASTE befehlen Sie einer Einheit, die momentane
+Position zu halten.
+
+#TOUROCEAN
+#xs 300
+Nur See- und Lufteinheiten können in ein Ozean-Feld eindringen.
+
+#TOUROCEAN2
+#xs 300
+Ihre Einheit $UNITTYPE0 kann den Ozean erforschen und Ihre
+Bodeneinheiten zu anderen Kontinenten transportieren.
+
+#TOURFUNGUS
+#xs 300
+{Xenofungus} ist eine auf Alpha Centauri beheimatete Pflanzenart.
+Momentan sollten Sie diese als gefährliches Hindernis betrachten.
+
+#TOURMAP
+#xs 300
+Die drei Primär-Ressourcen des Planeten sind {NAHRUNG}, {MINERALIEN}
+und {ENERGIE}. Um diese Ressourcen zu produzieren, sollten Sie Felder
+finden, die über {REGEN}, {FELSEN} und große {HÖHE} verfügen.
+
+#TOURRAIN
+#xs 300
+Je mehr "Grün" sich in einem Feld befindet, desto ergiebiger der {REGEN}.
+Regenreiche Felder erzeugen die meiste {NAHRUNG}. {NAHRUNG} verpflegt Ihre
+Kolonisten und ermöglicht das Wachstum Ihrer Siedlung.
+
+#TOURRAINWET
+#xs 300
+Dieses grüne und {REGNERISCHE} Feld ist hervorragend für den Anbau von
+Pflanzen geeignet, die als NAHRUNG dienen.
+
+#TOURRAINMOD
+#xs 300
+Dieses Feld erhält {MÄSSIGEN REGEN}, was durch den geringen Grünanteil
+dargestellt wird, und es ist für den Ackerbau geeignet. Wenn Sie hier
+eine Farm bauen, steigt die Produktion der {NAHRUNG} deutlich an.
+
+#TOURRAINDRY
+#xs 300
+Dieses Terrain ist trocken und {DÜRR} und enthält kein Grün. Ohne
+beträchtliches Terraforming oder Waldanbau kann es keine Nahrung
+erzeugen. Denken Sie daran, wenn Sie Ackerbau betreiben wollen,
+müssen Sie nach {grünen} Feldern suchen.
+
+#TOURRAINDRY2
+#xs 300
+Alle benachbarten Felder sind {DÜRR}, was durch das Fehlen grüner
+Flecken erkennbar wird. Die Nahrungsproduktion in dürren Feldern
+ist niedrig, also sollten Sie bald {FARMEN} oder {WÄLDER} anlegen.
+
+#TOURALT
+#xs 300
+Diese zwei Felder liegen auf verschiedenen {HÖHEN}. Je höher ein
+Feld liegt, desto mehr {ENERGIE} produziert es, wenn Sie einen
+Solarkollektor bauen. Als Faustregel gilt, daß für jede 1000 Meter
+Höhe die erzeugte ENERGIE um eine Einheit steigt.
+
+#TOURTWOFOOD
+#xs 300
+Dies wäre ein guter Standort für eine Farm. FARMEN steigern
+die {NAHRUNG}, die in einem Feld produziert werden können.
+
+#TOURTWOROCK
+#xs 300
+Dieses Feld hat viel {FELS} und ist ausgezeichnet zur Produktion von
+{MINERALIEN} geeignet. Ihre Basen benötigen Mineralien, um neue Einheiten
+und Einrichtungen zu erstellen. In felsigen Feldern kann Ackerbau nicht
+sehr erfolgreich betrieben werden.
+
+#TOURONEROCK
+#xs 300
+Das Terrain dieses Felds ist {HÜGELIG} und hat etwas Fels. Es produziert
+etwas {MINERALIEN}.
+
+#TOURFLAT
+#xs 300
+Dieses Feld ist {FLACH} (keine Felsen), und es wird keine {MINERALIEN}
+produzieren, es sei denn Sie bauen eine {MINE} oder pflanzen einen
+{WALD} an.
+
+#TOURFOREST
+#xs 400
+In jedem Feld können Ihre Former {FARMEN} bauen, welche die Produktion
+von {NAHRUNG} steigern, {MINEN}, welche die Produktion von {MINERALIEN}
+erhöhen, und {SOLARKOLLEKTOREN}, die die Produktion von {ENERGIE}
+verbessern. Sie können auch {WÄLDER} anpflanzen, die eine ausgewogene
+Ressourcenproduktion ermöglichen, sowie {STRASSEN} bauen, um schneller
+vorankommen zu können.
+
+#TOURREVIEW
+#xs 440
+Hier noch einmal die Grundsätze der Ressourcenproduktion:
+^{NAHRUNG} wird am besten in {FEUCHTEN} Gebieten erzeugt (Bauen Sie
+{FARMEN}).
+^{MINERALIEN} werden am besten in {FELSIGEN} Gebieten produziert (Bauen
+Sie {MINEN}).
+^{ENERGIE} wird an besten in {HOHEN} Gebieten erzeugt (Bauen Sie
+{SOLARKOLLEKTOREN}).
+^{WÄLDER} produzieren eine bestimmte Menge aller Ressourcentypen.
+Wenn ein Gebiet sehr felsig ist, wird wenig Nahrung produziert.
+
+#TOURADVANCED
+#xs 440
+Erfahrene Spieler sind vielleicht an folgenden Optionen interessiert:
+^{KONDENSATOREN} erhöhen den Niederschlag in allen angrenzenden Feldern.
+^{BOHRLÖCHER} erzeugen große Mengen an MINERALIEN und ENERGIE.
+^{WASSERBRUNNEN} zapfen unterirdische Flüsse an.
+^{MAGNET-RÖHREN} beschleunigen die Fortbewegung enorm.
+^{BODENANREICHERUNGSANLAGEN} erhöhen die landwirtschaftliche Produktion.
+^{TERRAIN EINEBNEN} reduziert Felsen.
+^{TERRAIN HEBEN/SENKEN} kann Kontinente verändern und das Wetterverhalten
+beeinflussen.
+
+#TOURFORMDONE
+#xs 440
+So, um unsere Tour der Terraforming-Funktionen abzuschließen, schlagen
+wir vor, daß Sie damit beginnen, in den Feldern nahe Ihrer Basis
+Farmen und Wälder anzulegen (bewegen Sie die Former auf diese Felder
+und drücken Sie die Taste 'F' bzw. 'Umschalt+F'). Wir geben Ihnen später
+noch weitere Hinweise.
+^
+Wenn Sie diese Tour wiederholen wollen, wählen Sie im Menü "Hilfe"
+die Option "Terraforming-Tour".
+
+#TOURSCAN
+#xs 300
+Die {Planetenkarte} zeigt eine Darstellung des Planeten in großem
+Maßstab,  die Sie dazu benutzen können, sich zu orientieren.
+
+#TOURMENU
+#xs 300
+Die {Menüauswahl} wird durch Anklicken dieser Taste aufgerufen und
+funktioniert ähnlich wie die Windows-Schaltfläche START.
+^
+Erfahrene Spieler sollten im Menü 'Spiel' auf  'Detailmenüs' umschalten.
+
+#TOURCOMMLINK
+#xs 300
+Die Taste {Kommunikation} ermöglicht es Ihnen, mit anderen Gruppierungen
+in Kontakt zu treten; Sie können den Namen einer Gruppierung anklicken,
+der Sie begegnet sind, um Verhandlungen aufzunehmen. Bei einem
+Multiplayer-Spiel zeigt dieses Fenster auch den Chat-Status und
+die aktuelle Rundenuhr.
+
+#TOURUNITSINFO
+#xs 300
+Das {Einheitenfenster} zeigt Ihnen, welche Einheit Sie momentan bewegen,
+oder welche Einheit Sie ausgewählt haben.
+
+#TOURTERRAININFO
+#xs 300
+Das {Terrainfenster} liefert Details über das Terrain an Ihrer jetzigen
+Position. Je regnerischer (grüner) ein Gebiet ist, desto mehr NAHRUNG
+produziert es. Je felsiger ein Gebiet ist, desto mehr MINERALIEN erzeugt
+es, und je höher ein Gebiet liegt, desto mehr ENERGIE kann produziert
+werden.
+
+#TOURSTACKINFO
+#xs 300
+Das {Stapelfenster} ermöglicht es Ihnen, alle Einheiten im momentan
+gewählten Feld zu sehen. Klicken Sie auf eine beliebige Einheit, um
+sie auszuwählen. Sie sehen die Daten für diese Einheit, z.B. 1-1-1,
+die auf {Waffen}, {Panzerung} und {Bewegung} hinweisen. Bessere
+Einheiten haben höhere Werte.
+
+#TOURMESSAGEINFO
+#xs 300
+Das {Nachrichtenfenster} liefert während des Spiels viele nützliche
+Informationen aller Art. Sie können es anklicken, um verschiedene
+Anzeigen durchzugehen, oder um einen Schirm, den Sie sich genauer
+ansehen wollen, fest einzustellen.
+
+#TOURBUTTONINFO
+#xs 300
+Die {Info-Taste} geht im Nachrichtenfenster
+allgemeine Informationstexte durch.
+
+#TOURBUTTONMESSAGE
+#xs 300
+Die {Nachrichten-Taste} listet im Nachrichtenfenster Ereignisse
+auf, die sich in letzter Zeit auf Ihren Basen abgespielt haben
+(z.B. die Konstruktion neuer Gegenstände, Drohnen-Aufstände, etc.).
+Sie können die aufgeführten Gegenstände anklicken, um zur jeweiligen
+Basis zu springen.
+
+#TOURWORLDINFO
+#xs 300
+Das {Weltfenster} zeigt eine Übersichtskarte des gesamten Planeten.
+Sie können auf jede beliebige Stelle auf der Karte klicken, um die
+Sicht auf diesen Punkt zu vergrößern.
+
+#TOURDATEINFO
+#xs 300
+Hier erscheinen das derzeitige Datum und Ihre Energiereserven.
+
+#TOURBUTTONTURN
+#xs 300
+Sie können die {Runden-Taste} anklicken, um die nächste Runde zu
+beginnen. Normalerweise beendet das Spiel eine Runde automatisch,
+sobald Sie alle Ihre Einheiten bewegt haben. Diese Taste hat in
+Multiplayer-Spielen mehr Bedeutung.
+
+#TOURINFO
+#xs 300
+Die {Datenanzeige} enthält wichtige Informationen über Ihre momentane
+Situation. Sie können die Datenanzeige anklicken, um die Informationen
+manuell durchzugehen.
+
+#TOURSTAT
+#xs 300
+Die {Missionsstatusanzeige} listet den Inhalt des aktiven Felds
+der Hauptkarte auf; hier finden Sie Details über Einheiten, Basen
+und Terrain in bezug auf das jeweilige Feld.
+
+#TOUROVER
+#xs 440
+Also, Ihre erste Aufgabe besteht darin, mit Ihrem
+Scout-Fahrzeug die Umgebung der Basis zu erkunden.
+^
+Falls Sie diese Tour wiederholen wollen, wählen Sie
+im Menü "Hilfe" die Option "Interface-Tour".
+
+#BASECONTROL
+#xs 400
+#button TOUR
+Der {Basis-Kontrollschirm} ermöglicht es Ihnen, die Produktion
+und das wirtschaftliche Wachstum Ihrer Basis $BASENAME0 zu
+kontrollieren. Klicken Sie auf die Taste {TOUR}, um mehr
+darüber zu erfahren.
+
+#TOUR1GOVERNOR
+#xs 400
+Wir beginnen die Tour der Basis mit einer Einführung in den
+{Gouverneur}. Der elektronische Gouverneur ist ein nützlicher
+virtueller Assistent, der Ihnen dabei hilft, die Aktivitäten
+der Basis zu regeln. Ganz gleich, ob Sie ein Anfänger oder ein
+Experte sind, Sie werden bald merken, daß der Gouverneur Ihnen
+dabei hilft, Ihre Basen in Schwung zu halten. Um den Gouverneur
+zu benutzen, sagen Sie ihm einfach, was diese Basis tun sollen:
+{Entdecken, Forschen, Bauen} oder {Kämpfen}.
+
+#TOUR1EXPLORE
+#xs 400
+Die Taste {ENTDECKEN} weist den Gouverneur an, sich darauf zu
+konzentrieren, neue Territorien zu erkunden und zu besetzen.
+Basen, die auf Entdecken ausgerichtet sind, konzentrieren
+sich meist auf den Bau von {Scouts}, {Koloniekapseln},
+{Transportern} und manchmal {Marine-Einheiten} für Entdeckungsreisen
+auf den Ozeanen. Diese Taste ist vor allem zu Beginn des
+Spiels sehr nützlich, wenn Sie schnell expandieren müssen.
+
+#TOUR1DISCOVER
+#xs 400
+Die Taste {FORSCHEN} legt den Schwerpunkt auf wissenschaftliche
+Arbeit und technologische Innovationen. Der Gouverneur wird
+sich darauf konzentrieren, {Wissenschaftliche Strukturen},
+wie Netzwerkknoten, {Geheimprojekte}, {Sondierteams} und
+{Prototyp-Einheiten} zu produzieren. Diese Taste ist vor
+allem dann effektiv, wenn Sie über große, gut geschützte
+Basen im Inneren Ihres Gebiets verfügen.
+
+#TOUR1BUILD
+#xs 400
+Die Taste {BAUEN} fördert Infrastruktur und Wachstum. Der
+Gouverneur baut meistens {Einrichtungen} und {Former}.
+Verwenden Sie diese Taste, wenn Sie das friedliche Wachstum
+Ihrer Basis steigern wollen.
+
+#TOUR1CONQUER
+#xs 440
+Verwenden Sie die Taste {KÄMPFEN}, um Ihre Streitkräfte
+zu stärken. In diesem Modus produziert die Basis {Militäreinheiten}
+jeglicher Art, sowie Unterstützungseinrichtungen wie
+{Kommandozentralen}. Verwenden Sie diese Taste, wenn Sie
+sich auf Angriff oder Verteidigung vorbereiten wollen.
+
+#TOUR1GOVERNOR2
+#xs 440
+Jetzt verfügen Sie über ausreichende Informationen, um
+zu beginnen. Wenn Sie wünschen, können Sie auf die Taste
+{Tour beenden} klicken, und mit dem Spiel beginnen.
+Sie können aber auch weiterlesen, um zu erfahren, wie Sie
+eine Basis selbst kontrollieren können.
+^
+Wir beginnen mit der Taste {GOUVERNEUR} selbst, die dazu
+verwendet wird, den Gouverneur ein- und auszuschalten.
+Denken Sie daran, daß das Anklicken der Tasten Entdecken,
+Forschen, Bauen und Kämpfen den Gouverneur automatisch
+aktiviert.
+
+#TOUR1ADVANCED
+Die Taste {GOUVERNEUR-OPTIONEN} ruft ein Dialogfeld auf,
+in dem Sie die Gouverneur-Optionen einstellen können. Sie
+können beispielsweise dem Gouverneur befehlen, {nur}
+Einrichtungen zu bauen.
+
+#TOUR1CAPTION
+#xs 300
+Das {Informationsfeld} zeigt den Namen der Basis und ihre
+Bevölkerung. Um es Ihnen einfacher zu machen, erscheinen hier
+zudem Ihre derzeitigen {Energiereserven}. Falls Ihre Basis so
+groß geworden ist, daß sie eine Gefahr für die örtliche Umwelt
+darstellt, zeigt die Anzeige {Ökologischer Schaden} eine Prozentzahl
+an, die die Wahrscheinlichkeit einer Intervention durch den
+Planeten darstellt.
+
+#TOUR1ECO
+#xs 300
+Der Übersicht halber werden das Datum und Ihre gegenwärtigen
+{Energiereserven} hier angezeigt. Wenn Ihre Basis so groß geworden ist,
+daß sie eine Bedrohung für die unmittelbare Umwelt darstellt, wird
+auf der Anzeige {Umweltschäden} ein prozentualer Wert für die
+Wahrscheinlichkeit eines Eingriffs durch den Planeten abgebildet.
+
+#TOUR1POP
+#xs 300
+Die {Bevölkerungsanzeige} zeigt Ihnen die Anzahl der Bürger von
+$BASENAME0 - jede "Person" steht für etwa 1000 Kolonisten. Die
+meisten Ihrer Bürger sind wahrscheinlich {Arbeiter} und werden
+grau dargestellt; sie können Standard-Ressourcen produzieren.
+Später können Sie einigen Bürgern einen höheren Status zuweisen,
+und diese werden dann zu {Spezialisten} (Ärzte, Techniker,
+Bibliothekare etc.).
+
+#TOUR1POP2
+#xs 300
+Wenn in Ihrer Kolonie gute soziale Bedingungen herrschen,
+entwickeln einige Ihrer Arbeiter {Talente} und werden Grün
+dargestellt. Bei schlechten gesellschaftlichen Bedingungen
+und Überbevölkerung werden sie als rote {Drohnen} dargestellt.
+Wenn Ihre Basis mehr Drohnen als Talente hat, kommt es zu
+einem {Drohnen-Aufstand}. Um dieses Problem zu beheben,
+sollten Sie psychologisch wirksame Einrichtungen bauen,
+etwa ein {Freizeitzentrum}, einige Bürger zu {Ärzten} ausbilden,
+oder Ihre Energiezuteilung für den Bereich {Psycho} erhöhen.
+
+#TOUR1STAPLE
+#xs 300
+Die Taste {Nervschneider} aktiviert eine drakonische Maßnahme zur
+Kontrolle von Drohnen-Aufständen. Wenn Sie den Nervschneider gegen
+Ihre Bürger einsetzen, werden diese mindesten {zehn Runden} lang
+nicht mehr rebellieren. Tun Sie dies aber nur im äußersten Notfall,
+da Nervenschneiden als eine {Greueltat} betrachtet wird.
+
+#TOUR1PRODUCTION
+#xs 300
+Das {Produktionsfeld} zeigt, was Ihre Basis momentan
+herstellt. Basen können neue Einheiten produzieren, oder
+Einrichtungen bauen, die die Basis selbst verbessern.
+Ihre Basis verwendet {Mineralien}, um Produkte herzustellen.
+Wenn alle Mineralien-Symbole im Feld aufleuchten, ist Ihre
+neue Einheit oder Einrichtung fertig.
+
+#TOUR1QUEUE
+#xs 300
+Die {Baufolge} zeigt, was die Basis als nächstes produzieren
+wird, nachdem sie ihre laufende Produktion fertiggestellt hat.
+
+#TOUR1CHANGE
+#xs 300
+Klicken Sie auf die Taste {Ändern}, um der Basis neue
+Produktionsbefehle zu erteilen.
+
+#TOUR1HURRY
+#xs 300
+Verwenden Sie die Taste {Beschleunigen}, wenn Sie etwas schnell fertigstellen
+müssen. Sie können Ihre {Energiereserve} einsetzen, um die Produktion
+zu beschleunigen, aber das kann sehr teuer werden.
+
+#TOUR1GARRISON
+#xs 400
+Das {Garnisonsfeld} zeigt, welche Einheiten momentan in dieser Basis
+sind. Versuchen Sie, mindestens eine Militäreinheit in jeder Basis zu
+stationieren, um die Basis vor einem Überraschungsangriff zu schützen.
+Sie können auf jede Einheit linksklicken, um sie zu aktivieren, oder
+können sie mit der rechten Maustaste anklicken, um weitere Optionen
+zu sehen.
+
+#TOUR1SUPPORTED
+#xs 400
+Das Feld {Unterstützte Einheiten} zeigt die Einheiten, die diese
+Basis produziert hat (und die sie deshalb {unterstützen} muß).
+Diese Einheiten sind aber nicht unbedingt momentan auf dieser
+Basis - Sie können die Taste {UNTERSTÜTZUNG} dazu verwenden,
+herauszufinden, wo sie sind.
+
+#TOUR1FACILITIES
+#xs 400
+Das Feld {Einrichtungen} zeigt alle {Einrichtungen}, die Sie
+auf dieser Basis gebaut haben. Diese Einrichtungen verbessern
+das Potential Ihrer Basis (ein Netzwerkknoten steigert
+beispielsweise die Produktion Ihrer Labors), aber die meisten
+Einrichtungen benötigen in jeder Runde eine kleine Menge an
+Energie für die {Wartung}. Wenn Sie eine Ihrer Einrichtungen
+nicht länger benötigen, können Sie diese anklicken um sie zum
+{Recycling} auszurangieren.
+
+#TOUR1COMMERCE
+#xs 400
+Das Feld {Handel} zeigt Ihre Handelsbeziehungen mit anderen
+Gruppierungen. Wenn Sie mit einer anderen
+Gruppierung einen {Vertrag} oder {Pakt} abschließen, wird Ihre
+Basis automatisch Handel mit Ihren neuen Freunden treiben, wodurch
+Ihre Basis {mehr Energie} erhält. Handelsaktivitäten werden durch
+eine Reihe von Faktoren beeinflußt: (1) der Größe der Basen, die
+Handel treiben, (2) der Anzahl der Wirtschaftstechnologien,
+die Sie entdeckt haben, und (3) der Tatsache, ob Sie einen
+Vertrag oder einen Pakt abgeschlossen haben (bei einem Pakt
+verdoppelt sich der Handel).
+
+#TOUR1NUTRIENTS
+#xs 400
+Das Feld {Nahrung} zeigt das {Wachstumspotential} Ihrer
+Basis. Wenn Ihre Basis {Nahrung} erzeugt, wird sie hier
+gesammelt; wenn alle Nahrungsfelder aufleuchten, wird
+die Bevölkerung Ihrer Basis ansteigen.
+
+#TOUR1AREA
+#xs 400
+Die {Basiskarte} zeigt das Gebiet um Ihre Basis herum. Jedes
+Feld in diesem Bereich kann von Ihren Bürgern durch Landwirtschaft
+oder Bergbau genutzt werden oder anderweitig verbessert werden,
+um {Nahrung}, {Mineralien} und {Energie} zu produzieren, welche
+die wirtschaftlichen Grundeinheiten des Spiels darstellen. Benutzte
+Felder zeigen Symbole, welche die Menge der jeweilig erzeugten
+Ressourcen angeben.
+^
+Sie können ein Feld auf dieser Karte für jeden {Arbeiter} benutzen,
+den Sie haben. Sie können auch das Basisfeld selbst benutzen. Man
+kann Arbeiter von einem Feld zum anderen verschieben, oder sie zur
+{Bevölkerungsanzeige} ziehen, um sie zu {Spezialisten} zu machen.
+^
+Sie können keine unerforschten Felder benutzen, ebensowenig Felder, 
+die von anderen benachbarten Basen benutzt werden, oder von feindlichen
+Einheiten besetzte Felder.
+
+#TOUR1NUT
+#xs 400
+Die {Nahrungsanzeige} stellt Ihre derzeitige Nahrungsproduktion dar.
+Die Nahrung verpflegt Ihre Bürger und ermöglicht das Wachstum Ihrer
+Kolonie. Jeder Bürger benötigt zum Leben $NUM0 Einheiten Nahrung pro
+Runde; dieser {Verbrauch} wird an der linken Seite der Anzeige
+dargestellt. Der Überschuß, falls vorhanden, wird in jeder Runde für
+den zukünftigen Verbrauch und für das {Bevölkerungswachstum} gespeichert.
+In Rot erscheinende Elemente stellen einen {Mangel} dar und können zu
+einer {Hungersnot} führen.
+^
+Wenn Sie die Nahrungsproduktion steigern müssen, sollten Sie Bürger
+auf Kartenfeldern positionieren, die mehr Nahrung erzeugen. Schicken
+Sie Ihre {Former}-Einheiten (auf der Hauptkarte), um auf diesen
+Feldern {Farmen} zu bauen.
+
+#TOUR1MIN
+#xs 400
+Die {Mineralanzeige} stellt Ihre derzeitige Produktion von
+Mineralien dar. Je nach der Anzahl der militärischen Einheiten,
+die Sie gebildet haben (sowie Ihre Einstellungen für
+Sozialtechnologie) werden Sie in jeder Runde einige Mineralien
+zur {Unterstützung} existierender Einheiten aufwenden müssen.
+Ein eventueller {Überschuß} an Mineralien wird auf der rechten
+Seite der Anzeige dargestellt und wird auf Ihre derzeitige
+{Produktion} angerechnet. In Rot erscheinende Elemente stellen
+einen {Mangel} dar, was zum Wegfall der nicht unterstützten
+Militäreinheiten führen kann.
+^
+Falls Ihre Basis mehr Mineralien benötigt, schicken
+Sie Ihre {Former}-Einheiten, um mehr {Minen} anzulegen.
+
+#TOUR1ENERGY
+#xs 400
+Die {Energieanzeige} repräsentiert die momentane Energieproduktion
+der Basis $BASENAME0. Rote Flächen stehen für aufgrund von
+{Ineffizienz} verlorene Energie. Die Ineffizienz steigt, wenn
+Ihre sozialtechnischen Entscheidungen für die Bedürfnisse
+einer großen Kolonie und ihrer Bevölkerung nicht mehr adäquat
+sind. Falls Sie durch Ineffizienz viel Energie verlieren,
+sollten Sie erwägen, eine {Kinderkrippe} zu bauen, um die
+Effizienz zu steigern, oder ein wirtschaftlich effizienteres
+Gesellschaftsmodell zu wählen (z.B. demokratisch oder grün).
+^
+Falls Ihre Basis mehr Energie benötigt, schicken Sie Ihre
+{Former}-Einheiten, um mehr {Solarkollektoren} zu bauen.
+
+#TOUR1ALLOC
+#xs 400
+Das {Energieverteilungs-Diagramm} zeigt, wie Ihre erzeugte
+Energie auf die drei Prioritätsbereiche verteilt wird:
+{Wirtschaft}, {Labors} und {Psycho}.
+^
+Sie können die Energieverteilung jederzeit ändern, indem Sie
+im Menü "Hauptquartier" die Option {Sozialtechnik} wählen.
+
+#TOUR1ALLOC2
+#xs 400
+Die {Energieverteilungs-Taste} ermöglicht es Ihnen, die Verteilung
+der Energieerzeugung auf die drei Prioritätsbereiche zu sehen:
+{Wirtschaft}, {Labors} und {Psycho}.
+^
+Sie können die Energieverteilung jederzeit ändern, indem Sie
+im Menü "Hauptquartier" die Option {Sozialtechnik} wählen.
+
+#TOUR1ECON
+#xs 400
+Energie, die dem Bereich {Wirtschaft} zugeteilt wird, steigert
+Ihre {Energiereserven}, die später dafür eingesetzt werden können,
+um die Produktion zu beschleunigen, Nachbarn zu bestechen und
+Basis-Einrichtungen instandzuhalten.
+
+#TOUR1PSYCH
+#xs 400
+Energie, die dem Bereich {Psycho} zugeteilt wird, verbessert
+die Lebensqualität Ihrer Bürger. Für je zwei hierfür aufgewandte
+Energieeinheiten entwickelt sich ein Arbeiter zu einem {Talent}.
+Ausgaben in diesem Bereich verhindern {Drohnen-Aufstände}.
+
+#TOUR1LABS
+#xs 400
+Energie, die dem Bereich {Labors} zugeteilt wird, unterstützt
+wissenschaftliche Forschungsarbeit. Je mehr Sie hier
+aufwenden, desto schneller entdecken Sie neue Technologien.
+
+#TOUR1SUPPORTBUTTON
+#xs 300
+Die Taste {Unterstützung} schaltet zwischen der Basiskarte und
+einer Übersicht darüber hin und her, wo sich die von der Basis
+erzeugten (und daher von ihr unterstützten) Einheiten befinden.
+Das große farbige Symbol stellt Ihre Basis dar; kleinere
+Symbole repräsentieren die Einheiten der Basis.
+
+#TOUR1PSYCHBUTTON
+#xs 300
+Die Taste {Psycho} schaltet zwischen der Basiskarte und einem
+Psychoprofil hin und her. Die hier angezeigten Informationen
+können Ihnen dabei helfen, schlechte Lebensbedingungen zu
+verbessern und {Drohnen-Aufstände} zu verhindern.
+
+#TOUR1RESOURCEBUTTON
+#xs 300
+Die Taste {Ressourcen} bringt Sie zu Standard-Ressourcensicht
+der Basiskarte zurück. Diese Perspektive dürfte für die Verwaltung
+der Basis generell am nützlichsten sein.
+
+#TOUR1PREV
+#xs 300
+Wenn Sie mehr als eine Basis haben, bringt Sie die Taste {Vorige Basis}
+sofort zur Basis, die sich in der alphabetischen Reihenfolge vor der
+jetzigen befindet.
+
+#TOUR1NEXT
+#xs 300
+In diesem Sinne bringt Sie die Taste {Nächste Basis} sofort zu der Basis,
+die sich in der alphabetischen Reihenfolge nach der jetzigen befindet. 
+
+#TOUR1RENAME
+#xs 300
+Die Taste {Name} ermöglicht es Ihnen, Ihrer Basis einen
+anderen Namen zu geben. Wenn Sie eine eben einem Mitspieler
+weggenommene Basis umbenennen, kann ihn das ganz schön in Rage
+versetzen.
+
+#TOUR1OK
+#xs 300
+Die Taste {OK} erlaubt Ihnen schließlich, den Basiskontrollschirm
+zu schließen. Sie können dieses Fenster auch schließen, indem Sie
+die EINGABETASTE drücken.
+^
+Diese Tour enthält viele Details, die Sie später vielleicht 
+noch einmal durcharbeiten wollen. Sie können diese Tour 
+jederzeit erneut aufrufen, indem Sie aus dem Menü "Hilfe" 
+die Option {Basisleitung-Tour} wählen.
+
+#DESWIN
+#xs 400
+#button TOUR
+Im Schirm {Design-Workshop} können Sie neue Einheiten erstellen,
+mit denen Sie den Planeten erforschen und erobern können. Sie
+weisen jedem Einheittyp eine bestimmte Waffe, Panzerung, ein
+Fahrzeug, einen Reaktor und vielleicht ein oder zwei
+Spezialfähigkeiten zu. Anschließend können Sie damit beginnen,
+diese Einheiten auf einer Ihrer Basen zu bauen.
+^
+Wenn Sie ausführlichere Informationen über diesen Schirm möchten,
+klicken Sie bitte auf die Taste {TOUR}.
+
+#DESTOURCHAS
+#xs 400
+Das {Fahrzeug} bestimmt, wie oft sich eine Einheit pro Runde
+{fortbewegen} kann. Sie können zwischen einem {Land-}, {See-}
+oder {Luft-}Fahrzeug wählen. Bestimmte Fahrzeuge erhalten
+Sonderboni im Kampf. Der Fahrzeugtyp "Infanterie" eignet sich
+z.B. besonders gut für den Angriff auf feindliche Basen.
+
+#DESTOURWEAP
+#xs 400
+Die Zuordnung einer {Waffe} erlaubt Ihrer Einheit feindliche
+Einheiten anzugreifen. Je höher der Angriffswert, desto 
+größer sind Ihre Erfolgschancen (aber um so teurer ist auch
+der Bau Ihrer Einheit). Zusätzlich können Sie {Ausrüstungen}
+auswählen, um Einheiten zu erstellen, die nicht zum Kampf
+eingesetzt werden.
+
+#DESTOURARM
+#xs 400
+{Panzerung} schützt Ihre Einheit von Angriffen. Je dicker desto
+besser.
+
+#DESTOURREACTOR
+#xs 400
+Der {Reaktor} ist die Antriebskraft Ihrer Einheit. Sie sollten
+in der Regel den größten Reaktor wählen, der Ihnen entsprechend
+Ihrer Technologiestufe zur Verfügung steht; dadurch wird es nicht
+nur schwieriger Ihre Einheiten zu zerstören, oftmals sind
+dann auch die Kosten niedriger.
+
+#DESTOURABILITY
+#xs 400
+Wenn es Ihre Technologie erlaubt, sollten Sie Ihren 
+Einheiten {Spezialfähigkeiten}, wie z.B. Abwurfmodule,
+oder Antigrav-Stützen, vergeben, um Einheiten für
+Sondermissionen zu erstellen.
+
+#DESTOURCOST
+#xs 400
+Die {Kosten} beziffern die Anzahl von Mineralien, die zum Bau
+Ihrer neuen Einheit erforderlich sind. Ausgenommen Sie spielen
+als Spartaner, fallen beim Bau eines neuen Einheittyps 
+{Prototypkosten} an; diese Kosten stellen die Schwierigkeiten
+bei der Entwicklung von neuen Designs dar.
+
+#DESTOURSTATS
+#xs 400
+Die {"Statistik"} Ihrer Einheit wird hier abgebildet. Die erste Zahl
+stellt die Waffenstärke, oder Angriffskapazität dar. Die Zahl in der
+Mitte zeigt die Dicke Ihrer Panzerung an (Verteidigungskapazität).
+Die letzte Zahl zeigt schließlich, wie oft sich die Einheit fortbewegen
+kann. Wenn Sie einen Reaktor mit einem Wert größer als 1 gewählt
+haben, wird dies am Ende hinter einem Asterisk (*) angedeutet.
+
+#DESTOURBAR
+#xs 400
+Die Grundversion von Einheittypen, und Einheittypen, die Sie
+selbst erstellt haben, werden hier angezeigt. Sie können auf
+jeden beliebigen Einheittyp klicken, um diesen anzusehen
+oder zu bearbeiten. 
+
+#DESTOURARROWS
+#xs 400
+Mit diesen Pfeiltasten können Sie die Einheittypen durchgehen.
+
+#DESTOURPRESETS
+#xs 400
+Die {Vorgabetasten} ermöglichen Ihnen, bestimmte Einheiten
+in kurzer Zeit zu erstellen. Klicken Sie auf eine beliebige Taste,
+um sich einen Designvorschlag dieses Typs vom Workshop
+anzeigen zu lassen.
+
+#DESTOURDONE
+#xs 400
+Wenn Sie eine neue Einheit entworfen, bzw. ein älteres Design
+abgeändert haben, müssen Sie auf die Taste {Fertig} klicken, um
+Ihre Änderungen zu bestätigen und den Design-Workshop zu beenden.
+
+#DESTOURAPPLY
+#xs 400
+Die Taste {Anwenden} dient dazu Ihre Änderungen zu bestätigen, ohne
+den Design-Workshop zu verlassen; Sie können dann an anderen
+Einheittypen weiterarbeiten.
+
+#DESTOURRENAME
+#xs 400
+Mit der Taste {Name} können Sie Ihre Einheittypen benennen.
+
+#DESTOUROBS
+#xs 400
+Mit der Taste {Veraltet} markieren Sie Einheittypen, die inzwischen überholt
+sind und nicht mehr benötigt werden. Veraltete Einheittypen werden dann
+nicht mehr in der Produktionsauswahl angezeigt und füllen die
+Produktionsauswahl-Schirme nicht unnötig aus; die noch existierenden
+Einheiten dieses zwar veralteten Typs, sind jedoch weiterhin einsatzfähig,
+bis Sie sie aufrüsten, oder die Einheiten zerstört oder aufgelöst werden.
+Sie können diese Taste auch dazu benutzen, einen zuvor veralteten Typ
+wieder einsatzfähig zu machen.
+
+#DESTOURUPGRADE
+#xs 400
+Die Taste {Upgrade} rüstet alle Ihre Einheiten des gegenwärtig
+gewählten Typs auf. Der Design-Workshop überprüft, ob es einen
+besseren Typ gibt und wird Ihnen in diesem Fall ein Upgrade
+anbieten. Sie müssen jedoch erst einen Prototypen eines neuen
+Einheittypen erstellen, bevor Sie diesen Typ aufrüsten können.
+
+#DESTOURRETIRE
+#xs 400
+Die Taste {Auflösen} zieht einen Einheittyp komplett aus dem
+Verkehr. Alle verbleibenden Einheiten dieses Typs werden aufgelöst
+und das Design wird von Ihrer Einheitsliste gestrichen
+(d.h. der "Slot" für das Desgin wird freigemacht).
+
+#DESTOURCANCEL
+#xs 400
+Mit der Taste {Abbrechen} können Sie den Design-Workshop verlassen,
+ohne Änderungen durchzuführen. Wenn Sie sich diese Tour noch einmal
+ansehen möchten, können Sie das gerne tun, indem Sie die Option
+"Design-Workshop-Tour" aus dem Menü "Hilfe" aufrufen.
+
+#SOCWIN
+#xs 400
+#button TOUR
+Auf dem Bildschirm {Sozialtechnik} wählen Sie Ihre Vision
+eines zukünftigen utopischen Gemeinwesens. Die hier getroffenen
+Entscheidungen haben weitreichende Auswirkungen auf den
+Spielverlauf. Sie können bestimmen, daß Ihre Gesellschaft
+über große Stärken in einem bestimmten Bereich verfügt. Aber
+Vorsicht! Dies kann Schwächen in anderen Bereichen nach
+sich ziehen.
+^
+Wenn Sie eine ausführlichere Tour über diesen Bildschirm
+sehen wollen, klicken Sie auf die Taste {TOUR}.
+
+#SOCTOURMAIN
+#xs 400
+Im Feld {Sozialtechnik} treffen Sie Entscheidungen, welche
+die Form Ihrer Gesellschaft bestimmen. Ihre Wahlmöglichkeiten
+lassen sich in vier Kategorien teilen: {Politik}, {Ökonomie},
+{Werte} und {Gesellschaftsprinzipien}. Zu Spielbeginn haben Sie
+nur wenige Wahlmöglichkeiten; aber in dem Maße, wie Ihre
+Forscher gesellschaftsrelevante Technologien entdecken, haben
+Sie mehr Optionen. Sie können jede Taste in diesem Feld anklicken,
+um die entsprechende gesellschaftliche Wahl für Ihre Kolonie
+zu treffen.
+
+#SOCTOURFACTION
+#xs 300
+Hier sehen Sie den {Gruppen-Bonus} und {Malus}. Diese Werte
+repräsentieren die inhärenten Stärken und Schwächen Ihrer
+Gruppierung und werden während des ganzen Spielverlaufs gleich bleiben.
+
+#SOCTOUROVERVIEW
+#xs 300
+Das Feld {Soziale Auswirkungen} zeigt die Auswirkungen
+der von Ihnen getroffenen Entscheidungen.
+
+#SOCTOUREFFECTS
+#xs 300
+Das Feld {Gesellschaft} addiert den sozialen Gesamteffekt in
+jeder generellen Kategorie. Sie können jede der Tasten hier
+anklicken, um zu sehen, welche gesellschaftlichen Entscheidungen
+jeweils den höchsten Wert erreichen.
+
+#SOCTOUR0
+#xs 300
+{WIRTSCHAFT} zeigt die direkte Stärke der Wirtschaft Ihrer Gesellschaft.
+Wenn Sie diesen Wert erhöhen, steigt der Energiefluß an.
+
+#SOCTOUR1
+#xs 300
+{EFFIZIENZ} repräsentiert die Fähigkeit Ihrer Gesellschaft, ohne
+Verschwendung und Mißwirtschaft zu funktionieren. Falls dieser
+Wert zu stark absinkt, werden Ihre Basen aufgrund von Ineffizienz
+Energie verlieren.
+
+#SOCTOUR2
+#xs 300
+{UNTERSTÜTZUNG} beeinflußt die Unterstützungskosten für Militäreinheiten.
+Je niedriger Ihr Wert hier ist, desto mehr Ihrer Einheiten müssen Sie
+mit Mineralien versorgen.
+
+#SOCTOUR3
+#xs 300
+{MORAL} beeinflußt das Training und die Entschlossenheit Ihres
+Militärs. Ein höherer Wert schlägt sich in einer höheren Kampfmoral 
+Ihrer Einheiten nieder.
+
+#SOCTOUR4
+#xs 300
+{POLIZEI} zeigt die Toleranz Ihrer Gesellschaft für Polizeikontrolle
+und Einschränkungen der persönlichen Freiheit. Ein hoher Wert erlaubt
+es Ihnen, Militäreinheiten als Polizei zur Niederschlagung von Drohnen-
+Aufständen einzusetzen. Ein niedriger Wert erzeugt zunehmende
+Spannungen, wenn Ihre Militäreinheiten abwesend sind.
+
+#SOCTOUR5
+#xs 300
+{WACHSTUM} beeinflußt die Wachstumsrate Ihrer Bevölkerung. Je höher
+der Wert, desto weniger Nahrung benötigen Ihre Basen, um zu wachsen.
+
+#SOCTOUR6
+#xs 300
+{PLANET} zeigt die Sensibilität Ihrer Gesellschaft für
+die Ökologie des Planeten. Ein niedriger Wert zeigt an,
+daß es schneller zu ökologischen Schäden kommen wird.
+
+#SOCTOUR7
+#xs 300
+{SONDE} beeinflußt die Verwundbarkeit (oder Stärke) Ihrer
+Gesellschaft in Sachen Sicherheit. Ein hoher Wert hilft,
+gegnerische Spionageangriffe zu verhindern.
+
+#SOCTOUR8
+#xs 300
+{INDUSTRIE} zeigt die Stärke Ihrer Fabriken. Ein hoher Wert
+reduziert die Anzahl von Mineralien, die für den Bau von
+Einheiten und Einrichtungen benötigt werden.
+
+#SOCTOUR9
+#xs 300
+{FORSCHUNG} beeinflußt den technologischen Fortschritt. Ein
+hoher Wert steigert die Rate technologischer Innovationen.
+
+#SOCTOURECON
+#xs 400
+Die {Wirtschafts-Anzeige} ermöglicht es Ihnen, den Anteil Ihrer
+Energie zu bestimmen, der der Wirtschaft zufließt, wodurch Sie
+Ihre {Energiereserve} erhöhen können. Klicken Sie auf den linken
+oder rechten Pfeil, um diesen Wert zu verändern.
+
+#SOCTOURPSYCH
+#xs 400
+Die {Psycho-Anzeige} ermöglicht es Ihnen, den Anteil Ihrer Energie
+zu bestimmen, der dem psychologischen Bereich zugute kommt und
+die Lebensqualität Ihrer Bürger steigt. Hier aufgewandte Energie
+führt zu einem Anstieg in der Anzahl der {Talente} in Ihrer Gesellschaft,
+wodurch {Drohnen-Aufstände} verhindert werden.
+
+#SOCTOURLABS
+#xs 400
+Die {Labor-Anzeige} kontrolliert den Anteil Ihrer Energie, der für
+Forschungsprojekte ausgegeben wird. Obwohl Sie die technologische
+Innovationsrate erhöhen können, indem Sie diesen Wert anheben, sollten
+Sie daran denken, daß Sie über die höchste Effizienz verfügen, wenn
+die Prozentzahlen für {Labor} und {Wirtschaft} gleich sind. Wenn sich diese
+beiden Werte unterscheiden, steigt die Ineffizienz; die Innovationsrate
+hängt dann von dem Wert Ihrer {EFFIZIENZ} ab.
+
+#SOCTOURINFO
+#xs 400
+Das Info-Feld {Sozialtechnik} zeigt weitere Auswirkungen Ihrer
+gesellschaftlichen Entscheidungen. Ihre technologische {Innovationsrate}
+und Ihr {Energie-Einkommen} pro Runde werden hier angezeigt. Falls
+Ihre Einstellungen für {Labor} und {Wirtschaft} nicht übereinstimmen,
+wird eine eventuell hierdurch hervorgerufene Ineffizienz auch hier
+dargestellt. Außerdem  kann es zu {Umwälzungskosten} kommen, wenn
+Sie versuchen, Ihre Gesellschaft zu schnell zu ändern, was ebenfalls
+hier sichtbar ist.
+
+#SOCTOURCANCEL
+#xs 400
+Mit der Taste {Abbrechen} stellen Sie die vorherigen
+Gesellschaftseinstellungen wieder her und verlassen diesen Schirm.
+
+#SOCTOURRESET
+#xs 400
+Mit der Taste {Verwerfen} stellen Sie die vorherigen
+Gesellschaftseinstellungen wieder her, verlassen aber den Schirm nicht.
+
+#SOCTOUROK
+#xs 400
+Mit der Taste {OK} verlassen Sie den Schirm und speichern
+die von Ihnen vorgenommenen gesellschaftlichen Änderungen ab.
+^
+Sie können diese Tour jederzeit erneut aufrufen, indem Sie
+aus dem Menü "Hilfe" die Option {Sozialtechnik-Tour} wählen. 
+
+#DRONERIOTS
+#xs 400
+#button DETAILS
+Die Basis $BASENAME0 erlebt {Drohnen-Aufstände}, die die
+Produktivität verringern. Die einfachste Methode, Drohnen-Aufstände
+zu beenden, ist, den {Gouverneur} zu aktivieren, der geeignete
+Schritte unternehmen wird, um sie niederzuschlagen. Klicken Sie
+auf die Taste DETAILS um mehr zu erfahren.
+
+#DRONETOUR1
+#xs 400
+{Drohnen-Aufstände} ereignen sich, wenn die Anzahl der roten
+{Drohnen} auf einer Basis die der grünen {Talente} übersteigt.
+Andere Bürger, wie {Arbeiter} und {Spezialisten}, haben keine
+direkte Einwirkung auf die Aufstände. Drohnen gibt es aufgrund
+des Bevölkerungsdrucks und schlechter Lebensbedingungen. Wir
+werden Ihnen nun mehrere Methoden zeigen, um Drohnen-Aufstände
+unter Kontrolle zu bringen.
+
+#DRONETOUR2
+#xs 400
+Eine direkte Methode zur Kontrolle von Drohnen-Aufständen ist der
+Einsatz von Militäreinheiten als {Polizei}. Militäreinheiten fungieren
+automatisch als Polizei, wenn Sie sie in Ihre Basis umpositionieren.
+Die Anzahl der Polizeieinheiten, die Sie einsetzen können, hängt von
+der Polizeitoleranz Ihrer Gesellschaft ab, die durch den Wert {POLIZEI}
+auf dem Bildschirm Sozialtechnik angezeigt wird. Wenn Sie beispielsweise
+Ihre Gesellschaft in einen {Polizeistaat} verwandeln , können Sie mehr
+Militäreinheiten als Polizei einsetzen, um Aufstände zu unterdrücken.
+
+#DRONETOUR3
+#xs 400
+Eine besonders drakonische Maßnahme zur Kontrolle von Drohnen-
+Aufständen ist, den {Nervschneider} gegen Ihre Bürger einzusetzen.
+Der Nervschneider verhindert Drohnen-Aufstände mindestens zehn
+Runden lang, wird aber als Greueltat betrachtet.
+
+#DRONETOUR4
+#xs 400
+Eine humanere Methode zur Verhinderung von Drohnen-Aufständen ist
+der Bau von {Einrichtungen}, welche die beengten und deprimierenden
+Wohnbedingungen verbessern. So wird beispielsweise der Bau eines
+{Freizeitzentrums} die Beschwerden von bis zu zwei Drohnen abstellen
+und sie in reguläre Arbeiter verwandeln. Der Bau derartiger Einrichtungen
+ist eine hervorragende Langzeitlösung für das Drohnen-Problem.
+
+#DRONETOUR5
+#xs 400
+Die Schaffung von {Ärzten} (oder später {Telepathen} und {Transzendenten})
+stellt eine andere Lösung, wenngleich eine kurzfristige, für dieses Problem
+dar. Ärzte erhöhen den Wert des Bereiches {Psycho} und erhöhen die Anzahl
+der Talente als Gegengewicht zu den Drohnen. Um einen Bürger in einen Arzt
+zu verwandeln, klicken Sie hier in der Bevölkerungsanzeige auf ihn.
+
+#DRONETOUR6
+#xs 400
+Wenn Sie zahlreiche große Basen besitzen, die viel Energie erzeugen,
+können Sie einen Teil dieser Energie dem Bereich {Psycho} zuleiten,
+wodurch die Lebensqualität Ihrer Bürger steigt. Für je zwei 
+Energieeinheiten entwickelt sich ein Arbeiter zu einem Talent.
+Um einen Teil Ihrer Energieproduktion umzulenken, wählen Sie in
+Hauptmenü das Untermenü "Hilfe" und dann den Schirm Sozialtechnik.
+
+#DRONETOUR7
+#xs 400
+Sie können die Taste {Psycho} dazu verwenden, die Auswirkungen
+Ihrer Entscheidungen in bezug auf Polizei, Einrichtungen, Psyche
+und Geheimprojekte zu sehen.
+
+#LOWNUTRIENT
+#xs 400
+Die Basis $BASENAME0 produziert nicht genug {Nahrung} für ihre
+Bürger! Klicken Sie auf das Feld in der Mitte der Basiskarte,
+um einige Ihrer Spezialisten als Arbeiter einzusetzen.
+
+#NEWTERRAFORMER
+#xs 400
+#button TOUR
+Die Basis $BASENAME0 hat gerade folgende Einheit gebaut, welche die
+Terraforming-Techniker repräsentiert, die für das Überleben Ihrer
+Expedition enorm wichtig sind: $UNITNAME1.
+Former können Wälder anpflanzen und Farmen anlegen, Straßen, Minen
+und Solarkollektoren bauen, und später können sie sogar Berge
+aufbauen oder einebnen.
+^
+Drücken Sie UMSCHALT+A, um die Verbesserungsarbeiten der Former
+zu automatisieren. Wenn Sie allerdings lernen wollen, wie man
+selbst Terraforming durchführt, klicken Sie auf die Taste {TOUR}.
+
+#TERRAFORMER
+#xs 320
+Ihre Terraforming-Techniker ("FORMER") sind für das Überleben
+Ihrer Expedition enorm wichtig. Former können Wälder anpflanzen
+und Farmen anlegen, Straßen, Minen und Solarkollektoren bauen,
+und sogar Berge aufbauen oder einebnen.
+
+#TERRAFARM
+#xs 400
+#button Nicht erneut anzeigen 
+Dieses Feld könnte zusätzliche Nahrung produzieren, wenn es eine
+Farm auf dem Feld gäbe. Nahrung hilft der Basis $BASENAME0 zu
+wachsen und zu gedeihen. Um hier eine Farm anzulegen, drücken
+Sie die Taste 'F'.
+
+#TERRASURVEY2
+#xs 300
+Diese Darstellung zeigt die besten Felder für den Ackerbau. Felder mit
+vielen Symbolen sind am besten geeignet. Verwenden Sie diesen Schirm
+als Leitfaden dafür, wohin Sie Ihre Former zum Anpflanzen schicken.
+Um diese Darstellung zu deaktivieren, klicken Sie einfach irgendwo
+auf der Karte.
+
+#TERRAROAD
+#xs 400
+#button Nicht erneut anzeigen
+Former können auch Straßen bauen, welche die Fortbewegung beschleunigen.
+Um hier eine Straße zu bauen, drücken Sie die Taste 'R' oder wählen Sie
+aus dem Menü "Befehle" die Option "Straße bauen".
+
+#TERRARAISE
+#xs 400
+#button Nicht erneut anzeigen
+Die Solarkollektoren in diesem Feld würden mehr Energie sammeln,
+wenn das Terrain höher wäre. Ihre Former können das Gelände anheben,
+wenn Sie die Taste "]]" drücken oder aus dem Menü "Befehle" die
+Option "Terraform Auf" wählen.
+
+##TERRARAISE2
+##xs 300
+##button Nicht erneut anzeigen
+#Die Basis $BASENAME0 erzeugt nicht sehr viel Energie. Um die
+#Energieproduktion zu steigern, müssen Sie Solarkollektoren
+#in benachbarten höhergelegenen Feldern bauen. Da die Basis
+#$BASENAME0 nicht viele hochgelegene Felder hat, sollten Sie 
+#vielleicht das Geländeniveau anheben, indem Sie die Taste "]]"
+#drücken oder aus dem Menü "Befehle" die Option "Terraform Auf"
+#wählen.
+
+#TERRAMINE
+#xs 400
+#button Nicht erneut anzeigen
+Um neue Former und Militäreinheiten zu produzieren, benötigt Ihre
+Kolonie Mineralien. Drücken Sie die Taste 'M', um eine Mine
+anzulegen, wodurch hier die Mineralienproduktion gesteigert wird.
+
+#TERRASOLAR
+#xs 400
+#button Nicht erneut anzeigen
+Solarkollektoren fangen {Energie} für Ihre Kolonie auf, was die
+Wirtschaft fördert und wissenschaftliche Forschungen beschleunigt.
+Drücken Sie 'S', um hier einen Solarkollektor zu bauen.
+
+
+#TERRAFOREST
+#xs 300
+#button Nicht erneut anzeigen
+Das Anpflanzen von {Wäldern} ist eine hervorragende Methode, Ihre
+Ressourcen zu vergrößern. Waldgebiete liefern eine begrenzte Menge
+an Nahrung, Mineralien und Energie in jedem Feld. Diese ausgewogene 
+Ressourcenproduktion kann sehr nützlich sein, vor allem in Gebieten,
+die für traditionelle Produktionsmethoden weniger geeignet sind.
+
+#TERRASENSOR
+#xs 300
+#button Nicht erneut anzeigen
+{Sensoren} entdecken Psycho-Viren und feindliche Einheiten im Abstand
+von zwei Feldern. Darüber hinaus steigern sie die Abwehrkraft jeder
+Ihrer Land-Einheiten im Umkreis von zwei Feldern um 25 %. Drücken Sie
+die Taste 'O', um hier einen Sensor zu bauen.
+
+#NEWUNIT
+#xs 400
+Die Basis $BASENAME0 hat eben folgende neue Einheit produziert:
+$UNITNAME1. Einheiten dienen dazu, den Planeten zu erkunden,
+Feinde anzugreifen und Ihre Kolonie zu verteidigen.
+
+#FASTUNIT
+#xs 400
+Die schnelle Einheit $UNITTYPE0 ($UNITSTATS1) kann sich in jeder Runde
+zweimal bewegen, es sei denn, sie kommt in ein Feld mit Felsen oder
+Xenofungus. Beachten Sie, daß ihr Bewegungswert, die dritte Zahl, zwei
+beträgt. Mobile Einheiten erhalten einen Kampfvorteil, wenn sie in
+offenem Gelände angreifen, und sie können sich oft von einem stärkeren,
+aber langsameren Feind lösen.
+
+#BIGUNIT
+#xs 400
+Die stärker bewaffnete Einheit $UNITTYPE0 ($UNITSTATS1) ist dazu
+geeignet, Feind anzugreifen und Ihr Gelände zu verteidigen. Beachten
+Sie, daß sie  einen hohen {Waffen}-Wert hat (die erste Zahl).
+Infanterieeinheiten sind vor allem dazu geeignet, feindliche Basen
+anzugreifen, wobei sie einen Angriffsbonus in Höhe von 25 % erhalten.
+
+#ARTYUNIT
+#xs 400
+Die Einheit $UNITTYPE0 kann bis zu zwei Felder weit auf Feinde
+schießen. Wählen Sie im Menü "Aktion" die Option "Langstreckenfeuer",
+wenn Sie feuern wollen.
+
+#NEWSHIP
+#xs 400
+Verwenden Sie Tragflügelboote und andere {Schiffe}, um die Ozeane
+dieses Planeten zu erforschen, Ihre Basen vor Angriffen von See her
+zu schützen und Bodentruppen zu anderen Kontinenten zu transportieren.
+
+#NEWAIR
+#xs 400
+{Luft}-Einheiten können schnell über Land und See fliegen, aber sie
+müssen hin und wieder zur Basis zurückkehren, um {Treibstoff} zu tanken.
+
+#DEFENDIT
+#xs 400
+#button Nicht erneut anzeigen
+Vielleicht sollte die Einheit $UNITTYPE1 zur {Verteidigung} der Basis
+$BASENAME0 gegen potentielle Gefahren "zuhause" bleiben. Drücken Sie
+die Taste 'H', damit die Einheit ihre Position hält.
+
+#DEFENDIT2
+#xs 400
+#button Nicht erneut anzeigen
+Die Einheit $UNITTYPE1 ($UNITSTATS2) wäre eine ausgezeichnete Garnison.
+Beachten Sie, daß ihre {Panzerung} (mittlere Zahl) stark ist, während
+ihr Waffenwert (erste Zahl) schwach ist. Vielleicht sollte sie zur
+{Verteidigung} der Basis $BASENAME0 gegen potentielle Gefahren "zuhause"
+bleiben. Drücken Sie die Taste 'H', damit die Einheit ihre Position hält.
+
+#ENEMYBASE
+#xs 400
+Diese Basis, $BASENAME0, gehört einem anderen Spieler: $TITLE1 $NAME2
+($FACTION3). Sie können eine feindliche Basis angreifen, indem Sie
+versuchen, Truppen dort zu positionieren.
+
+#ENEMYVEH
+#xs 400
+Diese Einheit gehört einem anderen Spieler: $TITLE1 $NAME2 ($FACTION3).
+Andere Gruppierungen können nützliche Verbündete oder gefährliche Feinde
+sein. Sie können eine feindliche Einheit angreifen, indem Sie versuchen,
+Truppen auf deren Feld zu bewegen.
+
+#ENEMYTERR
+#xs 400
+Diese farbige Linie markiert die Grenze zum {Territorium}
+des Leiters einer anderen Gruppierung: $TITLE1 $NAME2 ($FACTION3).
+Die Leiter anderer Gruppierungen werden es nicht gerne sehen, wenn
+Sie in ihr Gebiet eindringen.
+
+
+#NEWUNITS
+#xs 400
+#caption Allgemeine Hinweise
+Einheiten mit starker {Panzerung} und hohen Defensivwerten eignen
+sich zur Verteidigung wichtiger Basen. Drücken Sie die Taste 'H',
+oder den Befehl "Position halten", damit  sich die Einheit in der
+Basis verschanzt.
+^
+Schnelle Einheiten - {Speeder} - eignen sich sehr gut zur Erkundung und
+zur mobilen Kriegsführung. Setzen Sie diese Einheiten dazu ein, den Planeten
+zu erkunden und nach Feinden zu suchen.
+^
+Wenn Sie sich entschließen, einen Feind anzugreifen, sollten Sie eine
+Einheit mit einer leistungsstarken {Waffe} und vielleicht guter Panzerung
+oder hoher Mobilität bauen.
+^
+{Koloniekapseln} ermöglichen es Ihrer Kolonie, sich auszubreiten,
+indem sie neue Basen bauen. Je mehr Basen Sie bauen, desto schneller
+wächst Ihre Kolonie.
+^
+{Former}-Einheiten beschleunigen den Bau von Farmen und Straßen, sowie
+andere Teile der Infrastruktur. Vergessen Sie nicht, Former zu bauen,
+sobald sich Ihre Kolonie auszubreiten beginnt.
+
+#NEWCOLONIST
+#xs 400
+#button Nicht erneut anzeigen
+Die Basis $BASENAME0 hat eine neue {Koloniekapsel} produziert, die genug
+Ausrüstung und Arbeitskraft enthält, um eine neue Basis zu gründen. Bewegen
+Sie sie an eine geeignete Stelle, wie die hier gezeigte bei Linie 2,
+und drücken Sie dann die Taste 'B', um eine Basis zu bauen.
+
+#BUILDHERE
+#xs 400
+#button Nicht erneut anzeigen
+Da diese Stelle in der Nähe von fruchtbarem Land und anderen Ressourcen
+liegt, wäre sie ein guter Platz für den Bau einer {Basis}. Um hier eine
+Basis zu bauen, drücken Sie die Taste 'B' oder wählen Sie aus dem Menü
+"Befehle" die Option "Basis bauen".
+
+#FUNGUSAMUNGUS
+#xs 300
+{Xenofungus} ist ein auf diesem Planeten einheimisches Gewächs, das in
+vielen Gebieten wild wächst. In von Xenofungus überwachsenen Feldern
+können irdische Pflanzen nicht gedeihen, es sei denn, Sie entfernen
+den Xenofungus zuerst.
+
+#FUNGUSSEA
+
+#xs 300
+See-Fungus verlangsamt die Fahrt von Schiffen.
+
+#TECHNOLOGY
+#xs 400
+#caption Forschung
+{Energie} ist für Ihre {Labors} nötig und hilft Ihren Forschern, neue
+{Technologien} zu entdecken und umzusetzen. Sie können die
+Forschungsrichtung bestimmen, indem Sie die Forschungsthemen kontrollieren.
+
+#TERRAFORM
+#xs 400
+Ereignisse, die dazu führen, daß {Berge} angehoben oder eingeebnet
+werden (Erdbeben, die Aktionen der Former-Einheiten, etc.) können
+auch {Klimaänderungen} verursachen. Über 2000 m hohe Berge können
+die Wolkenbildung und den Regen deutlich beeinflussen, indem sie
+die Feuchtigkeit auffangen, die von den vorherrschenden Winden
+mitgeführt wird. Dies bedeutet, daß Gebiete im Windschatten eines
+Berges (in diesem Spiel östlich oder "rechts" davon) trockener
+sind, während die Gebiete vor dem Wind (also westlich oder "links"
+davon) feuchter sind, da die Feuchtigkeit durch den Berg aufgehalten
+wird. Sie können dieses Phänomen zu Ihrem Vorteil nutzen, indem Sie
+Ihren Formern befehlen, Berge anzuheben, um ihre Gegner im Windschatten
+des Gebirges "auszutrocknen", oder um die Niederschlagsmenge für Ihre
+vor dem Wind befindlichen Basen zu steigern.
+
+#SLOWFUNGUS
+#xs 300
+Der dicke {Xenofungus} behindert das Vorkommen Ihrer Einheit. Manchmal
+dauert es mehrere Runden, bis Sie in ein Xenofungus-Feld eindringen können.
+
+#FRACTIONALMOVE
+#xs 300
+Eine Einheit, der nicht mehr genug Bewegungspunkte zur Verfügung
+stehen, um ein Feld zu erreichen, muß eventuell bis zur nächsten
+Runde im Ausgangsfeld bleiben.
+
+#MADEFARM
+#xs 400
+Ihre Former haben hier eine {Farm} gebaut. Dieses Feld wird nun
+zusätzliche {Nahrung} erzeugen, was dem Bevölkerungswachstum
+dienlich ist.
+
+#MADESOIL
+#xs 400
+Ihre Former haben hier eine {Bodenanreicherungsanlage} gebaut,
+wodurch die Nahrungsproduktion dieses Felds weiter ansteigt.
+
+#MADEMINE
+#xs 400
+Ihre Former haben hier eine {Mine} angelegt, wodurch die Produktion
+dieses Felds an {Mineralien} erhöht wird. Mineralien ermöglichen es
+Ihrer Basis, Einheiten und Einrichtungen zu bauen.
+
+#MADESOLAR
+#xs 400
+Ihre Former haben hier einen {Solarkollektor} gebaut,
+wodurch die von diesem Feld erzeugte {Energie} gesteigert
+wird. Energie beschleunigt Forschungsvorhaben und steigert
+Ihren Wohlstand.
+
+#MADEFOREST
+#xs 400
+Ihre Former haben hier einen {Wald} an gepflanzt. Wälder liefern eine
+{ausgewogene} Menge an Nahrung, Mineralien und Energie. Sie verbessern
+die lokale Umwelt und wachsen und expandieren in benachbarte Felder.
+
+#MADEROAD
+#xs 400
+Ihre Former bauen hier eine {Straße}. Einheiten kommen dreimal
+so schnell voran, wenn sie eine Straße benutzen. Straßen erhöhen
+auch die Produktion der Minen.
+
+#MADETUBE
+#xs 400
+Ihre Former bauen hier eine {Magnet-Röhre}. Einheiten können diese,
+ohne zusätzliche Kosten, zur schnelleren Fortbewegung nutzen.
+
+#MADESENSOR
+#xs 400
+Ihre Former haben hier einen {Sensor} gebaut. Ein Sensor entdeckt jede
+feindliche Einheit im Abstand von zwei Feldern. Darüber hinaus steigert er
+die Abwehrkraft jeder ihrer Landeinheiten im Umkreis von zwei
+Feldern um 25 %.
+
+#MADEAQUIFER
+#xs 400
+Ihre Former haben eine unterirdische {Wasserquelle} angezapft. Der
+so entstehende neue Fluß wird Ihre Energieproduktion steigern und
+die Fortbewegung zu Lande beschleunigen.
+
+#MADECONDENSER
+#xs 400
+Ihre Former haben hier einen {Kondensator} gebaut! Ein Kondensator
+steigert die Niederschlagsmenge (und daher die Nahrungsproduktion)
+in allen anliegenden Feldern.
+
+#MADEBOREHOLE
+#xs 400
+Ihre Former haben hier ein {Bohrloch} angelegt! Ein Bohrloch verbessert
+sowohl die Mineralien- als auch die Energieproduktion, verhindert aber
+die Nahrungserzeugung.
+
+#MADESEAMINE
+#xs 400
+Ihre See-Former haben hier eine {Abbauplattform} gebaut, wodurch dieses
+Feld Mineralien erzeugt.
+
+#MADESEASOLAR
+#xs 400
+Ihre See-Former haben hier ein {Gezeitenkraftwerk} gebaut, 
+wodurch die Energieproduktion dieses Felds gesteigert wird.
+
+#MADESEAFARM
+#xs 400
+Ihre See-Former haben hier eine {Seetangfarm} angelegt, wodurch
+die Nahrungsproduktion dieses Felds gesteigert wird.
+
+
+#SOCIETY
+#xs 440
+#caption Seelsorger/in
+Die Entdeckung der Technologie $TECH0 ermöglicht Ihrer Kolonie
+eine neue sozialtechnische Entscheidung: {$SOC1}. Wollen
+Sie jetzt sozialtechnische Entscheidungen treffen?
+
+Nein. Mit derzeitigem Gesellschaftsmodell fortfahren.
+Ja. Sozialtechnik beginnen.
+
+#EXPLORATION
+#xs 400
+Von Ihrem Sternenschiff, der Unity, abgeworfene Nachschubkapseln
+sind bei der Erkundung des Planeten von besonderem Interesse. Sie
+müssen das Feld mit dem Behälter betreten, um den Inhalt herauszufinden.
+
+#BONUSNUTRIENT
+#xs 400
+Dieses Symbol zeigt reiche {Nahrungs}-Ressourcen an. Wenn Sie
+eine Basis innerhalb von zwei Feldern haben, kann diese hier
+zusätzliche Nahrung produzieren. Nahrung ermöglicht Ihnen weiteres
+Bevölkerungswachstum.
+
+#BONUSMINERALS
+#xs 400
+Dieses Symbol zeigt reiche {Mineralien}-Ressourcen an.
+Wenn Sie eine Basis innerhalb von zwei Feldern haben, kann
+diese hier zusätzliche Mineralien produzieren, vor allem,
+wenn Sie hier eine {Mine} anlegen. Mineralien ermöglichen
+Ihnen, neue Fahrzeuge und Einrichtungen zu bauen.
+
+#BONUSENERGY
+#xs 300
+Dieses Symbol zeigt reiche {Energie}-Ressourcen an. Wenn Sie
+eine Basis innerhalb von zwei Feldern haben, kann diese hier
+zusätzliche Energie produzieren. Energie beschleunigt
+Forschungsvorhaben und steigert Ihren Wohlstand.
+
+#SECONDBASE
+#xs 300
+Ihre Basis bei $BASE0 floriert nun. Jetzt wäre es an der Zeit,
+eine zweite Basis aufzubauen. Klicken Sie hierzu auf $BASE0
+und verwenden Sie die Taste "Wechseln", um den Befehl zum
+Bau einer Koloniekapsel zu geben.
+
+#BUILDMORE
+#xs 300
+Ihre Kolonie wächst, indem sie zu neuen Basen expandiert. Sie 
+erhalten neue Basen entweder dadurch, daß Sie sie selbst 
+bauen, oder indem Sie feindliche Basen erobern. Vielleicht 
+sollten Sie einer Ihrer Basen den Befehl geben, eine
+Koloniekapsel zu bauen.
+
+#BUILDBASE
+#xs 300
+Jetzt ist es an der Zeit, Ihre Kolonie zu erweitern und eine
+zweite Basis aufzubauen. Schicken Sie diese Koloniekapsel
+an eine geeignete Stelle und verwenden Sie dann den Befehl 'B'.
+
+#ARTIFACT
+#xs 300
+Transportieren Sie dieses {außerirdische Artefakt} so schnell
+wie möglich zu einer Ihrer Basen. Später, wenn Sie einen 
+{Netzwerkknoten} gebaut haben, können Ihre Forscher diesen
+mit dem Artefakt verbinden und versuchen, dessen Geheimnisse
+zu entschlüsseln.
+
+#DAMAGED
+#xs 400
+Diese Einheit wurde im Gefecht beschädigt. Der Schaden wird durch den
+farbigen Balken entlang der linken Seite des Statussymbols dargestellt.
+Grün repräsentiert leichten (oder keinen) Schaden, Gelb und Rot verweisen
+auf zunehmende Beschädigung. 
+^
+Um eine beschädigte Einheit zu reparieren, schicken Sie diese zu
+einer Ihrer Basen und lassen sie die Einheit eine Runde  aussetzen
+(drücken Sie dazu die LEERTASTE). Sie müssen dies möglicherweise
+mehrmals wiederholen.
+^
+Sie können auch eine "Feldreparatur" (also nicht auf der Basis)
+durchführen, aber dies ist viel langsamer und ist nur wirksam,
+wenn der Schadenswert Ihrer Einheit unter 10 % liegt.
+^
+Eine Basis mit einer Kommandozentrale kann Bodeneinheiten
+innerhalb einer Runde reparieren, entsprechendes gilt für
+Schiffswerften und Aerospace-Komplexe für See- und Lufteinheiten.
+
+#TREETIME
+#xs 300
+#caption Operationsleitung
+Nachdem unsere Forscher nun die Technologie $TECH0 entdeckt
+haben, können unsere Former in jedem Feld, das nicht völlig dürr
+ist, Wälder anpflanzen (Aktionstaste 'Umschalt+F'). Waldgebiete
+produzieren jeweils zwei Nahrungseinheiten, eine Einheit Mineralien
+und eine Energieeinheit, was sie für Gebiete, die für andere Zwecke
+zu heiß oder kalt sind, ideal macht.
+
+
+#ZOCMSG
+#xs 400
+Boden-Einheiten können sich nicht zwischen Feldern bewegen, die an
+Einheiten anderer Spieler angrenzen. Sie müssen zuerst zurück in
+ein nicht angrenzendes Feld. Dies wird als die "Kontrollzonen-Regel"
+bezeichnet und repräsentiert die Schwierigkeit, in der Nähe
+gegnerischer Streitkräfte zu manövrieren.
+^
+^Es gibt begrenzte Ausnahmen dieser Regel:
+^* Einheiten können immer Felder mit verbündeten Einheiten betreten.
+^* Einheiten können sich immer frei in Basen und aus diesen heraus bewegen.
+^* Einheiten mit der Fähigkeit "$ABIL0" können Kontrollzonen ignorieren.
+
+#VENDETTA
+#xs 440
+$TITLE0 $NAME1 ($FACTION2) verkündet eine Vendetta gegen Sie und Ihre 
+Gruppierung. Kümmern Sie sich um Ihre Abwehrmaßnahmen. Sie sollten 
+mindestens einige Ihrer Basen in den Modus "KÄMPFEN" schalten. Klicken
+Sie hierzu die Basis an und klicken Sie dann auf die Taste KÄMPFEN. Um
+eine feindliche Einheit oder Basis anzugreifen, bewegen Sie Ihre Einheit
+in deren Feld.
+
+#PSICOMBAT
+#xs 440
+Manche Einheiten (meist außerirdische Wesen wie Psycho-Viren) 
+beherrschen den {PSI-KAMPF}. Beim PSI-Kampf werden Waffen- und
+Panzerstärken ignoriert, und der Angreifer erhält eine Überlegenheit
+von 3 zu 2 auf dem Land (1 zu 1 bei der Seekriegsführung). Das
+{MORAL}-Niveau ist beim PSI-Kampf sehr wichtig.
+
+#MINDWORMS
+#xs440
+Psycho-Viren, die am meisten gefürchteten Lebewesen auf dem Planeten,
+können plötzlich, besonders in der Nähe von Fungus-Feldern, in 
+Erscheinung treten. Psycho-Viren greifen die Siedlungen
+auf tückische Art und Weise an.
+
+#EMPTYBASE
+#xs 440
+#button Nicht erneut anzeigen
+Diese Basis, $BASENAME0, ist vollkommen schutzlos und kann
+Psycho-Viren oder einem feindlichen Angriff zum Opfer fallen.
+Sie sollten vielleicht eine Ihrer Einheiten hierher verlegen,
+um die Basis zu verteidigen, oder auf die Basis klicken und
+ihr befehlen, eine neue Garnisonseinheit zu bauen.
+
+#INEFFICIENCY
+#xs 440
+Sehen Sie sich die roten Symbole an der {Energie}-Anzeige
+an. Dies bedeutet, daß die Basis viel Energie aufgrund von
+{Ineffizienz} verliert. Die Ineffizienz steigt, wenn Ihre
+sozialtechnischen Entscheidungen für die Bedürfnisse einer
+großen Kolonie und ihrer Bevölkerung nicht mehr adäquat sind.
+Sie sollten erwägen, eine {Kinderkrippe} zu bauen, um die
+Effizienz zu steigern, oder aus dem Bildschirm Sozialtechnik
+ein wirtschaftlich effizienteres Gesellschaftsmodell wählen
+(z.B. demokratisch oder grün).
+
+#INEFFICIENCYHQ
+#xs 440
+Seit Sie Ihre ursprüngliche {Hauptquartier}-Basis (die erste
+Basis, die von Ihnen gebaut wurde) verloren haben, hat Ihre
+Kolonie kein zentrales Hauptquartier mehr. Dadurch, daß Ihrer Kolonie
+eine zentrale Stelle fehlt, die Ihre Streitkräfte vereint, steigt
+die {Ineffizienz} Ihrer Kolonie. Dies wird durch die roten Flächen
+auf der {Energie}markierung angezeigt. Sie sollten sich eine
+relativ sichere Basis aussuchen und den Befehl zum Bau eines
+neuen {Hauptquartiers} geben.
+
+#SUPPORT
+#xs 400
+Die Basis $BASENAME0 verwendet viele {Mineralien} zur {Unterstützung
+von Einheiten}. Da sie so viele Einheiten unterstützt, kann sie nur
+langsam neue Einrichtungen bauen. Sie sollten erwägen, einige Einheiten
+{aufzulösen}, falls Sie nicht so viele benötigen, oder aus dem Bildschirm
+Sozialtechnik ein militaristischeres Gesellschaftsmodell wählen (z.B.
+Machtstaat oder Polizeistaat).
+
+#LOWMINERALS
+#xs 400
+Die Basis $BASENAME0 produziert nur wenige {Mineralien}. Das bedeutet,
+daß sie nur langsam neue Einheiten und Einrichtungen bauen kann.
+Vielleicht sollten einige Former in der Nähe {Minen} anlegen oder
+{Wälder} anpflanzen.
+
+#LOWMINERALS2
+#xs 400
+Die Basis $BASENAME0 produziert nur wenige {Mineralien}. Das bedeutet,
+daß sie nur langsam neue Einheiten und Einrichtungen bauen kann.
+Vielleicht sollten einige {See-Former} in der Nähe {Abbauplattformen}
+bauen.
+
+#COMMERCE
+#xs 400
+Unser neuer {Vertrag} mit der Gruppierung $FACTION0 öffnet uns
+Tür und Tor für den Handel und die daraus resultierenden
+{Handelserträge}.
+Jede unserer Basen, sofern sie groß genug sind,
+können ab jetzt {Bonusenergie} erhalten, die durch den Handelsertrag
+generiert wird. Wir können unsere Bonusenergie sogar noch 
+erhöhen, indem wir weitere Verträge mit anderen
+Gruppierungen schließen, Pakte mit anderen Gruppierungen
+eingehen und weitere Wirtschafts- und Industrie-Technologien erforschen.
+^
+
+#PACT
+#xs 400
+Unser neuer {Pakt} mit der Gruppierung $FACTION0 gibt uns die
+Möglichkeit mit $TITLE1 $NAME2 zusammenzuarbeiten und auf gemeinsame
+Ziele hinzuarbeiten. Wir können uns jetzt durch das Territorium
+der Gruppierung $FACTIONADJ3 bewegen, ihre Einheiten stapeln und ihre
+Basen betreten. Im Gegenzug kann die Gruppierung $FACTION0 ihre Einheiten
+durch unser Gebiet schicken, ohne daß es zu militärischen Konflikten
+kommt. Und, was vielleicht noch wichtiger ist, wir verdoppeln dabei
+den {Handelsertrag} zwischen unseren Gruppierungen!
+
+#ALMEETSGUY
+#xs 400
+Sie sind auf Einheiten einer menschlichen Gruppierung gestoßen, welche
+Zeichen ihrer Besiedlung auf dem ganzen Planeten hinterlassen haben. Da Sie die
+Technologie {Sozialpsychologie} entdeckt haben, können Sie mit diesen seltsamen
+und rückständigen Kreaturen kommunizieren.
+
+#GUYMEETSAL
+#xs 400
+Sie sind auf Einheiten der Gruppierung $FACTION0 gestoßen. Diese Außerirdischen
+gehören zu der Rasse der Vorfahren, deren Ahnen viele mysteriöse Strukturen gebaut
+haben, die Sie entdeckt haben. Da Sie die Technologie {Vorfahren-Psychologie} entdeckt
+haben, können Sie mit allen Vorfahren-Gruppierungen kommunizieren.
+
+#ALMEETSAL
+#xs 400
+Sie sind auf Einheiten der Gruppierung $FACTION0 gestoßen. Ihre Gruppierung steht
+in einem fortwährenden Krieg mit dieser Gruppierung, weshalb keine Kommunikation
+hergestellt werden kann.
+
+#ALMEETSGUYNOPSYCH
+#xs 400
+Sie sind auf Einheiten einer menschlichen Gruppierung gestoßen. Sie müssen zuerst die
+Technologie {Sozialpsychologie} entdecken, bevor Sie mit diesen primitiven
+Lebewesen kommunizieren können.
+
+#GUYMEETSALNOPSYCH
+#xs 400
+Sie sind auf Einheiten der Gruppierung $FACTION0 gestoßen. Sie müssen zuerst die
+Technologie {Vorfahren-Psychologie} entdecken, bevor Sie mit den Außerirdischen
+kommunizieren können.
+
+#GETOGRE
+#xs 400
+Sie haben eine außerirdische Einheit entdeckt, die Schlachtoger genannt wird.
+Schlachtoger sind große Kriegsmaschinen, die von der gleichen Rasse zurückgelassen
+wurden, die auch die Monolithen und Artefakte erzeugt haben. Ein Oger ist eine sehr
+kraftvolle Waffe, aber aufgrund der geheimnisvollen Technolgie nicht reparabel,
+nicht einmal durch einen Monolithen.
+
+#SEALURK
+#xs 400
+Diese Lebensform des Planeten wird Seeschleiche genannt. Sie ist der Insel der Tiefe sehr ähnlich,
+da sie ebenfalls die Ozeane des Planeten bewohnt, kann jedoch keine anderen Einheiten transportieren.
+Seeschleichen greifen Seebasen und Küstenbasen an.
+
+#SPORELAUNCHER
+#xs 400
+Psycho-Viren, die am meisten gefürchteten Lebewesen auf dem Planeten,
+können plötzlich, besonders in der Nähe von Fungus-Feldern, in
+Erscheinung treten. Psycho-Viren greifen die Siedlungen
+auf tückische Art und Weise an.
+
+# ; Diese Zeile muß am Dateiende stehen. 

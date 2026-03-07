@@ -2,6 +2,7 @@
 #include "game.h"
 #include "localization.h"
 #include "game_log.h"
+#include "screen_reader.h"
 
 static uint32_t custom_game_rules = 0;
 static uint32_t custom_more_rules = 0;
@@ -120,6 +121,19 @@ void __cdecl bitmask(uint32_t input, uint32_t* offset, uint32_t* mask) {
 
 void init_world_config() {
     ThinkerVars->game_time_spent = 0;
+
+    // Apply pending setup rules from accessible RULES modal.
+    // Must happen here (after game init sets GameRules) to get the last word.
+    if (sr_pending_setup_rules_set) {
+        // All 16 setup-rule RULES_* flag bits
+        const uint32_t ALL_SETUP_RULES = 0xFFFF; // bits 0-15 cover all RULES_* flags
+        uint32_t old = (uint32_t)*GameRules;
+        *GameRules = (int)((old & ~ALL_SETUP_RULES) | sr_pending_setup_rules);
+        sr_debug_log("init_world_config: applied pending rules 0x%X, GameRules: 0x%X -> 0x%X",
+            sr_pending_setup_rules, old, (uint32_t)*GameRules);
+        sr_pending_setup_rules_set = false;
+    }
+
     /*
     Adjust Special Scenario Rules if any are selected from the mod menu.
     This also overrides settings for any scenarions unless all custom options are left empty.

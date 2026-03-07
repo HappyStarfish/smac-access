@@ -2,6 +2,7 @@
 #include "patch.h"
 #include "patchdata.h"
 #include "patchveh.h"
+#include "game_log.h"
 #include "message_handler.h"
 #include "monument_handler.h"
 #include "netsetup_settings_handler.h"
@@ -69,6 +70,15 @@ int __cdecl alien_fauna_pop2(const char* label, const char* imagefile, int UNUSE
 
 int __cdecl base_production_popp(const char* textfile, const char* label, int a3, const char* imagefile, int a5) {
     MessageHandler::OnMessage(label, 0);
+    if (*CurrentBase) {
+        BASE* base = *CurrentBase;
+        int item_id = base->item();
+        if (item_id >= 0) {
+            game_log("Production: %s built %s", base->name, Units[item_id].name);
+        } else {
+            game_log("Production: %s built %s", base->name, Facility[-item_id].name);
+        }
+    }
     int item_id = (*CurrentBase ? (*CurrentBase)->item() : 0);
     if (item_id == -FAC_SKY_HYDRO_LAB
     || item_id == -FAC_ORBITAL_POWER_TRANS
@@ -1485,6 +1495,7 @@ bool patch_setup(Config* cf) {
     }
 
     if (cf->smac_only) {
+        smac_mod_init_paths();
         if (!FileExists(ModAlphaTxtFile)
         || !FileExists(ModHelpTxtFile)
         || !FileExists(ModTutorTxtFile)

@@ -1,5 +1,6 @@
 
 #include "base.h"
+#include "game_log.h"
 #include "message_handler.h"
 #include "screen_reader.h"
 #include "localization.h"
@@ -227,12 +228,19 @@ int __cdecl mod_base_init(int faction_id, int x, int y) {
     set_base(base_id);
     base_compute(1); // Always update
     *GameDrawState |= 2u;
+    if (is_human(faction_id)) {
+        game_log("Base founded: %s at (%d, %d)", base->name, x, y);
+    }
     return base_id;
 }
 
 void __cdecl mod_base_kill(int base_id) {
     assert(base_id >= 0 && base_id < *BaseCount);
-    int prev_faction = Bases[base_id].faction_id;
+    BASE* base = &Bases[base_id];
+    int prev_faction = base->faction_id;
+    if (is_human(prev_faction)) {
+        game_log("Base destroyed: %s at (%d, %d)", base->name, base->x, base->y);
+    }
     base_kill(base_id);
     find_relocate_base(prev_faction);
 }
@@ -2159,6 +2167,15 @@ int __cdecl mod_capture_base(int base_id, int faction_id, int is_probe) {
         prev_owner = base->faction_id_former;
     }
     base->defend_goal = 0;
+    if (is_human(faction_id)) {
+        game_log("Base captured: %s from %s%s",
+            base->name, MFactions[old_faction].noun_faction,
+            is_probe ? " (probe)" : "");
+    } else if (is_human(old_faction)) {
+        game_log("Base lost: %s to %s%s",
+            base->name, MFactions[faction_id].noun_faction,
+            is_probe ? " (probe)" : "");
+    }
     capture_base(base_id, faction_id, is_probe);
     find_relocate_base(old_faction);
     if (is_probe) {

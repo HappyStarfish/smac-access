@@ -5,6 +5,7 @@
 
 #include "main.h"
 #include "screen_reader.h"
+#include "game_log.h"
 #include "localization.h"
 #include "modal_utils.h"
 #include <stdarg.h>
@@ -101,37 +102,88 @@ bool sr_netsetup_log_coords = false;
 bool sr_mp_no_dedup = false;
 bool sr_net_start_requested = false;
 
-static void sr_trace_call(const char* func, const char* text) {
-    if (GetTickCount() < sr_trace_until) {
-        char logbuf[512];
-        snprintf(logbuf, sizeof(logbuf), "TRACE %s: %.200s", func, text ? text : "(null)");
-        // Write directly to log, bypass sr_log to avoid recursion issues
-        char path[MAX_PATH];
-        if (GetTempPathA(MAX_PATH, path)) {
-            strncat(path, "thinker_sr.log", MAX_PATH - strlen(path) - 1);
-            FILE* f = fopen(path, "a");
-            if (f) { fprintf(f, "%s\n", logbuf); fclose(f); }
+// Pending setup rules from accessible RULES modal
+uint32_t sr_pending_setup_rules = 0;
+bool sr_pending_setup_rules_set = false;
+
+// Returns path to Logs/ subdirectory in game folder (trailing backslash).
+// Creates the directory on first call. Returns empty string on failure.
+const char* sr_get_log_dir() {
+    static char log_dir[MAX_PATH] = {};
+    static bool initialized = false;
+    if (!initialized) {
+        initialized = true;
+        char exepath[MAX_PATH];
+        if (GetModuleFileNameA(NULL, exepath, MAX_PATH) > 0) {
+            char* last_sep = strrchr(exepath, '\\');
+            if (!last_sep) last_sep = strrchr(exepath, '/');
+            if (last_sep) *(last_sep + 1) = '\0';
+            snprintf(log_dir, sizeof(log_dir), "%sLogs\\", exepath);
+            CreateDirectoryA(log_dir, NULL);
         }
     }
+    return log_dir;
 }
 
-// Write diagnostic info to a file accessible without admin rights
+// Format a line timestamp prefix like "[14:30:45] "
+static void sr_timestamp(char* buf, int bufsize) {
+    SYSTEMTIME st;
+    GetLocalTime(&st);
+    snprintf(buf, bufsize, "[%02d:%02d:%02d] ", st.wHour, st.wMinute, st.wSecond);
+}
+
+// Format a file timestamp suffix like "_2026-03-07_14-30-45"
+static void sr_file_timestamp(char* buf, int bufsize) {
+    SYSTEMTIME st;
+    GetLocalTime(&st);
+    snprintf(buf, bufsize, "_%04d-%02d-%02d_%02d-%02d-%02d",
+             st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond);
+}
+
+// Write a line with timestamp to a file in the Logs/ subdirectory
 static void sr_write_log(const char* filename, const char* msg) {
-    char path[MAX_PATH];
-    if (GetTempPathA(MAX_PATH, path)) {
-        strncat(path, filename, MAX_PATH - strlen(path) - 1);
+    const char* dir = sr_get_log_dir();
+    if (dir[0]) {
+        char path[MAX_PATH];
+        snprintf(path, sizeof(path), "%s%s", dir, filename);
         FILE* f = fopen(path, "a");
         if (f) {
-            fprintf(f, "%s\n", msg);
+            char ts[32];
+            sr_timestamp(ts, sizeof(ts));
+            fprintf(f, "%s%s\n", ts, msg);
             fclose(f);
         }
     }
 }
 
-static void sr_log(const char* msg) { sr_write_log("thinker_sr.log", msg); }
+// Session log file: access_log_TIMESTAMP.log, created once per game launch
+static char sr_session_logfile[64] = {};
+
+static const char* sr_get_session_logfile() {
+    if (!sr_session_logfile[0]) {
+        char fts[32];
+        sr_file_timestamp(fts, sizeof(fts));
+        snprintf(sr_session_logfile, sizeof(sr_session_logfile),
+                 "access_log%s.log", fts);
+    }
+    return sr_session_logfile;
+}
+
+static void sr_log(const char* msg) { sr_write_log(sr_get_session_logfile(), msg); }
+
+// Debug state (defined here so sr_trace_call can reference them)
+static bool sr_debug = false;
+
+static void sr_trace_call(const char* func, const char* text) {
+    if (GetTickCount() < sr_trace_until) {
+        char logbuf[512];
+        snprintf(logbuf, sizeof(logbuf), "TRACE %s: %.200s", func, text ? text : "(null)");
+        sr_log(logbuf);
+    }
+}
 
 // Persistent hook installation log (NOT cleared by debug toggle)
-static void sr_hook_log(const char* msg) { sr_write_log("thinker_hooks.log", msg); }
+static void sr_hook_log(const char* msg) { sr_write_log("access_hooks.log", msg); }
 
 /*
 Load Tolk.dll and resolve all function pointers.
@@ -351,6 +403,23 @@ const char* sr_game_str(const char* ansi_text) {
     char* buf = bufs[idx];
     idx = (idx + 1) & 7;
     sr_ansi_to_utf8(ansi_text, buf, 512);
+    // Strip $LINK<text=id> markers in-place, keeping just the display text.
+    // These appear in facility effects, tech descriptions, etc.
+    char* p = buf;
+    while ((p = strstr(p, "$LINK<")) != NULL) {
+        char* link_start = p;
+        p += 6; // skip "$LINK<"
+        char* eq = NULL;
+        char* close = NULL;
+        for (char* s = p; *s; s++) {
+            if (*s == '=' && !eq) eq = s;
+            if (*s == '>') { close = s; break; }
+        }
+        if (!close) break;
+        int text_len = (int)((eq ? eq : close) - p);
+        memmove(link_start + text_len, close + 1, strlen(close + 1) + 1);
+        memmove(link_start, p, text_len);
+    }
     return buf;
 }
 
@@ -698,8 +767,6 @@ void sr_force_snapshot() {
 
 // ========== Debug Logging ==========
 
-static bool sr_debug = false;
-
 bool sr_debug_active() {
     return sr_debug;
 }
@@ -707,13 +774,6 @@ bool sr_debug_active() {
 void sr_debug_toggle() {
     sr_debug = !sr_debug;
     if (sr_debug) {
-        // Clear old log file on enable
-        char path[MAX_PATH];
-        if (GetTempPathA(MAX_PATH, path)) {
-            strncat(path, "thinker_sr.log", MAX_PATH - strlen(path) - 1);
-            FILE* f = fopen(path, "w");
-            if (f) fclose(f);
-        }
         sr_log("=== SR DEBUG ENABLED ===");
         sr_output(loc(SR_DEBUG_ON), true);
     } else {
@@ -734,12 +794,13 @@ void sr_debug_log(const char* fmt, ...) {
 
 // ========== Popup List Navigation ==========
 
-SrPopupList sr_popup_list = {{}, 0, 0, false};
+SrPopupList sr_popup_list = {{}, {}, 0, 0, false};
 
 void sr_popup_list_clear() {
     sr_popup_list.active = false;
     sr_popup_list.count = 0;
     sr_popup_list.index = 0;
+    sr_popup_list.label[0] = '\0';
 }
 
 /*
@@ -863,6 +924,8 @@ int sr_popup_list_parse(const char* filename, const char* label) {
         sr_popup_list.count = count;
         sr_popup_list.index = 0;
         sr_popup_list.active = true;
+        strncpy(sr_popup_list.label, label, sizeof(sr_popup_list.label) - 1);
+        sr_popup_list.label[sizeof(sr_popup_list.label) - 1] = '\0';
         sr_debug_log("POPUP-LIST parsed %d options from %s#%s",
             count, filename, label);
         for (int i = 0; i < count; i++) {
@@ -875,199 +938,39 @@ int sr_popup_list_parse(const char* filename, const char* label) {
 // ========== Game Variable Substitution ==========
 
 /*
-Substitute game variables in a text buffer. Handles:
-  - $WORD# or $WORD_WITH_UNDERSCORES# → ParseStrBuffer[slot] (string vars)
-  - $NUM# → ParseNumTable[slot] (numeric vars)
-  - $<N:form0:form1:form2:...> → gender/plurality-selected form
-    (uses ParseStrGender[N] + ParseStrPlurality[N] * 3 as index)
+Substitute game variables in a text buffer.
+Delegates to the game's native parse_string (0x625880) which handles ALL
+variable types: $TITLE#, $NAME#, $BASENAME#, $VOKI#, $SHIMODA#, $NUM#,
+$TECH#, $ABIL#, $TERRAFORM#, $<N:form0:form1:...> gender/plurality, etc.
 Called from sr_read_popup_text and sr_popup_list_parse.
 */
 void sr_substitute_game_vars(char* buf, int bufsize) {
     if (!buf || bufsize < 2) return;
+    // parse_string does not take a size parameter; use a large temp buffer
     char tmp[8192];
-    bool changed = true;
+    tmp[0] = '\0';
+    parse_string(buf, tmp);
+    strncpy(buf, tmp, bufsize - 1);
+    buf[bufsize - 1] = '\0';
 
-    // Safety: limit iterations to prevent infinite loops
-    int max_iter = 50;
-    while (changed && --max_iter > 0) {
-        changed = false;
-        char* p = buf;
-        while ((p = strchr(p, '$')) != NULL) {
-            char* start = p;
-            p++; // skip $
-
-            // Handle $<N:form0:form1:...> gender/plurality pattern
-            if (*p == '<') {
-                p++; // skip <
-                // Letter-prefixed patterns like $<M1:content> or $<F2:content>
-                // Strip the wrapper, keep content (inner $VARs resolved next iteration)
-                if (!(*p >= '0' && *p <= '9')) {
-                    char* colon = strchr(p, ':');
-                    char* close = strchr(p, '>');
-                    if (colon && close && colon < close) {
-                        // Extract content between ':' and '>'
-                        int prefix = (int)(start - buf);
-                        int content_len = (int)(close - colon - 1);
-                        snprintf(tmp, sizeof(tmp), "%.*s%.*s%s",
-                            prefix, buf, content_len, colon + 1, close + 1);
-                        strncpy(buf, tmp, bufsize - 1);
-                        buf[bufsize - 1] = '\0';
-                        changed = true;
-                        break; // restart scan
-                    }
-                    if (close) p = close + 1;
-                    continue;
-                }
-                if (*p >= '0' && *p <= '9') {
-                    int slot = 0;
-                    while (*p >= '0' && *p <= '9') {
-                        slot = slot * 10 + (*p - '0');
-                        p++;
-                    }
-                    if (*p == ':') {
-                        // Collect colon-separated forms until '>'
-                        const char* forms[8];
-                        int form_count = 0;
-                        p++; // skip first ':'
-                        forms[0] = p;
-                        form_count = 1;
-                        while (*p && *p != '>' && form_count < 8) {
-                            if (*p == ':') {
-                                forms[form_count++] = p + 1;
-                            }
-                            p++;
-                        }
-                        if (*p == '>') {
-                            p++; // skip '>'
-                            // Calculate form lengths (each form ends at next ':' or '>')
-                            int form_lens[8];
-                            for (int i = 0; i < form_count; i++) {
-                                if (i + 1 < form_count) {
-                                    form_lens[i] = (int)(forms[i + 1] - forms[i]) - 1; // -1 for ':'
-                                } else {
-                                    form_lens[i] = (int)(p - 1 - forms[i]); // -1 for '>'
-                                }
-                            }
-                            // Select form: gender + plurality * 3
-                            int idx = 0;
-                            if (ParseStrGender && ParseStrPlurality
-                                && slot >= 0 && slot < 10) {
-                                idx = ParseStrGender[slot]
-                                    + ParseStrPlurality[slot] * 3;
-                            }
-                            if (idx < 0 || idx >= form_count) idx = 0;
-
-                            int prefix = (int)(start - buf);
-                            snprintf(tmp, sizeof(tmp), "%.*s%.*s%s",
-                                prefix, buf, form_lens[idx], forms[idx], p);
-                            strncpy(buf, tmp, bufsize - 1);
-                            buf[bufsize - 1] = '\0';
-                            changed = true;
-                            break; // restart scan
-                        }
-                    }
-                }
-                // If we didn't match, skip past this $< to avoid infinite loop
-                continue;
-            }
-
-            // Handle $WORD# pattern (uppercase letters + underscores + digit)
-            char* word_start = p;
-            while ((*p >= 'A' && *p <= 'Z') || *p == '_') p++;
-            int word_len = (int)(p - word_start);
-            // Must have at least one letter and end with a digit
-            if (word_len > 0 && *p >= '0' && *p <= '9') {
-                int slot = *p - '0';
-                p++; // skip digit
-                // Also handle two-digit slot
-                if (*p >= '0' && *p <= '9') {
-                    slot = slot * 10 + (*p - '0');
-                    p++;
-                }
-                // Check if this is $NUM# (numeric variable)
-                bool is_num = (word_len == 3
-                    && word_start[0] == 'N'
-                    && word_start[1] == 'U'
-                    && word_start[2] == 'M');
-                if (is_num && slot < 16 && ParseNumTable) {
-                    int prefix = (int)(start - buf);
-                    snprintf(tmp, sizeof(tmp), "%.*s%d%s",
-                        prefix, buf, ParseNumTable[slot], p);
-                    strncpy(buf, tmp, bufsize - 1);
-                    buf[bufsize - 1] = '\0';
-                    changed = true;
-                    break;
-                }
-                // Check if this is $TECH# (technology name via ParseNumTable index)
-                bool is_tech = (word_len == 4
-                    && word_start[0] == 'T'
-                    && word_start[1] == 'E'
-                    && word_start[2] == 'C'
-                    && word_start[3] == 'H');
-                if (is_tech && slot < 16 && ParseNumTable && Tech) {
-                    int tech_id = ParseNumTable[slot];
-                    if (tech_id >= 0 && tech_id < MaxTechnologyNum
-                        && Tech[tech_id].name) {
-                        int prefix = (int)(start - buf);
-                        snprintf(tmp, sizeof(tmp), "%.*s%s%s",
-                            prefix, buf, Tech[tech_id].name, p);
-                        strncpy(buf, tmp, bufsize - 1);
-                        buf[bufsize - 1] = '\0';
-                        changed = true;
-                        break;
-                    }
-                }
-                // Check if this is $ABIL# (ability name via ParseNumTable index)
-                bool is_abil = (word_len == 4
-                    && word_start[0] == 'A'
-                    && word_start[1] == 'B'
-                    && word_start[2] == 'I'
-                    && word_start[3] == 'L');
-                if (is_abil && slot < 16 && ParseNumTable && Ability) {
-                    int abil_id = ParseNumTable[slot];
-                    if (abil_id >= 0 && abil_id < MaxAbilityNum
-                        && Ability[abil_id].name) {
-                        int prefix = (int)(start - buf);
-                        snprintf(tmp, sizeof(tmp), "%.*s%s%s",
-                            prefix, buf, Ability[abil_id].name, p);
-                        strncpy(buf, tmp, bufsize - 1);
-                        buf[bufsize - 1] = '\0';
-                        changed = true;
-                        break;
-                    }
-                }
-                // Check if this is $TERRAFORM# (terraform order name via ParseNumTable)
-                bool is_terraform = (word_len == 9
-                    && strncmp(word_start, "TERRAFORM", 9) == 0);
-                if (is_terraform && slot < 16 && ParseNumTable && Order) {
-                    int order_id = ParseNumTable[slot];
-                    if (order_id >= 0 && order_id < MaxOrderNum
-                        && Order[order_id].order) {
-                        int prefix = (int)(start - buf);
-                        snprintf(tmp, sizeof(tmp), "%.*s%s%s",
-                            prefix, buf, Order[order_id].order, p);
-                        strncpy(buf, tmp, bufsize - 1);
-                        buf[bufsize - 1] = '\0';
-                        changed = true;
-                        break;
-                    }
-                }
-                // Fallback to ParseStrBuffer for ALL non-NUM types,
-                // including TECH/ABIL/TERRAFORM when ParseNumTable lookup failed.
-                // The game sometimes uses parse_says() to store the resolved name
-                // as a string instead of parse_num() with the ID.
-                if (!is_num && slot < 10 && ParseStrBuffer
-                    && ParseStrBuffer[slot].str[0]) {
-                    int prefix = (int)(start - buf);
-                    snprintf(tmp, sizeof(tmp), "%.*s%s%s",
-                        prefix, buf, ParseStrBuffer[slot].str, p);
-                    strncpy(buf, tmp, bufsize - 1);
-                    buf[bufsize - 1] = '\0';
-                    changed = true;
-                    break; // restart scan
-                }
-            }
+    // Strip $LINK<text=id> markers, keeping just the text part.
+    // These are datalink hyperlinks the game renders as clickable UI elements.
+    char* p = buf;
+    while ((p = strstr(p, "$LINK<")) != NULL) {
+        char* link_start = p;
+        p += 6; // skip "$LINK<"
+        // Find '=' or '>' to extract the display text
+        char* eq = NULL;
+        char* close = NULL;
+        for (char* s = p; *s; s++) {
+            if (*s == '=' && !eq) eq = s;
+            if (*s == '>') { close = s; break; }
         }
+        if (!close) break; // malformed, stop
+        int text_len = (int)((eq ? eq : close) - p);
+        // Replace "$LINK<text=id>" with just "text" in-place
+        memmove(link_start + text_len, close + 1, strlen(close + 1) + 1);
+        memmove(link_start, p, text_len);
     }
 }
 
@@ -1085,7 +988,7 @@ and strips {curly} formatting markers.
 Returns true if any body text was found.
 */
 bool sr_read_popup_text(const char* filename, const char* label,
-                        char* buf, int bufsize) {
+                        char* buf, int bufsize, bool substitute) {
     if (!filename || !label || !buf || bufsize < 2) return false;
 
     char filepath[MAX_PATH];
@@ -1237,8 +1140,10 @@ bool sr_read_popup_text(const char* filename, const char* label,
     buf[pos] = '\0';
     fclose(f);
 
-    // Substitute game variables
-    sr_substitute_game_vars(buf, bufsize);
+    // Substitute game variables (unless caller handles substitution)
+    if (substitute) {
+        sr_substitute_game_vars(buf, bufsize);
+    }
 
     // Convert the entire buffer from Windows-1252 to UTF-8.
     // Game text files use Windows-1252; our output pipeline expects UTF-8.
@@ -1257,6 +1162,222 @@ bool sr_read_popup_text(const char* filename, const char* label,
         sr_log(logbuf);
     }
     return has_body;
+}
+
+// ========== Setup Rules Checkbox Popup Replacement ==========
+
+// Flag mapping for the 16 rules in SCRIPT.txt#RULES order.
+// This matches the order the game displays them in the setup popup.
+static const uint32_t sr_setup_rules_flags[16] = {
+    RULES_VICTORY_TRANSCENDENCE,  // 0: Höheres Ziel
+    RULES_VICTORY_CONQUEST,       // 1: Totaler Krieg
+    RULES_VICTORY_DIPLOMATIC,     // 2: Friedenszeiten
+    RULES_VICTORY_ECONOMIC,       // 3: Alles meins
+    RULES_VICTORY_COOPERATIVE,    // 4: Einer für alle
+    RULES_DO_OR_DIE,              // 5: Leben oder Tod
+    RULES_LOOK_FIRST,             // 6: Zuerst schauen
+    RULES_TECH_STAGNATION,        // 7: Tech-Stagnation
+    RULES_SPOILS_OF_WAR,          // 8: Kriegsbeute
+    RULES_BLIND_RESEARCH,         // 9: Ziellose Forschung
+    RULES_INTENSE_RIVALRY,        // 10: Starke Rivalität
+    RULES_NO_UNITY_SURVEY,        // 11: Keine Unity-Vermessung
+    RULES_NO_UNITY_SCATTERING,    // 12: Keine Unity-Verteilung
+    RULES_BELL_CURVE,             // 13: Glockenkurve
+    RULES_TIME_WARP,              // 14: Zeitsprung
+    RULES_IRONMAN,                // 15: Iron Man
+};
+
+/// Convert RULES_* game flags to item-position bitmask (bit N = item N checked).
+static uint32_t sr_rules_to_items(uint32_t rules_flags) {
+    uint32_t items = 0;
+    for (int i = 0; i < 16; i++) {
+        if (rules_flags & sr_setup_rules_flags[i])
+            items |= (1u << i);
+    }
+    return items;
+}
+
+/// Convert item-position bitmask back to RULES_* game flags.
+static uint32_t sr_items_to_rules(uint32_t items) {
+    uint32_t flags = 0;
+    for (int i = 0; i < 16; i++) {
+        if (items & (1u << i))
+            flags |= sr_setup_rules_flags[i];
+    }
+    return flags;
+}
+
+/// Replace the game's mouse-only RULES checkbox popup with an accessible
+/// keyboard-driven modal loop. Takes RULES_* flags as initial state.
+/// Returns RULES_* flags on Enter, or -1 on Escape (cancel).
+static int sr_handle_rules_checkbox(uint32_t initial_rules_flags) {
+    // Copy popup list items locally, then deactivate the popup list
+    // so gui.cpp's arrow key handler doesn't fire during our modal loop.
+    char items[16][256];
+    int count = sr_popup_list.count;
+    if (count <= 0 || count > 16) {
+        sr_debug_log("RULES-CB: bad count %d, falling through", count);
+        return -1;
+    }
+    for (int i = 0; i < count; i++) {
+        strncpy(items[i], sr_popup_list.items[i], 255);
+        items[i][255] = '\0';
+    }
+    sr_popup_list_clear();
+
+    // Convert RULES_* flags to item-position bitmask for internal tracking
+    uint32_t bits = sr_rules_to_items(initial_rules_flags);
+    int index = 0;
+    bool want_close = false;
+    bool accepted = false;
+
+    sr_debug_log("RULES-CB: starting modal, count=%d rules=0x%X items=0x%X",
+        count, initial_rules_flags, bits);
+
+    // Announce title and first item with on/off
+    char buf[512];
+    bool on = !!(bits & (1u << 0));
+    snprintf(buf, sizeof(buf), "%s. %s: %s",
+        loc(SR_TMENU_RULES), items[0],
+        on ? loc(SR_TMENU_OPT_ON) : loc(SR_TMENU_OPT_OFF));
+    sr_output(buf, true);
+
+    // Append help hint
+    sr_output(loc(SR_SETUP_RULES_HELP), false);
+
+    // Modal message loop — keyboard messages are consumed here,
+    // NOT dispatched to ModWinProc.
+    MSG msg;
+    while (!want_close) {
+        if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
+            if (msg.message == WM_QUIT) {
+                PostQuitMessage((int)msg.wParam);
+                break;
+            }
+            if (msg.message == WM_KEYDOWN) {
+                WPARAM key = msg.wParam;
+                bool announce = false;
+
+                switch (key) {
+                case VK_UP:
+                    index = (index + count - 1) % count;
+                    announce = true;
+                    break;
+                case VK_DOWN:
+                    index = (index + 1) % count;
+                    announce = true;
+                    break;
+                case VK_SPACE:
+                    if (index < 16) {
+                        bits ^= (1u << index);
+                        sr_debug_log("RULES-CB: toggle item %d -> bits=0x%X", index, bits);
+                    }
+                    announce = true;
+                    break;
+                case VK_RETURN:
+                    accepted = true;
+                    want_close = true;
+                    break;
+                case VK_ESCAPE:
+                    want_close = true;
+                    break;
+                case VK_F1:
+                    if (GetKeyState(VK_CONTROL) & 0x8000) {
+                        sr_output(loc(SR_SETUP_RULES_HELP), true);
+                    }
+                    break;
+                case 'S':
+                    if (!(GetKeyState(VK_CONTROL) & 0x8000)) {
+                        int enabled = 0;
+                        for (int i = 0; i < count && i < 16; i++) {
+                            if (bits & (1u << i)) enabled++;
+                        }
+                        snprintf(buf, sizeof(buf), "%d / %d", enabled, count);
+                        sr_output(buf, true);
+                    }
+                    break;
+                }
+
+                if (announce && !want_close) {
+                    bool item_on = (index < 16) && !!(bits & (1u << index));
+                    snprintf(buf, sizeof(buf), "%s: %s",
+                        items[index],
+                        item_on ? loc(SR_TMENU_OPT_ON) : loc(SR_TMENU_OPT_OFF));
+                    sr_output(buf, true);
+                }
+                continue; // consume keyboard messages, don't dispatch
+            }
+            if (msg.message == WM_KEYUP || msg.message == WM_CHAR
+                || msg.message == WM_SYSKEYDOWN || msg.message == WM_SYSKEYUP) {
+                continue; // also consume related keyboard messages
+            }
+            TranslateMessage(&msg);
+            DispatchMessage(&msg);
+        } else {
+            Sleep(10);
+        }
+    }
+
+    // Drain leftover messages
+    MSG drain;
+    while (PeekMessage(&drain, NULL, WM_CHAR, WM_CHAR, PM_REMOVE)) {}
+    while (PeekMessage(&drain, NULL, WM_KEYUP, WM_KEYUP, PM_REMOVE)) {}
+
+    if (accepted) {
+        sr_output(loc(SR_TMENU_RULES_SAVED), true);
+        sr_debug_log("RULES-CB: accepted, bits=0x%X", bits);
+        return (int)bits;
+    } else {
+        sr_output(loc(SR_TMENU_RULES_CANCELLED), true);
+        sr_debug_log("RULES-CB: cancelled");
+        return -1;
+    }
+}
+
+/// Check if a popup call is the RULES checkbox popup during game setup.
+static bool sr_is_setup_rules_popup(const char* filename, const char* label) {
+    return sr_is_available()
+        && label && _stricmp(label, "RULES") == 0
+        && filename
+        && (_stricmp(filename, "SCRIPT.txt") == 0
+            || _stricmp(filename, "SCRIPT") == 0)
+        && current_window() == GW_None;
+}
+
+/// Handle the RULES popup interception: full modal replacement (Option A).
+/// The game only calls X_pop RULES when the user chose "Individuelle Regeln"
+/// from the USERULES menu.
+///
+/// We NEVER call the original X_pop — that would require PostMessage hacks
+/// to close the game's mouse-driven popup, which is fragile (Pattern C).
+/// Instead we run our own modal and save the chosen RULES_* flags as
+/// pending. init_world_config() applies them AFTER the game's own
+/// initialization has set GameRules, so we get the last word.
+// Defined here (before intercept function) so sr_hook_x_pop can call it.
+static FX_pop sr_orig_x_pop = NULL;
+
+static int sr_intercept_rules_popup(const char* filename, const char* label,
+                                    int a3, int a4, int a5, int a6) {
+    sr_popup_list_parse(filename, label);
+    int modal_bits = sr_handle_rules_checkbox(DefaultRules);
+    sr_popup_list_clear();
+
+    if (modal_bits < 0) {
+        sr_debug_log("RULES-CB: cancelled");
+        return -1;
+    }
+
+    // Convert item-position bits to RULES_* flags and save as pending.
+    // These will be applied in init_world_config() after the game's own
+    // initialization, so the game can't overwrite them.
+    uint32_t rules_flags = sr_items_to_rules((uint32_t)modal_bits);
+    sr_pending_setup_rules = rules_flags;
+    sr_pending_setup_rules_set = true;
+    sr_debug_log("RULES-CB: accepted, item_bits=0x%X -> pending rules=0x%X",
+        modal_bits, rules_flags);
+
+    // Return item-position bits to the calling game code
+    return modal_bits;
 }
 
 /*
@@ -1282,6 +1403,30 @@ static void sr_pre_popup(const char* filename, const char* label) {
             char story_label[32];
             snprintf(story_label, sizeof(story_label), "INTERLUDE%d", sr_interlude_id);
             has_text = sr_read_popup_text(filename, story_label, buf, sizeof(buf));
+        }
+
+        // Diplomacy context: prepend "Diplomacy with [faction]" before popup text
+        if (*DiploWinState != 0 && *diplo_second_faction >= 0
+            && *diplo_second_faction < MaxPlayerNum) {
+            char prefix[512];
+            snprintf(prefix, sizeof(prefix), loc(SR_DIPLO_OPEN),
+                sr_game_str(MFactions[*diplo_second_faction].adj_name_faction));
+            int plen = strlen(prefix);
+            if (has_text) {
+                // Prepend: "Diplomacy with X. [popup text]"
+                int tlen = strlen(buf);
+                if (plen + 2 + tlen < (int)sizeof(buf)) {
+                    memmove(buf + plen + 2, buf, tlen + 1);
+                    memcpy(buf, prefix, plen);
+                    buf[plen] = '.';
+                    buf[plen + 1] = ' ';
+                }
+            } else {
+                // No popup text, just announce the diplomacy context
+                strncpy(buf, prefix, sizeof(buf) - 1);
+                buf[sizeof(buf) - 1] = '\0';
+                has_text = true;
+            }
         }
 
         int options = sr_popup_list_parse(filename, label);
@@ -1310,6 +1455,7 @@ static void sr_post_popup() {
 
 static int __cdecl sr_hook_popp(const char* filename, const char* label,
                                 int a3, const char* pcx, int a5) {
+    // RULES checkbox popup goes through x_pop, not popp — just pass through.
     sr_pre_popup(filename, label);
     int result = sr_orig_popp(filename, label, a3, pcx, a5);
     sr_post_popup();
@@ -1324,12 +1470,16 @@ static int __cdecl sr_hook_popb(const char* label, int flags,
     return result;
 }
 
-// Saved original X_pop/X_pops function pointers
-static FX_pop sr_orig_x_pop = NULL;
+// Saved original X_pops function pointer (sr_orig_x_pop declared earlier)
 static FX_pops sr_orig_x_pops = NULL;
 
 static int __cdecl sr_hook_x_pop(const char* filename, const char* label,
                                   int a3, int a4, int a5, int a6) {
+    // Intercept RULES checkbox popup during game setup
+    if (sr_is_setup_rules_popup(filename, label)) {
+        sr_debug_log("RULES-CB: intercepted in x_pop, a3=%d a5=0x%X", a3, a5);
+        return sr_intercept_rules_popup(filename, label, a3, a4, a5, a6);
+    }
     sr_pre_popup(filename, label);
     int result = sr_orig_x_pop(filename, label, a3, a4, a5, a6);
     sr_post_popup();
@@ -1339,6 +1489,11 @@ static int __cdecl sr_hook_x_pop(const char* filename, const char* label,
 static int __cdecl sr_hook_x_pops(const char* filename, const char* label,
                                    int a3, int a4, int a5, int a6,
                                    int a7, int a8, int a9) {
+    // Intercept RULES checkbox popup during game setup
+    if (sr_is_setup_rules_popup(filename, label)) {
+        sr_debug_log("RULES-CB: intercepted in x_pops, a3=%d", a3);
+        return sr_intercept_rules_popup(filename, label, a3, a4, a5, a6);
+    }
     sr_pre_popup(filename, label);
     int result = sr_orig_x_pops(filename, label, a3, a4, a5, a6, a7, a8, a9);
     sr_post_popup();
@@ -1347,6 +1502,7 @@ static int __cdecl sr_hook_x_pops(const char* filename, const char* label,
 
 static int __cdecl sr_hook_interlude(int id, int a2, int a3, int a4) {
     sr_interlude_id = id;
+    game_log("Interlude %d", id);
     int result = sr_orig_interlude(id, a2, a3, a4);
     sr_interlude_id = -1;
     return result;
@@ -1403,6 +1559,16 @@ static void sr_substitute_vars(char* buf, int bufsize, int faction_id) {
         strncpy(buf, tmp, bufsize - 1);
         buf[bufsize - 1] = '\0';
     }
+
+    // Replace naked $FACTIONADJ0 (used in German script text)
+    p = strstr(buf, "$FACTIONADJ0");
+    if (p) {
+        int prefix = (int)(p - buf);
+        snprintf(tmp, sizeof(tmp), "%.*s%s%s", prefix, buf,
+            mf->adj_name_faction, p + 12);
+        strncpy(buf, tmp, bufsize - 1);
+        buf[bufsize - 1] = '\0';
+    }
 }
 
 /*
@@ -1417,11 +1583,15 @@ static int __cdecl sr_hook_planetfall(int faction_id) {
         MFaction* mf = &MFactions[faction_id];
 
         // Cha Dawn (FUNGBOY) uses #PLANETFALLF (born on Planet, not from Unity)
+        // Skip game's parse_string (substitute=false) — it gets $FACTIONADJ0
+        // wrong for custom factions. We do our own substitution instead.
         if (_stricmp(mf->filename, "FUNGBOY") == 0) {
-            announced = sr_read_popup_text(ScriptFile, "PLANETFALLF", buf, sizeof(buf));
+            announced = sr_read_popup_text(ScriptFile, "PLANETFALLF",
+                buf, sizeof(buf), false);
         }
         if (!announced) {
-            announced = sr_read_popup_text(ScriptFile, "PLANETFALL", buf, sizeof(buf));
+            announced = sr_read_popup_text(ScriptFile, "PLANETFALL",
+                buf, sizeof(buf), false);
         }
         if (announced) {
             sr_substitute_vars(buf, sizeof(buf), faction_id);
@@ -1437,159 +1607,49 @@ static int __cdecl sr_hook_planetfall(int faction_id) {
 
 // ========== File Browser (Load/Save Dialog) ==========
 
+#include "file_browser_handler.h"
+#include "plan.h" // reset_state()
+
 static fp_2int sr_orig_load_game = NULL;
-static bool sr_fb_active = false;
-
-// Lookup table: directory names found in current game file browser view.
-// Used to add "Folder" type marker when game renders a directory name.
-#define SR_FB_DIR_MAX 64
-static char sr_fb_dirs[SR_FB_DIR_MAX][256] = {};
-static int sr_fb_dir_count = 0;
-
-// Last announced text in file browser (dedup)
-static char sr_fb_last_announced[256] = {};
-
-// Scan a directory and store directory names for type lookup.
-// path must be an absolute path to scan.
-static void sr_fb_scan_dirs(const char* path) {
-    sr_fb_dir_count = 0;
-    char pattern[300];
-    snprintf(pattern, sizeof(pattern), "%s\\*", path);
-
-    WIN32_FIND_DATAA fd;
-    HANDLE hFind = FindFirstFileA(pattern, &fd);
-    if (hFind == INVALID_HANDLE_VALUE) {
-        sr_debug_log("FB-SCAN: FindFirstFile failed for %s", pattern);
-        return;
-    }
-    do {
-        if (sr_fb_dir_count >= SR_FB_DIR_MAX) break;
-        if (!(fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) continue;
-        if (strcmp(fd.cFileName, ".") == 0 || strcmp(fd.cFileName, "..") == 0) continue;
-        strncpy(sr_fb_dirs[sr_fb_dir_count], fd.cFileName, 255);
-        sr_fb_dirs[sr_fb_dir_count][255] = '\0';
-        sr_fb_dir_count++;
-    } while (FindNextFileA(hFind, &fd));
-    FindClose(hFind);
-    sr_debug_log("FB-SCAN: %d directories in %s", sr_fb_dir_count, path);
-}
-
-// Check if a name matches a known directory from the last scan.
-static bool sr_fb_is_directory(const char* name) {
-    for (int i = 0; i < sr_fb_dir_count; i++) {
-        if (_stricmp(sr_fb_dirs[i], name) == 0) return true;
-    }
-    return false;
-}
+static fp_1int sr_orig_save_game = NULL;
 
 bool sr_file_browser_active() {
-    return sr_fb_active;
+    return FileBrowserHandler::IsActive();
 }
 
-// Called from gui.cpp when text is captured during file browser.
-// Announces file/directory names with type marker, and passes through
-// UI text (buttons, dialog options) without annotation.
+// Unused — kept for API compatibility, handler does its own announcements
 void sr_fb_on_text_captured(const char* text) {
-    if (!sr_fb_active || !text || !text[0]) return;
-
-    // Skip ".." (visual noise, not useful for SR)
-    if (strcmp(text, "..") == 0) return;
-
-    // Skip if same as last announced (dedup)
-    if (strcmp(text, sr_fb_last_announced) == 0) return;
-    strncpy(sr_fb_last_announced, text, 255);
-    sr_fb_last_announced[255] = '\0';
-
-    // Check if this is a UI button (OK, LADEN, ABBRECHEN, etc.)
-    // Announce these directly without type markers — they may be
-    // popup dialog options (e.g. overwrite confirmation).
-    if (strcmp(text, "OK") == 0 || strcmp(text, "LADEN") == 0
-        || strcmp(text, "LOAD") == 0 || strcmp(text, "SPEICHERN") == 0
-        || strcmp(text, "SAVE") == 0 || strcmp(text, "ABBRECHEN") == 0
-        || strcmp(text, "CANCEL") == 0) {
-        sr_output(text, true);
-        sr_debug_log("FB-BUTTON: %s", text);
-        return;
-    }
-
-    // Strip .SAV/.sav extension for display and type detection
-    char name[256];
-    strncpy(name, text, 255);
-    name[255] = '\0';
-    bool has_sav_ext = false;
-    int len = strlen(name);
-    if (len > 4) {
-        const char* ext = name + len - 4;
-        if (_stricmp(ext, ".SAV") == 0 || _stricmp(ext, ".sav") == 0) {
-            name[len - 4] = '\0';
-            has_sav_ext = true;
-        }
-    }
-
-    // Determine type — only announce positively identified items
-    const char* type;
-    if (sr_fb_is_directory(text)) {
-        type = loc(SR_FILE_FOLDER);
-    } else if (has_sav_ext) {
-        type = "SAV";
-    } else if (sr_fb_is_directory(name)) {
-        type = loc(SR_FILE_FOLDER);
-    } else {
-        // Unknown text (background game text, HUD noise) — skip
-        sr_debug_log("FB-SKIP unknown: %s", text);
-        return;
-    }
-
-    char buf[512];
-    snprintf(buf, sizeof(buf), "%s, %s", name, type);
-    sr_output(buf, true);
-    sr_debug_log("FB-ANNOUNCE: %s", buf);
-}
-
-// Rescan directories when game navigates to a new folder.
-// Called when game renders a new file list (detected by directory content change).
-void sr_fb_rescan_from_game_text() {
-    // Not needed in text-capture approach — we scan once at open
-}
-
-// Shared init/cleanup for load/save file browser hooks.
-static void sr_fb_open(const char* announcement) {
-    sr_output(announcement, true);
-    sr_fb_active = true;
-    sr_fb_last_announced[0] = '\0';
-    // Build absolute path to saves directory from game EXE location
-    char exepath[260] = {};
-    GetModuleFileNameA(NULL, exepath, sizeof(exepath) - 1);
-    char* last_sep = strrchr(exepath, '\\');
-    if (!last_sep) last_sep = strrchr(exepath, '/');
-    if (last_sep) *(last_sep + 1) = '\0';
-    char saves_path[260];
-    snprintf(saves_path, sizeof(saves_path), "%ssaves", exepath);
-    sr_debug_log("FB-INIT: saves=%s", saves_path);
-    sr_fb_scan_dirs(saves_path);
-}
-
-static void sr_fb_close(const char* label) {
-    sr_fb_active = false;
-    sr_fb_dir_count = 0;
-    sr_fb_last_announced[0] = '\0';
-    sr_debug_log("FB-CLOSE: %s returned", label);
+    (void)text;
 }
 
 static int __cdecl sr_hook_load_game(int a, int b) {
-    if (sr_is_available()) sr_fb_open(loc(SR_FILE_LOAD_GAME));
-    int result = sr_orig_load_game(a, b);
-    sr_fb_close("load_game");
-    return result;
+    if (sr_is_available()) {
+        const char* path = FileBrowserHandler::RunModal(false);
+        if (path && path[0]) {
+            sr_debug_log("FB-LOAD: loading %s", path);
+            reset_state();
+            return load_daemon(path, 0);
+        }
+        // Cancelled — return 0 (no file loaded)
+        sr_debug_log("FB-LOAD: cancelled, skipping game browser");
+        return 0;
+    }
+    // No screen reader — use original game file browser
+    return sr_orig_load_game(a, b);
 }
 
-static fp_1int sr_orig_save_game = NULL;
-
 static int __cdecl sr_hook_save_game(int a) {
-    if (sr_is_available()) sr_fb_open(loc(SR_FILE_SAVE_GAME));
-    int result = sr_orig_save_game(a);
-    sr_fb_close("save_game");
-    return result;
+    if (sr_is_available()) {
+        const char* path = FileBrowserHandler::RunModal(true);
+        if (path && path[0]) {
+            sr_debug_log("FB-SAVE: saving to %s", path);
+            save_daemon(path);
+            return 1;
+        }
+        sr_debug_log("FB-SAVE: cancelled");
+        return 0;
+    }
+    return sr_orig_save_game(a);
 }
 
 // ========== Planetary Council Hook ==========
@@ -1599,8 +1659,12 @@ static int __cdecl sr_hook_save_game(int a) {
 static fp_1int sr_orig_call_council = NULL;
 
 static int __cdecl sr_hook_call_council(int faction_id) {
+    sr_debug_log("COUNCIL HOOK: call_council(%d) human=%d sr=%d",
+        faction_id, is_human(faction_id), sr_is_available());
     CouncilHandler::OnCouncilOpen(faction_id);
+    sr_debug_log("COUNCIL HOOK: OnCouncilOpen done, IsActive=%d", CouncilHandler::IsActive());
     int result = sr_orig_call_council(faction_id);
+    sr_debug_log("COUNCIL HOOK: call_council returned %d", result);
     CouncilHandler::OnCouncilClose();
     return result;
 }
@@ -2192,7 +2256,7 @@ bool sr_install_text_hooks() {
     sr_hook_log("=== Hook Installation ===");
     // Allocate executable memory for trampolines
     // Each trampoline needs up to 32 bytes (stolen bytes + JMP)
-    const int SR_HOOK_SLOTS = 24; // 22 active + 2 spare — increase when adding hooks
+    const int SR_HOOK_SLOTS = 25; // 23 active + 2 spare — increase when adding hooks
     trampoline_mem = (uint8_t*)VirtualAlloc(NULL, SR_HOOK_SLOTS * 32,
         MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
     if (!trampoline_mem) {
@@ -2263,6 +2327,7 @@ bool sr_install_text_hooks() {
     // Install popup text capture hooks (inline hooks on popp/popb)
     int popup_hooked = sr_install_popup_hooks(slot);
     hooked += popup_hooked;
+    slot += popup_hooked * 32; // Advance past slots used by popup hooks
 
     // Hook load_game at 0x5AAAB0 (file browser for loading saves)
     tramp = install_inline_hook(0x5AAAB0, (void*)sr_hook_load_game, slot);
@@ -2282,15 +2347,14 @@ bool sr_install_text_hooks() {
         sr_hook_log("save_game hooked at 0x5A9EB0");
     }
 
-    // TODO: Hook call_council at 0x52C880 (Planetary Council)
-    // Hook function sr_hook_call_council not yet implemented.
-    // tramp = install_inline_hook(0x52C880, (void*)sr_hook_call_council, slot);
-    // if (tramp) {
-    //     sr_orig_call_council = (fp_1int)tramp;
-    //     slot += 32;
-    //     hooked++;
-    //     sr_hook_log("call_council hooked at 0x52C880");
-    // }
+    // Hook call_council at 0x52C880 (Planetary Council)
+    tramp = install_inline_hook(0x52C880, (void*)sr_hook_call_council, slot);
+    if (tramp) {
+        sr_orig_call_council = (fp_1int)tramp;
+        slot += 32;
+        hooked++;
+        sr_hook_log("call_council hooked at 0x52C880");
+    }
 
     // Hook pop_ask_number via function pointer redirect (no inline hook needed)
     sr_orig_pop_ask_number = pop_ask_number;
@@ -2299,7 +2363,7 @@ bool sr_install_text_hooks() {
     sr_hook_log("pop_ask_number redirected to sr_hook_pop_ask_number");
 
     char logbuf[128];
-    snprintf(logbuf, sizeof(logbuf), "sr_install_text_hooks: done (%d of 23 hooked)", hooked);
+    snprintf(logbuf, sizeof(logbuf), "sr_install_text_hooks: done (%d of 24 hooked)", hooked);
     sr_log(logbuf);
     sr_hook_log(logbuf);
     return true;

@@ -1,5 +1,6 @@
 
 #include "tech.h"
+#include "game_log.h"
 #include "message_handler.h"
 #include "screen_reader.h"
 #include "localization.h"
@@ -188,6 +189,9 @@ void __cdecl mod_tech_research(int faction_id, int value) {
                 debug("tech_advance %d %d %d %s\n", *CurrentTurn, faction_id, tech_id, tech_str(tech_id));
                 if (tech_id >= 0) {
                     mon_tech_discovered(faction_id, tech_id);
+                    if (is_human(faction_id)) {
+                        game_log("Tech discovered: %s", tech_str(tech_id));
+                    }
                 }
                 plr.tech_accumulated = 0;
                 if (!revised_tech_cost()) {
@@ -201,6 +205,9 @@ void __cdecl mod_tech_research(int faction_id, int value) {
                 debug("tech_secrets %d %d %d %s\n", *CurrentTurn, faction_id, tech_id, tech_str(tech_id));
                 if (tech_id >= 0) {
                     mon_tech_discovered(faction_id, tech_id);
+                    if (is_human(faction_id)) {
+                        game_log("Tech discovered: %s (stolen)", tech_str(tech_id));
+                    }
                 }
             }
         }
@@ -508,12 +515,30 @@ static int sr_tech_pick_specific(int faction_id) {
 
 // Accessible tech pick modal for screen reader users.
 // Handles both Blind Research (direction only) and normal (specific tech) modes.
+// Debounce: if the game calls tech_pick twice in quick succession (e.g. game start),
+// auto-select the second tech without showing the modal again.
 static int sr_tech_pick_modal(int faction_id) {
-    if (*GameRules & RULES_BLIND_RESEARCH) {
-        return sr_tech_pick_blind(faction_id);
-    } else {
-        return sr_tech_pick_specific(faction_id);
+    static DWORD last_pick_time = 0;
+    static int last_pick_faction = -1;
+    DWORD now = GetTickCount();
+    if (last_pick_faction == faction_id && (now - last_pick_time) < 2000) {
+        int tech_id = mod_tech_ai(faction_id);
+        sr_debug_log("sr_tech_pick_modal: auto-repeat faction=%d tech=%d %s",
+            faction_id, tech_id, tech_str(tech_id));
+        return tech_id;
     }
+
+    int result;
+    if (*GameRules & RULES_BLIND_RESEARCH) {
+        result = sr_tech_pick_blind(faction_id);
+    } else {
+        result = sr_tech_pick_specific(faction_id);
+    }
+    if (result >= 0) {
+        last_pick_time = GetTickCount();  // Use current time, not stale 'now' from before modal
+        last_pick_faction = faction_id;
+    }
+    return result;
 }
 
 /*

@@ -58,6 +58,26 @@ cp "$LANG_DIR/en.txt" "$STAGING/sr_lang/"
 cp "$LANG_DIR/de.txt" "$STAGING/sr_lang/"
 echo "  + sr_lang/en.txt, sr_lang/de.txt"
 
+# SMAC mod files (smac_only mode)
+SMAC_MOD_DIR="smac_mod"
+if [ -d "$SMAC_MOD_DIR" ]; then
+    mkdir -p "$STAGING/smac_mod"
+    cp "$SMAC_MOD_DIR/alphax.txt" "$STAGING/smac_mod/"
+    cp "$SMAC_MOD_DIR/helpx.txt" "$STAGING/smac_mod/"
+    cp "$SMAC_MOD_DIR/tutor.txt" "$STAGING/smac_mod/"
+    cp "$SMAC_MOD_DIR/conceptsx.txt" "$STAGING/smac_mod/"
+    echo "  + smac_mod/ (4 files)"
+    # Language-specific smac_mod variants
+    for lang_dir in "$SMAC_MOD_DIR"/*/; do
+        lang=$(basename "$lang_dir")
+        if [ -f "$lang_dir/alphax.txt" ]; then
+            mkdir -p "$STAGING/smac_mod/$lang"
+            cp "$lang_dir"/*.txt "$STAGING/smac_mod/$lang/"
+            echo "  + smac_mod/$lang/ ($(ls -1 "$lang_dir"/*.txt | wc -l) files)"
+        fi
+    done
+fi
+
 # Documentation
 cp README.md "$STAGING/"
 cp Details.md "$STAGING/"
@@ -105,6 +125,8 @@ echo "  SAAPI32.dll          - SAPI support"
 echo "  dolapi32.dll         - JAWS support"
 echo "  sr_lang/en.txt       - English screen reader text"
 echo "  sr_lang/de.txt       - German screen reader text"
+echo "  smac_mod/            - SMAC-in-SMACX mod files (English)"
+echo "  smac_mod/de/         - SMAC-in-SMACX mod files (German)"
 echo "  README.md            - Installation instructions"
 echo "  Details.md           - Thinker feature details"
 echo "  License.txt          - GPL license"

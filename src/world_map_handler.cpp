@@ -17,6 +17,7 @@
 #include "path.h"
 
 #include <algorithm>
+#include <set>
 #include <vector>
 
 namespace WorldMapHandler {
@@ -39,6 +40,7 @@ static bool sr_map_pending = false;
 
 // World map transition detection
 static bool sr_prev_on_world_map = false;
+static DWORD sr_last_on_world_map_time = 0;
 
 // Unit change detection
 static int sr_prev_unit = -1;
@@ -83,6 +85,10 @@ static const char* get_terraform_name(VEH* veh) {
         : Terraform[idx].name;
     if (!raw || !raw[0]) return NULL;
     return sr_game_str(raw);
+}
+
+static bool is_terraform_removal(uint8_t order) {
+    return order == ORDER_REMOVE_FUNGUS;
 }
 
 /// Diagnose why a unit could not move to (tx, ty) and announce the reason.
@@ -151,7 +157,7 @@ static int sr_tile_units(char* buf, int size, int x, int y, int faction) {
                 if (is_foreign) {
                     pos += snprintf(buf + pos, size - pos,
                         loc(SR_FOREIGN_UNIT_AT),
-                        MFactions[Vehs[i].faction_id].adj_name_faction, uname);
+                        sr_game_str(MFactions[Vehs[i].faction_id].adj_name_faction), uname);
                 } else {
                     pos += snprintf(buf + pos, size - pos,
                         loc(SR_UNIT_AT), uname);
@@ -160,7 +166,7 @@ static int sr_tile_units(char* buf, int size, int x, int y, int faction) {
                 if (is_foreign) {
                     pos += snprintf(buf + pos, size - pos,
                         ", %s %s",
-                        MFactions[Vehs[i].faction_id].adj_name_faction, uname);
+                        sr_game_str(MFactions[Vehs[i].faction_id].adj_name_faction), uname);
                 } else {
                     pos += snprintf(buf + pos, size - pos, ", %s", uname);
                 }
@@ -341,10 +347,10 @@ static int sr_tile_ownership(char* buf, int size, MAP* sq, int faction) {
             else if (has_treaty(faction, sq->owner, DIPLO_VENDETTA))
                 diplo_str = loc(SR_DIPLO_STATUS_VENDETTA);
             pos += snprintf(buf + pos, size - pos, loc(SR_TILE_OWNER_DIPLO),
-                MFactions[sq->owner].noun_faction, diplo_str);
+                sr_game_str(MFactions[sq->owner].noun_faction), diplo_str);
         } else {
             pos += snprintf(buf + pos, size - pos, loc(SR_TILE_OWNER),
-                MFactions[sq->owner].noun_faction);
+                sr_game_str(MFactions[sq->owner].noun_faction));
         }
     } else {
         pos += snprintf(buf + pos, size - pos, "%s", loc(SR_TILE_UNOWNED));
@@ -602,6 +608,7 @@ void OnTimer(DWORD now, bool on_world_map, GameWinState cur_win, int cur_popup,
         sr_debug_log("CURSOR-INIT (%d,%d)", sr_cursor_x, sr_cursor_y);
     }
     sr_prev_on_world_map = on_world_map;
+    if (on_world_map) sr_last_on_world_map_time = now;
 
     // Map position tracking with 150ms debounce
     if (on_world_map && *MapAreaX > 0 && *MapAreaY > 0) {
@@ -694,8 +701,10 @@ void OnTimer(DWORD now, bool on_world_map, GameWinState cur_win, int cur_popup,
                             int rate = Terraform[veh->order - ORDER_FARM].rate;
                             int done = rate - (int)veh->movement_turns;
                             char tf_buf[128];
+                            SrStr tf_str = is_terraform_removal(veh->order)
+                                ? SR_TERRAFORM_STATUS_REMOVE : SR_TERRAFORM_STATUS;
                             snprintf(tf_buf, sizeof(tf_buf),
-                                loc(SR_TERRAFORM_STATUS), tf_name, done, rate);
+                                loc(tf_str), tf_name, done, rate);
                             sr_output(tf_buf, false);
                         }
                     } else {
@@ -721,8 +730,10 @@ void OnTimer(DWORD now, bool on_world_map, GameWinState cur_win, int cur_popup,
                             int rate = Terraform[veh->order - ORDER_FARM].rate;
                             int done = rate - (int)veh->movement_turns;
                             char tf_buf[128];
+                            SrStr tf_str = is_terraform_removal(veh->order)
+                                ? SR_TERRAFORM_STATUS_REMOVE : SR_TERRAFORM_STATUS;
                             snprintf(tf_buf, sizeof(tf_buf),
-                                loc(SR_TERRAFORM_STATUS), tf_name, done, rate);
+                                loc(tf_str), tf_name, done, rate);
                             sr_output(tf_buf, false);
                         }
                     }
@@ -749,8 +760,10 @@ void OnTimer(DWORD now, bool on_world_map, GameWinState cur_win, int cur_popup,
                     if (tf_name) {
                         int rate = Terraform[prev_cur_order - ORDER_FARM].rate;
                         char tf_buf[128];
+                        SrStr tf_str = is_terraform_removal(prev_cur_order)
+                            ? SR_TERRAFORM_ORDER_REMOVE : SR_TERRAFORM_ORDER;
                         snprintf(tf_buf, sizeof(tf_buf),
-                            loc(SR_TERRAFORM_ORDER), tf_name, rate);
+                            loc(tf_str), tf_name, rate);
                         sr_debug_log("TERRAFORM-ORDER-ON-SWITCH: %s", tf_buf);
                         sr_output(tf_buf, true);
                     }
@@ -777,8 +790,10 @@ void OnTimer(DWORD now, bool on_world_map, GameWinState cur_win, int cur_popup,
                 if (tf_name) {
                     int rate = Terraform[cur_order - ORDER_FARM].rate;
                     char tf_buf[128];
+                    SrStr tf_str = is_terraform_removal(cur_order)
+                        ? SR_TERRAFORM_ORDER_REMOVE : SR_TERRAFORM_ORDER;
                     snprintf(tf_buf, sizeof(tf_buf),
-                        loc(SR_TERRAFORM_ORDER), tf_name, rate);
+                        loc(tf_str), tf_name, rate);
                     sr_debug_log("TERRAFORM-ORDER: %s", tf_buf);
                     sr_output(tf_buf, true);
                 }
@@ -881,8 +896,11 @@ bool HandleKey(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     if (sr_popup_is_active()) return false;
 
     GameWinState cur_win = current_window();
+    DWORD now = GetTickCount();
     bool on_world_map = (cur_win == GW_World
-        || (cur_win == GW_None && *PopupDialogState >= 2));
+        || (cur_win == GW_None && *PopupDialogState >= 2)
+        || (cur_win == GW_None && sr_last_on_world_map_time > 0
+            && (now - sr_last_on_world_map_time) < 500));
     if (!on_world_map) return false;
     if (msg != WM_KEYDOWN) return false;
 
@@ -932,6 +950,8 @@ bool HandleKey(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             sr_cursor_x = cx;
             sr_cursor_y = cy;
             sr_announce_tile(sr_cursor_x, sr_cursor_y);
+        } else if (sr_scan_matches(sx, sy, sr_scan_filter, faction)) {
+            sr_output(loc(SR_SCAN_NO_MORE), true);
         } else {
             sr_output(loc(SR_SCAN_NOT_FOUND), true);
         }
@@ -1590,17 +1610,17 @@ bool HandleKey(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     }
 
     // F (Long range fire) → accessible artillery modal
+    // Only intercept if selected unit can actually do artillery;
+    // otherwise let game handle F (former: remove fungus / build farm)
     if (wParam == 'F' && !ctrl_key_down() && !shift_key_down() && !alt_key_down()
         && !*GameHalted && cur_win == GW_World) {
         int veh_id = MapWin->iUnit;
         if (veh_id < 0 || !Vehs || *VehCount <= 0 || veh_id >= *VehCount) {
-            sr_output(loc(SR_NO_UNIT_SELECTED), true);
-            return true;
+            return false; // no unit — let game handle
         }
         VEH* veh = &Vehs[veh_id];
         if (!can_arty(veh->unit_id, true)) {
-            sr_output(loc(SR_ARTY_CANNOT), true);
-            return true;
+            return false; // not artillery capable — let game handle (former etc.)
         }
         if (!veh_ready(veh_id)) {
             sr_output(loc(SR_ARTY_CANNOT), true);
@@ -2640,6 +2660,78 @@ bool HandleKey(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             sr_game_str(v->name()), _tabCycleIndex + 1, (int)stack_units.size(), cx, cy);
 
         _tabCycleIndex++;
+        return true;
+    }
+
+    // Ctrl+Tab / Ctrl+Shift+Tab → cycle through own units with moves > 0 (one per tile)
+    if (wParam == VK_TAB && ctrl_key_down() && !alt_key_down()
+        && !*GameHalted && cur_win == GW_World) {
+        static std::vector<int> _cycleUnits;
+        static int _cycleIndex = 0;
+        static bool _cycleBuilt = false;
+        bool forward = !shift_key_down();
+
+        // Build/rebuild the unit list each time (units move, spend moves, etc.)
+        _cycleUnits.clear();
+        int faction = MapWin->cOwner;
+        // Track which tiles already have a unit in the list
+        std::set<int> seen_tiles;
+        for (int i = 0; i < *VehCount; i++) {
+            VEH* v = &Vehs[i];
+            if (v->faction_id != faction) continue;
+            int total_speed = veh_speed(i, 0);
+            int remaining = total_speed - (int)v->moves_spent;
+            if (remaining <= 0) continue;
+            int tile_key = v->y * 1024 + v->x;
+            if (seen_tiles.count(tile_key)) continue;
+            seen_tiles.insert(tile_key);
+            _cycleUnits.push_back(i);
+        }
+
+        if (_cycleUnits.empty()) {
+            sr_output(loc(SR_CYCLE_MOVABLE_NONE), true);
+            _cycleBuilt = false;
+            return true;
+        }
+
+        // Find current cursor position in the list to maintain context
+        if (!_cycleBuilt) {
+            _cycleIndex = 0;
+            _cycleBuilt = true;
+        }
+
+        // Advance index
+        int count = (int)_cycleUnits.size();
+        if (forward) {
+            _cycleIndex = (_cycleIndex + 1) % count;
+        } else {
+            _cycleIndex = (_cycleIndex - 1 + count) % count;
+        }
+
+        int vid = _cycleUnits[_cycleIndex];
+        VEH* v = &Vehs[vid];
+        int total_speed = veh_speed(vid, 0);
+        int remaining = max(0, total_speed - (int)v->moves_spent);
+        int disp_rem = remaining / Rules->move_rate_roads;
+        int disp_tot = total_speed / Rules->move_rate_roads;
+
+        // Center map and set cursor
+        MapWin_focus(MapWin, v->x, v->y);
+        sr_cursor_x = v->x;
+        sr_cursor_y = v->y;
+
+        // Announce
+        char buf[256];
+        snprintf(buf, sizeof(buf), loc(SR_CYCLE_MOVABLE_FMT),
+            sr_game_str(v->name()), v->x, v->y,
+            disp_rem, disp_tot,
+            _cycleIndex + 1, count);
+        sr_output(buf, true);
+
+        sr_debug_log("CYCLE-MOVABLE: %s at (%d,%d), %d/%d moves, %d of %d",
+            sr_game_str(v->name()), v->x, v->y, disp_rem, disp_tot,
+            _cycleIndex + 1, count);
+
         return true;
     }
 

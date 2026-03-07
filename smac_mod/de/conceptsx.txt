@@ -1,0 +1,1080 @@
+;
+; *************************************
+; *  SMAC-in-SMACX Mod / Thinker Mod  *
+; *************************************
+;
+; Basierend auf der SMACX GOG-Version. SMACX-Konzepte entfernt oder versteckt.
+; -cmc 2014
+;
+
+#TITLES
+Niederschlag
+Felsen
+Höhe
+Brüderschaftspakt
+Freundschaftsvertrag
+Friedensschwur
+Vendetta
+Integrität
+Greueltat
+Drohnen-Aufstände 
+Goldenes Zeitalter
+Moral
+Monolithe
+Artefakte
+Fungus/Xenofungus
+PSI-Kampf 
+Wegpunkte
+Patrouille
+Entdecken (Gouverneur)
+Forschen (Gouverneur)
+Bauen (Gouverneur)
+Kämpfen (Gouverneur)
+Schaden und Reparatur
+Prototypen
+Einheits-Kosten (Einfach)
+Ineffizienz (Einfach)
+Ökologie (Einfach)
+Planeten-Konzil
+Planeten-Gouverneur
+Handel (Einfach)
+Sieg und Niederlage
+Territorium/Grenzen
+Macht
+Auflösen
+Kontrollzone
+Bombenangriff
+Drohnen
+Talente
+Psycho
+Landschaftsmerkmale, Vulkane, usw.
+Ratsvorschläge
+Nahrung
+Mineralien
+Energie
+Wirtschaft
+Labors
+Energiereserven
+
+#ADVTITLES
+Einheits-Kosten (Fortgeschr.)
+Ineffizienz (Fortgeschr.)
+Ökologie (Fortgeschr.)
+Handel (Fortgeschr.)
+Punktzahl
+Sieg (Diplomatie)
+Sieg (Eroberung)
+Sieg (Transzendenz)
+Sieg (Wirtschaft)
+Sieg (Szenario)
+Pensionierung
+Machtformel
+Drohnen (Fortgeschritten)
+Bürokratie
+
+#CONCEPT0
+Der {Niederschlag} in einer Region bestimmt, wieviel $LINK<Nahrung=41>
+produziert werden kann. Eine Region kann dürr, normal oder regnerisch sein,
+und dementsprechend 0, 1 oder 2 Nahrungseinheiten produzieren. Eine
+$LINK<Farm=90000> steigert die Nahrungsproduktion um eine Einheit.
+^
+Außer in Küsten- und tropischen Regionen, regnet es auch in den Westhängen von
+Bergketten (Aufwind) ziemlich oft, da sich die warme und feuchte Luft abkühlt,
+wenn sie steigt und dabei die Flüssigkeit als Niederschlag abgibt. Sie können
+dieses Phänomen zu Ihrem Vorteil nutzen, indem Sie östlich Ihrer Basen Berge
+anheben. Umgekehrt sind die Gebiete östlich von Bergketten (oder mit Abwind)
+sehr dürr.
+^
+Ozean-Felder produzieren 1 Nahrungseinheit, es sei denn Sie haben eine
+$LINK<Seetangfarm=90020>,angelegt. In diesem Fall werden 3 Nahrungseinheiten
+produziert.
+^
+Felder mit speziellen {Nahrungsressourcen} produzieren 2 zusätzliche
+Nahrungseinheiten, und Felder im $LINK<Monsun-Dschungel=39> produzieren
+1 weitere Nahrungseinheit.
+
+#CONCEPT1
+Die {Felsbeschaffenheit} in einem Gebiet bestimmt das Produktionspotential von
+$LINK<Mineralien=42>. Regionen können flach, hügelig oder felsig sein. {Flache}
+Regionen produzieren keine Mineralien, sofern dort keine $LINK<Minen=90002>
+angelegt wurden. Mit einer Mine können flache Regionen 1 Mineralieneinheit
+produzieren. In {hügeligen} Regionen wird 1 Mineralieneinheit produziert; wenn
+eine Mine angelegt wurde, werden 2 Mineralieneinheiten produziert. Unbebaute
+{felsige} Regionen produzieren ebenfalls 1 Mineralieneinheit, können aber
+mit einer Mine und Straßen bis zu 4 Mineralien abgeben.
+^
+Felsige Gebiete erschweren die Bewegung, wodurch Sie doppelt so lange brauchen,
+in das Feld einzudringen. Diese Gebiete bieten auch einen gewissen Vorteil bei
+der Abwehr in Kampfsituationen.
+^
+Auf Ozean-Feldern gewinnen Sie nur dann Mineralien, wenn Sie eine $LINK<Abbauplattform=90022>
+bauen; in diesem Fall produzieren diese Felder 2 Einheiten.
+^
+Felder mit speziellen {Mineralienressourcen} produzieren zusätzlich 2
+Mineralieneinheiten pro Runde; was mit einer Mine auf bis zu 3 Einheiten
+gesteigert werden kann. $LINK<Krater=39>-Felder produzieren ebenfalls
+1 weitere Mineralieneinheit.
+
+#CONCEPT2
+Die {Höhe} einer Region beeinflußt die $LINK<Energie=43>-Menge, die dort
+gewonnen werden kann. Um diese Energie aufzufangen, müssen Sie einen
+$LINK<Solarkollektor=90003> bauen. Gebiete in 1000 m Höhe über Meeresspiegel
+produzieren 1 Energieeinheit. In Gebieten von 1000 m bis auf 2000 m werden 2
+Einheiten produziert; in Höhen zwischen 2000 und 3000 m werden 3
+Energieeinheiten produziert, und über 3000 m über Meeresspiegel werden
+schließlich 4 Energieeinheiten produziert.
+^
+Ozean-Felder produzieren keine Energie, es sei denn, Sie bauen ein
+$LINK<Gezeitenkraftwerk=90023>. In diesem Fall produzieren sie 3
+Energieeinheiten.
+^
+Felder mit speziellen Energieeinheiten produzieren 2 weitere Energieeinheiten
+pro Runde. Felder in den $LINK<Uranebenen=39> und $LINK<Geothermalen Becken=39>
+produzieren 1 weitere Einheit.
+
+
+#CONCEPT3
+Ein {Brüder-/Schwesternschaftspakt} ist die nächstliegendste Form einer
+diplomatischen Beziehung, die Sie mit einer anderen Gruppierung eingehen können.
+Paktmitglieder können das Territorium der verbündeten Gruppierung frei betreten,
+ihre Einheiten auf von Einheiten der verbündeten Gruppierung besetzten Felder
+ziehen, sowie deren Basen frei betreten (um dort beispielsweise ihre Einheiten
+reparieren zu lassen).
+^
+Von Paktmitgliedern wird erwartet, daß sie bei feindlichen Angriffen einander
+unterstützen. Die $LINK<Handelserträge=29> zwischen ihren Basen {verdoppeln}
+sich; oftmals sind die Paktmitglieder gewillt, technologische
+Forschung mit der verbündeten Gruppierung zu teilen.
+^
+Ein Pakt kann jederzeit aufgehoben werden (z.B. durch Rechtsklick im
+Menü {Kommunikation}); wenn dies geschieht, werden alle Ihre Einheiten automatisch
+aus dem Territorium des/der ehemaligen Paktbruders/-schwester abgezogen und zur
+Heimatbasis transportiert und umgekehrt.
+
+#CONCEPT4
+Ein {Freundschaftsvertrag} wird mit der Absicht, eine permanente und anhaltend
+friedliche Beziehung zwischen zwei Gruppierungen zu sichern, abgeschlossen. Wenn
+Sie einen solchen Vertrag abgeschlossen haben, erhalten Sie $LINK<Handelserträge=29>
+zusammen mit Ihren neu gewonnenen Freunden. Sie können nicht in das Territorium
+einer Gruppierung eindringen, mit der Sie einen Friedensvertrag abgeschlossen
+haben, ohne daß es ein diplomatisches Nachspiel für Sie hat.
+^
+Ein Freundschaftsvertrag endet nur, wenn eine Gruppierung die andere angreift
+oder der rechtmäßigen Forderung nach einem Rückzug nicht nachkommt.
+
+#CONCEPT5
+Ein {Friedensschwur} markiert das Ende einer Vendetta zwischen zwei
+Gruppierungen. Es ist ein Versprechen, die andere Gruppierung für einen
+bestimmten Zeitraum nicht anzugreifen. Nach ca. 15 - 20 Jahren läuft dieser
+Zeitraum ab, und die zwei Gruppierungen können sich neutral gegenübertreten,
+es sei denn, daß sie einander wieder angreifen.
+^
+Theoretisch hindert Sie ein Friedensschwur nicht daran, in das Territorium der
+anderen Gruppierung einzudringen, möglicherweise wird das aber von den Anführern
+der anderen Gruppierungen anders gesehen.
+
+#CONCEPT6
+{Vendetta} ist eine Fehde zwischen zwei Gruppierungen. Wenn Sie einer anderen
+Gruppierung eine Vendetta angesagt haben (oder andersherum, eine andere
+Gruppierung Ihnen), müssen Sie damit rechnen angegriffen zu werden.
+
+#CONCEPT7
+{Integrität} mißt den gegenwärtigen Wert Ihres Ehrenworts als Oberhaupt einer
+Gruppierung. Wenn Sie Ihre Versprechen halten und Ihre Freunde nicht
+hintergehen, bleibt der Wert für Ihre Integrität hoch. Wenn Sie hingegen
+Gruppierungen angreifen, denen gegenüber Sie einen $LINK<Friedensschwur=5>
+abgelegt, bzw. mit denen Sie einen Freundschafts-$LINK<Vertrag=4> abgeschlossen
+haben, wird Ihr Integritätswert rapide sinken; die Anführer anderer
+Gruppierungen werden dann nicht mehr besonders erpicht darauf sein,
+Vereinbarungen mit Ihnen einzugehen.
+^
+Hinweis: Es ist generell nicht unehrenhaft einen Erzfeind anzugreifen,
+gegenüber dem Sie keinen Friedensschwur abgelegt haben. Ihre Integrität
+sinkt lediglich, wenn Sie eine Vereinbarung brechen.
+
+#CONCEPT8
+{Greueltaten} sind unter der U.N. Charta der Unity-Mission verbotene und
+besonders verabscheuungswürdige Taten. Greueltaten der ersten Stufe sind
+beispielsweise der Einsatz von Nervengas oder Genetische Kriegsführung, die
+Nervschneidung von Zivilisten, sowie Angriffe gegen die Zivilbevölkerung (wie
+etwa die beabsichtigte Zerstörung einer Basis). Der Einsatz von quasi-nuklearen
+Waffen, wie Planetenbomben, wird sogar als schwerwiegende Greueltat (der zweiten
+Stufe) betrachtet.
+^
+Wenn Sie eine Greueltat der ersten Stufe begehen, müssen Sie damit rechnen, daß
+Ihnen die anderen Gruppierungen für zehn Jahre oder länger Handelssanktionen
+auferlegen, und damit der Handel mit Ihren Vertragspartnern oder Paktmitgliedern
+komplett zum Stillstand kommt. Die Gruppierung, gegen die Sie eine Greueltat
+begangen haben, wird wahrscheinlich für immer Ihr Erzfeind bleiben.
+^
+Wenn Sie eine Greueltat der zweiten Stufe begehen, werden Sie vom
+$LINK<Planeten-Konzil=27> ausgeschlossen und die anderen Gruppierungen
+werden eine $LINK<Vendetta=6> gegen Sie verkünden.
+^
+Greueltaten der ersten Stufe zwischen Gruppierungen unterschiedlicher Spezies
+(z.B. den $LINK<Vorfahren=47> und den Menschen), provozieren keine Bestrafung durch
+die Anführer anderer Gruppierungen.
+
+#CONCEPT9
+{Drohnen-Aufstände} ereignen sich, wenn die Anzahl der $LINK<Drohnen=36> auf
+einer Basis die der $LINK<Talente=37> übersteigt. Während der Aufstände werden
+sich die Bürger weiterhin selbst ernähren, die Produktion kommt jedoch zum
+Stillstand, und es wird kein Energieüberschuß erzielt. Um Drohnen-Aufstände zu
+beenden, müssen Sie das Gleichgewicht zwischen Drohnen und Talenten
+wiederherstellen.
+^
+Drohnen-Aufstände können auf eine der folgenden Weisen verhindert (oder beendet)
+werden: (a) Der Bau von {Einrichtungen mit sozialpsychologischer Auswirkung} wie
+$LINK<Freizeitkuppeln=100006>, reduziert die Anzahl der Drohnen auf einer Basis.
+(b) Wenn Ihr sozialtechnischer Wert für $LINK<POLIZEI=130005> hoch genug ist,
+können Ihre Militäreinheiten auf Ihrer Basis als "POLIZEI" fungieren und für
+Ordnung sorgen. (c) Die Aufwertung von Arbeitern zu {Ärzten} erhöht die Anzahl
+der Talente, und stellt somit ein Gleichgewicht zu den Drohnen dar. (d) Wenn
+Ihre Basis genug Energie produziert, können Sie dem Bereich {Psycho} mehr
+Energie zuweisen und somit die Anzahl der Talente auf Ihrer Basis erhöhen, was
+einen Ausgleich zu den Drohnen darstellt (für jeweils zwei Punkte, die im
+Bereich Psycho produziert werden, gibt es ein Talent mehr).
+
+#CONCEPT10
+Ein {Goldenes Zeitalter} tritt ein, wenn es auf einer Basis keine
+$LINK<Drohnen=36> gibt, und die Anzahl der $LINK<Talente=37> mindestens der
+Anzahl der regulären Arbeiter und Spezialisten entspricht.
+^
+Ein Goldenes Zeitalter steigert die {Wachstumsrate} und {Energieproduktion}
+einer Basis erheblich - das $LINK<WACHSTUM=130006> entspricht etwa +2 auf dem
+Sozialtechnikdiagramm und +1 in der $LINK<WIRTSCHAFT=130000>.
+
+#CONCEPT11
+Die {Moral} spiegelt das Training und die Erfahrung Ihrer Militäreinheiten
+wider. Die Moralstufen reichen von "Sehr unerfahren" über "Unerfahren",
+"Normal", "Abgehärtet", "Veteran", "Sehr erfahren" bis zur "Elite". Eine
+Einheit erhält einen {Kampfbonus in Höhe von +12,5%} für jede Moralstufe.
+Die Moral spielt vor allem im PSI-Kampf, und im Kampf zwischen Sondierteams
+eine wichtige Rolle, da in diesen Fällen keine Waffen oder Panzerungswerte
+berücksichtigt werden.
+^
+Neue Einheiten beginnen in der Regel auf der Moralstufe {Unerfahren}. Diese
+Einstufung hängt jedoch von den sozialtechnischen Einstellungen für die
+$LINK<MORAL=130004> ab und kann höher oder niedriger sein. Die Moral einer neuen
+Einheit kann ebenso gesteigert werden, wenn es ein $LINK<Kommandozentale=100027>
+oder eine ähnliche {Einrichtung} auf der Basis gibt.
+^
+Außerirdische Einheiten, wie die Psycho-Viren haben {Lebenszyklen}, die auf die
+Moralstufen abgestimmt sind. Die außerirdischen Einheiten werden nicht durch
+Kommandozentren oder andere militärische Einrichtungen beeinflußt, ihre
+Lebenszyklus-Stufen können jedoch durch den Bau von $LINK<Biolabors=100009>
+und ähnlichen Einrichtungen verbessert werden. Die {Transportkapazität}
+einer $LINK<Insel der Tiefe=30009> wird durch ihre Lebenszyklus-Stufe
+bestimmt: eine Einheit für jede Stufe.
+^
+Eine im Kampf erfolgreiche Einheit erhält oftmals einen Moralschub (je
+niedriger die Moralstufe, desto größer die Wahrscheinlichkeit für eine Erhöhung
+der Moral).
+^
+{Eliteeinheiten} erhalten einen besonderen Bonus - sie dürfen pro Runde einmal
+mehr bewegt werden.
+^
+Eine Einheit mit einem "+"-Zeichen nach der Moralangabe besitzt einen Kampfbonus
+aufgrund ihres Standorts in einer Basis mit $LINK<Kinderkrippe=100002>.
+
+#CONCEPT12
+{Monolithe} sind geheimnisvolle und unerforschte außerirdische Phänomene, die
+auf dem Planeten entdeckt wurden. Ein Monolith steigert die $LINK<Moral=11>
+(oder den Lebenszyklus) einer Einheit um eine Stufe; eine Einheit kann jedoch
+nur einen einmaligen Monolith-Bonus erhalten (Tip: Sparen Sie sich diesen Bonus
+für die besonders anspruchsvolle Beförderung von Kommando zu Elite auf).
+^
+Ein Monolith hat außerdem die Fähigkeit eine beschädigte Einheit wieder komplett
+zu reparieren; dies kann unbegrenzt wiederholt werden, selbst wenn eine Einheit
+zuvor bereits schon einen Moralschub von einem Monolithen erhalten hat.
+^
+Monolith-Felder können auch zur Gewinnung von Ressourcen angezapft werden und
+produzieren $LINK<2 Nahrungseinheiten=41>, $LINK<2 Mineralien=42>, und
+$LINK<2 Energieeinheiten=43> pro Runde.
+
+#CONCEPT13
+{Artefakte} sind ebenfalls geheimnisvolle und unerforschte außerirdische
+Objekte, die auf dem Planeten entdeckt wurden. Wenn Sie ein Artefakt finden und
+zu Ihrer Basis zurückbefördern, stehen Ihnen mehrere Optionen zur Auswahl:
+(a) Sie können es an einen $LINK<Netzwerkknoten=100008> anschließen, wenn ein
+solcher vorhanden ist, und erhalten daraufhin eine kostenlose technologische
+Innovation. (b) Sie können es dazu einsetzen, die Produktion eines
+$LINK<Geheimprojekts=110102> bzw. einer Prototyp-Einheit zu beschleunigen. (c)
+Sie können es zur späteren Verwendung aufsparen.
+^
+Artefakte können auch von anderen Spielern erobert werden. Ein einzelnes
+Artefakt kann von jedem Spieler ohne diplomatische Nachteile erobert werden.
+
+#CONCEPT14
+{Xenofungus} oder {Fungus} ist eine auf Alpha Centauri beheimatet Gewächsart.
+Der Xenofungus hat einige ungewöhnliche Eigenschaften, auf die Sie u.U. während
+des Spielverlaufs stoßen werden. Zu den auffälligeren Eigenschaften zählen:
+^
+(1) Der Fungus erschwert die {Fortbewegung}. Einheiten haben möglicherweise
+Schwierigkeiten, in Fungus-Felder einzudringen. Sie können dieses Problem jedoch
+beheben, indem Sie den sozialtechnischen Wert $LINK<PLANET=130007> erhöhen. Der
+Bau eines Xenoempathie-Zentrums verbessert die Fungus-Bewegung erheblich.
+^
+(2) Der Fungus zeigt einige {defensive} Werte bei der Verteidigung gegen
+andere menschliche oder $LINK<Vorfahren=47>-Gruppierungen. Gegen außerirdische
+$LINK<Psycho-Viren=30008> hat der Fungus jedoch negative Werte.
+^
+(3) Fungus-Felder können zur Gewinnung von {Ressourcen} angezapft werden;
+die Menge an Ressourcen von einem Fungus-Feld hängt von der Anzahl der
+$LINK<Centauri-Technologien=140006> ab, die Sie bisher entdeckt haben.
+
+#CONCEPT15
+Einige Einheiten (meistens außerirdische Kreaturen wie 
+$LINK<Psycho-Viren=30008>) können einen sog. {PSI-KAMPF} führen. Im PSI-Kampf
+bleiben Waffen und Panzerungsstärken unberücksichtigt, und der Angreifer erhält
+einen 3:2 Vorteil zu Land (1:1 für den Seekampf). Die
+$LINK<MORAL=130004>-Stufe ist im PSI-Kampf von großer Bedeutung.
+
+#CONCEPT16
+{Wegpunkte} können festgelegt werden, wenn Sie einer Einheit den Befehl "Zu ...
+gehen" erteilen. Eine Möglichkeit Ihrer Einheit diesen Befehl zu erteilen, ist
+auf die jeweilige Einheit zu klicken, um sie zu aktivieren, und die Einheit dann
+mit der {linken Maustaste} an die gewünschte Stelle zu {klicken-und-ziehen} (es
+erscheint daraufhin ein "Bewegungspfeil"). Während der Bewegungspfeil über einem
+bestimmten Feld angezeigt wird, können Sie Wegpunkte festlegen, indem Sie die
+{LEERTASTE} drücken. Die Einheiten bewegen sich jeweils an allen Wegpunkten
+entlang, bis sie an ihrem Zielort angekommen sind. In ähnlicher Form können Sie
+Wegpunkte festlegen, wenn Sie Patrouillen-Befehle erteilen.
+
+#CONCEPT17
+Sie können einer Einheit eine {Patrouille} zuweisen, indem Sie auf die Einheit
+klicken, um sie zu aktivieren, und dann die Option Patrouille auf dem Menü
+Aktion auswählen. Halten Sie die linke Maustaste gedrückt, wenn der Patrouillen-
+Cursor angezeigt wird, und ziehen Sie den sog. "Patrouillen-Pfeil" in das
+Gebiet, das die Einheit patrouillieren soll. Die Einheit wird sich daraufhin
+zwischen ihrer gegenwärtigen Position und der von Ihnen festgelegten Position
+hin- und herbewegen und diese Gebiet patrouillieren. Die Einheit zeigt
+eigenständig "Initiative" und verlangt Befehle, wenn Sie auf feindliche
+Einheiten stößt. Sie können {Wegpunkte} in eine Patrouille einbauen, indem Sie
+die {LEERTASTE} drücken, während Sie den Patrouillien-Pfeil ziehen.
+
+#CONCEPT18
+Mit den Tasten ENTDECKEN, FORSCHEN, BAUEN und KÄMPFEN im Basis-Kontrollschirm
+aktivieren Sie den {Gouverneur} für die jeweilige Basis. Wenn der Gouverneur
+aktiviert wurde, trifft er auf der Grundlage seiner generellen Vorgaben
+automatisch Entscheidungen. Diese Funktion ist vor allem für Einsteiger und
+Spieler geeignet, die Ihre Basen nicht selbst bis ins kleinste Detail leiten
+möchten.
+^
+Die Taste {ENTDECKEN} weist den Gouverneur an, sich darauf zu konzentrieren,
+neue Territorien ausfindig zu machen und zu besetzen. Basen, die auf Entdecken
+ausgerichtet sind, konzentrieren sich meist auf den Bau von $LINK<Scouts=30002>,
+$LINK<Koloniekapseln=30000>, $LINK<Transportern=30003>, und 
+$LINK<Marine-Einheiten=40003> für Entdeckungsreisen auf den Ozeanen. Diese Taste
+ist vor allem zu Beginn des Spiels sehr nützlich, wenn Sie schnell expandieren
+müssen.
+
+#CONCEPT19
+Mit den Tasten Entdecken, Forschen, Bauen und Kämpfen im Basis-Kontrollschirm
+aktivieren Sie den {Gouverneur} für die jeweilige Basis. Wenn der Gouverneur
+aktiviert wurde, trifft er auf der Grundlage seiner generellen Vorgaben 
+automatisch Entscheidungen. Diese Funktion ist vor allem für Einsteiger und
+Spieler geeignet, die Ihre Basen nicht selbst bis ins kleinste Detail leiten
+möchten.
+^
+Die Taste {FORSCHEN} legt den Schwerpunkt auf wissenschaftliche Arbeit und
+technologische Innovationen. Der Gouverneur wird sich darauf konzentrieren,
+{wissenschaftliche Einrichtungen} wie $LINK<Netzwerkknoten=100008>,
+$LINK<Geheimprojekte=110102>, $LINK<Sondierteams=30006> und
+$LINK<Prototyp-Einheiten=23>. zu produzieren. Diese Taste ist vor
+allem dann effektiv, wenn Sie über große, gut geschützte Basen im
+Inneren Ihres Gebiets verfügen.
+
+#CONCEPT20
+Mit den Tasten Entdecken, Forschen, Bauen und Kämpfen im Basis-Kontrollschirm
+aktivieren Sie den {Gouverneur} für die jeweilige Basis. Wenn der Gouverneur
+aktiviert wurde, trifft er auf der Grundlage seiner generellen Vorgaben
+automatisch Entscheidungen. Diese Funktion ist vor allem für Einsteiger und
+Spieler geeignet, die Ihre Basen nicht selbst bis ins kleinste Detail leiten
+möchten.
+^
+Die Taste {BAUEN} fördert Infrastruktur und Wachstum. Der Gouverneur baut
+meistens {$LINK<Einrichtungen=100029> und $LINK<Former=30001>. Verwenden Sie
+diese Taste, wenn Sie das friedliche Wachstum Ihrer Basis steigern wollen.
+
+#CONCEPT21
+Mit den Tasten Entdecken, Forschen, Bauen und Kämpfen im Basis-Kontrollschirm
+aktivieren Sie den {Gouverneur} für die jeweilige Basis. Wenn der Gouverneur
+aktiviert wurde, trifft er auf der Grundlage seiner generellen Vorgaben
+automatisch Entscheidungen. Diese Funktion ist vor allem für Einsteiger und
+Spieler geeignet, die Ihre Basen nicht selbst bis ins kleinste Detail leiten
+möchten.
+^
+Verwenden Sie die Taste {KÄMPFEN}, um Ihre Streitkräfte zu stärken. In
+diesem Modus produziert die Basis {Militäreinheiten} jeglicher Art, sowie
+Unterstützungseinrichtungen wie $LINK<Kommandozentralen=100027>. Verwenden Sie
+diese Taste, wenn Sie sich auf Angriff oder Verteidigung vorbereiten wollen.
+
+#CONCEPT22
+Einheiten, die in Kämpfe verwickelt waren, können beschädigt werden. Der Schaden
+wird durch den farbigen Balken entlang der linken Seite des Statussymbols der
+Einheit dargestellt: Grün repräsentiert leichten (oder keinen) Schaden, Gelb und
+Rot verweisen auf zunehmende Beschädigung. 
+^
+Der Schaden kann behoben werden, wenn die Einheit in einer verbündeten Basis
+eine ganze Runde aussetzt (LEERTASTE). Eine stark beschädigte Einheit muß unter
+Umständen mehrere Runden aussetzen, bis sie wieder einsatzfähig ist. HINWEIS: In
+Runden, in denen Einheiten angegriffen oder bombardiert werden, kann kein
+Schaden behoben werden.
+^
+Einheiten können auch sog. "Feldreparaturen" (also nicht auf der Basis)
+durchführen, aber dies viel langsamer und ist nur wirksam, wenn der
+Schadenswert Ihrer Einheit unter 10% liegt.
+
+#CONCEPT23
+Mit dem Bildschirm Design-Workshop können Sie neue Einheiten entwerfen.
+Wenn Sie eine Einheit mit einer $LINK<Waffe=60005>, $LINK<Panzerung=70007>
+oder einem $LINK<Fahrzeugtypen=40006> entwerfen, die Sie noch nie zuvor benutzt
+haben, müssen Sie einen {Prototypen} der Einheit fertigstellen.
+^
+Zum Bau einer Prototyp-Einheit benötigen Sie zusätzlich {+50% Mineralien},
+erhalten jedoch einen Bonus in Form eines $LINK<Moralschubs von +1=11> als
+Ausgleich, da experimentelle Waffen oftmals nur an kampfstarke, gut
+ausgebildete Truppen ausgegeben werden.
+^
+Wenn Sie erst einmal eine Prototyp-Einheit fertiggestellt haben, können Sie
+solche Einheiten in Zukunft ohne zusätzliche Kosten bauen.
+
+#CONCEPT24
+Wenn Sie Einheiten entwerfen sollten Sie daran denken, daß Einheiten, die die
+Anforderungen für alle drei Bereiche ($LINK<Waffen=60005>, $LINK<Panzerung=70007> und
+$LINK<Fahrzeugtyp=40006>) erfüllen, wesentlich teurer sind, als wenn ihre Stärken
+nur in einem (oder zwei) Bereich(en) liegen.
+^
+Beispiel: Der Bau einer 4-3-2 Einheit kostet normalerweise 70 Mineralien,
+wohingegen der Bau einer 4-1-2 Einheit nur 30 und eine 4-3-1 Einheit nur 40
+Mineralien kostet. In diesem Fall können Sie zwei Einheiten für den Preis einer
+Einheit bauen; ganz zu schweigen von dem +25% Basisangriffs-Bonus, den die 4-3-1
+$LINK<Infanterie=40000>-Einheit erhalten wird.
+
+#CONCEPT25
+Mit dem Wachstum Ihrer Kolonie beanspruchen Sie auch mehr Territorium und bauen
+mehr Basen. Dieser Wachstum wird Ihre Wirtschaft belasten und tritt als
+{Ineffizienz} auf, wodurch Sie unter Umständen pro Runde einen gewissen Teil
+Ihrer $LINK<Energie=43>-Produktion einbüßen.
+^
+Je weiter eine Basis von Ihrer $LINK<Hauptquartier=100001>-Basis entfernt ist,
+desto größer wird die Ineffezienz.
+^
+Die Ineffizienz auf Ihren Basen kann durch sozialtechnische Entscheidungen
+gelindert werden, die die $LINK<EFFIZIENZ=130001> erhöhen. Eine
+$LINK<demokratische=120003> Gesellschafts- oder $LINK<grüne=120009>
+Wirtschaftsform erhöhen beispielsweise die Effizienz.
+^
+Die Ineffizienz einer bestimmten Basis, kann durch die Einrichtung
+einer $LINK<Kinderkrippe=100002> auf dieser Basis gemäßigt werden.
+
+#CONCEPT26
+Bei der Ausbreitung der Menschen bzw. der $LINK<Vorfahren=47> auf dem
+Planeten und dem weiteren Bau von Kolonien, wird dem Planeten unvermeidlich
+ökologischer Schaden zugefügt. Ökologischer Schaden erhöht die Wahrscheinlichkeit,
+daß die auf dem Planet beheimateten Lebensformen intervenieren oder
+unerwartete Auswirkungen auftreten.
+^
+Je mehr $LINK<Minen=90002>, $LINK<Solarkollektoren=90003>,
+$LINK<Straßen=90005> und $LINK<Farmen=90000> Sie bauen, desto höher ist
+das Schadenspotential. Das gilt jedoch nicht für $LINK<Wälder=90004>,
+die positive Auswirkungen auf die Ökologie des Planeten haben.
+$LINK<Bohrlöcher=90014>, $LINK<Spiegel=90013> und $LINK<Kondensatoren=90012>
+verursachen sogar noch mehr Schaden. Sie können diese Schäden reduzieren,
+bzw. beheben, indem Sie $LINK<Baumfarmen=100013> und $LINK<Hybride Wälder=100014>
+einrichten.
+^
+Mit der Steigerung Ihrer industriellen Förderung von (Mineralien), findet
+ebenfalls eine Schädigung der Ökologie statt. Diese Folge kann durch den Bau
+folgender Einrichtungen reduziert werden: $LINK<Centauri-Reservate=100031>,
+$LINK<Planeten-Tempel=100032> und $LINK<Nanoreplikatoren=100020>.
+
+#CONCEPT27
+Wenn Sie soweit sind, daß alle Gruppierungen Frequenzen für
+Kommunikationsverbindungen erlangt haben, können Sie das {Planeten-Konzil}
+einberufen, um über planetarische Politik - einschließlich
+der Wahl einen $LINK<Planeten-Gouverneurs=28> - abzustimmen.
+^
+In den Wahlen zum Planeten-Gouverneur (und $LINK<Oberbefehlshaber=10005>) ist
+jede Gruppierung entsprechend der Gesamtgröße aller ihrer Basen stimm-
+berechtigt. Dieser Wert wird außerdem noch durch die Stärke der Gruppierung,
+sowie deren $LINK<Geheimprojekte=110102> beeinflußt. Nur das Oberhaupt einer
+der beiden Gruppierungen mit der höchsten Stimmberechtigung kann sich zur Wahl
+des Gouverneurs oder des Oberbefehlshabers aufstellen lassen.
+^
+In Wahlen, die die planetarische Politik betreffen, erhält jede Gruppierung
+eine Stimme. Bei diesen Wahlen hat der amtierende Planeten-Gouverneur das
+Vetorecht, das nur durch ein einstimmiges Votum aller anderen Gruppierungen
+überstimmt werden kann.
+
+#CONCEPT28
+Der {Planeten-Gouverneur} hat bei allen Abstimmungen über planetarische Politik
+das exekutive Vetorecht. Aufgrund des erhöhten Handelsaufkommens, das
+von Globalen Institutionen verursacht wird, erhält er auch {+1 Energieeinheit}
+in jeder Basis bei $LINK<Handels=29>-Geschäften mit verbündeten Gruppierungen.
+Die planetarische Verwaltung besorgt dem Gouverneur einen Spion
+in jeder anderen Gruppierung.
+
+#CONCEPT29
+{Handelserträge} sind Bonus-Energie aus der Geschäftstätigkeit zweier 
+befreundeter Gruppierungen. Wenn Sie einen $LINK<Vertrag=4> oder $LINK<Pakt=3>
+mit einer anderen Gruppierung eingehen, werden Ihre Basen automatisch beginnen,
+Handelserträge zu generieren (dieser Vorteil kommt Ihrer Partner-Gruppierung
+ebenso zugute).
+^
+Der Handel wird unterbrochen, wenn es zwischen zwei Gruppierungen zu einer
+$LINK<Vendetta=6> kommt oder Sanktionen gegen eine Gruppe verhängt werden, die
+eine $LINK<Greueltat=8> begangen hat. Stellen Sie sich den Handel als Belohnung
+für friedliches Verhalten vor.
+^
+Von jeweils zwei Gruppierungen profitiert diejenige mehr, die die meisten
+$LINK<Wirtschaftstechnologien=140045> entdeckt hat. Direktor Morgan erhält
+hier kraft seiner Stellung zusätzliche Boni. Handel kommt unter Umständen
+auch dem gegenwärtigen $LINK<Planeten-Gouverneur=28> zugute.
+^
+^Sie können Ihre Handelserträge durch folgende Maßnahmen erhöhen: 
+^* Mehr Verträge unterzeichnen.
+^* Mehr Pakte eingehen (Pakte bringen doppelt so viel Handelserträge ein).
+^* Die Größe und Wirtschaft Ihrer Basen steigern ("man braucht Energie, um
+Energie zu erzeugen").
+^* Mehr wirtschaftsbezogene Technologien entdecken.
+^
+Zu den wirtschaftsbezogenen Technologien Wirtschaft gehören
+$LINK<Industrielle Ökonomie=140045>, $LINK<Industrielle Automation=140046>,
+$LINK<Planetare Ökonomie=140061>, $LINK<Industrielle Nanorobotik=140073>,
+$LINK<Intelligente Ökonometrie=140075>, und $LINK<Umweltökonomie=140059>.
+
+#CONCEPT30
+Es gibt fünf Hauptwege, mit denen Sie das Spiel gewinnen können:
+^
+^$LINK<Transzendenz-Sieg=10007>
+^$LINK<Eroberungssieg=10006>
+^$LINK<Vorfahren-Sieg=10014>
+^$LINK<Diplomatischer Sieg=10005>
+^$LINK<Wirtschaftlicher Sieg=10008>
+^$LINK<Szenari-Sieg=10009>
+^
+Genaue Informationen über die Vergabe von Punkten finden sich unter
+$LINK<Punkte vergeben=10004>.
+^
+Genaue Informationen über die Beendung des Spiels bzw. Zwangspensionierung
+finden sich unter $LINK<Pensionierung=10010>.
+
+#CONCEPT31
+Ihr {Gebiet} besteht aus der gesamten Landfläche, die auf demselben Kontinent
+näher an einer Ihrer Landbasen liegen als die eines anderen Spielers. Ihre
+Wassergebiete bestehen aus all den Wasserfeldern, die einer Ihrer auf See
+befindlichen Basen (im selben Ozean) näher liegen als die eines anderen
+Spielers. Im Laufe des Spiels können sich die Gebiete verändern oder
+verschieben, wenn Basen gebaut, erobert oder zerstört werden.
+^
+Andere Anführer könnten empfindlich reagieren, wenn Sie Einheiten auf ihr Gebiet
+senden, besonders wenn Sie einen $LINK<Freundschaftsvertrag=4> unterzeichnet
+haben.
+^
+Ein Gebiet geht nie über 7 Felder von einer Landbasis und 3 von einer Basis auf
+See hinaus. 
+
+#CONCEPT32
+Ihre {Macht} ist ein Hinweis auf Ihren Gesamtstatus gegenüber anderen
+Gruppierungen. Ihr Gesamtstatus reicht von "Unübertroffen" (erster Platz),
+bis "Schwach" (siebter Platz).
+^
+Die Macht basiert auf einer Gesamtbewertung Ihrer Gruppe und schließt
+Bevölkerung, $LINK<Technologie=140080>, $LINK<Geheimprojekte=110102>
+und Militärstärke ein.
+^
+Die {Gruppendominanz}-Graphiken auf der Informationsanzeige zeigen die Macht an.
+
+#CONCEPT33
+Schnelle Einheiten wie Speeder und Schwebepanzer können sich manchmal
+{auflösen,} wenn sie von langsameren feindlichen Einheiten überrascht werden.
+Eine Einheit löst sich auf, wenn die folgenden Bedingungen eintreten:
+^
+^* Die Einheit erleidet Schäden von 50% gegenüber dem Stand zu Anfang der
+Schlacht.
+^* Die Einheit ist trotz Schäden schneller als ihr Angreifer.
+^* Die Einheit befindet sich allein auf ihrem Feld.
+^* Die Einheit hat in ihrer letzten Runde niemanden angegriffen.
+^* Es handelt sich um eine Kampfeinheit (nur Kampfeinheiten können sich
+auflösen).
+^* Weder Angreifer noch Verteidiger ist eine Luft-Einheit.
+^* Der Angreifer hat kein $LINK<Funkstörgerät=80009>.
+^* Die Einheit hat keinen Befehl die POSITION ZU HALTEN, und befindet sich weder
+in einem $LINK<Bunker=90007>, noch auf einem $LINK<Luftstützpunkt=90008>.
+* Ein gültiges Rückzugsfeld ist verfügbar, das kein $LINK<Fungus=14>-Feld ist,
+es sei denn, es handelt sich um das $LINK<Pholus-Mutagen=110086>), und befindet
+sich nicht direkt neben einer feindlichen Einheit.
+
+#CONCEPT34
+Jede Einheit dehnt ihre {Kontrollzone} auf jedes benachbarte Feld aus (doch
+Einheiten auf Feldern auf See dehnen ihre Kontrollzonen nicht auf Land-Felder
+aus oder umgekehrt).
+^
+Land-Einheiten dürfen in der Regel nicht näher als bis zwei Felder an eine
+feindliche Kontrollzone heranrücken, aber es gibt folgende Ausnahmen:
+^* Einheiten dürfen frei auf einer Basis landen und diese verlassen.
+^* Einheiten dürfen benachbarte Einheiten angreifen.
+^* Einheiten dürfen auf Feldern landen, auf denen sich bereits befreundete
+Einheiten befinden.
+^* $LINK<Sondierteams=30006> sowie Einheiten mit $LINK<Tarnung=80002> 
+können diese Regel ignorieren.
+^
+Luft- und See-Einheiten setzen Kontrollzonen ein, werden jedoch nicht von ihnen
+betroffen. 
+
+#CONCEPT35
+See-Einheiten sowie Land-Einheiten mit $LINK<schwerer Artillerie=80015> dürfen
+{Bombenangriffe} vornehmen, indem sie die Option "Langstreckenfeuer" im
+Menü "Aktionen" auswählen.
+^
+Bombenangriffe haben den Vorteil, potentiell jede feindliche Einheit auf
+einem Feld zu beschädigen, und den Nachteil, daß Landeinheiten nie mehr
+als 50% Schäden durch Bombardierungen erleiden können. 
+^
+Sollte der Versuch eines Bombenangriffs gegen ein Feld mit einer feindlichen
+Marine- oder Artillerieeinheit unternommen werden, so wird sie storniert und ein
+{Artillerie-Duell} eingeleitet, wobei die angreifenden und die verteidigenden
+Artillerie- (oder See-) Einheiten mit Angreifer-gegen-Angreifer-Stärke
+kämpfen. Panzerungswerte werden bei Artillerie-Duellen ignoriert.
+
+#CONCEPT36
+{Drohnen} sind unzufriedene, schlecht ausgebildete Bürger, die als Folge von
+Bevölkerungsdruck und anderen Gesellschaftskräften erscheinen. Sie arbeiten wie
+andere Bürger, doch wenn eine Basis mehr Drohnen als $LINK<Talente=37> hat, kann
+es zu einem $LINK<Drohnen-Aufstand=9> kommen.
+
+#CONCEPT37
+{Talente} sind wohlhabende, gut ausgebildete Bürger, Ihre intellektuelle
+Elite. Talente erstehen in guten gesellschaftlichen Umständen und durch die
+Umwandlung von Energie in $LINK<Psycho=38>. Solange eine Basis mindestens so
+viele Talente wie $LINK<Drohnen=36> hat, wird es nicht zu
+$LINK<Drohnen-Aufständen=9> kommen.
+
+#CONCEPT38
+In {Psycho} umgewandelte Energie wird zur Verbesserung der Lebensqualität
+Ihrer Bürger verwendet. Je zwei in Psycho umgewandelte Energieeinheiten
+erzeugen ein weiteres {Talent} auf der jeweiligen Basis.
+
+#CONCEPT39
+Bestimmte wichtige {Landschaftsmerkmale} auf der Oberfläche des Planeten
+beinhalten besondere Boni:
+^
+^Der {Garland-Krater} (Garland Crater) beinhaltet $LINK<+1 Mineralieneinheit=42> in Feldern im
+Landesinnern.
+^{Mount Planet} beinhaltet $LINK<+1 Mineralieneinheit=42> und $LINK<+1
+Energieeinheit=43> für jedes Feld um den Fuß des Berges herum.
+^Die {Uranebenen} (Uranium Flats) beinhalten $LINK<+1 Energieeinheit=43> pro Feld.
+^Das {Geothermale Becken} (Geothermal Shallows) beinhaltet $LINK<+1 Energieeinheit=43> pro Feld.
+^Der {Pholus-Höhenzug} (Pholus Ridge) beinhaltet $LINK<+1 Energieeinheit=43> pro Feld.
+^Der {Monsun-Dschungel} (Monsoon Jungle) beinhaltet $LINK<+1 Nahrungseinheit=41> pro Feld.
+^Das {Süßwassermeer} (Freshwater Sea) beinhaltet $LINK<+1 Nahrungseinheit=41> pro Feld.
+^Das {Fossilriff} (Fossil Field Ridge) beinhaltet $LINK<+1 Mineralieneinheit=42> pro Feld.
+^Die {Manifold-Zentrale} (Manifold Nexus) enthält eine Einstufung von $LINK<+1 für PLANET=130007>,
+wenn sie sich innerhalb der Grenzen der Gruppierung befindet.
+^
+Andere Landschaftsmerkmale haben außer der Geländeart, die sie
+repräsentieren, keine Auswirkungen. 
+
+#CONCEPT40
+Die folgenden Vorschläge können vor das Planeten-Konzil gebracht werden, wenn
+die entsprechende Technologie erst einmal gefunden wurde:
+^
+^Den {Fusionskern der Unity bergen}: +500 Energieeinheiten pro Gruppe
+^{Globaler Handelspakt}: Der Handel wird auf dem gesamten Planeten verdoppelt.
+^{Handelspakt auflösen}: Der Handel fällt auf den ursprünglichen Stand zurück.
+^{Solarschirm starten}: Globale Abkühlung; Meeresspiegel sinken.
+^{Polareis schmelzen}: Globaler Temperaturanstieg; Meeresspiegel steigen.
+^{UN-Charta kündigen}: Bann von Greueltaten ist aufgehoben.
+^
+Das Konzil wählt außerdem den $LINK<Planeten-Gouverneur=28> durch
+Stimmenmehrheit der Bevölkerung, und mit einer 3/4-Stimmenmehrheit der
+Bevölkerung kann es einen Oberbefehlshaber wählen und somit einen
+$LINK<diplomatischen Sieg=10005> erzielen.
+
+#CONCEPT41
+{Nahrung} wird in Feldern mit ausreichend $LINK<Niederschlag=0> produziert und
+manchmal durch zusätzliche $LINK<Farmen=90000> und ähnliche Verbesserungen 
+unterstützt.
+^
+Jeder Bürger auf einer Basis muß pro Runde zwei Nahrungseinheiten "aufnehmen",
+um zu überleben.
+^
+Überschüssige Nahrung wird gespeichert. Wenn ausreichend überschüssige Nahrung
+gespeichert ist, wächst eine Basis, und damit werden neue Bürger produziert.
+
+#CONCEPT42
+{Mineralien} werden auf Feldern mit ausreichend $LINK<Felsen=1> produziert, die
+manchmal von zusätzlichen $LINK<Minen=90002> und ähnlichen Verbesserungen
+unterstützt werden.
+^
+Wenn eine Basis ihre kostenlose $LINK<UNTERSTÜTZUNGS=130002>-Grenze überstiegen
+hat, verbrauchen zusätzliche (Militär- oder Zivil-) Einheiten je eine Mineralie
+pro unterstützte Runde. 
+^
+Überschüssige Mineralien werden für die Produktion von
+$LINK<Einrichtungen=100029>, Einheiten und $LINK<Geheimprojekten=110102>
+verwendet, die eine Basis aufbaut. Wenn ausreichend Mineralien angesammelt sind,
+wird eine Einrichtung oder Einheit errichtet.
+
+#CONCEPT43
+{Energie} wird in Feldern mit $LINK<Solarkollektoren=90003> produziert, vor
+allem in denjenigen in großer $LINK<Höhe=2>.
+^
+Je nach Verteilung der Energie, die Sie auf dem Bildschirm Sozialtechnik
+vorgenommen haben, wird jegliche von Ihnen produzierte Energie zwischen drei
+Prioritäten aufgeteilt: $LINK<Ökonomie=44>, $LINK<Labors=45> und
+$LINK<Psycho=38>. Teile der auf einer Basis produzierten Energie kann auch
+durch $LINK<Ineffizienz=25> verloren gehen.
+
+#CONCEPT44
+Die Ihrer {Wirtschaft} zugeteilte $LINK<Energie=43> wird als Energieguthaben
+Ihren $LINK<Energiereserven=46> zugerechnet, die als Staatskasse für
+Transaktionen dient, die Geld erfordern.
+
+#CONCEPT45
+Die den {Labors} zugeteilte $LINK<Energie=43> wird für wissenschaftliche
+Forschungsprogramme verwendet. Je mehr Energie Sie den Labors zuteilen, desto
+schneller werden Sie technologische Neuerungen erfinden.
+
+#CONCEPT46
+Ihre {Energiereserven} repräsentieren gespeicherte Energie. Ihre Reserven dienen
+als Kasse für Transaktionen, die Geld erfordern. 
+^
+Ihre Energiereserven wachsen an je nach der Menge der $LINK<Energie=43>, die
+Sie auf dem Bildschirm Sozialtechnik der $LINK<Ökonomie=44> zuteilen. 
+
+
+#ADVCONCEPT0
+Wenn Sie Einheiten entwerfen, sollten Sie daran denken, daß Einheiten, die in
+allen drei Bereichen ($LINK<Waffen=60005>, $LINK<Panzerung=70007> und
+$LINK<Fahrzeugtyp=40006>) ausgezeichnet sind, wesentlich teurer sind, wie wenn
+ihre Stärken nur auf einem (oder zwei) Bereich(en) liegen. Die Grundformel zur
+Kostenberechnung (für die es mehrere Ableitungen gibt) lautet:
+^
+^Kosten = Waffen * (Panzerung + Geschwindigk.) * 10 / (2 ^ (Reaktor + 1))
+^
+^* Der Wert der Waffen beträgt niemals weniger als die Hälfte des Werts der
+Panzerung.
+^* Einheiten, die nicht im Kampf eingesetzt werden, ersetzen den Waffenwert mit
+"Ausrüstungskosten".
+^* Die Kosten für Einheiten mit 1 Geschwindigkeit sind halbiert.
+^* Die Kosten für Marine-Einheiten sind halbiert, Panzerung wird mit 50%
+ermäßigt.
+^* Die Kosten für Luftkampf-Einheiten betragen ein Viertel.
+^* Die Kosten für Panzerung sind doppelt so hoch für Luft-Einheiten.
+^* Zu den Kosten werden +25% für $LINK<Spezialfähigkeiten=80008> aufgeschlagen.
+^* Die Kosten betragen zusätzlich +10 Mineralien, wenn der Wert für Waffen,
+sowohl Panzerung größer als 1 ist.
+^* Die Kosten betragen zusätzlich  +10 Mineralien, wenn der Wert für Waffen
+Panzerung und Geschwindigkeit von Land-Einheiten größer ist als 1.
+^* Mindestkosten (Reaktor*2 - Reaktor/2)*10, es sei denn alle Werte betragen 1.
+
+
+#ADVCONCEPT1
+Die Formel zur Berechnung des Energieverlusts einer Basis durch {Ineffizienz}
+lautet:
+^
+^Ineffizienz = (Energie * Entfernung / (64 - ((4 - Effizienz) * 8))
+^
+^Energie | Die Energiemenge, die pro Runde von der Basis produziert wird.
+^Entfernung | Die Entfernung zur $LINK<Hauptquartier=100001>-Basis (16, falls es
+kein Hauptquartier gibt).
+^Effizienz | Sozialtechnische $LINK<EFFIZIENZ=130001> (+2 wenn eine
+$LINK<Kinderkrippe=100002> vorhanden ist).
+^
+^* Wenn der Nenner Null beträgt, geht die GESAMTE Energie aufgrund von
+Ineffizienz verloren.
+
+#ADVCONCEPT2
+Die Formel für ökologischen Schaden ist komplex:
+^(1) Addieren Sie die Anzahl aller $LINK<Minen=90002>,
+$LINK<Solarkollektoren=90003>, $LINK<Farmen=90000>,
+$LINK<Bodenanreicherungsanlagen=90001>, $LINK<Straßen=90005>,
+$LINK<Magnet-Röhren=90006>, $LINK<Kondensatoren,=90012> $LINK<Spiegel=90013> und
+$LINK<Bohrlöcher=90014> auf jeder Basis. Einrichtungen in Klammern,
+die aktiv sind, zählen dabei doppelt.
+^(2) Addieren Sie weitere +8 für jedes Bohrloch, +6 für jeden Spiegel und +4 für jeden Kondensator.
+^(3) Subtrahieren Sie 1 für jeden $LINK<Wald=90004>.
+^(4) Halbieren Sie den Wert, wenn die Basis eine $LINK<Baumfarm=100013> hat,
+und lassen Sie den Wert fallen, wenn die Basis ebenso einen
+$LINK<Hybriden Wald=100014> hat.
+^(5) Dividieren Sie diesen Wert durch 8 und subtrahieren Sie einen Wert
+kleiner/gleich 16 + der Anzahl der vorangegangenen Schäden. Notieren Sie
+sich diesen Wert.
+^(6) Nehmen Sie die Zahl der Mineralien, die in dieser Runde produziert wurden
+(nicht jedoch von Orbit)
+^(7) Wenn ein kleinerer Wert als 16 + Anzahl der Schäden von Ergebnis (5)
+subtrahiert wurde, subtrahieren Sie den verbleibenden Wert von Ergebnis (6).
+^(8) Dividieren Sie die Mineralien durch 1 plus die Anzahl der
+$LINK<Centauri-Reservate=100031>, $LINK<Planeten-Tempel=100032> und
+$LINK<Nanoreplikatoren=100020>.
+^(9) Summe der Werte von (5) und (8); addieren Sie +5 für jede schwerwiegende
+$LINK<Greueltat=8>.
+^(10) Verdoppeln Sie diesen Wert, wenn sich Alpha Prime am seinem Perihel
+befindet (das ist alle 20 von 80 Jahren der Fall). 
+^
+^Ökologie% = (WertvonSchritt10) * Schwierigkeit * Technologien * (3-PLANET) *
+LEBEN / 300
+^
+^Schwierigkeit = Normalerweise 3; jedoch 5 auf den zwei höchsten
+Schwierigkeitsstufen.
+^Technologien = Anzahl der entdeckten $LINK<Technologien=140080>
+^PLANET = Sozialtechnischer Wert für $LINK<PLANET=130007>
+^LEBEN = Stufe für einheimische Lebensformen (1-3) bei individuellem Start
+
+#ADVCONCEPT3
+Der Handel pro Basis zwischen Gruppierungen mit $LINK<Verträgen=4> und
+$LINK<Pakten=3>, wird folgendermaßen berechnet:
+^
+^(1) Zuerst werden alle Basen der einzelnen Gruppierungen absteigend nach ihrer
+Energieporduktion aufgelistet.
+^(2) Die Basen werden absteigend zu Zweiergruppen zusammengefaßt. Wenn eine
+Gruppierung weitere Basen hat, bleiben diese unberücksichtigt.
+^(3) Addieren Sie die kombinierte ökonomische Produktion jeder Zweiergruppe,
+und dividieren Sie diesen Wert durch 8 (Wert aufrunden).
+^(4) Verdoppeln Sie diesen Wert, wenn ein Globaler Handelspakt besteht.
+^(5) Die Formel für den Handel jeder einzelnen Basis ist folgende:
+^       (WertvonSchritt4) * (HandelTech+1) / (GesamtHandelTech+1)
+^(6) HandelTech ist die Gesamtzahl aller ökonomischen Technologien,
+die entdeckt wurden, plus Gruppen- & Sozialboni.
+^(7) GesamtHandelTech ist die Gesamtzahl aller ökonomischen Technologien
+im Spiel.
+^(8) Den Wert von Schritt 5 dividieren Sie nun durch 2, wenn kein Pakt
+besteht (z.B. nur ein Vertrag)
+^(9) Addieren Sie +1, wenn Sie ein $LINK<Planeten-Gouverneur=28> sind.
+^(10) Reduzieren Sie diesen Wert auf 0, wenn einer der Gruppierungen
+Sanktionen auferlegt wurden.
+
+#ADVCONCEPT4
+Ihr Alpha Centauri-Spielstand setzt sich folgendermaßen zusammen:
+^
+^(1) 1 Punkt pro Bürger auf jeder Basis.
+^(2) Wenn Sie einen $LINK<diplomatischen=10005> oder
+$LINK<wirtschaftlichen=10008> Sieg errungen haben, gibt es folgende Punkte:
+^        (a) 1 Punkt pro Bürger auf der Basis eines $LINK<Paktmitglieds=3>.
+^        (b) 1/2 Punkt pro Bürger auf der Basis einer anderen Gruppierung.
+^(3) 1 Punkt pro Bürger einer sich ergebenen Basis.
+^(4) 1 Punkt pro $LINK<Handelsertrag=29>-Einheit, die Ihre Basen einnehmen.
+^(5) 1 Punkt für jede entdeckte $LINK<Technologie=140062>.
+^(6) 10 Punkte für jeden $LINK<Transzendenzgedanken-=140088>-Vorteil.
+^(7) 25 Punkte für jedes $LINK<Geheimprojekt=110102>.
+^(8) Einen $LINK<Sieg=30>-Bonus, wenn Sie das Spiel gewonnen haben.
+
+#ADVCONCEPT5
+Sie können das Spiel diplomatisch gewinnen, wenn Sie genügend Gruppenanführer
+davon überzeugen, sich hinter Ihnen als Oberbefehlshaber des Planeten zu
+vereinen. Eine 3/4-Stimmenmehrheit des $LINK<Planeten-Konzils=27> ist
+erforderlich, um eine solche Wahl zu gewinnen. Nur die Anführer der beiden
+Gruppierungen mit den meisten Stimmen können sich zur Wahl zum
+$LINK<Gouverneur=28> oder Oberbefehlshaber stellen.
+^
+Wenn ein Oberbefehlshaber gewählt wird, kann sich ein Gruppenanführer
+entschließen, sich dem Willen des Konzils zu widersetzen, und sich weigern, sich
+zu unterwerfen. In diesem Fall muß der Oberbefehlshaber mit Hilfe der loyalen
+Gruppen alle sich widersetzenden Gruppen besiegen, um den Sieg der Schlacht
+davonzutragen. Aufgrund der Militärkraft, die in der Regel benötigt wird, um die
+Wahl zum Oberbefehlshaber zu sichern, ist es geradezu selbstmörderisch, sich dem
+Willen des Konzils zu widersetzen. Andere Gruppierungen werden daher in der
+Regel diesen Weg nur einschlagen, wenn Sie eine Greueltat gegen sie verübt oder
+sie schwerwiegend und wiederholt verraten haben.
+^
+Wenn Sie einen diplomatischen Sieg erzielen, erhalten Sie 1200 Punkte abzüglich
+jeweils 2 für jede seit Spielbeginn gespielte Runde. Ist ein kooperativer Sieg
+möglich und wurde Ihr/Ihre $LINK<Paktbruder/-schwester=3> zum
+Oberbefehlshaber gewählt, so erhalten Sie die Hälfte der Punktzahl.
+^
+Kein Anführer kann einen diplomatischen Sieg erlangen, solange auch nur eine
+Vorfahren-Gruppierung unbesiegt bleibt.
+
+#ADVCONCEPT6
+Sie können das Spiel durch Eroberung gewinnen, wenn Sie alle verbleibenden
+Gruppen zerstört haben. Gruppen, die sich ergeben und "ein Gelöbnis, Ihnen zu
+dienen," ablegen, zählen zu diesem Zweck als zerstört. Ist ein kooperativer 
+Sieg möglich, müssen Sie keine Gruppierungen, mit denen Sie einen 
+$LINK<Brüderschaftspakt=3> abgeschlossen haben, ausschalten. Abgesehen 
+von besiegten KI-Gruppierungen, können nicht mehr als drei Gruppierungen 
+auf diese Weise "zusammen gewinnen".
+^
+Wenn Sie durch Eroberung gesiegt haben, erhalten Sie 1000 Punkte abzüglich
+jeweils 2 für seit Spielbeginn jede gespielte Runde. Wenn ein kooperativer Sieg 
+möglich ist und mehr als eine Gruppierung das Spiel überlebt, wird die erreichte 
+Punktzahl zwischen diesen Gruppierung entsprechend der Bevölkerungszahl aufgeteilt.
+
+#ADVCONCEPT7
+Der größte Sieg ist der Aufstieg zur Transzendenz, die nächste Stufe in der
+Evolution von intelligentem Leben. Um aufsteigen zu können, müssen Sie das 
+Geheimprojekt $LINK<Aufstieg zur Transzendenz=110102> beenden, das nur begonnen
+werden kann, wenn eine Gruppierung das Projekt $LINK<Stimme des Planeten=110101>
+abgeschlossen hat.
+^
+Spieler, die zur Transzendenz aufgestiegen sind, erhalten 2000 Punkte, abzüglich
+2 für jede seit Spielbeginn gespielte Runde. Ist ein kooperativer Sieg möglich,
+so sind alle $LINK<Paktbrüder/-schwestern=3> an dem Sieg beteiligt, und die
+Punkte werden je nach Bevölkerungszahl unter den gewinnenden Gruppierungen
+aufgeteilt.
+
+#ADVCONCEPT8
+Sie können einen wirtschaftlichen Sieg erringen, indem Sie den globalen
+Energiemarkt monopolisieren.  Sie müssen $LINK<Planetare Ökonomie=140061>
+entdeckt haben, um einen solchen Plan verfolgen zu können.
+^
+Um den globalen Energiemarkt monopolisieren zu können, werden Sie eine Summe an
+Energieeinheiten brauchen, die ungefähr den Kosten der "Gedankenkontrolle" aller
+verbleibender Basen des Planeten entsprechen. Wenn Sie in der Lage sind,
+einen solchen Versuch zu unternehmen, wählen Sie die Option "Globale
+Energiemärkte beherrschen" im Menü "Hauptquartier".
+^
+Wenn eine Gruppe versucht, den globalen Energiemarkt zu beherrschen, erhalten
+alle anderen Gruppen einen bestimmten Zeitraum, in dem sie das
+$LINK<Hauptquartier=100001> der monopolisierenden Gruppe erobern oder zerstören
+und somit den Plan vereiteln können.
+^
+Für einen wirtschaftlichen Sieg erhalten Sie 1200 Punkte, abzüglich je 2 für
+jede seit Spielbeginn gespielte Runde. Ist ein kooperativer Sieg möglich, so
+erhalten die $LINK<Paktbrüder/-schwestern=3> der siegreichen Gruppe jeweils
+die Hälfte der Bonuspunkte.
+
+#ADVCONCEPT9
+Sie tragen einen Szenario-Sieg davon, wenn Sie die Ziele eines Szenarios
+erfolgreich erreichen. Ihre Punktzahl hängt von den Regeln des jeweiligen
+Szenarios ab.
+^
+Wenn Sie ein Standardspiel spielen, können Sie keinen Szenario-Sieg davontragen.
+
+#ADVCONCEPT10
+Sie können als Gruppenführer in Pension gehen, wenn Sie im Menü "Spiel"
+die Option "Spiel beenden" auswählen. Damit wird das Spiel beendet, und
+Ihr $LINK<Alpha Centauri-Spielstand=10004> wird berechnet.
+^
+Wenn Sie das im Spiel oder Szenario Jahr der Zwangspensionierung erreichen,
+müssen Sie ebenfalls in Pension gehen. In Standardspielen ist das 
+Pensionierungsjahr das M.J. 2600 für Bürger, Spezialisten und Talente
+und M.J. 2500 für Bibliothekare, Denker und Transzendenten.
+^
+Sie werden 20 Jahre vor Erreichen der Zwangspensionierung gewarnt.
+
+#ADVCONCEPT11
+Um die Macht einer Gruppierung zu errechnen, wird folgende Formel benutzt:
+^
+^4  Punkte für jeden Bevölkerungspunkt
+^4  Punkte für jeden $LINK<Transzendenzgedanken=140088>
+^?? Punkte pro $LINK<Techn.=140062> (der Summe der Werte aus Entdecken,
+Forschen, Bauen und Kampf)
+^10 Punkte für jedes $LINK<Geheimprojekt=110102>
+^
+^Für jede zivile Einheit, fügen Sie Kosten/40 (technische
+MineralienReihen/4) hinzu
+^Für jede PSI-Einheit, fügen Sie Kosten/20 (MineralienReihen/2) hinzu
+^Für jede Planetenbombe, fügen Sie Kosten/10 (MineralienReihen) hinzu
+^Für Kampf-Einheiten, fügen Sie Kosten/10 im Verhältnis Waffenstärke zur besten
+Waffe aller gegenwärtig im Spiel befindlichen Einheiten hinzu.
+^
+^Auf diese Weise ist eine 2-1-2 Einheit nur halb so viel wert, wenn "4"-Waffen
+die besten verfügbaren Waffen sind. 
+
+#ADVCONCEPT12
+Mehrere Faktoren tragen zur Anzahl der auf einer Basis befindlichen $LINK<Drohnen=36>
+bei, ehe $LINK<Polizei=130005>, $LINK<Einrichtungen=100029>, $LINK<Psycho=38> und
+$LINK<Geheimprojekte=110102> in Betracht gezogen werden: 
+^
+(1) Schwierigkeitsgrad: auf dem niedrigsten Schwierigkeitsgrad ist jeder Bürger
+(2) nach den ersten sechs eine Drohne. Für jede Steigerung des
+(3) Schwierigkeitsgrads wird eine weitere Drohne hinzugefügt, so daß auf dem
+(4) höchsten Schwierigkeitsgrad jeder Bürger nach dem ersten eine Drohne ist.
+^
+(2) Bürokratie: je nach Ihrer $LINK<EFFIZIENZ=130001> und Ihrem
+Schwierigkeitsgrad werden Sie zusätzliche Drohnen erhalten, wenn {Anzahl an
+Basen} eine bestimmte Anzahl übersteigt. Siehe $LINK<BÜROKRATIE=10013>.
+^
+(3) Treulose Bürger: während jeweils 50-mal Vorrücken nach Eroberung einer
+feindlichen Basis werden Sie zusätzliche Drohnen erhalten, bis Sie die Bürger
+assimiliert haben. Die Grundrate ist 5 Drohnen minus eine für jeweils 10
+gespielte Runden, doch die Zahl darf nie mehr als das folgende Ergebnis sein:
+^^(BasisGröße + Schwierigkeitsgrad - 2)/4
+^
+(4) Gruppenmacht: Einige Gruppierungen erhalten zusätzliche Drohnen oder
+Talente. Die Universität erhält zum Beispiel eine zusätzliche Drohne für
+jeweils 4 Bürger (abgerundet), während die Friedenskämpfer ein zusätzliches
+$LINK<Talent=37> für jeweils 4 Bürger erhalten (aufgerundet).
+
+#ADVCONCEPT13
+{Bürokratie} ist der Zusatz weiterer Drohnen, weil eine Gruppe eine bestimmte
+Anzahl an Basen überschritten hat. Die Bürokratie-Formel funktioniert
+folgendermaßen:
+^
+^^BasisLimit = (8 - Schwierigkeit) * (4 + Effizienz) * KartenWurzel / 2
+^
+^Wobei:
+^Schwierigkeit = Der Schwierigkeitsgrad des Spielers (0 - 5)
+^Effizienz = Sozialtechnische $LINK<Effizienz-=130001>Rate.
+^KartenWurzel    = Quadratwurzel aus der Anzahl der Kartenfelder/Quadratwurzel
+aus 3200.
+^
+Für jede Basis, die eine Gruppierung über diese Anzahl hinaus baut, wird eine
+zusätzliche Drohne auf irgendeiner Basis in der Kolonie erscheinen.
+
+#CONCEPT47
+Die {Vorfahren} sind eine äußerst fortgeschrittene Rasse weltraumreisender Wesen,
+deren technologisches Niveau in den $LINK<Artefakten=13> und $LINK<Momolithen=12>
+deutlich wird, die sie auf dem Planeten zurückgelassen haben. Die Erforschung dieser
+Strukturen oder, falls sie zurückkehren, direkter Kontakt mit den Vorfahren,
+kann neue Technologien, Waffen und Basiseinrichtungen einbringen. 
+^
+In den jüngsten Jahrtausenden haben sich die Vorfahren in zwei sich gegenseitig
+bekriegende Parteien aufgespalten: die $LINK<Manifold-Verwalter=150006> und
+die $LINK<Manifold-Usurpatoren=150007>. Diese Gruppierungen streiten sich um
+die Nutzung der $LINK<Manifolds=49>, zu denen auch der Planet gehört. Die Verwalter
+möchten die Manifolds in ihrem ursprünglichen, unberührten Zustand belassen,
+während die Usurpatoren einen $LINK<Aufstieg zur Transzendenz=10007> einleiten und
+steuern möchten. Wenn eine der beiden Gruppierungen ihren Wunsch durchsetzen kann,
+bedeutet dies aller Wahrscheinlichkeit nach, daß das Dasein der Menschen auf
+dem Planeten zu einem Ende kommt.
+
+#CONCEPT48
+Die $LINK<Vorfahren=47> haben komplizierte biologische Systeme entwickelt, die
+Felder spüren können, welche Menschen verborgen bleiben. Dazu gehören
+zumindest elektrische und magnetische Felder. Der Oberbegriff dieses Gespürs
+ist {Resonanz}, und sie durchdringt die gesamte Kommunikation, Kunst und Kultur
+der Vorfahren. Dieses Gespür verleiht den Streitkräften der Vorfahren außerdem
+wertvolle Boni im Kampf. Durch ausgiebiges Training und gute mechanische
+Hilfsmittel können die Menschen lernen, diese Resonanz ebenfalls zu spüren
+und einzusetzen.
+
+#CONCEPT49
+Vor Äonen errichteten die $LINK<Vorfahren=47> sechs planetarische {Manifolds},
+welche als riesige und umfassende Experimente des Intelligenzvermögens gedacht waren.
+Eines der Manifolds, im Tau Ceti-System, erreichte schon früh dieses Intelligenzvermögen,
+wodurch es die Fähigkeit erlangte, ungeahnte Kräfte über die Galaxie zu projizieren.
+Das "Bestäuben", wie dieses Ereignis genannt wurde, verschlang mehrere Sternensysteme
+und stürzte die Kultur der Vorfahren in ein dunkles Zeitalter, aus dem sie sich noch
+nicht völlig erholt hat. In den daraus folgenden Jahrtausenden des Chaos und der
+Zersplitterung gingen die Aufenthaltsorte der sechs Manifolds verloren.
+
+#CONCEPT50
+$LINK<Vorfahren-=47>Gruppierungen betreiben keinen $LINK<Handel=29> mit Menschen. Ihre 
+Erfahrung bei der Wiederverwertung verschafft ihnen jedoch ein {Energieraster} auf jeder
+Basis. Jede Basiseinrichtung der Vorfahren ist an dieses Raster angeschlossen. Zwei
+Basiseinrichtungen generieren je eine Energieeinheit zum Gesamtwert der Basis (aufgerundet).
+Zwei $LINK<Geheimprojekte=110102> generieren jeweils fünf Energieeinheiten, die zum Gesamtwert
+der Basis addiert werden.
+^
+Die $LINK<Nervschneidung=8> verursacht weitreichende Unzufriedenheit unter den Bürgern der
+Vorfahren, die sich in der Stilllegung des Rasters für einen bestimmten Zeitraum auswirkt.
+
+#ADVCONCEPT14
+Die beiden Gruppierungen der $LINK<Vorfahren=47> können einen Sieg erringen,
+indem sie Verstärkung von ihrer jeweiligen Heimatwelt anfordern. Damit sie den
+versteckten Aufenthaltsort des $LINK<Manifolds=49> an ihre Anführer in anderen
+Welten weitergeben können, kann jede Gruppierung der Vorfahren einen
+{Resonanzsender} bauen. Der Sender besteht aus sechs $LINK<Unterraum-Generatoren=100040>,
+die auf Basen der Größe zehn oder größer erstellt werden müssen.
+^
+Spieler, die einen Resonanzsender bauen, werden mit 2000 Punkten - weniger 2
+Punkten für jede abgelaufene Runde - belohnt. Ein kooperativer Sieg ist unter
+diesen Spielbedigungen nicht möglich. Wenn es einer der beiden Vorfahren-Gruppierungen
+gelingt, einen solchen Sender zu bauen, läutet dies das Ende menschlichen
+Daseins auf dem Planeten ein.
+
+# ; Diese Zeile muß am Dateiende stehen.

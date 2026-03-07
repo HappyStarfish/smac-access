@@ -261,6 +261,20 @@ int find_hq(int faction_id) {
 
 void __cdecl treaty_off(int faction_id_1, int faction_id_2, uint32_t status) {
     debug("treaty_off %d %d %08X\n", faction_id_1, faction_id_2, status);
+    bool is_player = (faction_id_1 == *CurrentPlayerFaction || faction_id_2 == *CurrentPlayerFaction);
+    if (is_player) {
+        int other = (faction_id_1 == *CurrentPlayerFaction) ? faction_id_2 : faction_id_1;
+        if (status & DIPLO_PACT) {
+            game_log("Diplomacy: Pact ended with %s", MFactions[other].noun_faction);
+        } else if (status & DIPLO_TREATY) {
+            game_log("Diplomacy: Treaty ended with %s", MFactions[other].noun_faction);
+        } else if (status & DIPLO_TRUCE) {
+            game_log("Diplomacy: Truce ended with %s", MFactions[other].noun_faction);
+        }
+        if (status & DIPLO_VENDETTA) {
+            game_log("Diplomacy: Vendetta ended with %s", MFactions[other].noun_faction);
+        }
+    }
     Faction* plr1 = &Factions[faction_id_1];
     Faction* plr2 = &Factions[faction_id_2];
 
@@ -289,6 +303,22 @@ void __cdecl agenda_off(int faction_id_1, int faction_id_2, uint32_t status) {
 void __cdecl treaty_on(int faction_id_1, int faction_id_2, uint32_t status) {
     debug("treaty_on %d %d %08X\n", faction_id_1, faction_id_2, status);
     const bool is_player = (faction_id_1 == *CurrentPlayerFaction || faction_id_2 == *CurrentPlayerFaction);
+    if (is_player) {
+        int other = (faction_id_1 == *CurrentPlayerFaction) ? faction_id_2 : faction_id_1;
+        if (status & DIPLO_PACT) {
+            game_log("Diplomacy: Pact with %s", MFactions[other].noun_faction);
+        } else if (status & DIPLO_TREATY) {
+            game_log("Diplomacy: Treaty with %s", MFactions[other].noun_faction);
+        } else if (status & DIPLO_TRUCE) {
+            game_log("Diplomacy: Truce with %s", MFactions[other].noun_faction);
+        }
+        if (status & DIPLO_VENDETTA) {
+            game_log("Diplomacy: Vendetta with %s", MFactions[other].noun_faction);
+        }
+        if (status & DIPLO_COMMLINK && !(status & DIPLO_VENDETTA)) {
+            game_log("Diplomacy: Commlink with %s", MFactions[other].noun_faction);
+        }
+    }
     Faction* plr1 = &Factions[faction_id_1];
     Faction* plr2 = &Factions[faction_id_2];
 
@@ -401,6 +431,11 @@ int __cdecl has_agenda(int faction_id_1, int faction_id_2, uint32_t status) {
 void __cdecl atrocity(int faction_id, int faction_id_tgt, int skip_init_check, int skip_human_check) {
     MFaction* m = &MFactions[faction_id];
     Faction* plr = &Factions[faction_id];
+    if (faction_id == *CurrentPlayerFaction) {
+        game_log("Atrocity committed against %s", MFactions[faction_id_tgt].noun_faction);
+    } else if (faction_id_tgt == *CurrentPlayerFaction) {
+        game_log("Atrocity by %s against us", MFactions[faction_id].noun_faction);
+    }
     bool prev_victim = has_treaty(faction_id_tgt, faction_id, DIPLO_ATROCITY_VICTIM);
     set_treaty(faction_id_tgt, faction_id, DIPLO_ATROCITY_VICTIM|DIPLO_WANT_REVENGE, 1);
     set_agenda(faction_id_tgt, faction_id, AGENDA_UNK_4, 1);

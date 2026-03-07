@@ -2,6 +2,7 @@
 #include "gui.h"
 #include "base_handler.h"
 #include "social_handler.h"
+#include "file_browser_handler.h"
 #include "prefs_handler.h"
 #include "specialist_handler.h"
 #include "design_handler.h"
@@ -725,6 +726,9 @@ static bool sr_is_hud_noise(const char* text, bool in_menu_early) {
     return false;
 }
 
+// Saved popup object pointer for editbox field switching
+static void* sr_editbox_popup = NULL;
+
 LRESULT WINAPI ModWinProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     const bool debug_cmd = DEBUG && !*GameHalted && msg == WM_CHAR;
@@ -950,7 +954,8 @@ LRESULT WINAPI ModWinProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         // --- World map state ---
         bool on_world_map = MapWin &&
             (cur_win == GW_World || (cur_win == GW_None && cur_popup >= 2));
-        bool in_menu = (cur_win == GW_None && cur_popup == 0);
+        bool in_menu = (cur_win == GW_None && cur_popup == 0
+            && !CouncilHandler::IsActive());
 
         // Invalidate menu cache when leaving menu context
         if (!in_menu) MenuHandler::InvalidateCache();
@@ -998,10 +1003,45 @@ LRESULT WINAPI ModWinProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                     sr_popup_list.index + 1,
                     sr_popup_list.count,
                     sr_popup_list.items[sr_popup_list.index]);
+
+                // NETCONNECT_CREATE/JOIN: call popup's vtable OnLButtonDown
+                // with popup-local coordinates to switch editbox focus.
+                if ((_stricmp(sr_popup_list.label, "NETCONNECT_CREATE") == 0
+                    || _stricmp(sr_popup_list.label, "NETCONNECT_JOIN") == 0)
+                    && sr_editbox_popup) {
+                    int* vtbl = *(int**)sr_editbox_popup;
+                    if (vtbl && !IsBadReadPtr(vtbl + 19, 4)) {
+                        typedef int(__thiscall *FOnLBDown)(void*, int, int, int);
+                        FOnLBDown onClick = (FOnLBDown)vtbl[19];
+                        // Try multiple Y values to find the text fields.
+                        // Popup is #xs 320 wide, click at center X=160.
+                        static const int field_y[] = { 50, 90 };
+                        int idx = sr_popup_list.index;
+                        if (idx >= 0 && idx < 2) {
+                            int cx = 160;
+                            int cy = field_y[idx];
+                            sr_debug_log("EDITBOX vtbl[19]=%p click(%d,%d) field[%d]",
+                                (void*)vtbl[19], cx, cy, idx);
+                            onClick(sr_editbox_popup, cx, cy, MK_LBUTTON);
+                        }
+                    } else {
+                        sr_debug_log("EDITBOX bad vtable at %p", sr_editbox_popup);
+                    }
+                }
             } else if (wParam == VK_UP || wParam == VK_DOWN) {
                 // Menu item cache: delegate to MenuHandler
                 if (MenuHandler::OnArrowKey(wParam, now, on_world_map, cur_win,
                         sr_arrow_active, sr_arrow_dir, sr_arrow_time)) {
+                    sr_last_seen_record = 0;
+                    sr_stable_since = 0;
+                } else if (CouncilHandler::IsActive()) {
+                    // Council: set arrow trigger without menu cache
+                    sr_arrow_active = true;
+                    sr_arrow_dir = wParam;
+                    sr_arrow_time = now;
+                    sr_items_clear();
+                    sr_clear_text();
+                    sr_snapshot_consume();
                     sr_last_seen_record = 0;
                     sr_stable_since = 0;
                 }
@@ -1096,18 +1136,29 @@ LRESULT WINAPI ModWinProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             && !sr_modal_active && !FactionSelectHandler::IsActive()) {
             int count = sr_item_count();
             DWORD elapsed = now - sr_arrow_time;
-            if ((count >= 2 && elapsed > 50) || (count == 1 && elapsed > 200)) {
-                // Find best nav target: skip HUD noise items
+            // File browser: editbox (item[0]) always has current selection,
+            // use shorter timeout since we don't need 2 items.
+            bool fb = sr_file_browser_active();
+            int threshold1 = fb ? 50 : 200;
+            if ((count >= 2 && elapsed > 50) || (count == 1 && elapsed > threshold1)) {
+                // Find best nav target: skip HUD noise items.
                 int nav_idx = -1;
-                if (count >= 2) {
-                    // Normal: item[0]=leaving, item[1]=entering
-                    // Boundary: item[0]=current, item[1]=HUD noise
-                    const char* it1 = sr_item_get(1);
-                    if (!sr_is_hud_noise(it1, in_menu_early)) {
-                        nav_idx = 1;
+                if (fb) {
+                    // File browser: item[0] is the editbox = current selection
+                    nav_idx = 0;
+                } else if (count >= 2) {
+                    // Regular menus: game renders top-to-bottom, so
+                    //   DOWN: item[0]=leaving (above), item[1]=entering (below)
+                    //   UP:   item[0]=entering (above), item[1]=leaving (below)
+                    int entering = (sr_arrow_dir == VK_UP) ? 0 : 1;
+                    int fallback = (entering == 1) ? 0 : 1;
+                    const char* it_enter = sr_item_get(entering);
+                    if (it_enter && !sr_is_hud_noise(it_enter, in_menu_early)) {
+                        nav_idx = entering;
                     } else {
-                        sr_debug_log("NAV-BOUNDARY item[1] is HUD, using item[0]");
-                        nav_idx = 0;
+                        sr_debug_log("NAV-BOUNDARY item[%d] is HUD, using item[%d]",
+                            entering, fallback);
+                        nav_idx = fallback;
                     }
                 } else {
                     nav_idx = 0;
@@ -1191,6 +1242,13 @@ LRESULT WINAPI ModWinProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                 sr_debug_log("SETTLE-TIMER(%d)", count);
             }
             sr_stable_since = 0;
+        }
+
+        // --- Council: build vote list + detect results ---
+        if (CouncilHandler::IsActive() && sr_stable_since == 0
+            && sr_item_count() > 2) {
+            CouncilHandler::TryBuildVoteList();
+            CouncilHandler::CheckAndAnnounceResults();
         }
 
         // Trigger 4 (worldmap polling) handled by WorldMapHandler::OnTimer above
@@ -1393,9 +1451,11 @@ LRESULT WINAPI ModWinProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         || SpecialistHandler::IsActive() || DesignHandler::IsActive()
         || GovernorHandler::IsActive() || StatusHandler::IsActive()
         || GameSettingsHandler::IsActive() || NetSetupSettingsHandler::IsActive()
-        || ThinkerMenuHandler::IsActive())) {
+        || ThinkerMenuHandler::IsActive() || FileBrowserHandler::IsActive())) {
         if (msg == WM_KEYDOWN) {
-            if (SocialEngHandler::IsActive()) {
+            if (FileBrowserHandler::IsActive()) {
+                FileBrowserHandler::Update(msg, wParam);
+            } else if (SocialEngHandler::IsActive()) {
                 SocialEngHandler::Update(msg, wParam);
             } else if (PrefsHandler::IsActive()) {
                 PrefsHandler::Update(msg, wParam);
@@ -1739,6 +1799,7 @@ LRESULT WINAPI ModWinProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     // Screen reader: Diplomacy key handling (S/Tab summary, Ctrl+F1 help)
     } else if (msg == WM_KEYDOWN && sr_is_available()
     && DiplomacyHandler::HandleKey(msg, wParam)) {
+        sr_consumed_key_char = true;
         return 0;
 
     // Screen reader: World map key handling (scanner, arrows, targeting, G, E, etc.)
@@ -3008,6 +3069,12 @@ void* This, const char* filename, const char* label, int a4, int a5, int a6, int
     if (filename && label) {
         sr_debug_log("BASEPOP file=%s label=%s popup_active=%d",
             filename, label, sr_popup_is_active());
+        // Save popup pointer for editbox dialogs (NETCONNECT_CREATE/JOIN)
+        if (_stricmp(label, "NETCONNECT_CREATE") == 0
+            || _stricmp(label, "NETCONNECT_JOIN") == 0) {
+            sr_editbox_popup = This;
+            sr_debug_log("EDITBOX popup This=%p", This);
+        }
         // Detect faction selection screen: BLURB label from faction files
         // Note: OnBlurbDetected (with text) is called in mod_BasePop_end
         if (_stricmp(label, "BLURB") == 0 && current_window() == GW_None) {
@@ -3067,6 +3134,10 @@ void* This, const char* filename, const char* label, int a4, int a5, int a6, int
             }
             // Parse popup list for dialogs that bypass popp/popb
             sr_popup_list_parse(filename, label);
+            // Council: GOVVOTE has dynamic candidates — build from eligible()
+            if (_stricmp(label, "GOVVOTE") == 0 && CouncilHandler::IsActive()) {
+                CouncilHandler::OnGovVotePopup();
+            }
         }
     }
     if (movedlabels.count(label)) {

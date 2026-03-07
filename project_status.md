@@ -45,6 +45,7 @@
 - **Scanner mode** (Ctrl+Left/Right/PgUp/PgDn) — jump to points of interest, 10 filter categories — TESTED OK
 - **Unit list** (U) — modal list of all own units with full info, select to activate — TESTED OK
 - **Stack cycling** (Tab) — cycle through own units at cursor position — TESTED OK
+- **Movable unit cycling** (Ctrl+Tab / Ctrl+Shift+Tab) — cycle through all own units with movement points > 0, one per tile, forward/backward — needs testing
 
 ## Current Hotkeys
 
@@ -71,6 +72,7 @@
   - 10 filters: All, Own Bases, Enemy Bases, Enemy Units, Own Units, Own Formers, Fungus, Pods/Monoliths, Improvements, Terrain/Nature
 - **U: Unit list** (modal, all own units, sorted idle-first, Enter activates)
 - **Tab: Stack cycling** (own units at cursor, wake + select for movement)
+- **Ctrl+Tab / Ctrl+Shift+Tab: Movable unit cycling** (jump to next/previous own unit with moves > 0, one per tile)
 - **Ctrl+M: Message log browser** (world map only, browse/jump to message locations)
 - **World Map — Menu Bar (Alt key):**
   - Alt: Open menu bar, announce first menu (Game)
@@ -87,6 +89,7 @@
 5. ~~**No localization system**~~: RESOLVED — loc() system implemented with sr_lang/ files.
 6. **German text in multiplayer menu**: Reported but could not reproduce from game files (all English). Needs investigation during testing.
 7. ~~**Umlauts broken with German language patch**~~: RESOLVED (2026-02-25). Game text (Windows-1252) was passed to sr_output(CP_UTF8) without conversion. Fixed with ANSI→UTF-8 conversion at all entry points.
+9. **Diplomatie-Handler zu indirekt**: Aktueller DiplomacyHandler beobachtet nur (OnTimer treaty-polling, S/Tab Zusammenfassung). Spielinterne Tasten (P Propose, V Vendetta, E etc.) werden von communicate()-Modalloop konsumiert bevor WinProc sie sieht → keine direkte Rückmeldung. S-Taste Fix (sr_consumed_key_char) und Treaty-Polling funktionieren, aber für echte Accessibility muss ein tieferer Ansatz her. Optionen: (a) communicate() reverse-engineeren und Aktionstasten direkt hooken, (b) set_treaty/diplo_status Schreibzugriffe hooken für sofortige Ansagen, (c) voller Diplomatie-Handler mit eigener Modalloop (wie SocialEng) der communicate() ersetzt. Aufwand: groß.
 8. **Game diary (game_events.txt) unvollständig**: Aktuell loggt nur MessageHandler::OnMessage (Spieler-Popups) + SE-Änderungen + Eliminierungen + Rundenseparator. Viele Events fehlen (Forschung, Produktion, Kampf, Basengründung, Drohnenaufstände). Neuer Ansatz nötig — entweder tiefere Hooks in die Spielmechanik oder Auswertung der Spieltextausgabe. Manuelle game_log()-Aufrufe in Einzelfunktionen haben nicht funktioniert (falsche Filterung, unvollständig).
 
 ## Resolved Issues
@@ -177,6 +180,103 @@ Filters from triggers 1-3:
 - docs/game-api.md — Game API documentation
 
 ## Notes for Next Session
+
+### Combat & Terraform Announcements — Done (2026-03-06)
+
+**Combat: Faction names for enemy units**
+- Enemy units in combat announcements now include faction name: "Scout Patrol, University"
+- Own units stay without faction (would be redundant)
+- Applies to melee, defense, artillery announcements
+- Uses `MFactions[faction_id].noun_faction` (game data, language matches game install)
+
+**Terraform: "Removing" vs "Building"**
+- `ORDER_REMOVE_FUNGUS` now says "Removing Fungus" / "Fungus wird entfernt" instead of "Building"
+- New loc strings: `terraform_order_remove`, `terraform_status_remove` (en+de)
+- Helper `is_terraform_removal()` in world_map_handler.cpp
+- All 6 terraform announcement sites updated (2x ORDER, 4x STATUS)
+
+### Setup Rules Checkbox Popup — IN PROGRESS (2026-03-06)
+
+**Problem:** Die 16 individuellen Spielregeln (Spiel starten > Spielregeln > Individuelle Regeln) sind mausgesteuerte Checkboxen ohne Tastaturzugang.
+
+**Was funktioniert:**
+- Accessible Modal mit PeekMessage-Loop (volle Tastatursteuerung)
+- Korrekte An/Aus-Ansagen pro Regel
+- DefaultRules als Vorauswahl
+- Hilfetext (Strg+F1)
+- Alle 16 Regeln korrekt zugeordnet (SCRIPT.txt#RULES Reihenfolge = sr_setup_rules_flags Array)
+
+**Was NICHT funktioniert: Regeln werden nicht gespeichert**
+
+**Experimentell bestätigt (Log-Analyse):**
+- X_pop checkbox (a5=0x41) arbeitet mit **RULES_*-Flags** (NICHT Item-Position-Bits)
+- `a3` = initiale RULES-Flags (Game übergibt -1 = alle Flags = alle Checkboxen an)
+- Return = finale RULES-Flags (z.B. 0xA1F = TRANSCENDENCE|BLIND_RESEARCH|LOOK_FIRST|DIPLOMATIC|ECONOMIC|CONQUEST|DO_OR_DIE)
+- Game-Popup hat **18 Items** (16 RULES + 2 Zufallsgenerator-Optionen), wir handlen nur 16
+- PostMessage-Trick (Enter vor X_pop posten) funktioniert NICHT — Game-Popup blockt trotzdem
+
+**Getestete Ansätze:**
+1. Return Item-Position-Bits → Game ignoriert/falsche Regeln
+2. Return RULES_*-Flags (sr_items_to_rules) → User meldet "speichert nicht" (aber evtl. USERULES-Desync-Problem?)
+3. Original X_pop aufrufen mit unseren Bits als a3 + PostMessage Enter → Game-Popup öffnet sich trotzdem sichtbar
+
+**USERULES-Popup Desync (separates Problem):**
+- Unser popup_list-Index und Game-Highlight laufen auseinander (Game ist 1 Position voraus)
+- User denkt er wählt "Individuelle Regeln", Game wählt aber "Standardregeln" (oder umgekehrt)
+- Dies könnte der WAHRE Grund für "speichert nicht" sein — Game ruft X_pop RULES gar nicht auf
+
+**Strategie für nächste Session:**
+1. **Revert auf einfachen Intercept** — kein Original-X_pop aufrufen, nur Return-Wert
+2. **Return RULES_*-Flags** via `sr_items_to_rules(bits)` — Format bestätigt
+3. **USERULES-Desync fixen** — Hauptproblem! Optionen:
+   a. popup_list für USERULES deaktivieren, stattdessen Text-Capture beobachten
+   b. Initialen Highlight aus Capture-Daten ableiten (nach Down: höchste Y = neuer Highlight)
+   c. Eigenes USERULES-Modal bauen (wie RULES, 3 Optionen)
+4. **Items 16-17 handlen** — Zufallsgenerator-Persönlichkeiten/Gesellschaftsziele brauchen ggf. separate Bits
+5. **GameRules-Verifikation** — Bei Spielstart `*GameRules` loggen um zu bestätigen ob Regeln angewandt wurden
+6. **Code aufräumen** — sr_orig_x_pop forward-decl entfernen, PostMessage-Code raus, zurück auf sauberen Intercept
+
+**Dateien:** screen_reader.cpp (sr_handle_rules_checkbox, sr_intercept_rules_popup, sr_setup_rules_flags, sr_rules_to_items, sr_items_to_rules), localization.h/cpp (SR_SETUP_RULES_HELP), sr_lang/en.txt, sr_lang/de.txt
+
+### Scanner Bugfix (2026-03-06) — TESTED OK
+- **Bug:** When only one object matched the scan filter and cursor was already on it, Ctrl+Left/Right said "Nichts gefunden" (nothing found) instead of distinguishing "no more" from "nothing at all"
+- **Fix:** Added `SR_SCAN_NO_MORE` / "Scanner: Keine weiteren gefunden" / "Scanner: No more found". Logic now checks if current tile matches the filter before reporting "nothing found".
+- **Files:** localization.h, localization.cpp, world_map_handler.cpp, sr_lang/en.txt, sr_lang/de.txt
+
+### Umlaut Fix Session (2026-03-06)
+1. **alphax.txt umlauts**: GOG German version had ALL bytes > 0x7F replaced with 0x20 (space). Created `tools/fix_de_umlauts.py` with ~200 replacement rules. 454 umlauts restored. Also fixed `tools/create_de_alphax.py` to translate Thinker's extra units (Trance Infantry→Trance-Infanterie etc.) — game parser required German field names.
+2. **jackal.txt umlauts**: Same corruption but with U+FFFD (EF BF BD, 3 bytes) instead of space. 73 umlauts restored directly in game directory. Backup at jackal.txt.bak.
+3. **Gender toggle removed**: Discovered #NAME dialog has no gender toggle button. "Gruppe bearbeiten" opens faction editor, not gender. Gender is set via separate #GENDER dialog (only for custom factions). Removed all gender-toggle code from gui.cpp.
+4. **Multiplayer text field focus — PLANNED**: NETCONNECT_CREATE dialog has two text inputs (game name, player name). Our popup-list nav announces both but doesn't shift keyboard focus. Text always goes to player name field. Fix needed: simulate click on selected field when user activates it.
+
+### Multiplayer Text Field Focus — INVESTIGATION IN PROGRESS (2026-03-06)
+**Problem:** NETCONNECT_CREATE popup (jackal#NETCONNECT_CREATE) has two `#editbox` + `#itemlist` text inputs. Arrow up/down announces via popup-list nav, but keyboard focus stays on field 0 (game name). Cannot switch to field 1 (player name).
+
+**Approaches tried (ALL FAILED):**
+1. PostMessage WM_LBUTTONDOWN at estimated client coords (400, 265/310)
+2. WinProc WM_KEYDOWN VK_TAB — game's custom popup ignores Tab
+3. vtable[19] OnLButtonDown direct call at popup-local coords (160, 50/90) — executes without crash but doesn't switch field
+
+**Current code state:** `sr_editbox_popup` saves BasePop This pointer, `sr_popup_list.label` stores dialog label, vtable[19] click is implemented but ineffective.
+
+**Key findings from memory dump:**
+- BasePop vtable: 0x006695C8, vtable[19]: 0x00404260
+- +0x128: 2 (editbox field count), +0x1A0: 2 (child count)
+- +0x1A4/+0x1A8/+0x1AC: child object pointers (likely editbox widgets)
+- +0x13C: RECT(709, 531, 1211, 668) — popup canvas position
+- Memory is IDENTICAL across navigations → active field NOT in BasePop 0x000-0x1FF
+
+**Next steps:** See `memory/multiplayer_editbox.md` for detailed plan. Priority: dump child objects, disassemble 0x00404260, or replace dialog entirely.
+
+**Files modified:** gui.cpp (popup-list handler + BasePop_start hook), screen_reader.h/cpp (label field in SrPopupList)
+
+### Bug Fixes Session (2026-03-06) — TESTED OK
+Four bugs fixed in this session:
+1. **Umlaut corruption in tile announcements**: `MFactions[].noun_faction` (ANSI) passed to snprintf without UTF-8 conversion. Fixed by wrapping with `sr_game_str()` in `sr_tile_ownership()` and `sr_tile_units()`.
+2. **Arrow keys silent after popup**: `current_window()` returns `GW_None` during transition after popup closes. Fixed with time-based fallback (500ms window using `sr_last_on_world_map_time`).
+3. **Research priorities shown twice at game start**: Game calls `tech_pick` twice in quick succession. Fixed with debounce in `sr_tech_pick_modal()` — uses `GetTickCount()` at modal close (not stale `now` from before modal).
+4. **CRITICAL: Trampoline slot collision**: `sr_install_popup_hooks(slot)` advanced `tramp_slot` internally but didn't update caller's `slot` variable, causing `load_game`/`save_game` trampolines to overwrite `popp`/`popb`. When game called `popp` for monolith popup, it actually called `load_game` → mysterious load dialog. Fixed by adding `slot += popup_hooked * 32;` after the call. **This fix restored ALL popup dialogs** (~95 call sites across combat, base, diplomacy, exploration, events).
+5. **Diplomacy popup text interrupted by context announcement**: Popup hook announced dialog text (non-interrupting), then DiplomacyHandler::OnTimer announced "Diplomatie mit X" (interrupting), cutting off the text. Fixed: popup hook now detects diplomacy context and prepends "Diplomatie mit [Fraktion]" before popup text. OnTimer skips open announcement when `sr_popup_is_active()`. Needs testing.
 
 ### NEW: Tile Detail Query Keys (1-8, 0) — needs testing (2026-03-02)
 - **Refactored sr_announce_tile** into 10 category helper functions for reuse
@@ -387,10 +487,14 @@ Filters from triggers 1-3:
 
 ### Pending Tests
 
+0z2. **Debug Logging + Game Event Diary** — Added 2026-03-07. (1) All SR logs now write to `<GameDir>/Logs/` instead of `%TEMP%`. Session log file has timestamp in name: `access_log_2026-03-07_14-30-45.log`. Each line gets `[HH:MM:SS]` prefix. Hook log: `access_hooks.log`. (2) Game event diary (`game_events.txt` in Logs/) now logs: base founded/captured/lost/destroyed, combat results, unit disbanded, tech discovered, diplomacy changes (pact/treaty/truce/vendetta/commlink on/off), interludes, production completion, atrocities. All from player perspective (only human-faction events, except combat which logs both sides if player involved). Test: Play a few turns, check `Logs/game_events.txt` for sensible entries. Check `Logs/access_log_*.log` exists. Toggle Ctrl+F12 debug → check log entries appear in same session file.
+0y. **Combat faction names + Terraform remove** — Added 2026-03-06. (1) Combat announcements now include enemy faction name ("Scout Patrol, University"). Applies to melee, defense, artillery. (2) Terraform: ORDER_REMOVE_FUNGUS says "Removing" instead of "Building". Test: Attack enemy → result should include faction name. Select former on fungus → press F → should say "Removing Fungus/Xenofungus". Select former elsewhere → press F (farm) → should still say "Building Farm".
+0x. **Diplomacy popup text ordering** — Added 2026-03-06. Popup hook prepends "Diplomatie mit [Fraktion]" before dialog text, OnTimer skips duplicate. Test: Open diplomacy → first popup should say "Diplomatie mit X. [dialog text]. Weiter mit Eingabe." without interruption.
+0w. **F-Tastenkonflikt Fix (Artillery vs Former)** — Added 2026-03-05. F-Taste wurde immer vom Artillery-Handler abgefangen, auch für Former (Pilz entfernen / Farm bauen ging nicht). Fix: Artillery-Handler gibt F ans Spiel durch wenn Einheit keine Artillerie kann. Pilz entfernen: GETESTET OK. Artillerie schießen: OFFEN — braucht Artillerie-Einheit mit Ziel in Reichweite zum Testen.
 0v. **Combat Accessibility** — Added 2026-03-02. Three features: (1) Automatic combat result announcements in mod_battle_fight_2 — melee results (victory/defeat/defense/draw/retreat/capture), artillery bombardment results (units hit + damage per unit), interceptor announcements, promotion announcements, nerve gas warning. (2) Combat odds in Shift+U enemy list — when player has a selected combat unit, odds are appended to each enemy entry (Favorable/Unfavorable/Even). (3) C key in Shift+U for detailed combat preview (weapon, morale, HP, odds). Files: veh_combat.cpp (SR code in mod_battle_fight_2), world_map_handler.cpp (Shift+U enhancement), localization.h/cpp, en.txt, de.txt. 23 new loc strings. Test: Attack enemy → hear result. Use artillery → hear bombardment. Open Shift+U with combat unit selected → hear odds. Press C → hear detailed preview.
 0u. **Faction Selection Keyboard Access** — WIP (2026-03-01). Handler erkennt Fraktionsauswahl per BLURB-Detection. Fraktionsname wird vor BLURB-Text vorgelesen. Tasten: Enter (spielen), G (Gruppe bearbeiten), I (Info), R (Zufallsgruppe), Ctrl+F1 (Hilfe). Dateien: faction_select_handler.h/cpp. Änderungen V3 (2026-03-01): (1) I-Taste liest DATALINKS1+DATALINKS2 direkt aus Fraktionsdatei per sr_read_popup_text() statt INFO-Button-Klick (vermeidet unerreichbares DATALINKS-Popup). (2) ScanButtons() wird bei JEDEM OnBlurbDetected() aufgerufen statt nur beim ersten Mal (_buttonsScanned Guard entfernt) — fix für Buttons die nach Screen-Wechsel nicht mehr funktionieren. (3) BTN_INFO aus enum/MatchButton entfernt. (4) Hilfetext um G/I/R erweitert. Neuer Loc-String SR_FACTION_NO_INFO. **PROBLEM: I-Taste funktioniert gar nicht (kein Effekt).** Nächste Sitzung debuggen — prüfen ob HandleKey überhaupt aufgerufen wird, ob _lastBlurbFile gesetzt ist, ob sr_read_popup_text die Datei findet. Ctrl+F12 Debug-Log prüfen.
 0t. **Research Selection Modal (Shift+R)** — TESTED OK (2026-03-01). Dual-mode: Blind Research ON shows 4 directions, OFF shows specific techs. Announces blind status + current direction on open. Intro text from #TECHRANDOM. All opening messages queued. ANSI→UTF-8 fixed (no double conversion). Enter key no longer leaks to game.
-0s. **Council Handler (Planetary Council Accessibility)** — Added 2026-02-28. Inline hook on call_council (0x52C880) detects council open/close. OnOpen announces faction name + governor + vote summary. S/Tab repeats vote summary, Ctrl+F1 help. Ctrl+V on world map: can council be called? + governor info + vote summary. Observer pattern (game handles navigation). New files: council_handler.h/cpp. 10 new loc strings (en+de). Hook count 22→23. Test: Ctrl+V on world map, council einberufen, S/Tab/Ctrl+F1 während Council, KI-Council löst keine Ansage aus.
+0s. **Council Handler (Planetary Council Accessibility)** — Updated 2026-03-07. Hook enabled, K in F12 Commlink calls council (TESTED OK). GOVVOTE popup_list from eligible() factions. Vote result detection (BESTÄTIGT/GEWÄHLT etc.). 14 loc strings (en+de). Vote screen: popup_list aus MFactions+council_votes() gebaut (Navigation mit Pfeiltasten GETESTET OK — Liste sauber, eliminierte Fraktionen korrekt ausgeschlossen). **Klick-Simulation: PostMessage und WinProc() funktionieren NICHT** (Spiel nutzt GetAsyncKeyState für Maus). Aktuell: SendInput implementiert (physischer Mausklick), **NOCH NICHT GETESTET**. Fixes: in_menu-Erkennung schließt Council aus, MenuHandler::OnArrowKey leitet Council-Pfeiltasten nicht um, separate Council-Arrow-Behandlung in gui.cpp. **Noch zu testen:** SendInput-Klick bei Enter auf Vote-Screen, Wahlergebnis-Ansage nach Stimmabgabe, S/Tab Stimmübersicht während Council, Strg+F1 Hilfe.
 0r. **Enhanced Tile Announcements v2** — Added 2026-02-28. Five enhancements to sr_announce_tile(): (1) Foreign units show faction prefix ("Spartan Scout Patrol"), (2) Foreign territory shows diplo status ("Territory: Spartans (Treaty of Friendship)"), (3) Formers show terraform order ("Former, building Road"), (4) Worked tiles in base radius show ", worked", (5) Used monoliths show "(used)". Test all 5 on world map.
 0q. **Game-End Accessibility (Siegtyp, Replay, Score)** — Added 2026-02-28. Drei Features: (1) Siegtyp-Ansage bei STATE_GAME_DONE (Conquest/Diplomatic/Economic/Transcendence/Defeat/Game Over), (2) Replay-Karte Ansage ("Visuelle Animation, Escape zum Fortfahren"), (3) Score-Screen Text kommt durch bestehendes Text-Capture. Testen: Spiel beenden (Cheat/Szenario), prüfen ob Siegtyp angesagt wird, ob Replay-Karte angesagt wird, ob Score-Texte lesbar sind.
 0p. **Design Workshop: Rename/Obsolete/Upgrade (R/O/U)** — Added 2026-02-28. R: rename unit inline. O: toggle obsolete. U: upgrade with double-press confirm. Rename+Obsolete testable sofort. Upgrade braucht Late-Game mit Custom-Designs.
@@ -612,6 +716,7 @@ Full details documented in docs/game-api.md.
 - **2026-02-28 (session 4)**: Multiplayer Setup — Start/Cancel fix via disassembly of AlphaNet_setup (0x4E31E0). (1) Discovered `PbemActive` (0x93A95C) is the lobby dialog result: Cancel button (ID 9999 in pick_service loop at 0x4E26E0) sets it to 1, Start leaves it at 0. (2) After lobby: if PbemActive==0 → game shows accessible "Spiel leiten/Beitreten" popup (NETCONNECT_JOIN_OR_CREATE from "jackal" script), if !=0 → cancel path. (3) Fix: Cancel sets `*PbemActive=1` then `GraphicWin_close(NetWin)` → proper cancel. Start just calls `GraphicWin_close(NetWin)` with PbemActive=0 → popup appears for user. (4) Attempted and reverted: mod_netconnect_popup hook at 0x4E3266 — bypassing the popup caused DirectPlay crash (do_join null ptr) or wrong mode selection. The popup is already accessible, no hook needed. (5) Removed diagnostic dump_netwin_fields code. (6) Removed unused WinProc extern. PENDING TEST: Start → popup → Spiel leiten → game starts?
 - **2026-03-01**: Multiplayer NetWin click simulation investigation. (1) Removed run_setting_modal + all SettingOption arrays + prepare_game/NetSetupState logic (~200 lines). (2) WinProc direct call `WinProc(hwnd, WM_LBUTTONDOWN, MK_LBUTTON, MAKELPARAM(x,y))` — clicks were sent but game didn't respond at all (no popup, no state change). DDrawCompat (ddraw.dll in game dir confirmed) likely prevents synthetic mouse processing even via direct WinProc call. (3) SpotList scan: runtime scan of NetWin memory (offsets 0x444-0x1400) after first OnTimer redraw found SpotList at **NetWin+0xD34** (NOT 0xA2C/CWinFonted). 61 spots, max=85. Full hitbox type map: type=0 settings, type=1 checkboxes, type=2/5 player name areas, type=3 faction column, type=4 difficulty column. (4) iHitBoxTagClicked write at NetWin+0xD2C (CWinFonted analogy) — no effect, game didn't process it. (5) Vtable dump code deployed (40 entries) but not yet tested — user ended session. Next: analyze vtable, find on_left_click handler, call directly as `vtbl[N](NetWin, x, y)`.
 - **2026-02-27**: Load Game + Save Game dialog accessibility + status cleanup. (1) Load Game file browser: Initial approach (parallel file list with own index, popup_list navigation) failed after 5 iterations — our index desynchronized with game's internal cursor, Enter on folders was consumed but game didn't navigate, user ended up in C:\ root. Root cause: game's file dialog is a modal with its own state we can't control. **Rewrote to text-capture approach**: game handles all navigation (arrows/Enter/Escape), we observe rendered filenames via Trigger 2 (Arrow Nav) and route through sr_fb_on_text_captured() which adds type markers (Ordner/SAV). Directory names from saves/ scanned via FindFirstFile as lookup table. Triggers 1+3 suppressed during file browser. TESTED OK. (2) Status cleanup: Ctrl+R conflict RESOLVED, Setup options RESOLVED (already works), Base screen mini-map NOT NEEDED (read-only visual), Zoom feedback NOT NEEDED (purely visual). (3) Key lesson documented in memory: for game modal dialogs, always observe+annotate, never build parallel navigation. (4) Save Game dialog: Hooked save_game at 0x5A9EB0 with same text-capture pattern as load_game (shared sr_fb_open/sr_fb_close helpers). "Spiel speichern" announced on Ctrl+S. Modified sr_fb_on_text_captured() to announce button text (OK, ABBRECHEN, SPEICHERN, LADEN, CANCEL, SAVE, LOAD) directly instead of skipping — enables overwrite confirmation dialog options to be read. SR_FILE_SAVE_GAME loc string added (en+de). Inline hook slot 24 used. Awaiting testing.
+- **2026-03-07**: File Browser Handler rewrite. Old text-capture approach (observe game's file browser rendering) had fundamental reliability problems: wrong item announced on UP navigation, "auto" folder never announced, timing-dependent missed announcements. **Replaced with full modal handler** (FileBrowserHandler, like SocialEngHandler pattern): scans saves directory via FindFirstFile, own sorted list (dirs first, then files alphabetically), own index, own modal pump. Up/Down navigate, Enter opens folder or selects file, Backspace parent dir, Home/End first/last, Escape cancel, Ctrl+F1 help. For load: calls load_daemon() directly (bypasses game's file browser UI entirely). For save: calls save_daemon() directly. Non-.SAV files (like debug logs) still shown — could filter later. New files: file_browser_handler.h/cpp. 6 new loc strings (en+de). Removed old sr_fb_scan_dirs, sr_fb_is_directory, sr_fb_on_text_captured (now stub), sr_fb_open/close. TESTED OK — navigation reliable, folder entry works, file loading confirmed.
 - **2026-03-02**: Three small features. (1) D key on world map: SR feedback for "Destroy Improvements" (D without modifiers). Follows H-key pattern (pass to WinProc, announce). New string SR_ACT_DONE_DESTROY (en: "Destroying improvements.", de: "Zerstört Verbesserungen."). (2) Scenario Editor announcement: Detects STATE_SCENARIO_EDITOR activation (Ctrl+K) via static was_editor flag in ModWinProc. Announces "Scenario editor. Not yet accessible with screen reader." New string SR_EDITOR_NOT_ACCESSIBLE. (3) Monument F9 disclaimer: Modified SR_MONUMENT_OPEN to include "Visualization of achievements, list may be inaccurate" / "Visualisierung der Erfolge, Liste kann fehlerhaft sein" — warns user that monument data readout may have errors.
 
 ## Future: Scenario Editor Accessibility

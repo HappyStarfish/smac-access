@@ -1,5 +1,6 @@
 
 #include "veh.h"
+#include "game_log.h"
 #include "message_handler.h"
 #include "screen_reader.h"
 #include "localization.h"
@@ -2134,6 +2135,9 @@ int __cdecl mod_veh_init(int unit_id, int faction_id, int x, int y) {
 int __cdecl mod_veh_kill(int veh_id) {
     VEH* veh = &Vehs[veh_id];
     debug("disband %2d %2d %s\n", veh->x, veh->y, veh->name());
+    if (is_human(veh->faction_id)) {
+        game_log("Unit disbanded: %s at (%d, %d)", veh->name(), veh->x, veh->y);
+    }
     veh_kill(veh_id);
     return VEH_SKIP;
 }

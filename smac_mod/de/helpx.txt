@@ -1,0 +1,2074 @@
+;
+;  Hilfe
+;
+
+#HELPCATS
+Konzepte
+Reaktoren
+Waffen
+Panzerung
+Fahrzeugaufbau
+Einrichtungen
+Gesellschaft
+Fähigkeiten
+Tech
+Fahrzeuge
+Projekte
+Gruppierungen
+Bürger
+Terraforming
+
+#HELPTECHS
+#xs 600
+#caption Technologie auswählen
+
+#HELPTECH
+#xs 440
+#caption Technologie: $STR0
+^$STR0
+^
+
+#TECHHECK
+^Former können Fungus-Felder verbessern. 
+^Behinderung durch Fungus reduziert.
+^Straßen können in Fungus-Feldern gebaut werden.
+^Einheiten können zwei Spezialfähigkeiten haben.
+^Einschränkungen für Nahrung aufgehoben; können 3 und mehr Nahrungseinheiten pro Feld produzieren. 
+^Einschränkungen für Mineralien aufgehoben; können 3 und mehr Mineralien pro Feld produzieren. 
+^Einschränkungen für Energie aufgehoben; können 3 und mehr Energieeinheiten pro Feld produzieren. 
+^Geheimnisse: Erste Gruppe, die sie entdeckt, erhält freie Techn.
+^Steigert die Moral in der Basis der Sondierteams.
+^Steigert den HANDELS-Ertrag aus Verträgen und Pakten.
+^Die gesamte Karte des Planeten wird angezeigt.
+^Sondierteams können im Zuge der genetischen Kriegsführung Greueltaten begehen.
+^Steigert die ENERGIE-Produktion in Fungus-Feldern.
+^Steigert die MINERALIEN-Produktion in Fungus-Feldern.
+^Steigert die NAHRUNGS-Produktion in Fungus-Feldern.
+^Einheiten mit Abwurfmodulen dürfen orbitale Landungen durchführen.
+^+1 Mineralienbonus für alle Abbauplattformen.
+^Wirtschaftlicher Sieg zugelassen.
+^Diplomatischer Sieg zugelassen.
+^Former können den Befehl "$TERRAFORM0" ausführen.
+
+#CITIZENHECK
+^Handelsertrag-Bonus für die Basis.
+^Produktionsbonus für die Basis.
+^PSI-Verteidigungsbonus für die Basis.
+^Moralbonus für die Basis.
+^Einheits-Unterstützungsbonus für die Basis.
+^Effizienzbonus für die Basis.
+^Außerirdischen-Bonus für die Basis.
+
+#HELPWEAPONS
+#xs 440
+#caption Waffentyp auswählen
+
+#HELPWEAPON
+#xs 440
+#caption Waffe: $STR0
+^
+^SCHUSSKRAFT: $NUM0
+^KOSTEN: $NUM1
+^
+^VORAUSSETZUNG: $LINK<$STR2=$NUM2>
+
+#HELPWEAPON2
+#xs 440
+#caption Waffe: $STR0
+^
+^SCHUSSKRAFT: $NUM0
+^
+^VORAUSSETZUNG: $LINK<$STR2=$NUM2>
+
+#HELPDEFENSES
+#xs 440
+#caption Verteidigungstyp auswählen
+
+#HELPDEFENSE
+#xs 440
+#caption Verteidigung: $STR0
+^
+^STÄRKE: $NUM0
+^
+^VORAUSSETZUNG: $LINK<$STR2=$NUM2>
+
+#HELPDEFENSE2
+#xs 440
+#caption Verteidigung: $STR0
+^
+^STÄRKE: $STR1
+^
+^VORAUSSETZUNG: $LINK<$STR2=$NUM2>
+
+#HELPREACTOR
+#xs 440
+#caption Verteidigung: $STR0
+^
+^KRAFT: $NUM0
+^VORAUSSETZUNG: $LINK<$STR1=$NUM1>
+
+#HELPCHASSIS2
+#xs 440
+#caption Fahrzeugtyp auswählen
+
+#HELPCHASSIS
+#xs 440
+#caption Fahrgestell: $STR0
+^
+^BEWEGUNGSRATE: $STR1 $NUM0
+^
+^VORAUSSETZUNG: $LINK<$STR2=$NUM3>
+
+
+#HELPCROPS
+#xs 440
+#caption Liste der Anbausorten
+
+
+#HELPFACS
+#xs 440
+#caption Einrichtungsart auswählen
+
+#HELPFAC
+#xs 440
+#caption Basiseinrichtung: $STR0
+^
+^KOSTEN: $NUM0
+^WARTUNG: $NUM1
+^
+^VORAUSSETZUNG: $LINK<$STR1=$NUM2>
+
+#HELPFACFREE
+#xs 440
+#caption Basiseinrichtung: $STR0
+^
+^KOSTEN: $NUM0
+^WARTUNG: $NUM1
+^
+^VORAUSSETZUNG: $LINK<$STR1=$NUM2>
+^KOSTENLOS FÜR NEUE BASEN: $LINK<$STR2=$NUM3>
+^
+
+
+#HELPPROJS
+#xs 440
+#caption Geheimprojekt auswählen
+
+#HELPPROJ
+#xs 440
+#caption Geheimprojekt: $STR0
+^
+^KOSTEN: $NUM0
+^
+^VORAUSSETZUNG: $LINK<$STR1=$NUM2>
+^
+
+#HELPUNIT
+#xs 440
+#caption Einheitstyp: $STR0
+^ANGRIFF: {$STR2}
+^VERTEIDIGUNG: {$STR3}
+^BEWEGUNGEN: {$NUM1}
+^KOSTEN: {$NUM0}
+^
+^VORAUSSETZUNG: $LINK<$STR1=$NUM2>
+
+#HELPUNITS
+#xs 400
+#caption Einheitstyp auswählen
+
+#HELPABILS
+#xs 400
+#caption Spezialfähigkeiten auswählen
+
+#HELPABIL
+#xs 440
+#caption Spezielle Einheitsfähigkeiten: $STR0
+^
+^FÄHIGKEIT: $STR2
+^KOSTEN: $STR3
+^
+^VORAUSSETZUNG: $LINK<$STR1=$NUM0>
+
+#HELPTERRAFORM
+#xs 440
+#caption Terraforming: $STR0
+^
+^RUNDEN BIS ZUR FERTIGSTELLUNG: $NUM1 $STR2
+^
+^VORAUSSETZUNG: $LINK<$STR1=$NUM0>
+
+
+#; Hauptquartier
+#HELPFAC1
+Das administrative Zentrum Ihrer Kolonie. $LINK<+1 ENERGIE=43>.
+Keine $LINK<Ineffizienz=25>. Feindliche $LINK<Sondierteams=30006>
+dürfen hier keine Versuche der Gedankenkontrolle unternehmen.
+
+#; Kinderkrippe
+#HELPFAC2
+Basis erhält +2 auf der $LINK<WACHSTUMS=130006>-Skala und +1 auf der
+$LINK<EFFIZIENZ=130001>-Skala. Alle negativen Auswirkungen auf die
+$LINK<MORAL=130004> sind für die Einheiten im Basis-Feld gestrichen;
+statt dessen erhalten diese Einheiten einen MORAL-Faktor von +1.
+Reduziert die Verwundbarkeit der Basis gegenüber feindlicher
+Gedankenkontrolle.
+
+#; Recyclingtanks
+#HELPFAC3
+Steigert die $LINK<NAHRUNGS-=41>, $LINK<MINERALIEN-=42>, und
+$LINK<ENERGIE=43>-Produktion auf dem Basis-Feld.
+
+#; Abwehrzone
+#HELPFAC4
+Steigert den Abwehr-Multiplikator der Basis um den Faktor eins.
+Mit Hilfe der Abwehrzone wird die Abwehrkraft praktisch verdoppelt
+(oder verdreifacht, wenn sie mit einem $LINK<Tachyonenfeld=100005>
+verbunden wird).
+
+#; Tachyonenfeld
+#HELPFAC5
+Steigert den Abwehr-Multiplikator der Basis um den Faktor eins. Dies
+ist kumulativ zur $LINK<Abwehrzone=100004> und führt letztendlich zu
+einer Verdreifachung der Abwehrstärke auf der Basis.
+
+#; Freizeitkuppel
+#HELPFAC6
+Reduziert die Anzahl der $LINK<Drohnen=36> in der Kolonie um zwei.
+
+#; Energielager
+#HELPFAC7
+Erhöht die $LINK<WIRTSCHAFT=44> auf der Basis um 50%.
+
+#; Netzwerkknoten
+#HELPFAC8
+Erhöht die $LINK<LABORS=45> auf der Basis um 50%.
+Die Basis kann $LINK<außerirdische Artefakte=30007> untersuchen.
+
+#; Biolabor
+#HELPFAC9
+$LINK<+2 Labors=45> pro Runde. Alle auf dieser
+Basis gezüchteten außerirdischen Lebewesen erhalten einen
+$LINK<+1 Lebenszyklus=11>-Bonus.
+
+#; Skunkworks
+#HELPFAC10
+Eliminiert zusätzliche Kosten für $LINK<Prototypen=23> neuer
+Einheiten auf dieser Basis.
+
+#; Holo-Theater
+#HELPFAC11
+Reduziert die Anzahl der $LINK<Drohnen=36> um zwei und steigert
+$LINK<PSYCHO=38> der Basis um 50%.
+
+#; Paradiesgarten
+#HELPFAC12
+Zwei zusätzliche $LINK<Talente=37> auf dieser Basis.
+
+#; Baumfarm
+#HELPFAC13
+Steigert den Wert für $LINK<PSYCHO=38> und die $LINK<WIRTSCHAFT=44>
+auf der Basis um jeweils 50%. Steigert die $LINK<Nahrungs=41>-Produktion
+in $LINK<Wald=90004>-Feldern. Vermindert mindestens die Hälfte der durch
+Terraforming ($LINK<Farmen=90000>, $LINK<Minen=90002>,
+$LINK<Straßen=90005> usw.) verursachten $LINK<Umweltschäden=26>. 
+
+#; Hybrider Wald
+#HELPFAC14
+Steigert die $LINK<NAHRUNGS=41>- und $LINK<ENERGIE=43>-PRODUKTION von
+$LINK<WALD=90004>-Feldern. Steigert den Wert für $LINK<PSYCHO=38> und
+die $LINK<WIRTSCHAFT=44> auf der Basis um jeweils 50% und eliminiert
+zusammen mit $LINK<Baumfarmen=100013> die durch Terraforming entstandenen
+Umweltschäden. Kumulativ zur Baumfarm.
+
+#; Fusionslabor
+#HELPFAC15
+Steigert die $LINK<WIRTSCHAFT=44> und die $LINK<LABORS=45>
+auf der Basis um jeweils 50%.
+
+#; Quantenlabor
+#HELPFAC16
+Steigert die $LINK<WIRTSCHAFT=44> und die $LINK<LABORS=45>
+auf der Basis um jeweils 50%. Kumulativ zum $LINK<Fusionslabor=100015>.
+
+#; Forschungshospital
+#HELPFAC17
+Steigert den Wert für $LINK<PSYCHO=38> auf der Basis um 25% und die
+$LINK<LABORS=45> auf der Basis um 50% und reduziert die
+Anzahl der $LINK<Drohnen=36> um eine. Reduziert die durch genetische
+Kriegsführung und das Ausbrechen anderer Krankheiten verursachten
+Verluste unter der Bevölkerung.
+
+#; Nanohospital
+#HELPFAC18
+Steigert den Wert für $LINK<PSYCHO=38> auf der Basis um 25% und die
+$LINK<LABORS=45> auf der Basis um 50% und reduziert die
+Anzahl der $LINK<Drohnen=36> um 1. Reduziert die durch genetische
+Kriegsführung und das Ausbrechen anderer Krankheiten verursachten
+Verluste unter der Bevölkerung. Kumulativ zum
+$LINK<Forschungshospital=100017>.
+
+#; Roboterfabrik
+#HELPFAC19
+Steigert die $LINK<MINERALIEN=42>-Produktion auf der Basis um 50%.
+Kuumulativ zu allen anderen Einrichtungen dieser Art.
+
+#; Nanoreplikator
+#HELPFAC20
+Steigert die $LINK<MINERALIEN=42>-Produktion auf der Basis um 50%.
+Kumulativ zu allen anderen Einrichtungen dieser Art.
+
+#; Quantenkonverter
+#HELPFAC21
+Steigert die $LINK<MINERALIEN=42>-Produktion auf der Basis um 50%.
+Kumulativ zu allen anderen Einrichtungen dieser Art.
+
+#; Genarbeiter-Fabrik
+#HELPFAC22
+Steigert die $LINK<MINERALIEN=42>-Produktion auf der Basis um 50%, steigert
+aber auch die Anzahl der $LINK<Drohnen=36> auf der Basis um 1 und erhöht die
+Verwundbarkeit gegenüber feindlicher Gedankenkontrolle. Kumulativ zu allen
+anderen Einrichtungen dieser Art.
+
+#; Strafsphäre
+#HELPFAC23
+Eliminiert sowohl $LINK<DROHNEN=36> als auch $LINK<TALENTE=37> auf dieser
+Basis und reduziert die Verwundbarkeit gegenüber feindlicher
+Gedankenkontrolle, reduziert aber auch die Leistung der
+$LINK<LABORS=45> um die Hälfte.
+
+#; Wohnkomplex
+#HELPFAC24
+Gestattet es der Bevölkerung auf der Basis, auf einen Wert größer
+als 7 zu wachsen.
+
+#; Wohnkuppel
+#HELPFAC25
+Gestattet es der Bevölkerung auf der Basis, auf einen Wert größer als
+14 zu wachsen. Die Basis muß bereits einen $LINK<Wohnkomplex=100024> haben.
+
+#; Druckkuppel
+#HELPFAC26
+Gestattet es der Basis, eine Überflutung zu überstehen. Zählt außerdem
+als $LINK<Recyclingtank=100003> für diese Basis.
+
+#; Kommandozentrale
+#HELPFAC27
+Repariert beschädigte Boden-Einheiten schnell. Hier hergestellte
+Boden-Einheiten erhalten zwei $LINK<Moral=11>-Aufwertungen.
+
+#; Schiffswerft
+#HELPFAC28
+Repariert beschädigte Marine-Einheiten schnell. Hier hergestellte
+Marine-Einheiten erhalten zwei $LINK<Moral=11>-Aufwertungen.
+
+#; Aerospace-Komplex
+#HELPFAC29
+Repariert beschädigte Luft-Einheiten schnell. Hier hergestellte
+Luft-Einheiten erhalten zwei $LINK<Moral=11>-Aufwertungen. Eine
+Basis muß einen Aerospace-Komplex haben, bevor sie im Weltraum
+einsetzbare Anlagen produzieren kann.
+
+#; Bio-Optimierungszentrum
+#HELPFAC30
+Alle hier hergestellten Militäreinheiten erhalten zwei
+$LINK<Moral=11>-Aufwertungen. Alle auf dieser Basis gezüchteten
+außerirdischen Lebensformen erhalten einen $LINK<Lebenszyklus=11>-Bonus
+von +1.
+
+#; Centauri-Reservat
+#HELPFAC31
+Reduziert die Auswirkung der Industrie auf die Umwelt des Planeten.
+Alle auf dieser Basis gezüchteten außerirdischen Lebensformen erhalten
+einen $LINK<Lebenszyklus=11>-Bonus von +1.
+
+#; Planeten-Tempel
+#HELPFAC32
+Reduziert die Auswirkung der Industrie auf die Umwelt des Planeten.
+Alle auf dieser Basis gezüchteten außerirdischen Lebensformen erhalten
+einen $LINK<Lebenszyklus=11>-Bonus von +1. Kumulativ zum
+$LINK<Centauri-Reservat=100031>.
+
+#; PSI-Tor
+#HELPFAC33
+Einheiten können zwischen mit PSI-Toren ausgestatteten Basen teleportieren.
+
+#; Schwebendes Hydrokultur-Labor
+#HELPFAC65
+Jedes Hydrokultur-Labor steigert die $LINK<NAHRUNGS-Produktion=41>
+pro Basis um +1.
+
+Können nur von Basen mit $LINK<Aerospace-Komplexen=100029> produziert werden.
+Der Nahrungsanstieg für Basen ohne Aerospace-Komplex beträgt die Hälfte und
+kann nie die Größe der Basis übersteigen.
+
+#; Nessus-Bergwerk
+#HELPFAC66
+Jedes Nessus-Bergwerk steigert die $LINK<MINERALIEN-Produktion=42>
+pro Basis um +1.
+
+Können nur von Basen mit $LINK<Aerospace-Komplexen=100029> produziert
+werden. Der Mineralienbonus für Basen ohne Aerospace-Komplex beträgt die
+Hälfte und kann nie die Größe der Basis übersteigen.
+
+#; Orbitaler Energietransmitter
+#HELPFAC67
+Jeder orbitale Energietransmitter steigert die
+$LINK<ENERGIE-Produktion=43> pro Basis um +1. Kann nur von Basen mit
+$LINK<Aerospace-Komplexen=100029> produziert werden. Der Energiebonus für
+Basen ohne Aerospace-Komplex beträgt die Hälfte und kann nie die Größe der
+Basis übersteigen.
+
+
+#; Orbitale Abwehrstation
+#HELPFAC68
+Jede noch nicht gestartete orbitale Abwehrstation hat eine 50%ige Chance,
+einen Angriff durch eine $LINK<Planetenbombe=60016>, $LINK<Fungus-Rakete=60025> oder
+$LINK<tektonische Rakete=60024> auf eine Ihrer Basen zu verhindern.
+Es kann nur jeweils eine Abwehrstation pro Runde gestartet werden; wenn es
+am Boden keine Stationen mehr gibt, kann eine Planetenbombe nur gestoppt
+werden, wenn man eine bereits gestartete Stationen opfert. 
+^
+Zusätzlich können Sie eine orbitale Abwehrstation zum Angriff folgender Einrichtungen
+gegnerischer Gruppierungen einsetzen: $LINK<Schwebendes Hydrokultur-Labor=100034>,
+$LINK<Nessus-Bergwerk=100035> und $LINK<Orbitaler Energietransmitter=100036>,
+sowie auch gegen orbitale Abwehrstationen der anderen Gruppierungen.
+
+#; Stapelenergie
+#HELPFAC69
+Alle auf der Basis produzierten $LINK<MINERALIEN=42> werden sofort in
+$LINK<WIRTSCHAFT=44> umgewandelt (2 Mineralien werden jeweils zu
+1 Energieeinheit).
+
+#; Das Human-Genom-Projekt
+#HELPPROJ0
+Ein zusätzliches $LINK<Talent=37> auf jeder Basis.
+
+#; Das Kommandozentrum
+#HELPPROJ1
+Zählt als $LINK<Kommandozentrum=100027> auf jeder Ihrer Basen.
+
+#; Das Wetterparadigma
+#HELPPROJ2
+Erhöht die Terraforming-Geschwindigkeit um 50% für alle
+Aufgaben außer für $LINK<Fungus entfernen=90010>. Ihre Former dürfen
+$LINK<Kondensatoren=90012> und $LINK<Bohrlöcher=90014> erstellen und
+können $LINK<Berge aufbauen=90016>/$LINK<einebnen=90017>, selbst wenn
+Sie die entsprechenden Technologien noch nicht entdeckt haben.
+
+#; Die Handelsbörse
+#HELPPROJ3
+$LINK<+1 Energie=43>-Einheit für jedes Feld auf dieser Basis.
+
+#; Die Gilde der Empathen
+#HELPPROJ4
+Gestattet es Ihnen, jeden Anführer zu kontaktieren, und bringt Ihnen
+in jeder Gruppe einen Spion. Sie erhalten +50% Stimmen in Wahlen
+zum $LINK<Planeten-Gouverneur=28> und $LINK<Oberbefehlshaber=10005>.
+
+#; Die Bürgerwehr
+#HELPPROJ5
+Zählt auf jeder Basis als $LINK<Abwehrzone=100004>.
+
+#; Die virtuelle Welt
+#HELPPROJ6
+Neben ihrer normalen Wirkung zählen die $LINK<Netzwerkknoten=100008> auf
+jeder Ihrer Basen als $LINK<Holo-Theater=100011>: sie reduzieren die
+Anzahl der $LINK<Drohnen=36> um zwei und steigern 
+$LINK<PSYCHO=38> der Basis um 50%.
+
+#; Das Planeten-Verkehrssystem
+#HELPPROJ7
+Alle neue Basen, die Sie gründen, fangen mit einer Bevölkerung von 3 an.
+Eine $LINK<Drohne=36> weniger auf allen Basen mit einer Bevölkerung
+von 3 und weniger.
+
+#; Die Xenoempathie-Dom
+#HELPPROJ8
+Alle $LINK<Xenofungus=14>-Felder werden wie $LINK<Straßen=90005> behandelt,
+und die Rate, in der Ihre $LINK<Former=30001> $LINK<Fungus anpflanzen=90011>
+und/oder $LINK<entfernen=90010> können, verdoppelt sich. Alle von Ihnen
+gezüchteten außerirdischen Lebensformen erhalten einen
+$LINK<Lebenszyklus=11>-Bonus von +1.
+
+#; Der Neural-Verstärker
+#HELPPROJ9
++50% zur $LINK<PSI-Abwehr=15>.
+
+#; Das Meeres-Kontrollzentrum
+#HELPPROJ10
+Steigert die Bewegungsrate aller nicht-einheimischen Marine-Einheiten
+um zwei und zählt auf jeder Ihrer Basen als $LINK<Schiffswerft=100028>.
+
+#; Die Planeten-Datenübertragung
+#HELPPROJ11
+Sie entdecken automatisch jede $LINK<Technologie=140062>, die von drei
+beliebigen anderen $LINK<Gruppierungen=150001> entdeckt wurde.
+
+#; Das Synchrotron
+#HELPPROJ12
+Die Zahl der $LINK<Forschungsergebnisse=45> auf dieser Basis wird verdoppelt.
+
+#; Die asketischen Tugenden
+#HELPPROJ13
+Steigert das Bevölkerungslimit auf Ihren Basen um zwei und erhöht die
+Toleranz Ihrer Gesellschaft gegenüber dem Einsatz von Polizei- und
+Militäreinheiten ($LINK<+1 POLIZEI=130005>).
+
+#; Das Langlebigkeits-Serum
+#HELPPROJ14
+Zwei $LINK<Drohnen=36> weniger auf jeder Basis, wenn Ihre
+$LINK<Gesellschaft=120005> eine $LINK<Planwirtschaft=120008> hat.
+Eine Drohne weniger auf jeder Basis, wenn Sie eine $LINK<einfache=120006>
+oder eine $LINK<grüne=120009> Wirtschaftsform haben.
+$LINK<WIRTSCHAFT=44> auf dieser Basis für die
+$LINK<freie Marktwirtschaft=120007> um 50% gesteigert.
+
+#; Der Jagdalgorithmus
+#HELPPROJ15
+Macht Ihre Einheiten und Basen vollkommen immun gegen jegliche
+Angriffe seitens $LINK<Sondierteams=30006>, es sein denn,
+ein solches Team hat die Spezialfähigkeit
+$LINK<Algorithmische Verbesserung=80028>.
+
+#; Das Pholus-Mutagen
+#HELPPROJ16
+Reduziert die Wirkung der Industrie auf die Umwelt des Planeten auf allen
+Ihren Basen. Zusätzlich verleiht der $LINK<Fungus=14> allen Ihren Einheiten
+dieselben Kampfvorteile, die normalerweise außerirdischen Lebensformen
+vorbehalten sind. Alle von Ihnen gezüchteten Lebensformen erhalten einen
+$LINK<+1 Lebenszyklus=11>-Bonus.
+
+#; Die Cyborg-Fabrik
+#HELPPROJ17
+Zählt auf jeder Basis als $LINK<Bio-Optimierungszentrum=100030>.
+
+#; Die Universaltheorie
+#HELPPROJ18
+Doppelt so viele $LINK<LABORS=45> auf dieser Basis.
+
+#; Der Traum-Manipulator
+#HELPPROJ19
++50% bei einem $LINK<PSI-Angriff=15>.
+
+#; Der Übersetzungscomputer
+#HELPPROJ20
+Bei Fertigstellung zwei kostenlose $LINK<technische Fortschritte=140062>.
+$LINK<Außerirdische Artefakte=30007> in beliebiger Anzahl können auf dieser
+Basis umgetauscht werden. 
+
+#; Das Rückgrat des Netzwerks
+#HELPPROJ21
+$LINK<+1 Forschungseinheiten=45> auf dieser Basis für jeden
+$LINK<Handelsertrag=29>-Punkt, den diese Basis erhält, und +1 Forschungseinheiten
+für jeden auf Alpha Centauri befindlichen $LINK<Netzwerkknoten=100008>,
+unabhängig davon, ob der Spieler den Netzwerkknoten besitzt oder nicht.
+Eliminiert die negativen Auswirkungen der
+$LINK<Kybernetischen Gesellschaft=120017>.
+
+#; Die Nanofabrik
+#HELPPROJ22
+Einheiten können schnell und vollständig repariert werden,
+selbst wenn sie sich nicht in Basis-Feldern befinden. Die Kosten für
+das Nachrüsten von Einheiten werden um 50% reduziert.
+
+#; Die lebende Raffinerie
+#HELPPROJ23
+Dezimiert die Anzahl der Mineralien, die gebraucht werden, um Militär-
+einheiten zu unterstützen: $LINK<+2 UNTERSTÜTZUNG=130002> in der
+Sozialtechnik-Tabelle.
+
+#; Die Klon-Behälter
+#HELPPROJ24
+Alle Ihre Basen beginnen ein ständiges Bevölkerungswachstum und werden
+in jeder Runde weiter wachsen, wenn die $LINK<NAHRUNGS-Produktion=41> ausreicht
+und die $LINK<Wohneinrichtungen=100024> angemessen sind. Die Nachteile der
+sozialtechnischen Entscheidungen $LINK<Macht=120012> und
+$LINK<Gedankenkontrolle=120019> werden eliminiert.
+
+#; Die integrierte Kolonie
+#HELPPROJ25
+Die Energie-Wartungskosten für Einrichtungen werden auf allen Ihren Basen
+halbiert. Wenn nach dem gegenwärtigen Gesellschaftsmodell ein Einsatz der
+$LINK<Polizei=130005> gestattet ist, besitzen nun alle Ihre Basen zusätzliche
+Polizei-Einheiten.
+
+#; Klinische Unsterblichkeit
+#HELPPROJ26
+Ein zusätzliches $LINK<Talent=37> für jede Basis. Verdoppelt Ihre Stimmen
+bei den Wahlen des $LINK<Planeten-Gouverneurs=28> oder
+$LINK<Oberbefehlshabers=10005>.
+
+#; Der Raumlift
+#HELPPROJ27
+Verdoppelt die Produktion der $LINK<WIRTSCHAFT=44> auf dieser
+Basis und verdoppelt die $LINK<MINERALIEN=42>-Produktionsrate auf allen
+Ihren Basen, wenn Sie orbitale Verbesserungen vornehmen. Ihre mit
+$LINK<Abwurfmodulen=80004> ausgestatteten Einheiten dürfen nun überall auf
+dem Planeten orbitale Landeunternehmen vornehmen. Alle
+$LINK<Aerospace-Komplex=100029>-Beschränkungen in bezug auf orbitale
+Verbesserungen werden aufgehoben.
+
+#; Das Singularitätsgerät
+#HELPPROJ28
+Zählt auf jeder Basis als $LINK<Quanten-Konverter=100021> und reduziert die
+$LINK<Auswirkungen=26> der Mineralien-Produktion auf die Umwelt.
+
+#; Der Massen-Teleporter
+#HELPPROJ29
+$LINK<+2 MINERALIEN=42> pro Basis.
+
+#; Die Telepathie-Matrix
+#HELPPROJ30
+$LINK<Drohnen=36> werden auf Ihrer Basis nie $LINK<Aufstände=9> organisieren.
+Alle Ihrer $LINK<Sondierteams=30006> erhalten einen $LINK<+2 Moral=11>-Faktor.
+
+#; Die Stimme des Planeten
+#HELPPROJ31
+Beginnt den Zyklus des $LINK<Aufstieg zur Transzendenz=110102>. Alle Gruppen
+können nun den Aufstieg zur Transzendenz beginnen. Alle von Ihnen gezüchteten
+außerirdischen Lebensformen erhalten einen $LINK<+1 Lebenszyklus=11>-Bonus.
+
+#; Der Aufstieg zur Transzendenz
+#HELPPROJ32
+Schließt den Zyklus des Aufstiegs zur Transzendenz ab und beendet das
+menschliche Zeitalter. Der Aufstieg kann nicht begonnen werden, bis die
+$LINK<Stimme des Planeten=110101> einsatzfähig ist.
+
+#;POLITIK
+#HELPSOC0
+Die Sozialkategorie "Politik" gestattet es Ihnen, das politische Grundsystem
+Ihrer Gesellschaft zu wählen.
+^
+^$LINK<Grenzstaat=120001>
+^$LINK<Polizeistaat=120002>
+^$LINK<Demokratie=120003>
+^$LINK<Fundamentalismus=120004>
+
+#;Grenzstaat
+#HELPSOC00
+Grenzpolitik umfaßt die inoffiziellen Vereinbarungen, die in den Anfangszeiten
+der Kolonien getroffen wurden, bevor die Bevölkerungszahlen höhere
+Regierungsformen erforderten. Für Grenzpolitik gibt es keine Boni oder
+Strafpunkte.
+^
+^Voraussetzung: KEINE
+
+#;Polizeistaat
+#HELPSOC01
+Der Polizeistaat unterdrückt seine Bürger, um alles unter Kontrolle zu halten
+und gibt seinen Anführern viel Macht in bezug auf militärische Entscheidungen.
+Diese Methode im Umgang mit seinen Bürgern reduziert jedoch auch die
+wirtschaftliche Effizienz.
+^
++2 POLIZEI
++2 UNTERST.
+-2 EFFIZIENZ
+^
+^Voraussetzung: $LINK<$STR0=$NUM0>
+
+#;Demokratie
+#HELPSOC02
+Demokratien räumen ihren Bürgern die Möglichkeit ein, sich bei der Regierung des
+Staats zu beteiligen, und tauschen die Stabilität, die durch Unterdrückung
+erzielt wird, zugunsten von Wachstum und Effizienz ein.
+Bürger in Demokratien mißtrauen jedoch dem Militär. Daher steigen die Kosten für
+die Militärunterstützung, da ein großer Verwaltungsapparat benötigt wird, der
+das Militär im Interesse der Bürger überwacht.
+^
++2 EFFIZIENZ
++2 WACHSTUM
+-2 UNTERST.
+^
+^Voraussetzung: $LINK<$STR0=$NUM0>
+
+#;Fundamentalismus
+#HELPSOC03
+Fundamentalistische Politik vereint eine Gesellschaft unter einer starken,
+dogmatischen Religion. Durch die Propagandaeinwirkung auf die Bevölkerung kann
+man loyale, sogar fanatische Militärstreitkräfte erzeugen, und oftmals die
+Bürger gegen (andere) Formen der Gehirnwäsche immunisieren. Die technologische
+Forschung leidet jedoch oftmals unter den dauerhaften Angriffen auf die
+intellektuelle Integrität, die mit dieser Art von Regierungsformen verbunden
+ist.
+^
++1 MORAL
++2 SONDE
+-2 FORSCHUNG
+^
+^Voraussetzung: $LINK<$STR0=$NUM0>
+
+
+#;ÖKONOMIE
+#HELPSOC1
+Die Sozialkategorie "Ökonomie" gestattet es Ihnen, die Art und Weise zu
+kontrollieren, wie Ihre Wirtschaft verwaltet wird. 
+^
+^$LINK<Einfache Wirtschaft=120006>
+^$LINK<Freie Marktwirtschaft=120007>
+^$LINK<Planwirtschaft=120008>
+^$LINK<Grün=120009>
+
+#;Einfache Wirtschaft
+#HELPSOC10
+Einfache Wirtschaft beschreibt die informelle, ad hoc Wirtschaft, die sich in
+den Anfangsjahren nach der Landung auf dem Planeten entwickelt, bevor
+organisierte wirtschaftliche Systeme etabliert werden können. In der einfachen
+Wirtschaft gibt es keine besonderen Vorteile oder Strafpunkte.
+^
+^Voraussetzung: KEINE
+
+#;Freie Marktwirtschaft
+#HELPSOC11
+Die freie Marktwirtschaft gibt den Marktgrößen in Ihrer Gesellschaft grünes
+Licht. Uneingeschränkte Marktwirtschaft kann in kurzer Zeit großen Wohlstand
+erzeugen, zieht jedoch gerade in der auf dem Planeten sich neu entwickelnden
+Wirtschaft die Gefahr extremer Umweltverschmutzung und Umweltschäden. Bürger,
+die plötzlich aufgrund von Machenschaften skrupelloser Industriemogule ihr
+Hab und Gut verlieren, scheuen nicht davor, gegen ihre Energie-hortenden
+Meister aufzubegehren.
+^
++2 WIRTSCHAFT
+-3 PLANET
+-5 POLIZEI
+^
+^Voraussetzung: $LINK<$STR0=$NUM0>
+
+#;Planwirtschaft
+#HELPSOC12
+Eine quasi-Marktwirtschaft, die durch eiserne Reglementierung der Regierung
+geleitet wird.  Planwirtschaft begünstigt dauerhaftes industrielles und
+Bevölkerungs-Wachstum, was jedoch zu Lasten der Effizienz geht.
+^
++2 WACHSTUM
++1 INDUSTRIE
+-2 EFFIZIENZ
+^
+^Voraussetzung: $LINK<$STR0=$NUM0>
+
+#;Grün
+#HELPSOC13
+Umweltorientierte, oder grüne Wirtschaft strebt danach, den Fortschritt
+intelligenter Lebewesen mit den Bedürfnissen der Biosphäre zu vereinbaren.
+In der umweltorientierten Wirtschaft werden Ressourcen effizient eingesetzt.
+Es wird versucht, übermäßige industrielle Entwicklung zu vermeiden, die den
+Planeten gefährden könnten. Das Wachstum der Bevölkerung ist jedoch aufgrund
+von Platzmangel eingeschränkt.
+^
++2 PLANET
++2 EFFIZIENZ
+-2 WACHSTUM
+^
+^Voraussetzung: $LINK<$STR0=$NUM0>
+
+#;WERTE
+#HELPSOC2
+Die Sozialkategorie "Werte" gestattet es Ihnen, die wichtigsten Prioritäten
+Ihrer Gesellschaft festzulegen. 
+^
+^$LINK<Überleben=120011>
+^$LINK<Macht=120012>
+^$LINK<Wissen=120013>
+^$LINK<Wohlstand=120014>
+
+#;Überleben
+#HELPSOC20
+Das Überleben ist natürlich die allumfassende erste Priorität der ersten
+Weltraumkolonien der Menschen und der $LINK<Vorfahren=47>. Die Priorität
+"Überleben" erhält jedoch weder besondere Boni oder Strafpunkte.
+^
+^Voraussetzung: KEINE
+
+#;Macht
+#HELPSOC21
+Anführer die anstreben Macht auszuüben, bauen starke und gut bezahlte Militärs
+auf, die den Willen des Anführers erzwingen können. Die wirtschaftliche oder
+industrielle Infrastruktur hat unter Umständen durch den aufgeblähten
+Verteidigungshaushalt das Nachsehen. 
+^
++2 MORAL
++2 UNTERST.
+-2 INDUSTRIE
+^
+^Voraussetzung: $LINK<$STR0=$NUM0>
+
+#;Wissen
+#HELPSOC22
+Anführer, die das Hauptaugenmerk auf Wissen und intellektuelle Aufklärung legen,
+werden ihre Ressourcen in Forschung und Ausbildung investieren. Sie neigen auch
+dazu, den freien Austausch von Informationen zu unterstützen, was wiederum die
+Effizienz erhöht, jedoch auch größere Sicherheitsrisiken birgt.
+^
++2 FORSCHUNG
++1 EFFIZIENZ
+-2 SONDE
+^
+^Voraussetzung: $LINK<$STR0=$NUM0>
+
+#;Wohlstand
+#HELPSOC23
+Anführer, die eine Wohlstandsgesellschaft anstreben, werden sich zunächst darauf
+konzentrieren, in kürzester Zeit eine wirtschaftliche und industrielle
+Infrastruktur aufzubauen. Sie bewerkstelligen schnelles Wachstum und schnelle
+Entwicklung, jedoch mit möglichen Nebenwirkungen in Form von Dekadenz und
+moralischem Verfall.
+^
++1 INDUSTRIE
++1 WIRTSCHAFT
+-2 MORAL 
+^
+^Voraussetzung: $LINK<$STR0=$NUM0>
+
+#;GESELLSCHAFTSPRINZIPIEN
+#HELPSOC3
+Gesellschaftsprinzipien zeigen spekulativ, wie sich die
+Gesellschaft in der fernen Zukunft entwickeln könnte.
+^
+^$LINK<Keine=120016>
+^$LINK<Kybernetik=120017>
+^$LINK<Eudämonie=120018>
+^$LINK<Gedankenkontrolle=120019>
+
+#;Keine
+#HELPSOC30
+"Keine" Gesellschaftsprinzipien, bedeutet, daß Ihre Gesellschaft
+sich noch nicht zu einer Zukunftsgesellschaft entwickelt hat.
+Boni oder Strafen werden nicht verteilt.
+^
+^Voraussetzung: KEINE
+
+#;Kybernetik
+#HELPSOC31
+In der fernen Zukunft könnten die Bürger die Regierung der Gesellschaft
+Computern mit künstlicher Intelligenz übertragen, wodurch die Effizienz
+gesteigert wird und Individuen mehr Zeit für kreative Aufgaben haben. Doch
+werden durch Computer ersetzte Menschen verzweifeln, verarmen und
+möglicherweise aufrührerisch werden?
+^
++2 EFFIZIENZ
++2 PLANET
++2 FORSCHUNG
+-3 POLIZEI 
+^
+^Voraussetzung: $LINK<$STR0=$NUM0>
+
+#;Eudämonie
+#HELPSOC32
+Diese Gesellschaftsform der fernen Zukunft ist vielleicht die angenehmste.
+Sie erhält ihren Namen von dem altgriechischen Wort für Erfüllung und Glück.
+Die eudämonische Gesellschaft ermutigt alle Bürger, ihr Glück zu finden,
+indem sie ihr jeweiliges Potential vollkommen erfüllen.  Bevölkerung,
+Wirtschaft und Industrie erfahren alle ein ausgeglichenes Wachstum.
+Gewalt schwindet dahin, wenn die Gesellschaft toleranter und gerechter wird,
+und wenn der Arm dieser Gesellschaft doch einmal zum Schießen gezwungen wird,
+so tut er dies häufig, um zu betäuben statt zu zerstören.
+^
++2 WACHSTUM
++2 WIRTSCHAFT
++2 INDUSTRIE
+-2 MORAL 
+^
+^Voraussetzung: $LINK<$STR0=$NUM0>
+
+#;Gedankenkontrolle
+#HELPSOC33
+Gedankenkontrolle ist die stärkste der "Großer Bruder"-Methoden. Sie gibt
+subtile neurochemische Mittel in die Atmosphäre ab, um ihre Bevölkerung
+gehorsam, loyal und widerstandskräftig gegen Ideen von außen zu machen.
+Allerdings sind erhebliche Ressourcen nötig, um diesen Grad an Kontrolle
+aufrecht zu erhalten. 
+^
++2 POLIZEI
++2 MORAL
++2 SONDE
+-3 UNTERST. 
+^
+^Voraussetzung: $LINK<$STR0=$NUM0>
+
+ECONOMY, EFFIC, SUPPORT, TALENT, MORALE, POLICE, GROWTH, PLANET, PROBE,
+INDUSTRY, RESEARCH
+
+#;WIRTSCHAFT
+#HELPEFFECT0
+{WIRTSCHAFT} repräsentiert die rohe Macht der Wirtschaft Ihrer Gesellschaft.
+Wenn Sie diesen Wert erhöhen, werden Sie auch Ihren $LINK<Energie=43>-Fluß
+steigern.
+^
+^-3, -2 Energieeinheiten pro Basis
+^-2, -1 Energieeinheiten pro Basis
+^-1, -1 Energieeinheiten auf der Hauptquartier-Basis
+^ 0, Standard Energie-Einstufung
+^ 1, +1 Energieeinheiten pro Basis
+^ 2, +1 Energieeinheiten pro Feld!
+^ 3, +1 Energieeinheiten pro Basis; +1 Handelseinstufung!!
+^ 4, +1 Energieeinheiten/Feld; +2 Energieeinheiten/Basis, +2 Handelsertrag!!!
+^ 5, +1 Energieeinheiten/Feld; +4 Energieeinheiten/Basis, +3 Handelsertrag!!!!
+
+#;EFFIZIENZ
+#HELPEFFECT1
+{EFFIZIENZ} repräsentiert die Fähigkeit Ihrer Gesellschaft, ohne
+Verschwendung und Mißmanagement zu funktionieren. Wenn dieser Wert
+auf einen zu niedrigen Stand fällt, werden Ihre Basen anfangen,
+$LINK<Energie=43> durch Ineffizienz zu verlieren.
+^
+^-4, ÖKONOMISCHE LÄHMUNG
+^-3, Extreme Ineffizienz
+^-2, Schreckliche Ineffizienz
+^-1, Schlimme Ineffizienz
+^ 0, Hohe Ineffizienz
+^ 1, Normale Effizienz
+^ 2, Lobenswerte Effizienz
+^ 3, Hervorragende Effizienz!
+^ 4, MUSTERWIRTSCHAFT!!
+
+#;UNTERSTÜTZUNG
+#HELPEFFECT2
+{UNTERSTÜTZUNG} hat Auswirkungen auf die Kosten zur Unterhaltung der
+Militäreinheiten. Je niedriger Ihre Punktzahl hier ist, desto mehr Ihrer
+Einheiten werden Mineralien für ihren Unterhalt ausgeben müssen.
+^
+^-4, Unterstützung kostet 2 pro Einheit; keine kostenlosen Mineralien für eine
+neue Basis.
+^-3, Unterstützung kostet 1 pro Einheit; keine kostenlosen Mineralien für eine
+neue Basis.
+^-2, Unterstützung für 1 Einheit pro Basis ist kostenlos; keine kostenlosen
+Mineralien für eine neue Basis.
+^-1, Unterstützung für 1 Einheit pro Basis ist kostenlos
+^ 0, Unterstützung für 2 Einheiten pro Basis ist kostenlos
+^ 1, Unterstützung für 3 Einheiten pro Basis ist kostenlos
+^ 2, Unterstützung für 4 Einheiten pro Basis ist kostenlos!
+^ 3, Unterstützung für 4 Einheiten ODER bis zur Größe der Basis ist kostenlos!!
+
+#;TALENT - NICHT BELEGT!!!
+#HELPEFFECT3
+
+#;MORAL
+#HELPEFFECT4
+{MORAL} hat Auswirkungen auf die Ausbildung und Entschlußkraft Ihres Militärs.
+Eine höhere Punktzahl bedeutet hier automatisch eine $LINK<Moral=11>-Aufwertung
+für Ihre Einheiten.
+^
+^-4, -3 Moral; + Faktor halbiert
+^-3, -2 Moral; + Faktor halbiert 
+^-2, -1 Moral; + Faktor halbiert 
+^-1, -1 Moral
+^ 0, Normale Moral
+^ 1, +1 Moral
+^ 2, +1 Moral (+2 im Verteidigungsfall)
+^ 3, +2 Moral! (+3 im Verteidigungsfall)
+^ 4, +3 Moral!!
+
+#;POLIZEI
+#HELPEFFECT5
+{POLIZEI} repräsentiert die Toleranz Ihrer Gesellschaft gegenüber Kontrolle
+durch die Polizei und Einschränkungen persönlicher Freiheiten. Eine hohe
+Punktzahl gestattet es Ihnen, Militäreinheiten als Polizei einzusetzen,
+um $LINK<Drohnenaufstände=9> zu unterdrücken. Eine niedrige Punktzahl wird
+steigernde Spannungen hervorrufen, wenn Ihre Militäreinheiten außerhalb der
+Heimbasis eingesetzt werden.
+^
+^-5, Zwei zusätzliche Drohnen pro Militär-Einheit, die sich nicht im Territorium
+befindet
+^-4, Eine zusätzliche Drohne pro Militär-Einheit, die sich nicht im Territorium
+befindet
+^-3, Eine zusätzliche Drohne, wenn sich mehr als eine Militär-Einheit nicht im
+Territorium befindet
+^-2, Kann Militär-Einheit nicht als Polizei einsetzen. Kein Nervschneider.
+^-1, Eine Polizei-Einheit gestattet. Kein Nervschneider.
+^ 0, Kann eine Militär-Einheitals Polizei einsetzen.
+^ 1, Kann bis zu 2 Militär-Einheit als Polizei einsetzen.
+^ 2, Kann bis zu 3 Militär-Einheit als Polizei einsetzen!
+^ 3, 3 Einheiten als Polizei. Wirkung der Polizei verdoppelt!!
+
+#;WACHSTUM
+#HELPEFFECT6
+{WACHSTUM} hat Auswirkungen auf die Wachstumsrate Ihrer Bevölkerung. Je höher
+Ihre Punktzahl, desto weniger $LINK<Nahrung=41> wird Ihre Basis brauchen, um
+zu wachsen.
+^
+^-3, BEVÖLKERUNGSWACHSTUM FAST GLEICH NULL
+^-2, Wachstumsrate von -20%
+^-1, Wachstumsrate von -10%
+^ 0, Normale Wachstumsrate
+^ 1, Wachstumsrate von +10%
+^ 2, Wachstumsrate von +20%
+^ 3, Wachstumsrate von +30%
+^ 4, Wachstumsrate von +40%
+^ 5, Wachstumsrate von +50%!
+^ 6, BEVÖLKERUNGSEXPLOSION!!
+
+#;PLANET
+#HELPEFFECT7
+{PLANET} repräsentiert die Sensibilität Ihrer Gesellschaft gegenüber der
+$LINK<Umwelt des Planeten=26>. Eine niedrige Punktzahl ist ein Zeichen
+dafür, daß Umweltschäden schneller zu verzeichnen sein werden.
+^
+^-3, Mutwillige Umweltstörung; Fungus-Produktion von -3
+^-2, Ungebändigte Umweltstörung; Fungus-Produktion von -2
+^-1, Zunehmende Umweltstörung; Fungus-Produktion von -1
+^ 0, Normales ökologisches Gleichgewicht
+^ 1, Umweltschützer!; können einheimische Lebensformen einfangen
+^ 2, Ökologische Harmonie!; erhöhte Wahrscheinlichkeit einheimische Lebensformen einzufangen
+^ 3, Ökologische Weisheit!!; maximale Wahrscheinlichkeit einheimische Lebensformen einzufangen
+
+#;SONDE
+#HELPEFFECT8
+{SONDE} hat Einfluß auf Ihre Verwundbarkeit (oder Stärke) bezüglich
+Sicherheitsfragen. Eine hohe Punktzahl wird bei der Verhinderung
+von Angriffen feindlicher $LINK<Sondierteams=30006> helfen.
+^
+^-2, -50% Kosten für Aktionen feindlicher Sondierteams; Erfolgsrate der
+Feinde erhöht
+^-1, -25% Kosten für Aktionen feindlicher Sondierteams; Erfolgsrate der
+Feind erhöht
+^ 0, Normale Sicherheitsmaßnahmen
+^ 1, +1 Moral des Sondierteams; +50% höhere Kosten für Aktionen feindlicher
+Sondierteams
+^ 2, +2 Moral des Sondierteams; doppelt so hohe Kosten für Aktionen feindlicher
+Sondierteams!
+^ 3, +3 Moral des Sondierungsteams; Basen und Einheiten sind vor subversiven
+Aktionen von Standard-Sondierteams sicher!!
+
+#;INDUSTRIE
+#HELPEFFECT9
+{INDUSTRIE} repräsentiert Ihre Produktionsfähigkeit. Eine hohe Punktzahl
+reduziert die Anzahl der zum Erbau von Einheiten und Einrichtungen
+benötigten $LINK<Mineralien=42>.
+^
+^-3, Mineralienkosten nehmen um 30% zu
+^-2, Mineralienkosten nehmen um 20% zu
+^-1, Mineralienkosten nehmen um 10% zu
+^ 0, Normale Produktionsrate
+^ 1, Mineralienkosten nehmen um 10% ab
+^ 2, Mineralienkosten nehmen um 20% ab
+^ 3, Mineralienkosten nehmen um 30% ab!
+^ 4, Mineralienkosten nehmen um 40% ab!!
+^ 5, Mineralienkosten nehmen um 50% ab!!!
+
+#;FORSCHUNG
+#HELPEFFECT10
+{FORSCHUNG} hat Einfluß auf Ihren $LINK<technologischen Fortschritt=45>.
+Eine höhere Punktzahl steigert die Rate, mit der Sie technologische
+Innovationen produzieren.
+^
+^-5, Forschungstätigkeit der Labors um 50% verlangsamt
+^-4, Forschungstätigkeit der Labors um 40% verlangsamt
+^-3, Forschungstätigkeit der Labors um 30% verlangsamt
+^-2, Forschungstätigkeit der Labors um 20% verlangsamt
+^-1, Forschungstätigkeit der Labors um 10% verlangsamt
+^ 0, Normale Forschungsrate
+^ 1, Forschungstätigkeit der Labors um 10% schneller
+^ 2, Forschungstätigkeit der Labors um 20% schneller
+^ 3, Forschungstätigkeit der Labors um 30% schneller
+^ 4, Forschungstätigkeit der Labors um 40% schneller
+^ 5, Forschungstätigkeit der Labors um 50% schneller
+
+#;FARM
+#HELPTERRALAND0
+Eine {Farm} erhöht die $LINK<Nahrungsproduktion=41> eines Feldes um +1.
+In $LINK<felsigen Feldern=1> können keine Farmen gebaut werden.
+
+#HELPTERRASEA0
+Eine {Seetangfarm} erhöht die $LINK<Nahrungsproduktion=41> eines Ozean-Feldes
+um +2. Seetangfarmen können nur in Kontinentalschelf-Feldern (in weniger als
+1000 m Meerestiefe) angelegt werden.
+
+#;BODEN
+#HELPTERRALAND1
+Eine {Bodenanreicherungsanlage} erhöht die $LINK<Nahrungsproduktion=41> eines
+Feldes um +1. Eine solche Anlage kann nur in Feldern gebaut werden, in denen es
+bereits eine $LINK<Farm=90000> gibt.
+
+#HELPTERRASEA1
+Nein
+
+#;MINE
+#HELPTERRALAND2
+Eine {Mine} erhöht die $LINK<Mineralienproduktion=42> eines Feldes:
+^$LINK<Flache Felder=1>:   +1 Mineralieneinheiten
+^$LINK<Hügelige Felder=1>: +1 Mineralieneinheiten
+^$LINK<Felsige Felder=1>:  +2 Mineralieneinheiten (+3, wenn es eine Straße gibt)
+^
+^Eine Mine liefert zusätzlich +1 Mineralieneinheiten in Feldern mit Mineralienquellen.
+
+#HELPTERRASEA2
+Eine {Abbauplattform} erhöht die $LINK<Mineralienproduktion=42> eines
+Ozean-Feldes um +1 bzw. +2, sofern die
+$LINK<Fortgeschrittene Ökotechnik=140062> entdeckt wurde. Abbauplattformen
+können nur in Kontinentalschelf-Feldern (in weniger als 1000 m Meerestiefe)
+eingesetzt werden.
+
+#;SOLAR
+#HELPTERRALAND3
+Ein {Solarkollektor} ermöglicht die $LINK<Energie=43>-Gewinnung in einem Feld.
+Schwimmende Solarkollektoren gewinnen 1 Energieeinheit pro Runde. 
+In $LINK<größerer Höhe=2> positionierte Solarkollektoren sammeln eine
+zusätzliche Energieeinheit pro 1000 m über dem Meeresspiegel.
+
+#HELPTERRASEA3
+Ein {Gezeitenkraftwerk} ermöglicht die $LINK<Energie=43>-Gewinnung in einem
+Ozean-Feld. Felder mit einem Gezeitenkraftwerk produzieren 3 Energieeinheiten
+pro Runde.
+^
+Gezeitenkraftwerke können nur in Kontinentalschelf-Feldern (in weniger als
+1000 m Meerestiefe) gebaut werden.
+
+#;WALD
+#HELPTERRALAND4
+{Wald}-Felder haben eine ausgewogene, aber begrenzte $LINK<Nahrungs-=41>,
+$LINK<Mineralien-=42> und $LINK<Energie=43>-Produktion. Die Produktion eines
+Wald-Feldes erhöht sich drastisch, wenn es eine $LINK<Baumfarm=100013>
+und/oder einen $LINK<Hybriden Wald=100014> auf dem Feld gibt.
+^
+Wälder breiten sich gelegentlich auch auf angrenzende Felder aus, und
+vertreiben dabei sogar den einheimischen $LINK<Fungus=14>.
+
+#HELPTERRASEA4
+Nein
+
+#;STRASSE
+#HELPTERRALAND5
+{Straßen} beschleunigen die Bewegung von Land-Einheiten; Land-Einheiten können
+sich dadurch dreimal so schnell fortbewegen.
+^
+Straßen steigern auch die Produktion von $LINK<Minen=90002> in
+$LINK<felsigen Feldern=1>.
+
+#HELPTERRASEA5
+Nein
+
+#;RÖHRE
+#HELPTERRALAND6
+{Magnet-Röhren} beschleunigen die Bewegung von Land-Einheiten erheblich.
+Land-Einheiten benötigen keine Bewegungspunkte, um sich zwischen Feldern
+mit Magnet-Röhren hin- und herzubewegen.
+
+#HELPTERRASEA6
+Nein
+
+#;BUNKER
+#HELPTERRALAND7
+Ein {Bunker} verbessert den Verteidigungswert eines Feldes. Einheiten, die
+sich in Bunkern verschanzt haben, erhalten +50% zu ihrer Abwehr.
+
+#HELPTERRASEA7
+Nein
+
+#;LUFTSTÜTZPUNKT
+#HELPTERRALAND8
+Ein {Luftstützpunkt} ermöglicht verbündeten Luft-Einheiten,
+zwischenzulanden und Treibstoff aufzunehmen.
+
+#HELPTERRASEA8
+Nein
+
+#;SENSOR
+#HELPTERRALAND9
+Ein {Sensorenfeld} überwacht das umliegende Gelände auf Eindringlinge.
+Sensorenfelder können feindliche Einheiten innerhalb von zwei Feldern
+aufspüren.
+^
+Die Daten von Sensorenfeldern erhöhen auch die Verteidigungsbereitschaft:
+eine Einheit, die sich in bis zu zwei Feldern Entfernung eines Sensorenfelds
+einer verbündeten Gruppierung befindet, erhält +25% zu ihrer Abwehr.
+
+#HELPTERRASEA9
+Nein
+
+#;FUNGUS
+#HELPTERRALAND10
+Ermöglicht es, den $LINK<Fungus=14> von einem Feld zu entfernen.
+
+#HELPTERRASEA10
+Ermöglicht es, den $LINK<See-Fungus=14> von einem Feld zu entfernen.
+
+#;FUNGUS ZÜCHTEN
+#HELPTERRALAND11
+Mit xenoagrarwissentschaftlichen Techniken kann der $LINK<Fungus=14> gezüchtet
+werden.
+^
+Die Produktion in Fungus-Felder erhöht sich mit jeder
+$LINK<"Centauri"=140006>-Technologie, die entdeckt wird.
+
+#HELPTERRASEA11
+Mit xenoagrarwissentschaftlichen Techniken kann der $LINK<Fungus=14>
+gezüchtet werden.
+^
+Die Produktion in Fungus-Felder erhöht sich mit jeder
+$LINK<"Centauri"=140006>-Technologie, die entdeckt wird.
+
+#;KONDENSATOR 12
+#HELPTERRALAND12
+Ein {Kondensator} erhöht den $LINK<Niederschlag=0> des eigenen und
+ALLER UMLIEGENDEN FELDER. Er liefert außerdem zusätzlich
+$LINK<+1 Nahrungseinheiten=41> im eigenen Feld; kumulativ mit
+$LINK<Farm=90000>-Boni. Setzen Sie Kondensatoren dazu ein, die
+Nahrungsproduktion in trockenen Gebieten drastisch zu erhöhen.
+^
+Kondensatoren haben erheblich negative $LINK<Auswirkungen=26> auf die Umwelt.
+
+#HELPTERRASEA12
+Nein
+
+#;MIRROR      13
+#HELPTERRALAND13
+Ein {Stufen-Spiegelsystem} erhöht die Menge an Solar-$LINK<Energie=43>, die von
+Solarkollektoren aufgefangen wird, in ALLEN UMLIEGENDEN FELDERN um +1. Es hat
+in dem Feld, in dem es sich befindet, im Prinzip auch die Funktion eines
+$LINK<Solarkollektors=90003>, erhält aber keine weiteren Boni von anderen
+Stufen-Spiegelsystemen.
+^
+Stufen-Spiegelsysteme haben erheblich negative $LINK<Auswirkungen=26>
+auf die Umwelt.
+
+#HELPTERRASEA13
+Nein
+
+#;BOHRLOCH    14
+#HELPTERRALAND14
+Ein {Thermal-Bohrloch} dringt in den Mantel des Planeten ein und liefert große
+Mineralien- und Energie-Boni. Felder mit Bohrlöchern produzieren
+$LINK<+6 Mineralieneinheiten=42> und $LINK<+6 Energieeinheiten=43>, können
+jedoch keine $LINK<Nahrung=41> liefern und nicht bewirtschaftet werden.
+^
+Thermal-Bohrlöcher können weder neben bereits existierende Bohrlöcher, noch in
+Hang-Feldern (Felder, die an andere Felder auf einer niedrigeren $LINK<Höhe=2>
+angrenzen), errichtet werden.
+^
+Thermal-Bohrlöcher haben erhebliche negative $LINK<Auswirkungen=26> auf die
+Umwelt.
+
+#HELPTERRASEA14
+Nein
+
+#;WASSERQUELLE15
+#HELPTERRALAND15
+{Bohrungen in eine unterirdische Wasserquelle} schaffen einen neuen Fluß, dessen
+Ursprung sich in diesem Feld befindet.
+
+#HELPTERRASEA15
+Nein
+
+#;AUFBAUEN    16
+#HELPTERRALAND16
+{Terraform Auf} erhöht die $LINK<Höhenlage=2> des gegenwärtigen Feldes um
+ca. 1000 Meter. Dabei können aus Ozean-Felder z.B. Land-Felder werden.
+
+#HELPTERRASEA16
+{Terraform Auf} erhöht die $LINK<Höhenlage=2> des gegenwärtigen Feldes um
+ca. 1000 Meter.
+
+#;ABTRAGEN    17
+#HELPTERRALAND17
+{Terraform Ab} reduziert die $LINK<Höhenlage=2> des aktuellen Feldes um
+ca. 1000 Meter. Ein Land-Feld kann durch einen See-Former, der sich in einem
+naheliegenden Ozean-Feld befindet, abgetragen und in ein Ozean-Feld
+umgewandelt werden.
+
+#HELPTERRASEA17
+{Terraform Ab} reduziert die $LINK<Höhenlage=2> des aktuellen Feldes um
+ca. 1000 Meter. Ein Land-Feld kann durch einen See-Former, der sich in
+einem naheliegenden Ozean-Feld befindet, abgetragen und in ein Ozean-Feld
+umgewandelt werden.
+
+#;EINEBNEN    18
+#HELPTERRALAND18
+{Terraform einebnen} vermindert die Höhe der $LINK<Felsvorkommen=1> in einem
+Feld. Dieser Befehl kann dazu benutzt werden, ein felsiges Feld in ein
+hügeliges Feld umzuwandeln, in dem dann $LINK<Ackerbau=90000> betrieben
+werden kann.
+
+#HELPTERRASEA18
+Nein
+
+#;MAKEMONO    19
+#HELPTERRALAND19
+Nein
+
+#HELPTERRASEA19
+Nein
+
+#UNITDESC0
+Eine {Koloniekapsel} repräsentiert die Arbeitsstärke und Ressourcen, die
+für den Bau einer neuen {Basis} benötigt werden.
+
+#UNITDESC1
+Ihre Terraform-Ingenieure ("FORMER") sind von wesentlicher Wichtigkeit
+für das Überleben Ihrer Expedition. Former können $LINK<Wälder=90004> anpflanzen
+und $LINK<Farmen=90000>, $LINK<Straßen=90005>, $LINK<Minen=90002>
+und $LINK<Solarkollektoren=90003> bauen und sogar $LINK<Berge aufbauen=90016>
+oder $LINK<einebnen=90017>.
+
+#UNITDESC2
+Eine {Scout-Patrouille} kann zur Erkundung unbekannter Regionen des Planeten
+benutzt werden. Sie eignet sich zum Bewachen der Basen vor feindlichen
+Angriffen und $LINK<Psycho-Viren=30008>, obwohl sie nicht so stark ist
+wie modernere Militäreinheiten, die später entwickelt werden können.
+
+#UNITDESC3
+{Transport-Tragflügelboote} sind ein nützliche frühe Transportmittel zwischen
+Kontinenten und Ozeanen. Land-Einheiten können auf Transport-Tragflügelboote
+geladen und über das Meer transportiert werden. 
+
+#UNITDESC4
+{See-Former} werden, wie ihre $LINK<auf das Land beschränkten
+Kollegen=30001>, zur Verbesserung und zum Umbau des Planeten verwendet.
+See-Former können $LINK<Seetang-Farmen=90020> errichten sowie
+$LINK<Abbau-Plattformen=90022> und $LINK<Gezeitenkraftwerke=90023>
+errichten.
+
+#UNITDESC5
+{Versorgungsraupen} sind nützlich für den Transport von Ressourcen.
+Versorgungsraupen können:
+^
+* $LINK<Nahrung=41>, $LINK<Mineralien=42> oder $LINK<Energie=43> von
+einem beliebigen Feld auf der Karte holen und die Ressourcen zur Heimbasis
+bringen. Wählen Sie die Option "Konvoi" ('O') im Menü "Aktionen" aus.
+^
+* sich auf einer verbündeten Basis auflösen, um ihren {vollständigen}
+Mineralien-Wert zum Bau eines $LINK<Geheimprojekts=110071> oder von
+$LINK<Einheits=23>-Prototypen zur Verfügung zu stellen.
+
+#UNITDESC6
+{Sondierteams} können feindliche Basen und Einheiten unterwandern oder
+umstürzen. Sie können außerdem feindliche Forschungsinformationen stehlen,
+Basiseinrichtungen sabotieren, wichtige Feinde ermorden und genetische
+Kriegsführung betreiben.
+^
+Setzen Sie ein Sondierteam auf eine feindliche Basis oder Einheit an, um
+seine Fähigkeiten einzusetzen.
+^
+Sondierteams können außerdem Ihre Basen gegen feindliche Sondierteams
+verteidigen. Wenn sich ein Sondierteam auf einem Feld befindet, auf dem ein
+feindliches Sondierteam zu landen versucht, kommt es zwischen den beiden zum
+Kampf. In der Regel gewinnt das Sondierteam mit der höchsten $LINK<Moral=11>.
+^
+Sondierteams erhalten häufig Verbesserungen ihres Gruppenstatus, wenn sie eine
+Mission erfolgreich abschließen. Je höher der Gruppenstatus eines Sondierteams,
+desto wahrscheinlicher ist sein Überleben bei immer komplizierteren Missionen. 
+
+#UNITDESC7
+{Artefakte} (oder {Datenbankknoten-Artefakte}, wie sie von den Vorfahren genannt
+werden) sind geheimnisvolle und unerforschte Geräte der Vorfahren, die
+gelegentlich auf dem Planeten gefunden werden. Wenn Sie ein Artefakt finden
+und es auf eine Ihrer Basen bringen, haben Sie mehrere Optionen: (a) Sie
+können es mit einem $LINK<Netzwerkknoten=100008> verbinden, wenn Sie einen
+haben, und erhalten gratis eine technologische Innovation; (b) Sie können es
+verwenden, um die Produktion eines $LINK<Geheimprojekts=110071> oder eines
+$LINK<Einheits-Prototypen=23> zu beschleunigen; (c) Sie können es sich für
+den späteren Gebrauch aufheben. 
+^
+Artefakte können von anderen Spielern eingenommen werden. Ein einzelnes
+Artefakt kann ohne diplomatische Strafen von jedem Spieler übernommen
+werden. 
+
+#UNITDESC8
+{Psycho-Viren} können plötzlich auftauchen und sind eng mit $LINK<Fungus=14>
+verbunden.
+^
+Psycho-Viren und andere außerirdische Lebewesen können $LINK<PSI-Kämpfe=15>
+führen, in denen die Stärke von Waffen und Panzern nicht berücksichtigt werden;
+der Angreifer erhält auf dem Land einen Vorteilfaktor von 3 zu 2. Bei der
+Verteidigung gegen Psycho-Viren und andere außerirdische Einheiten ist der
+$LINK<Gruppenstatus=11> ist sehr wichtig. 
+^
+Mit den richtigen Züchtungs- und Bindungsmaßnahmen können ausgebildete
+Brut-Trainer Psycho-Viren auch in Gefangenschaft züchten und kontrollieren.
+Diese Psycho-Virus-Schwärme können zum Angriff feindlicher Einheiten eingesetzt
+werden, die den PSI-Kampf anweden und auf diese Weise die Vorteile der Feinde
+in bezug auf Waffen- und Panzertechnologie umgehen. $LINK<Biolabors=100009>
+und andere Einheiten können die Wirkung der in Gefangenheit gezüchteten
+Psycho-Virus-Schwärme verstärken. Wie jede einheimische Einheit, können Spieler
+Psycho-Viren ebenso in die Wildnis entlassen, um einen Feind zu stören und zu bedrohen.
+
+#UNITDESC9
+Ein Wasservektor der $LINK<Psycho-Viren=30008>, die {Insel der Tiefe},
+wird eng mit Psycho-Viren und $LINK<See-Fungus=14> in Verbindung gebracht.
+Der schwimmende Panzer der Insel der Tiefe, durch Abscheidungen der einzelnen
+Mitglieder der Kolonie gebildet, dient häufig als Nistplatz der Psycho-Viren
+und kann sogar größere Land-Einheiten transportieren. ^
+Inseln der Tiefe und andere außerirdische Lebewesen können
+$LINK<PSI-Kämpfe=15> Führen, in denen Waffen- und Panzerstärken nicht
+berücksichtigt werden. Der $LINK<Gruppenstatus=11> ist jedoch sehr wichtig bei
+der Verteidigung gegen Inseln der Tiefe und andere außerirdische Einheiten.
+^
+Mit den richtigen Züchtungs- und Bindungsmaßnahmen können Inseln der Tiefe von
+ausgebildeten Brut-Trainern auch in Gefangenheit gezüchtet und kontrolliert
+werden. Diese gefangenen Schwärme können per PSI-Kampf gegen feindliche
+See-Einheiten eingesetzt werden. Ja nach Größe können sie auch zum Transport
+von Land-Einheiten verwendet werden. Wie jede einheimische Einheit, können Spieler
+Psycho-Viren ebenso in die Wildnis entlassen, um einen Feind zu stören und zu bedrohen.
+
+#UNITDESC10
+Die gefährlichsten der Lebensformen auf dem Planeten sind die {Heuschrecken
+von Chiron} - die fliegende und sehr hungrige Variante der auf das Land
+beschränkten $LINK<Psycho-Viren=30008>. Das Erscheinen von Heuschrecken
+ist ein Zeichen für erhebliche Probleme des ursprünglichen
+Neuralnetz-$LINK<Fungus=14>.
+
+Wie jede einheimische Einheit, können Spieler Psycho-Viren ebenso in die
+Wildnis entlassen, um einen Feind zu stören und zu bedrohen.
+
+#UNITDESC11
+Das UN-Sternenschiff Unity war mit vielen dieser spärlich bewaffneten
+{Rovers} beladen, die die Kontinente des Planeten erkunden sollten.
+
+#UNITDESC12
+Einige dieser sehr praktischen Hubschrauber waren an Bord des
+UN-Sternenschiff Unity stationiert. Ein oder zwei dieser Hubschrauber
+wurden beim Absturz des Schiffs auf dem Planeten nicht beschädigt.
+Obgleich sie spärlich bewaffnet sind und nur wenig Treibstoff haben,
+sind die {Unity-Kopter} wertvolle Scouts und Aufklärer.
+
+#UNITDESC13
+Diese kleinen Fertig-{Tragflügelboote} waren an Bord des
+UN-Sternenschiff Unity stationiert und bereit, die Ozeane des
+Planeten zu erforschen.
+
+#CHASSISDESC0
+{Infanterie}-Einheiten gehen langsam voran, sind jedoch preiswert und haben im
+Kampf erhebliche Vorteile. Infanterie-Einheiten erhalten einen Kampfvorteil von
++25%, wenn sie feindliche Basen direkt angreifen.
+
+#CHASSISDESC1
+Mobile {Speeder}-Einheiten können sich schnell über die Oberfläche des Planeten
+bewegen. Speeder-Einheiten erhalten einen Kampfvorteil von 25%, wenn sie auf
+offenem Gelände angreifen. Sie können sich auch aus dem Kampf zurückziehen,
+wenn sie von einer langsameren feindlichen $LINK<Infanterie=40000> überrascht
+werden.
+
+#CHASSISDESC2
+Der {Schwebepanzer} ist das beste in bezug auf Bodentransport und wird nie
+bestraft, wenn er durch schwieriges Gelände fährt - er kostet nie mehr als ein
+Aussetzen, wenn man einen Schwebepanzer auf ein Feld bringt.
+Wie die $LINK<Speeder=40001>-Einheiten, so erhalten auch die Schwebepanzer
+einen Kampfvorteil von +25%, wenn sie auf offenem Gelände angreifen.
+
+#CHASSISDESC3
+{Tragflügelboote} können für das Erstellen wirksamer Seetransporte und
+Seepatrouillen verwendet werden. Tragflügelboot-Transporter sind langsamer, als
+andere Typen von Tragflügelbooten, weshalb sie pro Runde einen Bewegungspunkt
+weniger haben.
+
+#CHASSISDESC4
+Mit der entsprechenden industriellen Infrastruktur können große
+{Kreuzer}-Einheiten produziert werden. Diese größeren Schiffe dienen als
+mächtige See-Einheiten und sind die effizientesten Transportmittel.
+
+#CHASSISDESC5
+Der {Nadeljet}, das Markenflugzeug des 23. Jahrhunderts, ist in den
+Lufträumen des Planeten zu finden, wenn die wachsende planetarische Industrie
+hochgradigen Flugzeugtreibstoff in ausreichenden Mengen produziert. Nadeljets
+sind mächtig, auch wenn sie keine große Reichweite haben, können jedoch zur
+Verteidigung der Lufträume, zum Einsatz von Luftmacht und zur Erforschung
+des Planeten eingesetzt werden. 
+^
+Nadeljets müssen in jeder zweiten Runde zu einer verbündeten Basis oder
+einem Luftstützpunkt zurückkehren, um aufzutanken.
+
+#CHASSISDESC6
+{Kopters} sind mächtige Kampf-Einheiten und haben die Flexibilität und
+die Fähigkeit, vorübergehend auf schwierigem Gelände zu landen. 
+^
+Kopter sollten am Ende jeder Runde zum Auftanken zu einer verbündeten
+Basis oder einem Luftstützpunkt zurückkehren. Wenn ein Kopter dazu nicht
+in der Lage ist, muß er vorübergehend auf einem Feld landen und trägt
+dabei einen 30%igen Schaden davon.
+
+#CHASSISDESC7
+{Gravi-Schiffe}, die verheerende Gewalt der fernen Zukunft, bieten alle
+Vorteile eines Flugzeugs und noch mehr. Gravi-Schiffe können sich schnell
+über Land und See bewegen und müssen nie zu verbündeten Basen zurückkehren,
+um aufzutanken.
+
+#CHASSISDESC8
+{Raketenfahrzeuge} können mächtige $LINK<konventionelle Nutzlasten=60020>,
+$LINK<Fungus-Nutzlasten=60023>, $LINK<tektonische Nutzlasten=60024> oder
+spektakuläre quasi-atomare $LINK<Planetenbomben=60016> laden. Raketen
+richten großen Schaden an, werden aber beim Einschlag zerstört und können nicht
+erneut eingesetzt werden.
+
+#WEAPONDESC0
+Die {Waffen}-Stärke einer Einheit bestimmt mit welcher Kampfstärke sie angreift.
+Je mächtiger die Waffe, desto stärker ist der Angriff.
+
+#WEAPONDESC1
+Die {Waffen}-Stärke einer Einheit bestimmt mit welcher Kampfstärke sie angreift.
+Je mächtiger die Waffe, desto stärker ist der Angriff.
+
+#WEAPONDESC2
+Die {Waffen}-Stärke einer Einheit bestimmt mit welcher Kampfstärke sie angreift.
+Je mächtiger die Waffe, desto stärker ist der Angriff.
+
+#WEAPONDESC3
+Die {Waffen}-Stärke einer Einheit bestimmt mit welcher Kampfstärke sie angreift.
+Je mächtiger die Waffe, desto stärker ist der Angriff.
+
+#WEAPONDESC4
+Die {Waffen}-Stärke einer Einheit bestimmt mit welcher Kampfstärke sie angreift.
+Je mächtiger die Waffe, desto stärker ist der Angriff.
+
+#WEAPONDESC5
+Die {Waffen}-Stärke einer Einheit bestimmt mit welcher Kampfstärke sie angreift.
+Je mächtiger die Waffe, desto stärker ist der Angriff.
+
+#WEAPONDESC6
+Die {Waffen}-Stärke einer Einheit bestimmt mit welcher Kampfstärke sie angreift.
+Je mächtiger die Waffe, desto stärker ist der Angriff.
+
+#WEAPONDESC7
+Die {Waffen}-Stärke einer Einheit bestimmt mit welcher Kampfstärke sie angreift.
+Je mächtiger die Waffe, desto stärker ist der Angriff.
+
+#WEAPONDESC8
+Die {Waffen}-Stärke einer Einheit bestimmt mit welcher Kampfstärke sie angreift.
+Je mächtiger die Waffe, desto stärker ist der Angriff.
+
+#WEAPONDESC9
+Die {Waffen}-Stärke einer Einheit bestimmt mit welcher Kampfstärke sie angreift.
+Je mächtiger die Waffe, desto stärker ist der Angriff.
+
+#WEAPONDESC10
+Die {Waffen}-Stärke einer Einheit bestimmt mit welcher Kampfstärke sie angreift.
+Je mächtiger die Waffe, desto stärker ist der Angriff.
+
+#WEAPONDESC11
+Die {Waffen}-Stärke einer Einheit bestimmt mit welcher Kampfstärke sie angreift.
+Je mächtiger die Waffe, desto stärker ist der Angriff.
+
+#WEAPONDESC15
+Die {PSI-Angriffs}-Waffe gestattet es einer konventionellen Einheit,
+PSI-Angriffe vorzunehmen. Waffen und Panzer werden im
+$LINK<PSI-Kampf=15>ignoriert, und der Angreifer erhält einen Vorteil
+von 3 zu 2 auf dem Land (1 zu 1 auf See).
+
+#WEAPONDESC16
+Die quasi-atomare {Planetenbombe} ist die größte Greueltat der Zukunft. Planetenbomben zerstören alles in einem Radius, der ihrer
+$LINK<Reaktor=50001>-Größe entspricht, und hinterlassen riesige Krater.
+^
+Laut UN-Charta wird der Einsatz von Planetenbomben mit sofortigem Ausschluß
+aus dem $LINK<Planeten-Konzil=27> und völliger militärischer Zerstörung
+bestraft.
+
+#WEAPONDESC17
+Das {Kolonie-Modul} kann zum Bau maßgeschneiderter $LINK<Koloniekapseln=30000>
+verwendet werden. Einheiten mit Kolonie-Modulen können neue Basen bauen. Wenn
+ein Kolonie-Modul auf einer See-Einheit stationiert wird, können Basen auf See
+zerstört werden.
+
+#WEAPONDESC18
+Die {Terraforming-Einheit} kann zur Herstellung maßgeschneiderter
+$LINK<Terraformer=30001> verwendet werden.
+
+#WEAPONDESC19
+Das {Truppentransport}-Modul gestattet es einer Einheit, andere Einheiten
+je nach Fahrzeugtyp der Einheit über Land, auf See und in der Luft zu
+transportieren. 
+^
+Nur für die See ausgerüstete Einheiten können mehr als eine Einheit zur Zeit
+transportieren. Ein {Tragflügelboot} kann eine Anzahl von Einheiten
+transportieren, die der doppelten Menge ihres Reaktorwertes entspricht. Ein
+{Kreuzer} kann eine Anzahl von Einheiten transportieren, die dem Vierfachen
+seines Reaktorwertes entspricht. 
+^
+Transporter können in der Regel nur Boden-Einheiten transportieren, doch die
+für die See ausgerüstete Transporter haben u.U. ein $LINK<Trägerdeck=80007>,
+mit dem Luft-Einheiten transportiert und betankt werden können.
+
+#WEAPONDESC20
+Das {Versorgungstransport}-Modul kann verwendet werden, um maßgeschneiderte
+Versorgungs-Einheiten zu bauen. Solche Einheiten funktionieren im Prinzip
+wie $LINK<Versorgungsraupen=30005> und können:
+^
+* Nahrung, Mineralien oder Energie auf einem beliebigen Feld auf der
+Karte produzieren und die Ressourcen zu seiner Heimbasis schicken.
+Wählen Sie die Option "Konvoi" ('O') im Menü "Aktionen".
+^
+* sich auf einer verbündeten Basis auflösen, um ihren {vollständigen}
+Mineralienwert der Errichtung eines Geheimprojekts oder eines
+Einheits-Prototypen zur Verfügung zu stellen.
+
+#WEAPONDESC21
+Das {Sondierteam}-Modul kann für den Bau maßgeschneiderter Sondierteams
+verwendet werden. Solche Einheiten funktionieren weitgehend wie normale
+$LINK<Sondierteams=30006>.
+^
+Sondierteams können feindliche Basen unterwandern und unterwefen. Sie
+können außerdem Forschungsergebnisse der Feinde stehlen, Basiseinrichtungen
+sabotieren, wichtige Feinde ermorden und genetische Kriegsführung
+betreiben.
+^
+Bewegen Sie ein Sondierteam zu einer feindlichen Basis oder Einheit,
+um seine Macht zu aktivieren. 
+^
+Sondierteams können außerdem Ihre Basen gegen feindliche Sondierteams
+verteidigen. Wenn sich ein Sondierteam auf einem Feld befindet, auf dem ein
+feindliches Sondierteam zu landen versucht, kommt es zwischen den beiden zum
+Kampf. In der Regel gewinnt das Sondierteam mit dem höchsten
+$LINK<Gruppenstatus=11>.
+^
+Sondierteams erhalten häufig Moralboni, wenn sie eine Mission
+erfolgreich abschließen. Je höher der Gruppenstatus eines Sondierteams,
+desto wahrscheinlicher ist sein Überleben bei immer komplizierteren Missionen.
+
+#WEAPONDESC23
+Das Waffenpaket mit {konventioneller Nutzlast} kann zum Bau konventioneller
+Raketen verwendet werden. Es kann nur mit dem
+$LINK<Raketen=40008>-Fahrzeug eingesetzt werden.
+^
+Konventionelle Raketen greifen mit den folgenden Stärken an:
+^
+^Kernkraft: {9}
+^Fusion: {18}
+^Quanten: {27}
+^Singularität: {36}
+
+#ABILDESC0
+{Super-Former} verdoppeln die Geschwindigkeit, mit der eine
+Einheit normale Terraforming-Funktionen durchführt. Sie können nur mit
+$LINK<Terraforming-Einheiten=30001> verwendet werden.
+
+#ABILDESC1
+{Tiefenradar} gestattet es einer Einheit, Feinde und Gelände in bis zu zwei
+Felder Entfernung zu erkennen. 
+
+#ABILDESC2
+Ein {Tarngerät} ermöglicht es einer Einheit die Entdeckung durch feindliche
+Einheiten zu vermeiden - es sei denn, die Einheit versucht, auf demselben
+Feld zu landen. Getarnte Einheiten können außerdem feindliche
+$LINK<Kontrollzonen=34> ignorieren - sie können sich frei zwischen Feldern
+neben feindlichen Einheiten hin- und herbewegen. 
+
+#ABILDESC3
+{Amphibienmodule} gestatten es einer Boden-Einheit, direkt von einem Feld auf
+See aus anzugreifen, wenn es von Bord eines Transporters geht. Einheiten mit
+Amphibienmodulen können außerdem die Kanäle zwischen auf See stationierten Basen
+und den Kontinenten überqueren und von der anderen Seite angreifen.
+
+#ABILDESC4
+{Abwurfmodule} gestatten es Boden-Einheiten, Luftlandeunternehmen
+durchzuführen. Eine Einheit muß die Runde auf einem verbündeten
+Luftstützpunkt oder einer verbündeten Basis beginnen. Luftlandeunternehmen
+sind in ein leeres Feld innerhalb von 8 Feldern möglich (es sei denn, Ihre Gruppe
+hat die für orbitale Landeunternehmen notwendige Technologie.
+In diesem Fall dürfen Einheiten an beliebiger Stelle auf dem Planeten
+abgesetzt werden).
+^
+Abwurfmodul-Einheiten dürfen sich nach dem Luftlandeunternehmen
+weiterbewegen, doch wenn sie angreifen, erhalten sie einen Kampfmalus
+von 50%.
+
+#ABILDESC5
+Durch die {Luftüberlegenheit} ist eine Einheit mit den Raketen ausgestattet,
+die notwendig sind, um Nadeljets in der Luft anzugreifen.
+Luft-Überlegenheitseinheiten erhalten einen Kampfvorteil von +100%, wenn sie
+andere Luft-Einheiten im Flug angreifen; wenn sie jedoch Boden- oder See-
+Einheiten angreifen, erhalten Sie einen Malus von -50%. 
+^
+Luft-Luft-Kämpfe werden entschieden, indem die Angriffsfaktoren verglichen
+werden - der Wert der Waffen wird ignoriert. 
+^
+Sie werden feststellen, daß selbst Boden- und See-Einheiten mit SAM-
+Raketen ausgestattet werden können, die für die Übertragung dieser
+Fähigkeit notwendig sind. 
+
+#ABILDESC6
+Eine {Druckkuppel} gestattet es einer Einheit auf See, wie ein U-Boot
+zu funktionieren. U-Booteinheiten können von Feinden nur schwer entdeckt
+werden. 
+
+#ABILDESC7
+Ein {Trägerdeck} gestattet es einem Transporter auf See, Luft-Einheiten
+zu transportieren und zu betanken. 
+
+#ABILDESC8
+Die {Flak-Peilung} steigert die Verteidigungsfähigkeit einer Einheit
+gegen Raketen um 100%.
+
+#ABILDESC9
+Das {Funkstörgerät} stört die taktischen Befehle und Kontrollmaßnahmen
+der Feinde und verwirrt auf diese Weise die mobilen feindlichen Offensiven.
+Ein Funkstörgerät überträgt einen Verteidigungsbonus von +50% gegen
+Boden-Einheiten, die mehr als einmal vorrücken dürfen ($LINK<Speeder=40001>
+und $LINK<Schwebepanzer=40002>).
+
+#ABILDESC10
+Mit {Antigrav-Stützen} darf eine Einheit in jeder Runde einmal mehr
+vorrücken, und alle Bodeneinheiten, wie die $LINK<Schwebepanzer=40002>,
+können damit Einschränkungen für schwieriges Gelände vermeiden. 
+^
+Luft-Einheiten mit Antigrav-Stützen dürfen sich ihrem doppelten
+Reaktorwert entsprechend fortbewegen (eine Antigrav-Lufteinheit mit
+einem $LINK<Fusionsreaktor=50002> würde sich viermal fortbewegen).
+
+#ABILDESC11
+Das {Empath-Lied} übertragt einen Angriffsbonus von +50% gegen Einheiten,
+die eine PSI-Abwehr haben, d.h. $LINK<Psycho-Viren=30008>
+und andere außerirdische Lebewesen.
+
+#ABILDESC13
+{Fungizid-Tanks} gestatten es einer Terraformer-Einheit,
+$LINK<Xenofungus=14> doppelt so schnell wie sonst zu entfernen.
+Nur $LINK<Terraformer=30001>-Einheiten dürfen diese Fähigkeit
+in Anspruch nehmen.
+
+#ABILDESC14
+Der {hohe Gruppenstatus} gewährt einer Einheit eine Aufwertung von
+$LINK<+1 des Gruppenstatus=11>, wenn sie gegründet wird. 
+
+#ABILDESC15
+{Schwere Artillerie}-Einheiten bombardieren ihre Ziele aus der Entfernung,
+statt sie direkt anzugreifen. Diese einzigartige Fähigkeit gestattet es
+ihnen, auf Einheiten in bis zu zwei Feldern Entfernung zu feuern und alle
+Einheiten auf einem Feld mit einem Angriff anzugreifen.
+^
+Die einzige Schwäche einer Artillerieeinheit ist, daß sie nur durch
+$LINK<Bombenangriffe=35> durchführen kann.
+^
+Hinweis: Die eigentliche Fähigkeit von See-Einheiten ist, Bombenangriffe
+durchzuführen, sie können jedoch auch andere Einheiten auf Ozean-Feldern
+direkt angreifen. 
+
+#ABILDESC16
+Einheiten mit {autonomem Reaktor} benötigen keine Unterstützung
+von ihrer Heimbasis.
+
+#ABILDESC17
+Der {Mini-Teleporter} gestattet es einer Einheit beim Angriff 
+die gesamte Abwehr einer Basis ($LINK<Abwehrzone=100004>,
+$LINK<Tachyonenfeld=100005>) zu ignorieren.
+
+#ABILDESC18
+Einheiten mit der Fähigkeit {hypnotische Trance} sind gegen PSI-Angriffe
+gewappnet und erhalten aus diesem Grund einen Verteidigungsbonus von +50%,
+wenn sie von Einheiten angegriffen werden, die $LINK<PSI-Kämpfe=15>
+führen, z.B. $LINK<Psycho-Viren=30008> und andere außerirdische Lebewesen.
+
+#ABILDESC20
+Anführer, die zu Greueltaten bereit sind, können ihre Kampf-Einheiten mit
+{Nervengasbehältern} ausstatten. So ausgestattete Einheiten können diese
+Behälter einsetzen, um einen Angriffsbonus von +50% zu erhalten. Wenn
+Nervengasbehälter gegen bevölkerte Regionen eingesetzt werden, haben sie
+erhebliche Opfer unter Zivilisten zur Folge. 
+
+#ABILDESC21
+Ein {Reparaturbereich} gestattet es Transport-Einheiten, die Einheiten, die sie
+mitführen, während des Transports zu reparieren.
+
+#ABILDESC22
+Mit {gewaltarmen Methoden} können Einheiten doppelt gezählt werden,
+wenn sie als Polizei-Einheiten eingesetzt werden (jede Einheit zerstört
+zwei $LINK<Drohnen=36> statt einer).
+
+#ABILDESC12
+{Polymorphe Codierung} verdoppelt die Widerstandskraft einer Einheit
+gegenüber Unterwanderung durch ein Sondierteam.
+
+#ARMORDESC
+Die {Panzerungs-}Stärke einer Einheit bestimmt ihre Kampfstärke,
+wenn sie angegriffen wird. Je dicker die Panzerung, desto besser
+ist die Abwehr.
+
+#REACTORDESC
+Der {Reaktor} einer Einheit bestimmt deren {Energie} und damit die Menge der
+Schäden, die die Einheit im Kampf überstehen kann, ehe sie zerstört wird.
+Eine Einheit kann für jeden Energiebereich des Reaktors 10 Punkte an
+Schäden überstehen.
+^
+Fortschrittlichere Reaktortechnologie senkt außerdem die Baupreise der
+komplizierteren Einheiten.
+
+; Neuer Text für SMACX
+
+#; Geheimdienstzentrum
+#HELPFAC34
+Hier gebaute $LINK<Sondierteam=30006>-Einheiten erhalten zwei
+$LINK<Moral=11>-Aufwertungen. Die Basis erhält außerdem eine
+Einstufung von +2 für $LINK<SONDE=130008>.
+
+#; Bruthöhle
+#HELPFAC35
+Hier gebaute einheimische Einheiten erhalten einen $LINK<Lebenszyklus=11>
+-Bonus von +1. Reduzierung der Kosten von außerderirdischen Einheiten um
+25 %. Negative $LINK<LEBENSZYKLUS=13004>-Effekte in einem Basis-Feld werden
+aufgehoben. Die Basis erhält eine Einstufung von $LINK<+1 für POLIZEI=130005>.
+
+#; Wasserfarm
+#HELPFAC36
+Alle $LINK<Seetangfarmen=90020>, die von der Basis geführt werden,
+bringen eine zusätzliche $LINK<Nahrungseinheit=41>.
+
+#; Unterwasser-Hauptleitung
+#HELPFAC37
+Alle $LINK<Abbau-Plattformen=90022>, die von der Basis geführt werden,
+bringen eine zusätzliche $LINK<Mineralieneinheit=42>.
+
+#; Thermokliner Meßwandler
+#HELPFAC38
+Alle $LINK<Gezeitenkraftwerke=90023>, die von der Basis geführt werden,
+bringen eine zusätzliche $LINK<Energieeinheit=43>.
+
+#; Flechette-Abwehrsystem
+#HELPFAC39
++50% Verteidigungsbonus gegen $LINK<konventionelle Raketen=60023< für alle
+Einheiten, die bis zu zwei Felder entfernt sind. Wenn Sie keine
+$LINK<orbitalen Abwehrstationen=100068> haben, kann das System mit einer
+Wahrscheinlichkeit von 50% eine nicht konventionelle Rakete
+($LINK<Planetenbombe=60016>, $LINK<tektonische Rakete=60024> und
+$LINK<Fungus-Rakete>) abschießen, wenn es innerhalb eines Radius von zwei
+Feldern um die Basis eingesetzt wird. Die Wirkung der Systeme ist kumulativ,
+d.h., wenn zwei Flechette-Systeme innerhalb eines Radius von zwei Feldern
+um das Ziel einer Rakete stationiert sind, hat eine Rakete nur eine
+Erfolgschance von 25%. 
+
+#; Unterraum-Generator
+#HELPFAC40
+Dies ist die Hauptkomponente des Resonanzsenders, der von den
+$LINK<Vorfahren=47>-Gruppierungen zur Übertragung der Position des
+Planeten an ihre jeweiligen Streitkräfte verwendet wird. Wenn eine
+Vorfahren-Gruppierung sechs Generatoren in Basen der Größe 10 oder
+höher baut, fordert der Sender eine ganze Flotte an Verstärkung an,
+was das Ende des Daseins der Menschen auf dem Planeten bedeutet
+und den $LINK<Vorfahren-Sieg=10014> abzeichnet. 
+
+#; Geosynchrone Überwachungskapsel
+#HELPFAC41
+Der Sichtradius der Basis erhöht sich auf drei Felder.
+Die Kapsel fungiert auch als $LINK<Sensorenfeld=90009>,
+was einen Verteidigungsbonus von +25% bringt. Geosynchrone
+Kapseln können von $LINK<orbitalen Abwehrstationen=100068>
+oder $LINK<Sondierteams=30006> zerstört werden.
+
+#; Die Manifold-Harmonie
+#HELPPROJ33
+Erhöht die auf $LINK<Monolithen-=12> und $LINK<Fungus-=14>
+Feldern gewonnenen Ressourcen je nach Gesamt-Einstufung
+für $LINK<PLANET=130007> wie folgt:
+^
+^0 Planet:   +1 $LINK<Energieeinheit=43>
+^+1 Planet:  +1 $LINK<Nahrungseinheit=41>, +1 Energieeinheit
+^+2 Planet:  +1 Nahrungseinheit, +1 Energieeinheit,
++1 $LINK<Mineralieneinheit=42>
+^+3 Planet:  +1 Nahrungseinheit, +2 Energieeinheit, +1 Mineralieneinheit
+
+#; Der Netzhacker-Terminus
+#HELPPROJ34
+Bonus von +1 für den $LINK<Moral-=11>Wert aller existierenden
+$LINK<Sondierteams=30006>. Reduzierung der Kosten für Sondierteamaktionen
+um 25%. Alle Sondierteams mit einem $LINK<Fusionsreaktor=50002> oder
+besser, haben eine entsprechende $LINK<algorithmische Verbesserung=80028>.
+
+#; Die Wolken-Akademie
+#HELPPROJ35
+Kostenloser $LINK<Aerospace-Komplex=100029> in jeder Basis.
+
+#; Das Planeten-Energieraster
+#HELPPROJ36
+Kostenloses $LINK<Energielager=100007> in jeder Basis. Die
+$LINK<Stapelenergie=100069> bringt einen um 25% erhöhten Umsatz.
+
+#ABILDESC24
+Einheiten, die mit {soporifischen Gaskapseln} ausgestattet sind, 
+reduzieren die Moral des Feindes beim Angriff um 2.
+
+#ABILDESC25
+Mit einer {dissoziativen Welle} ausgerüstete Einheiten können Spezialfähigkeiten
+entgegenwirken, die die Kampf-Prozentsätze ändern. Dies macht Spezialfähigkeiten
+wie das $LINK<Funkstörgerät=80009> und die $LINK<hypnotische Trance=80018>
+unwirksam. 
+
+#ABILDESC26
+Mit einer {Marineinfanterieabteilung} ausgerüstete See-Einheiten können feindliche
+Schiffe entern und kapern, die schwer beschädigt wurden. 
+
+#ABILDESC27
+{Treibstoff-Nanozellen} erhöhen die Treibstoffkapazität einer Luft-Einheit um +2.
+
+#ABILDESC28
+$LINK<Sondierteams=30006> mit einer {algorithmischen Verbesserung} führen Geheimoperationen mit größerem Erfolgschancen durch. Verbesserte Sondierteams
+können außerdem Basen und Einheiten  infiltrieren, unabhängig von der
+sozialtechnischen Auswahl oder dem Geheimprojekt
+$LINK<Der Jagdalgorithmus=110085>, weisen jedoch immer noch eine
+hohe Mißerfolgsrate auf.
+
+#UNITDESC14
+{Seeschleichen} suchen die Fungus-Felder und Ozeantiefen der Meere des
+Planeten heim. Im Gegensatz zu den weniger aggressiven $LINK<Inseln der Tiefe=30009>
+suchen die Seeschleichen Seebasen und Basen an der Küste heim und greifen
+diese an. Sie lauern aber auch auf leichte Beute und
+greifen unbedarfte Schiffe an, die sich zu nahe an $LINK<Fungus-=14>Feldern befinden. 
+Wenn sie sich nicht bewegen, sind diese Wesen extrem schwer zu entdecken, daher
+können sie sehr überraschend angreifen.
+
+Seeschleichen könne auch $LINK<PSI-Kampf=15> betreiben, wenn sie angegriffen werden.
+Dabei werden Waffen- und Panzerungsstärken ignoriert. Die $LINK<Moral=11>-Stufe ist
+beim Angriff von Seeschleichen von großer Bedeutung.
+^
+Mit entsprechenden Zucht- und Propftechniken können Seeschleichen auch 
+in Gefangenschaft gezüchtet und von fähigen Bruttrainern kontrolliert werden.
+Wie auch andere einheimische Einheiten können Spieler Seeschleichen in der
+Wildnis freisetzen, um den Feind zu stören und zu beunruhigen.
+
+#UNITDESC15
+{Sporenwerfer} können einzeln oder zusammen mit $LINK<Psycho-Viren=30008> auftreten 
+und sind eng mit dem $LINK<Fungus=14> verwandt. Sporenwerfer lauern gern
+in der Umgebung einer Siedlung und stäuben Wolken schädlicher Sporen, die von 
+Menschen oder Vorfahren geschaffene Verbesserungen in einem Umkreis von zwei
+Feldern zerstören. Diese Sporen sind auch für Einheiten schädlich.
+^
+Sporenwerfer können auch $LINK<PSI-Kampf=15> betreiben, wenn sie angegriffen werden.
+Dabei werden Waffen- und Panzerungsstärken ignoriert. Die $LINK<Moral=11>-Stufe
+ist beim Angriff auf Sporenwerfer sehr wichtig.
+^
+Mit entsprechenden Zucht- und Propftechniken können Sporenwerfer auch 
+in Gefangenschaft gezüchtet und von fähigen Bruttrainern kontrolliert werden.
+In Gefangenschaft können diese Wesen als Artillerie für den Angriff auf
+feindliche Einheiten oder Geländeverbesserungen verwendet werden. 
+Wie auch andere einheimische Einheiten können Spieler Sporenwerfer in der
+Wildnis freisetzen, um den Feind zu stören und zu beunruhigen.
+
+#UNITDESC16
+{Schlachtoger} sind seltene mechanische Überbleibsel der ersten
+$LINK<Vorfahren=47>-Ära des Planeten. Es gibt mehrere verschiedene
+Ogertypen, die jeweils über fortgeschrittene Ausrüstung und verschiedene
+Funktionen verfügen. Leider können diese Einheiten aufgrund ihrer
+komplizierten Technik nicht repariert werden, nicht einmal von Technikern
+der Vorfahren. Alle Schäden sind deshalb irreparabel.
+^
+Der Schlachtoger Mk1 verfügt über einen $LINK<Resonanzlaser=60012>,
+$LINK<Resonanz 3-Panzerung=70011> und einen $LINK<Atomreaktor=50001>.
+Seine überwältigende Größe und sein furchterregendes Design helfen
+auch, Drohnenaktivitäten zu unterdrücken, indem die
+$LINK<Polizei=130005>-Werte des Ogers effektiv verdoppelt werden.
+
+#UNITDESC17
+{Schlachtoger} sind seltene mechanische Überbleibsel der ersten
+$LINK<Vorfahren=47>-Ära des Planeten. Es gibt mehrere verschiedene
+Ogertypen, die jeweils über fortgeschrittene Ausrüstung und verschiedene
+Funktionen verfügen. Leider können diese Einheiten aufgrund ihrer
+komplizierten Technik nicht repariert werden, nicht einmal von Technikern
+der Vorfahren. Alle Schäden sind deshalb irreparabel.
+^
+Der Schlachtoger Mk2 verfügt über einen $LINK<Resonanzbolzen=60013>, 
+$LINK<Resonanz 8-Panzerung=70013> und einen $LINK<Fusionsreaktor=130005>.
+Seine überwältigende Größe und sein furchterregendes Design helfen auch,
+Drohnenaktivitäten zu unterdrücken, indem die Polizeiwerte des Ogers effektiv
+verdoppelt werden. Die Vorfahren statteten den Mk2-Oger auch mit der Spezialfähigkeit $LINK<dissoziative Welle=80025> aus.
+
+#UNITDESC18
+{Schlachtoger} sind seltene mechanische Überbleibsel der ersten$LINK<Vorfahren=47>-Ära des Planeten. Es gibt mehrere verschiedene
+Ogertypen, die jeweils über fortgeschrittene Ausrüstung und verschiedene
+Funktionen verfügen. Leider können diese Einheiten aufgrund ihrer
+komplizierten Technik nicht repariert werden, nicht einmal von Technikern
+der Vorfahren. Alle Schäden sind deshalb irreparabel.
+^
+Der Schlachtoger Mk3 verfügt über einen $LINK<Reihendisruptor=60014>,
+$LINK<Stasisgenerator-Panzerung=70008> und einer $LINK<Quantenkammer=50003>.
+Seine überwältigende Größe und sein furchterregendes Design helfen auch,
+Drohnenaktivitäten zu unterdrücken, indem die $LINK<Polizei=130005>-Werte
+des Ogers effektiv verdoppelt werden. Die  Vorfahren statteten den Oger auch
+mit der Spezialfähigkeit $LINK<dissoziative Welle=80025> aus.
+
+#UNITDESC19
+{Fungus-Türme} können als lokales Nervensystem für
+$LINK<Fungus=14>-Felder betrachtet werden. Diese Türme sind massive,
+verworrene Verflechtungen von Psycho-Viren, Fungus und anderen
+einheimischen Lebensformen. Obwohl sich die Türme nicht bewegen
+und nicht angreifen können, können Sie die Bewegung durch das geweilige
+Gelände erschweren und eine $LINK<Kontrollzone=34> schaffen,
+die Einheiten in diesem Gebiet behindert. 
+^
+Wenn sie angegriffen werden, können Fungus-Türme LINK<PSI-Kampf=15> betreiben,
+bei dem Waffen- und Panzerungsstärken ignoriert werden. Die $LINK<Moral=11>-Stufe
+ist beim Angriff auf Fungus-Türme sehr wichtig. Werden sie angegriffen, erhalten
+Fungus-Türme aufgrund ihrer Fähigkeit, einheimische Lebensformen im Gebiet direkt zu steuern und zu koordinieren, einen Bonus von 50 %.
+^
+Die Größe und Stärke der Fungus-Türme hängt von der Menge des Fungus
+um den Turm ab. Türme können auch Fungus in benachbarten leeren Feldern
+erzeugen.
+
+#UNITDESC20
+Das UN-Sternschiff Unity enthielt einige dieser Laser, die für primitive
+Abbauoperationen vorgesehen waren. Ein oder zwei wurden möglicherweise beim
+Absturz der Unity auf dem Planeten nicht beschädigt. In den ersten Jahren
+nach der Landung auf dem Planeten können diese im Notfall als Waffen
+eingesetzt werden.
+
+#WEAPONDESC12
+Der {Resonanzlaser} funktioniert sowohl als Laser wie auch als leistungsstarke
+störende Kraft in örtlichen Resonanzfeldern. Sein grundlegender Angriffsfaktor
+beträgt 6, und er erhält einen Bonus von +25%, wenn er bei einem
+$LINK<PSI-Angriff=15> eingesetzt wird.
+
+#WEAPONDESC13
+Der {Resonanzbolzen} funktioniert sowohl als $LINK<Tachyonen-Bolzen=60007>
+wie auch als leistungsstarke störende Kraft in örtlichen Resonanzfeldern.
+Sein grundlegender Angriffsfaktor beträgt 12, und er erhält einen Bonus von +25%,
+wenn er bei einem $LINK<PSI-Angriff=15> eingesetzt wird.
+
+#WEAPONDESC14
+Die Stärke der {Waffen} einer Einheit bestimmt ihre Kampfstärke bei Angriffen.
+Je stärker die Waffe, desto kraftvoller ist der Angriff. 
+
+#WEAPONDESC24
+Das Waffenpaket mit {tektonischer Nutzlast} kann zum Bau tektonischer Raketen
+verwendet werden. Es kann nur mit dem $LINK<Raketen=40008>-Fahrzeug
+eingesetzt werden. 
+^
+Die Detonation einer tektonischen Rakete verursacht ein Erdbeben, welches - je nach
+$LINK<Reaktor=50001> - das Zielgebiet um 1-4 Höhestufen anhebt. Ein Atomreaktor
+hebt das Gebiet um eine Höhenstufe, ein Singularitätsreaktor um bis zu vier Höhenstufen.
+Tektonische Raketen werden nicht als Kampf-Einheiten, sondern als 'Lieferanten' betrachtet,
+und können deshalb nicht auf Basen oder Einheiten gezielt werden.
+
+#WEAPONDESC25
+Das Waffenpaket mit {Fungus-Nutzlast} kann zum Bau von Fungus-Raketen
+verwendet werden. Es kann nur mit dem $LINK<Raketen=40008>-Fahrzeug
+eingesetzt werden.
+^
+Die Detonation einer Fungus-Rakete zerstört alle Verbesserungen im Zielfeld. Zusätzlich
+bedingt die Detonation, daß - je nach $LINK<Reaktor=50001> - 1 bis 4 Felder mit Fungus
+bedeckt werden. Ein Atomreaktor bedeckt ein  Feld, ein Singularitätsreaktor bedeckt bis
+zu vier Felder. Die Detonation kann auch zur Folge haben, daß sich einheimische
+Lebensformen aus bisher nicht aktivierten Sporen entwickeln. Fungus-Raketen
+werden nicht als Kampf-Einheiten, sondern als 'Lieferanten'
+betrachtet, und können deshalb nicht auf Basen oder Einheiten gezielt werden.
+
+#ARMORDESC9
+Die {PSI-Abwehr}-Panzerung hat die gleichen Abwehrfähigkeiten, wie sie
+auch bei einheimischen Lebensformen, wie beispielsweise den
+$LINK<Psycho-Viren=30008> vorkommt. Eine Einheit, die mit der PSI-Abwehr
+ausgestattet ist, wird bei einem Angriff automatisch $LINK<PSI-Kampf=15>
+betreiben, wobei Waffen- und Panzerungsstärken unberücksichtigt bleiben,
+und der Angreifer an Land einen Vorteil von 3:2 erhält. 
+Die LINK<Moral=11>-Stufe ist überaus wichtig, wenn eine Einheit angegriffen
+wird, die mit PSI-Abwehr ausgestattet ist.
+
+#ARMORDESC10
+{Impuls 3-Panzerung} ist ein kombiniertes Verteidigungssystem, das die Vorteile
+von $LINK<Plasma-Stahl=70002> (D3) bietet und einen 25% Verteidigungsbonus
+gegen Boden-Einheiten mit mehr als einer Runde liefert ($LINK<Speeder=40001>
+und $LINK<Schwebepanzer=40002>).
+
+#ARMORDESC11
+{Resonanz 3-Panzerung} kombiniert den physischen Schutz von
+$LINK<Plasma-Stahl=70002> (D3) mit einem PSI-Schild, der einen
+Verteidigungsbonus von +25% liefert, wenn er von Einheiten angegriffen wird,
+die den $LINK<PSI-Kampf=15> anwenden (z.B. $LINK<Psycho-Viren=30008>
+und andere außerirdische Lebensformen).
+
+#ARMORDESC12
+{Impuls 8-Panzerung} ist ein kombiniertes Verteidigungssystem, das die
+Vorteile eines $LINK<Neutronium-Panzers=70006> (D8) bietet und einen
+Verteidigungsbonus von 25% gegen Boden-Einheiten mit mehr als einer
+verbleibenden Runde liefert ($LINK<Speeder=40001> und
+$LINK<Schwebepanzer=40002>).
+
+#ARMORDESC13
+{Resonanz-8-Panzerung} kombiniert den physischen Schutz eines
+$LINK<Neutronium-Panzers=70006> (D8) mit einem PSI-Schild, der 
+einen Verteidigungsbonus von +25% liefert, wenn er von Einheiten
+angegriffen wird, die den $LINK<PSI-Kampf=15> anwenden 
+(z.B. $LINK<Psycho-Viren=30008> und andere außerirdische Lebensformen).
+
+# ; Diese Zeile muß am Dateiende stehen.

@@ -74,6 +74,7 @@ enum SrStr {
     SR_SCAN_IMPROVEMENTS,
     SR_SCAN_NATURE,
     SR_SCAN_NOT_FOUND,
+    SR_SCAN_NO_MORE,
 
     SR_BASE_AT,
     SR_UNIT_AT,
@@ -224,6 +225,12 @@ enum SrStr {
     SR_FILE_ITEM_FMT,       // "%d of %d: %s, %s"  (pos, total, name, type)
     SR_FILE_PARENT_DIR,     // "Parent directory"
     SR_FILE_OVERWRITE_HINT, // "Enter to confirm, Escape to cancel"
+    SR_FILE_NAV_HINT,       // "Up/Down: navigate, Enter: select, Backspace: parent, Escape: cancel"
+    SR_FILE_EMPTY_DIR,      // "Empty directory"
+    SR_FILE_AT_ROOT,        // "Already at top level"
+    SR_FILE_LOAD_CANCELLED, // "Load cancelled"
+    SR_FILE_SAVE_CANCELLED, // "Save cancelled"
+    SR_FILE_HELP,           // help text
 
     // Popup list navigation
     SR_POPUP_LIST_FMT,      // "%d of %d: %s"
@@ -422,6 +429,12 @@ enum SrStr {
     SR_DIPLO_COMMLINK_ITEM,
     SR_DIPLO_COMMLINK_EMPTY,
     SR_DIPLO_COMMLINK_CONTACT,
+    SR_DIPLO_PROFILE,
+    SR_DIPLO_PROFILE_PRIORITY,
+    SR_DIPLO_PROFILE_OPPOSITION,
+    SR_DIPLO_PROFILE_MALE,
+    SR_DIPLO_PROFILE_FEMALE,
+    SR_DIPLO_STATUS_CHANGED,
 
     // Cursor / Numpad
     SR_CURSOR_TO_UNIT,
@@ -478,6 +491,8 @@ enum SrStr {
     SR_TERRAFORM_ORDER,
     SR_TERRAFORM_STATUS,
     SR_TERRAFORM_COMPLETE,
+    SR_TERRAFORM_ORDER_REMOVE,
+    SR_TERRAFORM_STATUS_REMOVE,
 
     // Nerve Staple (Ctrl+N)
     SR_NERVE_STAPLE_CONFIRM,
@@ -524,6 +539,19 @@ enum SrStr {
     SR_SOCENG_ALLOC_LABS,
     SR_SOCENG_ALLOC_MODE_OPEN,
     SR_SOCENG_ALLOC_MODE_CLOSED,
+
+    // Social Engineering effect names
+    SR_SOCENG_EFF_ECONOMY,
+    SR_SOCENG_EFF_EFFICIENCY,
+    SR_SOCENG_EFF_SUPPORT,
+    SR_SOCENG_EFF_TALENT,
+    SR_SOCENG_EFF_MORALE,
+    SR_SOCENG_EFF_POLICE,
+    SR_SOCENG_EFF_GROWTH,
+    SR_SOCENG_EFF_PLANET,
+    SR_SOCENG_EFF_PROBE,
+    SR_SOCENG_EFF_INDUSTRY,
+    SR_SOCENG_EFF_RESEARCH,
 
     // Garrison List (Ctrl+U)
     SR_GARRISON_OPEN,
@@ -797,6 +825,10 @@ enum SrStr {
     SR_COUNCIL_NO_GOVERNOR,
     SR_COUNCIL_CAN_CALL,
     SR_COUNCIL_CANNOT_CALL,
+    SR_COUNCIL_ABSTAIN,
+    SR_COUNCIL_CANDIDATES,
+    SR_COUNCIL_RESULT,
+    SR_COUNCIL_YOUR_FACTION,
 
     // Base Operations Status (F4)
     SR_BASEOPS_OPEN,        // "Base Operations, %d bases"
@@ -1181,6 +1213,16 @@ enum SrStr {
     SR_HISTORY_EMPTY,
     SR_HISTORY_OLDEST,
     SR_HISTORY_FMT,
+
+    // Name/Gender popup
+    SR_NAME_GENDER_HINT,
+
+    // Setup rules checkbox popup
+    SR_SETUP_RULES_HELP,
+
+    // Ctrl+Tab cycle through movable units
+    SR_CYCLE_MOVABLE_FMT,
+    SR_CYCLE_MOVABLE_NONE,
 
     SR_COUNT
 };

@@ -3,14 +3,23 @@
 
 const char* AlphaFile = "alphax";
 const char* ScriptFile = "script";
-const char* ModAlphaFile = "smac_mod\\alphax";
-const char* ModHelpFile = "smac_mod\\helpx";
-const char* ModTutorFile = "smac_mod\\tutor";
-const char* ModConceptsFile = "smac_mod\\conceptsx";
-const char* ModAlphaTxtFile = "smac_mod\\alphax.txt";
-const char* ModHelpTxtFile = "smac_mod\\helpx.txt";
-const char* ModTutorTxtFile = "smac_mod\\tutor.txt";
-const char* ModConceptsTxtFile = "smac_mod\\conceptsx.txt";
+static char ModAlphaBuf[64]    = "smac_mod\\alphax";
+static char ModHelpBuf[64]     = "smac_mod\\helpx";
+static char ModTutorBuf[64]    = "smac_mod\\tutor";
+static char ModConceptsBuf[64] = "smac_mod\\conceptsx";
+static char ModAlphaTxtBuf[64]    = "smac_mod\\alphax.txt";
+static char ModHelpTxtBuf[64]     = "smac_mod\\helpx.txt";
+static char ModTutorTxtBuf[64]    = "smac_mod\\tutor.txt";
+static char ModConceptsTxtBuf[64] = "smac_mod\\conceptsx.txt";
+
+const char* ModAlphaFile = ModAlphaBuf;
+const char* ModHelpFile = ModHelpBuf;
+const char* ModTutorFile = ModTutorBuf;
+const char* ModConceptsFile = ModConceptsBuf;
+const char* ModAlphaTxtFile = ModAlphaTxtBuf;
+const char* ModHelpTxtFile = ModHelpTxtBuf;
+const char* ModTutorTxtFile = ModTutorTxtBuf;
+const char* ModConceptsTxtFile = ModConceptsTxtBuf;
 const char* OpeningFile = "opening";
 const char* MovlistFile = "movlist";
 const char* MovlistTxtFile = "movlist.txt";
@@ -1316,6 +1325,21 @@ int __cdecl read_rules(int tgl_all_rules) {
         text_get();
         Repute[i] = text_item_string();
     }
+    // Fix corrupted German umlauts from GOG version (bytes > 0x7F replaced with 0x20).
+    // Single-byte in-place replacement: same string length, just wrong character.
+    if (Mood[0] && strcmp(Mood[0], "GROSSZ GIG") == 0) {
+        Mood[0][6] = '\xDC'; // GROSSZÜGIG
+        Mood[3][3] = '\xDC'; // ZURÜCKHALTEND
+        Mood[5][5] = '\xC4'; // HARTNÄCKIG
+        Mood[6][7] = '\xDC'; // STREITSÜCHTIG
+        Mood[8][1] = '\xDC'; // WÜTEND
+        Repute[3][4] = '\xC4'; // VERLÄSSLICH
+        Repute[4][1] = '\xDC'; // RÜCKSICHTSLOS
+        Repute[5][4] = '\xC4'; // VERRÄTERISCH
+        Repute[6][1] = '\xD6'; // BÖSE
+        Repute[7][3] = '\xDC'; // BERÜCHTIGT
+        debug("Fixed German umlaut corruption in MOOD/REPUTE strings\n");
+    }
     if (text_open(alpha_file(), "MIGHT")) {
         return true;
     }
@@ -1563,5 +1587,48 @@ void __cdecl prefs_use() {
     *GameWarnings = AlphaIniPrefs->announce;
 }
 
+/*
+Detect game language from alphax.txt and update smac_mod paths to use
+language-specific subdirectory (e.g. smac_mod\de\) if available.
+Called from patch_setup() before smac_only paths are applied.
+*/
+void smac_mod_init_paths() {
+    // Detect language from main alphax.txt (same logic as loc_detect_language)
+    const char* lang = "en";
+    FILE* f = fopen("alphax.txt", "r");
+    if (f) {
+        char line[512];
+        int lines_read = 0;
+        while (fgets(line, sizeof(line), f) && lines_read < 30) {
+            lines_read++;
+            if (strstr(line, "Benutzerkonfig") || strstr(line, "GRUNDREGELN")
+                || strstr(line, "Fortbewegung") || strstr(line, "Sicherungskopie")) {
+                lang = "de";
+                break;
+            }
+        }
+        fclose(f);
+    }
+    if (!strcmp(lang, "en")) {
+        debug("smac_mod_init_paths: English detected, using default paths\n");
+        return;
+    }
+    // Check if language-specific smac_mod subfolder exists
+    char test_path[64];
+    snprintf(test_path, sizeof(test_path), "smac_mod\\%s\\alphax.txt", lang);
+    if (!FileExists(test_path)) {
+        debug("smac_mod_init_paths: %s detected but %s not found, using default paths\n", lang, test_path);
+        return;
+    }
+    debug("smac_mod_init_paths: Using %s language paths\n", lang);
+    snprintf(ModAlphaBuf,       sizeof(ModAlphaBuf),       "smac_mod\\%s\\alphax", lang);
+    snprintf(ModHelpBuf,        sizeof(ModHelpBuf),        "smac_mod\\%s\\helpx", lang);
+    snprintf(ModTutorBuf,       sizeof(ModTutorBuf),       "smac_mod\\%s\\tutor", lang);
+    snprintf(ModConceptsBuf,    sizeof(ModConceptsBuf),    "smac_mod\\%s\\conceptsx", lang);
+    snprintf(ModAlphaTxtBuf,    sizeof(ModAlphaTxtBuf),    "smac_mod\\%s\\alphax.txt", lang);
+    snprintf(ModHelpTxtBuf,     sizeof(ModHelpTxtBuf),     "smac_mod\\%s\\helpx.txt", lang);
+    snprintf(ModTutorTxtBuf,    sizeof(ModTutorTxtBuf),    "smac_mod\\%s\\tutor.txt", lang);
+    snprintf(ModConceptsTxtBuf, sizeof(ModConceptsTxtBuf), "smac_mod\\%s\\conceptsx.txt", lang);
+}
 
 

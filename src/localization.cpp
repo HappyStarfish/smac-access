@@ -77,6 +77,7 @@ static const char* sr_defaults[SR_COUNT] = {
     /* SR_SCAN_IMPROVEMENTS */ "Scanner: Improvements",
     /* SR_SCAN_NATURE       */ "Scanner: Terrain and Nature",
     /* SR_SCAN_NOT_FOUND    */ "Scanner: Nothing found",
+    /* SR_SCAN_NO_MORE      */ "Scanner: No more found",
 
     /* SR_BASE_AT           */ ". Base: %s",
     /* SR_UNIT_AT           */ ". Unit: %s",
@@ -226,6 +227,12 @@ static const char* sr_defaults[SR_COUNT] = {
     /* SR_FILE_ITEM_FMT    */ "%d of %d: %s, %s",
     /* SR_FILE_PARENT_DIR  */ "Parent directory",
     /* SR_FILE_OVERWRITE_HINT */ "Enter to confirm, Escape to cancel.",
+    /* SR_FILE_NAV_HINT    */ "Up/Down: navigate, Enter: select, Backspace: parent, Escape: cancel.",
+    /* SR_FILE_EMPTY_DIR   */ "Empty directory.",
+    /* SR_FILE_AT_ROOT     */ "Already at top level.",
+    /* SR_FILE_LOAD_CANCELLED */ "Load cancelled.",
+    /* SR_FILE_SAVE_CANCELLED */ "Save cancelled.",
+    /* SR_FILE_HELP        */ "Up/Down: navigate files. Enter: open folder or select file. Backspace: parent directory. Home/End: first/last. Escape: cancel. Ctrl+F1: this help.",
 
     /* SR_POPUP_LIST_FMT   */ "%d of %d: %s",
     /* SR_POPUP_CONTINUE   */ "Enter to continue.",
@@ -404,10 +411,10 @@ static const char* sr_defaults[SR_COUNT] = {
     /* SR_AIRDROP_CURSOR_INVALID */ "Cannot drop at cursor: invalid target.",
 
     // Diplomacy
-    /* SR_DIPLO_OPEN         */ "Diplomacy with %s",
+    /* SR_DIPLO_OPEN         */ "Diplomacy with %s. S or Tab: Summary with profile. Ctrl+F1: Help.",
     /* SR_DIPLO_CLOSED       */ "Diplomacy ended.",
-    /* SR_DIPLO_HELP         */ "S or Tab: Relationship summary. Ctrl+F1: Help. Popup options navigate with arrows.",
-    /* SR_DIPLO_SUMMARY      */ "%s. %s. %s",
+    /* SR_DIPLO_HELP         */ "S or Tab: Summary with leader profile, treaty, patience. Popup options navigate with arrows. Ctrl+F1: This help.",
+    /* SR_DIPLO_SUMMARY      */ "%s. %s. %s. %s. %s. %s",
     /* SR_DIPLO_STATUS_PACT  */ "Pact",
     /* SR_DIPLO_STATUS_TREATY */ "Treaty of Friendship",
     /* SR_DIPLO_STATUS_TRUCE */ "Truce",
@@ -420,10 +427,16 @@ static const char* sr_defaults[SR_COUNT] = {
     /* SR_DIPLO_SURRENDERED  */ "Has surrendered",
     /* SR_DIPLO_INFILTRATOR  */ "We have infiltrator",
     /* SR_DIPLO_NETMSG       */ "%s",
-    /* SR_DIPLO_COMMLINK_OPEN */ "Commlink: %d factions. Up/Down to browse, Enter to contact, Escape to cancel.",
+    /* SR_DIPLO_COMMLINK_OPEN */ "Commlink: %d factions. Up/Down to browse, Enter to contact, K for Council, Escape to cancel.",
     /* SR_DIPLO_COMMLINK_ITEM */ "%d of %d: %s, %s, %d votes",
     /* SR_DIPLO_COMMLINK_EMPTY */ "No factions with commlink.",
     /* SR_DIPLO_COMMLINK_CONTACT */ "Contacting %s",
+    /* SR_DIPLO_PROFILE     */ "Profile: %s %s, %s. %s. %s. %s",
+    /* SR_DIPLO_PROFILE_PRIORITY */ "Priority: %s %s",
+    /* SR_DIPLO_PROFILE_OPPOSITION */ "Opposition: %s %s",
+    /* SR_DIPLO_PROFILE_MALE */ "Male",
+    /* SR_DIPLO_PROFILE_FEMALE */ "Female",
+    /* SR_DIPLO_STATUS_CHANGED */ "Diplomatic status: %s",
     // Cursor / Numpad
     /* SR_CURSOR_TO_UNIT    */ "Cursor at unit.",
 
@@ -479,6 +492,8 @@ static const char* sr_defaults[SR_COUNT] = {
     /* SR_TERRAFORM_ORDER      */ "Building %s, %d turns",
     /* SR_TERRAFORM_STATUS     */ "Building %s, %d of %d turns",
     /* SR_TERRAFORM_COMPLETE   */ "%s completed",
+    /* SR_TERRAFORM_ORDER_REMOVE  */ "Removing %s, %d turns",
+    /* SR_TERRAFORM_STATUS_REMOVE */ "Removing %s, %d of %d turns",
 
     // Nerve Staple (Ctrl+N)
     /* SR_NERVE_STAPLE_CONFIRM */ "Press Ctrl+N again to nerve staple %s.",
@@ -525,6 +540,19 @@ static const char* sr_defaults[SR_COUNT] = {
     /* SR_SOCENG_ALLOC_LABS      */ "Labs",
     /* SR_SOCENG_ALLOC_MODE_OPEN */ "Energy allocation. %s Up/Down: select slider, Left/Right: adjust. Enter: confirm, Escape: cancel.",
     /* SR_SOCENG_ALLOC_MODE_CLOSED */ "Energy allocation closed.",
+
+    // Social Engineering effect names
+    /* SR_SOCENG_EFF_ECONOMY    */ "Economy",
+    /* SR_SOCENG_EFF_EFFICIENCY */ "Efficiency",
+    /* SR_SOCENG_EFF_SUPPORT    */ "Support",
+    /* SR_SOCENG_EFF_TALENT     */ "Talent",
+    /* SR_SOCENG_EFF_MORALE     */ "Morale",
+    /* SR_SOCENG_EFF_POLICE     */ "Police",
+    /* SR_SOCENG_EFF_GROWTH     */ "Growth",
+    /* SR_SOCENG_EFF_PLANET     */ "Planet",
+    /* SR_SOCENG_EFF_PROBE      */ "Probe",
+    /* SR_SOCENG_EFF_INDUSTRY   */ "Industry",
+    /* SR_SOCENG_EFF_RESEARCH   */ "Research",
 
     // Garrison List (Ctrl+U)
     /* SR_GARRISON_OPEN          */ "Garrison: %d units. Up/Down: navigate, D: details, Enter: activate, B: home base, H: hurry, Escape: close.",
@@ -798,6 +826,10 @@ static const char* sr_defaults[SR_COUNT] = {
     /* SR_COUNCIL_NO_GOVERNOR   */ "No Governor.",
     /* SR_COUNCIL_CAN_CALL      */ "You can call the Planetary Council.",
     /* SR_COUNCIL_CANNOT_CALL   */ "Cannot call the Planetary Council.",
+    /* SR_COUNCIL_ABSTAIN       */ "Abstain",
+    /* SR_COUNCIL_CANDIDATES    */ "Candidates: %s. Up/Down: navigate, Enter: vote.",
+    /* SR_COUNCIL_RESULT        */ "Result: %s",
+    /* SR_COUNCIL_YOUR_FACTION  */ "you",
 
     // Base Operations Status (F4)
     /* SR_BASEOPS_OPEN          */ "Base Operations, %d bases. Up/Down: navigate, S: summary, D: detail, Ctrl+F1: help.",
@@ -1181,6 +1213,13 @@ static const char* sr_defaults[SR_COUNT] = {
     /* SR_HISTORY_EMPTY             */ "No speech history",
     /* SR_HISTORY_OLDEST            */ "Oldest entry",
     /* SR_HISTORY_FMT               */ "%d of %d: %s",
+    // Name/Gender popup
+    /* SR_NAME_GENDER_HINT          */ "Tab: Change gender",
+    // Setup rules checkbox popup
+    /* SR_SETUP_RULES_HELP          */ "Up/Down: Navigate. Space: Toggle rule. Enter: Accept. Escape: Cancel. Ctrl+F1: This help.",
+    // Ctrl+Tab cycle through movable units
+    /* SR_CYCLE_MOVABLE_FMT         */ "%s at (%d,%d), %d of %d moves, unit %d of %d",
+    /* SR_CYCLE_MOVABLE_NONE        */ "No units with movement points.",
 };
 
 // Key names matching the enum order (for file parsing)
@@ -1200,7 +1239,7 @@ static const char* sr_keys[SR_COUNT] = {
     "unit_terraform", "monolith_used", "tile_unexplored",
     "scan_all", "scan_own_bases", "scan_enemy_bases", "scan_enemy_units",
     "scan_own_units", "scan_own_formers", "scan_fungus", "scan_pods",
-    "scan_improvements", "scan_nature", "scan_not_found",
+    "scan_improvements", "scan_nature", "scan_not_found", "scan_no_more",
     "base_at", "unit_at", "more_units",
     "base_screen", "sec_overview", "sec_resources", "sec_production",
     "sec_economy", "sec_facilities", "sec_status",
@@ -1243,6 +1282,8 @@ static const char* sr_keys[SR_COUNT] = {
     "menu_file_select",
     "file_load_game", "file_save_game", "file_folder", "file_item_fmt", "file_parent_dir",
     "file_overwrite_hint",
+    "file_nav_hint", "file_empty_dir", "file_at_root",
+    "file_load_cancelled", "file_save_cancelled", "file_help",
     "popup_list_fmt", "popup_continue",
     "soceng_title", "soceng_category_fmt", "soceng_model_fmt",
     "soceng_effects", "soceng_no_effect", "soceng_unavailable_tech",
@@ -1317,6 +1358,9 @@ static const char* sr_keys[SR_COUNT] = {
     "diplo_netmsg",
     "diplo_commlink_open", "diplo_commlink_item",
     "diplo_commlink_empty", "diplo_commlink_contact",
+    "diplo_profile", "diplo_profile_priority", "diplo_profile_opposition",
+    "diplo_profile_male", "diplo_profile_female",
+    "diplo_status_changed",
     // Cursor / Numpad
     "cursor_to_unit",
     // Turn Info
@@ -1341,6 +1385,7 @@ static const char* sr_keys[SR_COUNT] = {
     "design_upgrade_none", "design_upgrade_cost", "design_obsolete_status",
     // Terraform Status
     "terraform_order", "terraform_status", "terraform_complete",
+    "terraform_order_remove", "terraform_status_remove",
     // Nerve Staple
     "nerve_staple_confirm", "nerve_staple_done", "nerve_staple_cannot",
     // Base Rename
@@ -1358,6 +1403,11 @@ static const char* sr_keys[SR_COUNT] = {
     "soceng_alloc_fmt", "soceng_alloc_mode", "soceng_alloc_slider",
     "soceng_info_fmt", "soceng_alloc_econ", "soceng_alloc_psych",
     "soceng_alloc_labs", "soceng_alloc_mode_open", "soceng_alloc_mode_closed",
+    // Social Engineering effect names
+    "soceng_eff_economy", "soceng_eff_efficiency", "soceng_eff_support",
+    "soceng_eff_talent", "soceng_eff_morale", "soceng_eff_police",
+    "soceng_eff_growth", "soceng_eff_planet", "soceng_eff_probe",
+    "soceng_eff_industry", "soceng_eff_research",
     // Garrison List
     "garrison_open", "garrison_item", "garrison_detail",
     "garrison_activate", "garrison_home_set", "garrison_empty",
@@ -1471,6 +1521,8 @@ static const char* sr_keys[SR_COUNT] = {
     "council_vote_line", "council_total", "council_your_votes",
     "council_governor", "council_no_governor",
     "council_can_call", "council_cannot_call",
+    "council_abstain", "council_candidates", "council_result",
+    "council_your_faction",
     // Base Operations Status (F4)
     "baseops_open", "baseops_closed", "baseops_base_fmt", "baseops_base_fmt_stall",
     "baseops_summary", "baseops_help", "baseops_empty", "baseops_detail",
@@ -1619,6 +1671,12 @@ static const char* sr_keys[SR_COUNT] = {
     "detail_no_landmarks", "detail_no_work",
     // Speech History
     "history_empty", "history_oldest", "history_fmt",
+    // Name/Gender popup
+    "name_gender_hint",
+    // Setup rules checkbox popup
+    "setup_rules_help",
+    // Ctrl+Tab cycle through movable units
+    "cycle_movable_fmt", "cycle_movable_none",
 };
 
 // Loaded strings (dynamically allocated, or NULL = use default)

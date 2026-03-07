@@ -1,5 +1,6 @@
 
 #include "veh_combat.h"
+#include "game_log.h"
 #include "message_handler.h"
 #include "screen_reader.h"
 #include "localization.h"
@@ -1292,15 +1293,26 @@ int __cdecl mod_battle_fight_2(int veh_id_atk, int offset, int tx, int ty, int t
     int veh_def_val;
 
     // SR: Save pre-combat state for announcement
-    char sr_atk_name[64] = {};
-    char sr_def_name[64] = {};
+    char sr_atk_name[128] = {};
+    char sr_def_name[128] = {};
     int sr_atk_morale_pre = -1;
     int sr_def_morale_pre = -1;
     bool sr_player_involved = sr_is_available()
         && (faction_id_atk == player_id || faction_id_def == player_id);
     if (sr_player_involved) {
-        strncpy(sr_atk_name, sr_game_str(veh_atk->name()), sizeof(sr_atk_name) - 1);
-        strncpy(sr_def_name, sr_game_str(veh_def->name()), sizeof(sr_def_name) - 1);
+        // Include faction name for the opponent's unit
+        if (faction_id_atk != player_id) {
+            snprintf(sr_atk_name, sizeof(sr_atk_name), "%s, %s",
+                sr_game_str(veh_atk->name()), MFactions[faction_id_atk].noun_faction);
+        } else {
+            strncpy(sr_atk_name, sr_game_str(veh_atk->name()), sizeof(sr_atk_name) - 1);
+        }
+        if (faction_id_def != player_id) {
+            snprintf(sr_def_name, sizeof(sr_def_name), "%s, %s",
+                sr_game_str(veh_def->name()), MFactions[faction_id_def].noun_faction);
+        } else {
+            strncpy(sr_def_name, sr_game_str(veh_def->name()), sizeof(sr_def_name) - 1);
+        }
         sr_atk_morale_pre = veh_atk->morale;
         sr_def_morale_pre = veh_def->morale;
     }
@@ -1735,13 +1747,30 @@ int __cdecl mod_battle_fight_2(int veh_id_atk, int offset, int tx, int ty, int t
         && (faction_id_atk == player_id || faction_id_def == player_id)) {
             char sr_buf[512];
             if (sr_arty_hit_count > 0) {
+                char sr_arty_src[128];
+                if (faction_id_atk != player_id) {
+                    snprintf(sr_arty_src, sizeof(sr_arty_src), "%s, %s",
+                        sr_game_str(veh_atk->name()), MFactions[faction_id_atk].noun_faction);
+                } else {
+                    strncpy(sr_arty_src, sr_game_str(veh_atk->name()), sizeof(sr_arty_src) - 1);
+                }
                 int pos = snprintf(sr_buf, sizeof(sr_buf), loc(SR_COMBAT_ARTY_RESULT),
-                    sr_game_str(veh_atk->name()), tx, ty, sr_arty_hit_count);
+                    sr_arty_src, tx, ty, sr_arty_hit_count);
                 sr_output(sr_buf, true);
                 for (int i = 0; i < sr_arty_hit_count && i < 4; i++) {
                     if (sr_arty_hits[i].veh_id >= 0 && sr_arty_hits[i].veh_id < *VehCount) {
+                        int hit_fid = Vehs[sr_arty_hits[i].veh_id].faction_id;
+                        char sr_hit_name[128];
+                        if (hit_fid != player_id) {
+                            snprintf(sr_hit_name, sizeof(sr_hit_name), "%s, %s",
+                                sr_game_str(Vehs[sr_arty_hits[i].veh_id].name()),
+                                MFactions[hit_fid].noun_faction);
+                        } else {
+                            strncpy(sr_hit_name, sr_game_str(Vehs[sr_arty_hits[i].veh_id].name()),
+                                sizeof(sr_hit_name) - 1);
+                        }
                         snprintf(sr_buf, sizeof(sr_buf), loc(SR_COMBAT_ARTY_DAMAGE),
-                            sr_game_str(Vehs[sr_arty_hits[i].veh_id].name()),
+                            sr_hit_name,
                             sr_arty_hits[i].dmg,
                             sr_arty_hits[i].hp_after,
                             sr_arty_hits[i].hp_max);
@@ -1956,6 +1985,26 @@ int __cdecl mod_battle_fight_2(int veh_id_atk, int offset, int tx, int ty, int t
     int veh_def_last_hp = veh_def->cur_hitpoints();
     bool atk_alive = veh_atk_last_hp > 0;
     bool def_alive = veh_def_last_hp > 0;
+
+    // Log combat result for human player
+    if (is_human(faction_id_atk) || is_human(faction_id_def)) {
+        const char* winner = atk_alive ? veh_atk->name() : veh_def->name();
+        const char* loser = atk_alive ? veh_def->name() : veh_atk->name();
+        int winner_fac = atk_alive ? faction_id_atk : faction_id_def;
+        int loser_fac = atk_alive ? faction_id_def : faction_id_atk;
+        if (atk_alive && !def_alive) {
+            game_log("Combat at (%d, %d): %s (%s) defeated %s (%s)",
+                tx, ty, winner, MFactions[winner_fac].noun_faction,
+                loser, MFactions[loser_fac].noun_faction);
+        } else if (!atk_alive && def_alive) {
+            game_log("Combat at (%d, %d): %s (%s) defeated %s (%s)",
+                tx, ty, winner, MFactions[winner_fac].noun_faction,
+                loser, MFactions[loser_fac].noun_faction);
+        } else {
+            game_log("Combat at (%d, %d): %s vs %s (both survived)",
+                tx, ty, veh_atk->name(), veh_def->name());
+        }
+    }
 
     if (render_battle || render_tile) {
         draw_tile_fixup2(x, y, tx, ty, 2, 2);
