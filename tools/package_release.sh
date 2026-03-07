@@ -62,11 +62,17 @@ echo "  + sr_lang/en.txt, sr_lang/de.txt"
 SMAC_MOD_DIR="smac_mod"
 if [ -d "$SMAC_MOD_DIR" ]; then
     mkdir -p "$STAGING/smac_mod"
-    cp "$SMAC_MOD_DIR/alphax.txt" "$STAGING/smac_mod/"
-    cp "$SMAC_MOD_DIR/helpx.txt" "$STAGING/smac_mod/"
-    cp "$SMAC_MOD_DIR/tutor.txt" "$STAGING/smac_mod/"
-    cp "$SMAC_MOD_DIR/conceptsx.txt" "$STAGING/smac_mod/"
-    echo "  + smac_mod/ (4 files)"
+    # Root-level English files (optional)
+    ROOT_COUNT=0
+    for f in alphax.txt helpx.txt tutor.txt conceptsx.txt; do
+        if [ -f "$SMAC_MOD_DIR/$f" ]; then
+            cp "$SMAC_MOD_DIR/$f" "$STAGING/smac_mod/"
+            ROOT_COUNT=$((ROOT_COUNT + 1))
+        fi
+    done
+    if [ $ROOT_COUNT -gt 0 ]; then
+        echo "  + smac_mod/ ($ROOT_COUNT files)"
+    fi
     # Language-specific smac_mod variants
     for lang_dir in "$SMAC_MOD_DIR"/*/; do
         lang=$(basename "$lang_dir")
@@ -103,8 +109,12 @@ if command -v 7z &> /dev/null; then
     7z a -mx9 "$OLDPWD/$ZIP_PATH" . > /dev/null
 elif command -v zip &> /dev/null; then
     zip -r -9 "$OLDPWD/$ZIP_PATH" . > /dev/null
+elif command -v powershell &> /dev/null; then
+    ABS_STAGING=$(cd "$STAGING" && pwd -W)
+    ABS_ZIP=$(cd "$OLDPWD" && pwd -W)/"$ZIP_PATH"
+    powershell -NoProfile -Command "Compress-Archive -Path '$ABS_STAGING/*' -DestinationPath '$ABS_ZIP' -Force" 2>/dev/null
 else
-    echo "ERROR: Neither 7z nor zip found. Install one of them."
+    echo "ERROR: No archive tool found (tried 7z, zip, powershell)."
     exit 1
 fi
 cd "$OLDPWD"
