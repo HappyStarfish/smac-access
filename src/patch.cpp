@@ -1347,6 +1347,8 @@ bool patch_setup(Config* cf) {
         write_call(0x5D552E, (int)window_scale_load_pcx); // GraphicWin::load_pcx
         write_call(0x428A40, (int)Credits_GraphicWin_init); // Credits::exec
         write_call(0x428AB9, (int)Credits_GraphicWin_init); // Credits::exec
+        // Screen reader: announce credits text instead of visual scroll
+        write_call(0x428B14, (int)sr_Credits_exec);
     }
     if (cf->render_base_info) {
         short_jump(0x49DE33);

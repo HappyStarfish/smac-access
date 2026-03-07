@@ -212,6 +212,7 @@ enum SrStr {
     SR_MENU_NAV_FMT,
 
     // ===== Popup Menus =====
+    SR_CREDITS_HINT,        // "Credits are loaded from CREDITS.TXT in the game directory."
     SR_MENU_MAIN,           // "Main Menu"
     SR_MENU_MAP_MENU,       // "Map Menu"
     SR_MENU_MULTIPLAYER,    // "Multiplayer"
@@ -1236,6 +1237,21 @@ enum SrStr {
     SR_DESIGN_NO_SLOTS,
     SR_COMBAT_PSI,
     SR_COMBAT_ATK_DEF,
+
+    // ===== World Map Help (additional Ctrl+F1) =====
+    SR_HELP_DISBAND,
+    SR_HELP_VIEW_HEX,
+    SR_HELP_TERRAIN,
+    SR_HELP_COMBAT_PREVIEW,
+    SR_HELP_TAB_CYCLE,
+    SR_HELP_CTRL_TAB_CYCLE,
+    SR_HELP_FKEYS,
+    SR_HELP_F12_COMMLINK,
+    SR_HELP_MSG_LOG,
+    SR_HELP_DIARY,
+    SR_HELP_SILENCE,
+    SR_HELP_DESIGN,
+    SR_HELP_PREFS,
 
     SR_COUNT
 };

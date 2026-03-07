@@ -2772,7 +2772,7 @@ bool HandleKey(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     // Ctrl+F1 = context-sensitive help for current unit/terrain
     if (wParam == VK_F1 && ctrl_key_down() && !shift_key_down()
         && cur_win == GW_World) {
-        char buf[1024];
+        char buf[2048];
         int pos = 0;
         pos += snprintf(buf + pos, sizeof(buf) - pos, "%s", loc(SR_HELP_HEADER));
 
@@ -2846,25 +2846,48 @@ bool HandleKey(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             }
         }
 
-        // Always-shown commands
-        pos += snprintf(buf + pos, sizeof(buf) - pos, " %s.", loc(SR_HELP_MOVE));
+        // Movement
         pos += snprintf(buf + pos, sizeof(buf) - pos, " %s.", loc(SR_HELP_EXPLORE));
+        pos += snprintf(buf + pos, sizeof(buf) - pos, " %s.", loc(SR_HELP_MOVE));
         pos += snprintf(buf + pos, sizeof(buf) - pos, " %s.", loc(SR_HELP_SKIP));
         pos += snprintf(buf + pos, sizeof(buf) - pos, " %s.", loc(SR_HELP_HOLD));
+
+        // Navigation
         pos += snprintf(buf + pos, sizeof(buf) - pos, " %s.", loc(SR_HELP_GOTO));
+        pos += snprintf(buf + pos, sizeof(buf) - pos, " %s.", loc(SR_HELP_CURSOR_TO_UNIT));
         pos += snprintf(buf + pos, sizeof(buf) - pos, " %s.", loc(SR_HELP_GO_TO_BASE));
         pos += snprintf(buf + pos, sizeof(buf) - pos, " %s.", loc(SR_HELP_GO_HOME));
         pos += snprintf(buf + pos, sizeof(buf) - pos, " %s.", loc(SR_HELP_GROUP_GOTO));
         pos += snprintf(buf + pos, sizeof(buf) - pos, " %s.", loc(SR_HELP_PATROL));
+        pos += snprintf(buf + pos, sizeof(buf) - pos, " %s.", loc(SR_HELP_TAB_CYCLE));
+        pos += snprintf(buf + pos, sizeof(buf) - pos, " %s.", loc(SR_HELP_CTRL_TAB_CYCLE));
+
+        // Unit commands (conditional)
         if (veh && veh->is_combat_unit()) {
             pos += snprintf(buf + pos, sizeof(buf) - pos, " %s.", loc(SR_HELP_ARTILLERY));
         }
+        pos += snprintf(buf + pos, sizeof(buf) - pos, " %s.", loc(SR_HELP_DISBAND));
+
+        // Information
+        pos += snprintf(buf + pos, sizeof(buf) - pos, " %s.", loc(SR_HELP_VIEW_HEX));
+        pos += snprintf(buf + pos, sizeof(buf) - pos, " %s.", loc(SR_HELP_TERRAIN));
+        pos += snprintf(buf + pos, sizeof(buf) - pos, " %s.", loc(SR_HELP_COMBAT_PREVIEW));
         pos += snprintf(buf + pos, sizeof(buf) - pos, " %s.", loc(SR_HELP_READ));
-        pos += snprintf(buf + pos, sizeof(buf) - pos, " %s.", loc(SR_HELP_CURSOR_TO_UNIT));
         pos += snprintf(buf + pos, sizeof(buf) - pos, " %s.", loc(SR_HELP_SCAN_FILTER));
         pos += snprintf(buf + pos, sizeof(buf) - pos, " %s.", loc(SR_HELP_SCAN_JUMP));
-        pos += snprintf(buf + pos, sizeof(buf) - pos, " %s.", loc(SR_STATUS_HELP));
+        pos += snprintf(buf + pos, sizeof(buf) - pos, " %s.", loc(SR_HELP_DIARY));
+
+        // Info screens
+        pos += snprintf(buf + pos, sizeof(buf) - pos, " %s.", loc(SR_HELP_FKEYS));
+        pos += snprintf(buf + pos, sizeof(buf) - pos, " %s.", loc(SR_HELP_F12_COMMLINK));
+        pos += snprintf(buf + pos, sizeof(buf) - pos, " %s.", loc(SR_HELP_MSG_LOG));
+        pos += snprintf(buf + pos, sizeof(buf) - pos, " %s.", loc(SR_HELP_PREFS));
+        pos += snprintf(buf + pos, sizeof(buf) - pos, " %s.", loc(SR_HELP_DESIGN));
         pos += snprintf(buf + pos, sizeof(buf) - pos, " %s.", loc(SR_ACT_MENU_HELP));
+        pos += snprintf(buf + pos, sizeof(buf) - pos, " %s.", loc(SR_STATUS_HELP));
+
+        // Screen reader
+        pos += snprintf(buf + pos, sizeof(buf) - pos, " %s.", loc(SR_HELP_SILENCE));
         pos += snprintf(buf + pos, sizeof(buf) - pos, " %s.", loc(SR_HELP_TOGGLE_AI));
         pos += snprintf(buf + pos, sizeof(buf) - pos, " %s.", loc(SR_HELP_TOGGLE_SR));
 

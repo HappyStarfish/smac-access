@@ -202,6 +202,9 @@ menu_item_fmt=%s, %s
 menu_item_nohk=%s
 menu_nav_fmt=%d von %d: %s
 
+# Mitwirkende
+credits_hint=Die Mitwirkenden werden aus der Datei CREDITS.TXT im Spielverzeichnis geladen.
+
 # Popup-Menüs
 menu_main=Hauptmenü
 menu_map_menu=Kartenmenü
@@ -1219,3 +1222,18 @@ cycle_movable_none=Keine Einheiten mit Bewegungspunkten.
 design_no_slots=Nicht möglich: keine freien Prototyp-Plätze
 combat_psi=Psi
 combat_atk_def=Ang %d Ver %d
+
+# Weltkarten-Hilfe (zusätzlich Strg+F1)
+help_disband=D: Einheit auflösen
+help_view_hex=V: Feld anzeigen
+help_terrain=T: Geländedetails
+help_combat_preview=C: Kampfvorschau
+help_tab_cycle=Tab: Einheiten auf Feld wechseln
+help_ctrl_tab_cycle=Strg+Tab: Bewegliche Einheiten wechseln
+help_fkeys=F1: Datenlinks. F2: Forschung. F3: Gesellschaft. F4: Status. F5: Projekte. F6: Orbital. F7: Militär. F8: Punktzahl. F9: Monumente
+help_f12_commlink=F12: Kommunikation
+help_msg_log=Strg+M: Nachrichtenprotokoll
+help_diary=E: Ereignistagebuch
+help_silence=Strg+Umschalt+R: Sprache stumm
+help_design=Umschalt+D: Designwerkstatt
+help_prefs=Strg+P: Einstellungen

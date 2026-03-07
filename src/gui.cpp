@@ -2495,6 +2495,61 @@ Win* This, int a2, int a3, int a4, int a5, int a6, int a7, int a8, int a9, int a
     }
 }
 
+typedef int (__thiscall *FCreditsExec)(Win*);
+static FCreditsExec Credits_exec_orig = (FCreditsExec)0x428880;
+
+int __thiscall sr_Credits_exec(Win* This) {
+    if (sr_is_available()) {
+        // Announce hint about the source file (queued)
+        sr_output(loc(SR_CREDITS_HINT), false);
+
+        // Build path to CREDITS.TXT in game directory
+        char path[MAX_PATH];
+        GetModuleFileNameA(NULL, path, MAX_PATH);
+        char* last_slash = strrchr(path, '\\');
+        if (last_slash) *(last_slash + 1) = '\0';
+        strncat(path, "CREDITS.TXT", MAX_PATH - strlen(path) - 1);
+
+        FILE* f = fopen(path, "r");
+        if (!f) {
+            debug("sr_Credits_exec: cannot open %s\n", path);
+        } else {
+            char buf[32000] = {};
+            int pos = 0;
+            char line[512];
+            while (fgets(line, sizeof(line), f)) {
+                int len = strlen(line);
+                while (len > 0 && (line[len-1] == '\n' || line[len-1] == '\r')) {
+                    line[--len] = '\0';
+                }
+                if (line[0] == ';' || line[0] == '#') continue;
+                if (len == 0) {
+                    if (pos > 0 && pos < (int)sizeof(buf) - 3) {
+                        buf[pos++] = '.';
+                        buf[pos++] = ' ';
+                    }
+                    continue;
+                }
+                if (pos > 0 && pos < (int)sizeof(buf) - 2) {
+                    buf[pos++] = ' ';
+                }
+                int copy = min(len, (int)sizeof(buf) - pos - 1);
+                if (copy > 0) {
+                    memcpy(buf + pos, line, copy);
+                    pos += copy;
+                }
+            }
+            fclose(f);
+            buf[pos] = '\0';
+            if (pos > 0) {
+                sr_output(buf, false);
+            }
+        }
+    }
+    // Run original visual scroll (blocks until user presses Escape)
+    return Credits_exec_orig(This);
+}
+
 int __thiscall BaseWin_hurry_popup_start(
 Win* This, const char* filename, const char* label, int a4, int a5, int a6, int a7)
 {

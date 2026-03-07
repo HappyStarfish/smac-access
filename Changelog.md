@@ -6,7 +6,7 @@ followed by the upstream Thinker changelog for reference.
 
 ---
 
-## SmacAccess v0.1.0-alpha (2026-03-07)
+## SmacAccess v0.1.1-alpha (2026-03-07)
 
 First public alpha release.
 
@@ -25,7 +25,7 @@ First public alpha release.
 - Combat result announcements (melee, artillery, interception, promotion)
 
 ### Base Screen
-- 7 navigable sections (Overview, Resources, Production, Economy, Facilities, Status, Units)
+- 7 navigable sections with ctrl + arrow keys (Overview, Resources, Production, Economy, Facilities, Status, Units)
 - Production picker with facility/unit/project details
 - Production queue management (Ctrl+Q)
 - Specialist management (Ctrl+W)
@@ -35,25 +35,21 @@ First public alpha release.
 ### Game Screens and Dialogs
 - Main menu, game setup, faction selection with faction info (I key)
 - Social Engineering modal (E key)
-- Research selection (Shift+R) with blind research support
+- Research selection (Shift+R)
 - Design Workshop (Shift+D) with rename/obsolete/upgrade
 - Preferences handler (Ctrl+P)
-- F1-F5 status screens (budget, society, energy, research, military)
-- Datalinks browser (F6)
+- F12-F5 status screens (budget, society, energy, research, military)
+- Datalinks browser (F1)
 - Diplomacy via F12 Commlink
 - Planetary Council voting (K in Commlink)
 - File browser for load/save dialogs
 - Number input dialogs
-- Interlude story text with full narrative
+- Interlude story text 
 - Context help (Ctrl+F1) for current unit/terrain
 
 ### Menu Bar
-- Full menu bar navigation (Alt + arrow keys)
-- Thinker settings menu (Ctrl+T)
-
-### Game Event Diary
-- Logs game events to Logs/game_events.txt (combat, base events, diplomacy, tech, production)
-- Debug logging to Logs/ directory with timestamped session files
+- Full menu bar navigation (Ctrl + F2)
+- Thinker settings menu (Alt+T)
 
 ### Technical
 - Based on Thinker Mod v5.3 by induktio

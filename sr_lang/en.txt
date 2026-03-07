@@ -202,6 +202,9 @@ menu_item_fmt=%s, %s
 menu_item_nohk=%s
 menu_nav_fmt=%d of %d: %s
 
+# Credits
+credits_hint=Credits are loaded from CREDITS.TXT in the game directory.
+
 # Popup Menus
 menu_main=Main Menu
 menu_map_menu=Map Menu
@@ -1219,3 +1222,18 @@ cycle_movable_none=No units with movement points.
 design_no_slots=Cannot: no empty prototype slots
 combat_psi=Psi
 combat_atk_def=Atk %d Def %d
+
+# World Map Help (additional Ctrl+F1)
+help_disband=D: Disband unit
+help_view_hex=V: View hex
+help_terrain=T: Terrain detail
+help_combat_preview=C: Combat preview
+help_tab_cycle=Tab: Cycle units on tile
+help_ctrl_tab_cycle=Ctrl+Tab: Cycle movable units
+help_fkeys=F1: Datalinks. F2: Labs. F3: Social. F4: Status. F5: Projects. F6: Orbital. F7: Military. F8: Score. F9: Monuments
+help_f12_commlink=F12: Commlink
+help_msg_log=Ctrl+M: Message log
+help_diary=E: Event diary
+help_silence=Ctrl+Shift+R: Silence speech
+help_design=Shift+D: Design Workshop
+help_prefs=Ctrl+P: Preferences

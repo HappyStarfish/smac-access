@@ -213,6 +213,7 @@ static const char* sr_defaults[SR_COUNT] = {
     /* SR_MENU_ITEM_FMT    */ "%s, %s",
     /* SR_MENU_ITEM_NOHK   */ "%s",
     /* SR_MENU_NAV_FMT     */ "%d of %d: %s",
+    /* SR_CREDITS_HINT      */ "Credits are loaded from CREDITS.TXT in the game directory.",
     // Popup Menus
     /* SR_MENU_MAIN         */ "Main Menu",
     /* SR_MENU_MAP_MENU     */ "Map Menu",
@@ -1232,6 +1233,21 @@ static const char* sr_defaults[SR_COUNT] = {
     /* SR_DESIGN_NO_SLOTS           */ "Cannot: no empty prototype slots",
     /* SR_COMBAT_PSI                */ "Psi",
     /* SR_COMBAT_ATK_DEF            */ "Atk %d Def %d",
+
+    // World Map Help (additional Ctrl+F1)
+    /* SR_HELP_DISBAND              */ "D: Disband unit",
+    /* SR_HELP_VIEW_HEX            */ "V: View hex",
+    /* SR_HELP_TERRAIN             */ "T: Terrain detail",
+    /* SR_HELP_COMBAT_PREVIEW      */ "C: Combat preview",
+    /* SR_HELP_TAB_CYCLE           */ "Tab: Cycle units on tile",
+    /* SR_HELP_CTRL_TAB_CYCLE      */ "Ctrl+Tab: Cycle movable units",
+    /* SR_HELP_FKEYS               */ "F1: Datalinks. F2: Labs. F3: Social. F4: Status. F5: Projects. F6: Orbital. F7: Military. F8: Score. F9: Monuments",
+    /* SR_HELP_F12_COMMLINK        */ "F12: Commlink",
+    /* SR_HELP_MSG_LOG             */ "Ctrl+M: Message log",
+    /* SR_HELP_DIARY               */ "E: Event diary",
+    /* SR_HELP_SILENCE             */ "Ctrl+Shift+R: Silence speech",
+    /* SR_HELP_DESIGN              */ "Shift+D: Design Workshop",
+    /* SR_HELP_PREFS               */ "Ctrl+P: Preferences",
 };
 
 // Key names matching the enum order (for file parsing)
@@ -1289,6 +1305,7 @@ static const char* sr_keys[SR_COUNT] = {
     "menu_terraform", "menu_scenario", "menu_editmap", "menu_help",
     "menu_closed", "menu_entry_fmt", "menu_item_fmt", "menu_item_nohk",
     "menu_nav_fmt",
+    "credits_hint",
     "menu_main", "menu_map_menu", "menu_multiplayer",
     "menu_scenario_menu", "menu_thinker", "menu_game_menu",
     "menu_file_select",
@@ -1693,6 +1710,11 @@ static const char* sr_keys[SR_COUNT] = {
     // Ctrl+Tab cycle through movable units
     "cycle_movable_fmt", "cycle_movable_none",
     "design_no_slots", "combat_psi", "combat_atk_def",
+    // World Map Help (additional Ctrl+F1)
+    "help_disband", "help_view_hex", "help_terrain", "help_combat_preview",
+    "help_tab_cycle", "help_ctrl_tab_cycle", "help_fkeys",
+    "help_f12_commlink", "help_msg_log", "help_diary",
+    "help_silence", "help_design", "help_prefs",
 };
 
 // Loaded strings (dynamically allocated, or NULL = use default)

@@ -822,3 +822,30 @@ SMAC scenarios can be partially defined through text files:
 - **Scenario .txt files**: Custom rules, victory conditions, faction settings
 - **Map files (.mp)**: Binary format, but map generators exist
 - Investigate: What scenario features can be fully configured via text editing? Could a text-based workflow replace most editor functions for blind users?
+
+## Future: Accessible Popup Menu Replacement (TOPMENU, MAPMENU, etc.)
+
+**Status:** Attempted 2026-03-07, reverted. Pattern A replacement not feasible with current hook points.
+
+**Goal:** Replace the mouse-driven popup menus (TOPMENU, MAPMENU, MULTIMENU, SCENARIOMENU) with keyboard-navigable modals (Pattern A). Currently these use the fragile mcache/Trigger-2 text-capture approach (Pattern B) which has timing issues and inaccuracies.
+
+**What was tried and why it failed:**
+- Hook `mod_BasePop_start` (0x601BF0): Fires for these menus, but is only the *inner* init function. Returning early skips buffer allocation → Caller's destructor crashes ("Unable to allocate draw-buffer").
+- Hook `popp` (0x48C0A0): Game setup menus do NOT go through `popp`. Hook never fires for TOPMENU.
+- Hook `X_pop` (0x5BF480): Same — game setup menus don't use `X_pop`. Hook never fires.
+- Inline hook on `Popup_start` (0x406380): This IS the function the game calls for TOPMENU. But `Popup_start` allocates a Win object (1092 bytes) + draw buffer. Returning early without init crashes the destructor. Existing `write_call` patches at 0x4063CB/0x40649A/0x4064BE (inside Popup_start body) complicate inline hooking.
+
+**The core problem:** `Popup_start` creates a Win object with a draw buffer. The calling function (in terranx.exe) expects the Win object to be fully initialized after the call and will destroy it later. We cannot skip initialization without crashing cleanup.
+
+**Viable approaches for a future attempt:**
+1. **Find the TOPMENU caller in terranx.exe**: Disassemble the game binary to find the function that calls `Popup_start` with "TOPMENU". Patch that specific CALL instruction to redirect to our handler, which never creates the Win object at all. The caller function likely looks like: create Win on stack → call Popup_start → switch on result → destroy Win. If we replace the entire caller, no buffer/destructor issue.
+2. **Zero-init the Win object**: In our `Popup_start` hook, `memset(this_ptr, 0, sizeof(Win))` (1092 bytes) before returning. If the destructor checks for NULL buffer pointers before freeing, this would work. Needs testing — destructor may not be NULL-safe.
+3. **Let Popup_start run, inject keyboard control**: Call the original `Popup_start` (buffer gets allocated normally), but inject keyboard events into the popup's own event loop from ModWinProc. This is Pattern C (shared control) which historically breaks, but menu popups might be simpler than other dialogs.
+
+**Data already gathered:**
+- TOPMENU items (from xscript.txt): START GAME, QUICK START, SCENARIO, LOAD GAME, MULTIPLAYER, VIEW CREDITS, EXIT GAME (7 items, 0-based index returned)
+- MAPMENU: MAKE RANDOM MAP, CUSTOMIZE RANDOM MAP, THE MAP OF PLANET, HUGE MAP OF PLANET, LOAD MAP FILE (5 items)
+- MULTIMENU: New Multiplayer Game, Multiplayer Scenario, Load Multiplayer Game (3 items)
+- SCENARIOMENU: PLAY SCENARIO, CREATE SCENARIO, LOAD MAP FILE, EDIT SCENARIO (4 items)
+- `Popup_start` prologue bytes at 0x406380: `55 8B EC 51 A1 0C 1B 69 00 53 56 8B 75 08 57 8B` (push ebp; mov ebp,esp; push ecx; mov eax,[0x691B0C]; ...)
+- `BasePop_start` at 0x601BF0 is a different (inner) function called BY Popup_start
