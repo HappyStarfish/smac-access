@@ -6,6 +6,20 @@ followed by the upstream Thinker changelog for reference.
 
 ---
 
+## SmacAccess v0.1.2-alpha (2026-03-12)
+
+### Accessible Startup Menus
+- Main menu, map settings, multiplayer menu and scenario menu fully converted to reliable keyboard navigation
+- Consistent controls (arrow keys, Enter, Escape) across all startup menus
+- Cancelling sub-dialogs (e.g. file browser) now returns cleanly to the menu
+- Fixed crash when cancelling "Load Game"
+
+### Improvements
+- Ctrl+F12 (toggle debug log) now works in all dialogs
+- Added English SMAC mod files for smac_only mode
+
+---
+
 ## SmacAccess v0.1.1-alpha (2026-03-07)
 
 First public alpha release.
