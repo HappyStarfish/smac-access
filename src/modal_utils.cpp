@@ -1,5 +1,15 @@
 
 #include "modal_utils.h"
+#include "screen_reader.h"
+
+bool sr_modal_handle_utility_key(WPARAM key) {
+    // Ctrl+F12: toggle debug logging
+    if (key == VK_F12 && (GetKeyState(VK_CONTROL) & 0x8000)) {
+        sr_debug_toggle();
+        return true;
+    }
+    return false;
+}
 
 void sr_run_modal_pump(bool* want_close) {
     MSG msg;

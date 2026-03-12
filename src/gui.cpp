@@ -3131,6 +3131,22 @@ int __thiscall mod_startup_menu_runner(void* ContainerThis, void* WinObj, int fl
         sr_debug_log("MENU-MODAL %s: result=%d", sr_startup_menu_label, result);
         return result;
     }
+    // Re-entry: game looped back after a sub-dialog (e.g., file browser cancel).
+    // Re-parse the menu and show our modal again instead of the inaccessible original.
+    if (!sr_startup_menu_pending && sr_is_available() && sr_startup_menu_label[0]) {
+        sr_popup_list_parse("SCRIPT", sr_startup_menu_label);
+        if (sr_popup_list.count > 0) {
+            const char* title = sr_menu_name(sr_startup_menu_label);
+            int result = sr_accessible_menu_modal(
+                (title && title[0]) ? title : sr_startup_menu_label,
+                sr_popup_list.items, sr_popup_list.count);
+            sr_popup_list_clear();
+            sr_debug_log("MENU-MODAL re-entry %s: result=%d",
+                sr_startup_menu_label, result);
+            return result;
+        }
+        sr_popup_list_clear();
+    }
     sr_startup_menu_pending = false;
     return OrigMenuRunner(ContainerThis, WinObj, flag);
 }

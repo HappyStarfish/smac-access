@@ -1256,6 +1256,7 @@ static int sr_handle_rules_checkbox(uint32_t initial_rules_flags) {
             }
             if (msg.message == WM_KEYDOWN) {
                 WPARAM key = msg.wParam;
+                if (sr_modal_handle_utility_key(key)) continue;
                 bool announce = false;
 
                 switch (key) {
@@ -1378,6 +1379,93 @@ static int sr_intercept_rules_popup(const char* filename, const char* label,
 
     // Return item-position bits to the calling game code
     return modal_bits;
+}
+
+/// Accessible menu modal: replaces startup menus (TOPMENU, MAPMENU, etc.)
+/// with a fully keyboard-navigable modal loop.
+/// Returns 0-based index of selected item, or -1 if cancelled.
+int sr_accessible_menu_modal(const char* title,
+    char items[][256], int count)
+{
+    if (count <= 0 || count > SR_POPUP_LIST_MAX) {
+        sr_debug_log("MENU-MODAL: bad count %d", count);
+        return -1;
+    }
+
+    int index = 0;
+    bool want_close = false;
+    bool accepted = false;
+
+    // Announce title and first item
+    char buf[512];
+    snprintf(buf, sizeof(buf), "%s. %s", title, items[0]);
+    sr_output(buf, true);
+
+    sr_debug_log("MENU-MODAL: %s, %d items", title, count);
+
+    // Modal message loop
+    MSG msg;
+    while (!want_close) {
+        if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
+            if (msg.message == WM_QUIT) {
+                PostQuitMessage((int)msg.wParam);
+                break;
+            }
+            if (msg.message == WM_KEYDOWN) {
+                WPARAM key = msg.wParam;
+                if (sr_modal_handle_utility_key(key)) continue;
+                bool announce = false;
+
+                switch (key) {
+                case VK_UP:
+                    index = (index + count - 1) % count;
+                    announce = true;
+                    break;
+                case VK_DOWN:
+                    index = (index + 1) % count;
+                    announce = true;
+                    break;
+                case VK_RETURN:
+                    accepted = true;
+                    want_close = true;
+                    break;
+                case VK_ESCAPE:
+                    want_close = true;
+                    break;
+                case VK_F1:
+                    if (GetKeyState(VK_CONTROL) & 0x8000) {
+                        sr_output(loc(SR_TMENU_HELP), true);
+                    }
+                    break;
+                }
+
+                if (announce && !want_close) {
+                    sr_output(items[index], true);
+                }
+                continue;
+            }
+            if (msg.message == WM_KEYUP || msg.message == WM_CHAR
+                || msg.message == WM_SYSKEYDOWN || msg.message == WM_SYSKEYUP) {
+                continue;
+            }
+            TranslateMessage(&msg);
+            DispatchMessage(&msg);
+        } else {
+            Sleep(10);
+        }
+    }
+
+    // Drain leftover keyboard messages
+    MSG drain;
+    while (PeekMessage(&drain, NULL, WM_CHAR, WM_CHAR, PM_REMOVE)) {}
+    while (PeekMessage(&drain, NULL, WM_KEYUP, WM_KEYUP, PM_REMOVE)) {}
+
+    if (accepted) {
+        sr_debug_log("MENU-MODAL: selected %d (%s)", index, items[index]);
+        return index;
+    }
+    sr_debug_log("MENU-MODAL: cancelled");
+    return -1;
 }
 
 /*
@@ -1642,9 +1730,13 @@ static int __cdecl sr_hook_load_game(int a, int b) {
             reset_state();
             return load_daemon(path, 0);
         }
-        // Cancelled — return 0 (no file loaded)
-        sr_debug_log("FB-LOAD: cancelled, skipping game browser");
-        return 0;
+        // Cancelled — return non-zero to tell the TOPMENU caller to loop
+        // back to the menu. The caller's dispatch: non-zero → jne to menu
+        // loop; zero → check 0x9B2074 flag and either init game or exit.
+        // Returning 0 with flag=0 causes the caller to EXIT the menu
+        // function entirely, which crashes (no valid game state).
+        sr_debug_log("FB-LOAD: cancelled, returning to menu");
+        return -1;
     }
     // No screen reader — use original game file browser
     return sr_orig_load_game(a, b);
@@ -1754,6 +1846,7 @@ static int sr_council_vote_modal(int voter) {
             }
             if (msg.message == WM_KEYDOWN) {
                 WPARAM key = msg.wParam;
+                if (sr_modal_handle_utility_key(key)) continue;
                 bool announce = false;
 
                 switch (key) {
@@ -1918,6 +2011,7 @@ static int sr_proposal_vote_modal(int voter, int arg1, int arg2) {
             }
             if (msg.message == WM_KEYDOWN) {
                 WPARAM key = msg.wParam;
+                if (sr_modal_handle_utility_key(key)) continue;
                 bool announce = false;
 
                 switch (key) {

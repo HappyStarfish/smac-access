@@ -3,6 +3,7 @@
 #include "engine.h"
 #include "gui.h"
 #include "screen_reader.h"
+#include "modal_utils.h"
 #include "localization.h"
 #include "council_handler.h"
 #include "design_handler.h"
@@ -1180,6 +1181,7 @@ bool HandleKey(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                 }
                 if (modal_msg.message == WM_KEYDOWN) {
                     WPARAM k = modal_msg.wParam;
+                    if (sr_modal_handle_utility_key(k)) continue;
                     if (k == VK_ESCAPE) {
                         want_close = true;
                     } else if (k == VK_RETURN) {
@@ -1431,6 +1433,7 @@ bool HandleKey(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                 }
                 if (modal_msg.message == WM_KEYDOWN) {
                     WPARAM k = modal_msg.wParam;
+                    if (sr_modal_handle_utility_key(k)) continue;
                     if (k == VK_ESCAPE) {
                         want_close = true;
                     } else if (k == VK_RETURN) {
@@ -1553,6 +1556,7 @@ bool HandleKey(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                 }
                 if (modal_msg.message == WM_KEYDOWN) {
                     WPARAM k = modal_msg.wParam;
+                    if (sr_modal_handle_utility_key(k)) continue;
                     if (k == VK_ESCAPE) {
                         want_close = true;
                     } else if (k == VK_RETURN) {
@@ -1723,6 +1727,7 @@ bool HandleKey(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                 }
                 if (modal_msg.message == WM_KEYDOWN) {
                     WPARAM k = modal_msg.wParam;
+                    if (sr_modal_handle_utility_key(k)) continue;
                     if (k == VK_ESCAPE) {
                         want_close = true;
                     } else if (k == VK_RETURN) {
@@ -1831,6 +1836,7 @@ bool HandleKey(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                     break;
                 }
                 if (modal_msg.message == WM_KEYDOWN) {
+                    if (sr_modal_handle_utility_key(modal_msg.wParam)) continue;
                     if (modal_msg.wParam == VK_RETURN) {
                         confirmed = true;
                         wait = false;
@@ -1893,6 +1899,7 @@ bool HandleKey(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                     break;
                 }
                 if (modal_msg.message == WM_KEYDOWN) {
+                    if (sr_modal_handle_utility_key(modal_msg.wParam)) continue;
                     if (modal_msg.wParam == VK_RETURN) {
                         confirmed = true;
                         wait = false;
@@ -2005,6 +2012,7 @@ bool HandleKey(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                 }
                 if (modal_msg.message == WM_KEYDOWN) {
                     WPARAM k = modal_msg.wParam;
+                    if (sr_modal_handle_utility_key(k)) continue;
                     if (k == VK_ESCAPE) {
                         want_close = true;
                     } else if (k == VK_RETURN) {
@@ -2178,6 +2186,7 @@ bool HandleKey(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                 }
                 if (modal_msg.message == WM_KEYDOWN) {
                     WPARAM k = modal_msg.wParam;
+                    if (sr_modal_handle_utility_key(k)) continue;
                     if (k == VK_ESCAPE) {
                         want_close = true;
                     } else if (k == VK_RETURN) {
@@ -2421,6 +2430,7 @@ bool HandleKey(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                 }
                 if (modal_msg.message == WM_KEYDOWN) {
                     WPARAM k = modal_msg.wParam;
+                    if (sr_modal_handle_utility_key(k)) continue;
                     if (k == VK_ESCAPE) {
                         want_close = true;
                     } else if (k == VK_RETURN) {
@@ -3022,6 +3032,7 @@ bool HandleKey(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                 }
                 if (modal_msg.message == WM_KEYDOWN) {
                     WPARAM k = modal_msg.wParam;
+                    if (sr_modal_handle_utility_key(k)) continue;
                     if (k == VK_ESCAPE) {
                         want_close = true;
                     } else if (k == VK_RETURN) {
@@ -3275,6 +3286,7 @@ void RunTimeControls() {
             }
             if (modal_msg.message == WM_KEYDOWN) {
                 WPARAM k = modal_msg.wParam;
+                if (sr_modal_handle_utility_key(k)) continue;
                 if (k == VK_ESCAPE) {
                     want_close = true;
                 } else if (k == VK_RETURN) {

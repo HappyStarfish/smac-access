@@ -1,18 +1,49 @@
-
-SmacAccess
+#SmacAccess
 ==========
-
 **Screen reader accessibility mod for Sid Meier's Alpha Centauri: Alien Crossfire.**
-
 SmacAccess is a fork of [Thinker Mod](https://github.com/induktio/thinker) that adds full screen reader support to SMACX, making this classic 4X strategy game playable for blind and visually impaired players. It works with NVDA, JAWS, and other screen readers via the [Tolk](https://github.com/ndarilek/tolk) library.
 
+##Quickstart:
+Just unpack the .zip file to your game directory, then run thinker.exe against the will of Windows Defender.
+And maybe have a quick look at the next couple of sections for keystrokes and known issues, then you're good to go.
 
-Features
+##Important keys and concepts:
+ctrl+f1: Should show context-sensitive help everywhere, might still be messy or missing in a few places.
+Ctrl+f2: Opens the menu bar with loads of sections.
+On the world map:
+Explanation: The grid has only fully odd and fully even coordinates. You need to move diagonally in order to switch from one type to the other.
+Also, one unit at a time is always selected and will take whatever order you give. This can defy from your cursor position, which can be rather confusing in the beginning.
+Arrow keys, home, end, page up, page down: Move the cursor around the map without moving your units.
+Shift + arrow keys or other movement keys: Move the selected unit in the respective direction.
+Ctrl + Space: Moves your cursor to the currently selected unit and announces its position.
+Shift + Space: Moves the currently selected unit to (or towards) your current cursor position.
+U: Lists all your Units and you can activate them with Enter.
+Shift + U: Similar for units which are not yours.
+Enter: Opens the home base of the currently selected unit. (this is a game-native key).
+There are loads more hotkeys on the world map, for example all the f-keys open some sort of status display, Shift E is for social engineering, b for building a new base using a colony pod etc.
+
+##Known issues:
+There are major issues with the planet council, bribes don't work at all and the rest may be unstable.
+Only hot seat multiplayer works so far. The menus are extremely fiddly, I'm working on it.
+When starting the game, it'll probably tell you that you don't have the original SMAC CD in your computer. Well what a surprise...
+Main menu navigation may be unpredictable, occasionally the wrong item is selected when pressing Enter. This is a deeply rooted issue, but I hope I'll be able to fix it eventually.
+Sometimes variable names are shown instead of processed, e.g. $tech0, $faction etc. Please tell me where and I'll do my best to fix them everywhere.
+Same for german Screenreader announcements.
+You can't rename your save files within the game yet.
+Some status screens don't work properly yet, e.g. monolith and hall of fame. They aren't crucial for progressing in the game as far as I can tell.
+The scenario editor is not at all accessible for now. Please let me know how big of a deal that is for passionate fans of the game, I might be able to implement it at some point.
+
+##Sections which are not thoroughly tested yet:
+Ranged Combat
+All ways in which a game can end.
+And probably quite some others which I haven't encountered so far.
+
+
+##Features
 --------
 
 **Screen Reader Integration**
 - All menus, dialogs, and popups announced via screen reader
-- Consistent announcement patterns: menu position, status changes, action confirmations
 - Localization support (English and German included)
 
 **World Map Navigation**
@@ -27,12 +58,11 @@ Features
 - Production picker with item details (facilities, units, secret projects)
 
 **Menu Bar**
-- Full menu bar navigation (Alt + arrow keys)
+- Full menu bar navigation (Ctrl + F2 from the world map)
 - Shortcut summaries for each menu
 
 **Context Help**
-- Ctrl+F1: context-sensitive help for current unit/terrain
-- Available commands announced based on game state
+- Ctrl+F1: context-sensitive help for current window
 
 **All Thinker Mod Features**
 - Improved AI for single player

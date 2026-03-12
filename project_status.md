@@ -91,7 +91,8 @@
 7. ~~**Umlauts broken with German language patch**~~: RESOLVED (2026-02-25). Game text (Windows-1252) was passed to sr_output(CP_UTF8) without conversion. Fixed with ANSI→UTF-8 conversion at all entry points.
 9. **Diplomatie-Handler zu indirekt**: Aktueller DiplomacyHandler beobachtet nur (OnTimer treaty-polling, S/Tab Zusammenfassung). Spielinterne Tasten (P Propose, V Vendetta, E etc.) werden von communicate()-Modalloop konsumiert bevor WinProc sie sieht → keine direkte Rückmeldung. S-Taste Fix (sr_consumed_key_char) und Treaty-Polling funktionieren, aber für echte Accessibility muss ein tieferer Ansatz her. Optionen: (a) communicate() reverse-engineeren und Aktionstasten direkt hooken, (b) set_treaty/diplo_status Schreibzugriffe hooken für sofortige Ansagen, (c) voller Diplomatie-Handler mit eigener Modalloop (wie SocialEng) der communicate() ersetzt. Aufwand: groß.
 8. **Game diary (game_events.txt) unvollständig**: Aktuell loggt nur MessageHandler::OnMessage (Spieler-Popups) + SE-Änderungen + Eliminierungen + Rundenseparator. Viele Events fehlen (Forschung, Produktion, Kampf, Basengründung, Drohnenaufstände). Neuer Ansatz nötig — entweder tiefere Hooks in die Spielmechanik oder Auswertung der Spieltextausgabe. Manuelle game_log()-Aufrufe in Einzelfunktionen haben nicht funktioniert (falsche Filterung, unvollständig).
-10. **Pattern-C-Handler (Shared Control) müssen umgebaut werden**: Analyse ergab, dass Handler die eigenen State + simulierte Clicks/PostMessage mischen (Pattern C) immer brechen, weil SMACX GetAsyncKeyState-Polling nutzt statt WinProc-Messages. Zwei Handler noch betroffen:
+10. **Escape in TOPMENU beendet Spiel**: Wenn man im Hauptmenü "Spiel laden" wählt und dort Escape drückt, beendet sich das Spiel statt zum Hauptmenü zurückzukehren. Ursache: der TOPMENU-Caller in terranx.exe interpretiert negative Return-Werte (Escape = -1) als "quit". Loop-Fix (Escape → Menü neu zeigen) hat nicht funktioniert. Mögliche Lösung: GetAsyncKeyState-Hook oder tieferes Verständnis der Caller-Funktion bei 0x58E6D0.
+11. **Pattern-C-Handler (Shared Control) müssen umgebaut werden**: Analyse ergab, dass Handler die eigenen State + simulierte Clicks/PostMessage mischen (Pattern C) immer brechen, weil SMACX GetAsyncKeyState-Polling nutzt statt WinProc-Messages. Zwei Handler noch betroffen:
     - **multiplayer_handler.cpp**: simulate_click() für NetWin-Settings. Später auf Pattern A (direkter Speicherzugriff) oder AlphaIniPref-Writes umbauen.
     - **netsetup_settings_handler.cpp**: WinProc-Injection für Popup-Navigation. Später auf Pattern A (Full Modal) umbauen.
     - ~~**council_handler.cpp**: Vote-Screen~~ — GELÖST (2026-03-07). Komplett auf Pattern A (Full Modal) umgebaut: Gouverneurswahl via 0x602600 Hook, Antragsabstimmung via 0x427230 Hook. Buy-Votes-Diplomatie wird übersprungen (siehe 0s).
@@ -185,6 +186,41 @@ Filters from triggers 1-3:
 - docs/game-api.md — Game API documentation
 
 ## Notes for Next Session
+
+### KRITISCH: Escape in Laden-Dialog beendet Spiel (2026-03-12, UNGELÖST)
+
+**Problem:** Wenn man im TOPMENU "Spiel laden" wählt und im Datei-Browser Escape drückt, beendet sich das Spiel statt zum Menü zurückzukehren. Gleiches Problem bei SCENARIOMENU → "Szenario bearbeiten" → Escape.
+
+**Bisherige Analyse (Disassembly des Callers bei 0x58E71D):**
+- TOPMENU Switch-Tabelle bei 0x58EE34: case 3 = SPIEL LADEN → 0x58E796
+- Case 3 ruft `load_game` (0x5AAAB0) auf, unser Hook `sr_hook_load_game` gibt 0 bei Cancel zurück
+- Der Caller prüft danach `[0x9B2074]`: wenn 0 → loop zurück zum Menü, wenn non-zero → startet Spiel mit leerem Zustand → Crash
+- Versuch: `*(int*)0x9B2074 = 0` vor return 0 setzen → **hat NICHT geholfen**
+
+**Was der Caller-Code macht (disassembliert):**
+```
+58E7A1: call load_game   ; unser Hook
+58E7A6: mov esi, eax     ; result
+58E7AB: cmp esi, 0
+58E7B3: jne success      ; non-zero = geladen
+; Cancel-Pfad:
+58E7B5: mov [0x9B2070], [0x939284]
+58E7BF: cmp [0x9B2074], 0
+58E7C6: je menu_loop     ; wenn 0 → zurück zum Menü
+; else: fällt durch → startet Spiel → Crash
+```
+
+**Nächste Schritte:**
+1. **Prüfen was [0x9B2074] wirklich ist** — Adresse in Thinker/OpenSMACX suchen, evtl. GameState-Flag
+2. **Prüfen ob der 0x9B2074-Write tatsächlich ausgeführt wird** — Debug-Log nach dem Write einfügen
+3. **Alternativer Ansatz:** Originale `load_game` via Trampoline aufrufen bei Cancel, statt return 0. Problem: Game zeigt dann die originale (inaccessible) Dateiauswahl
+4. **Alternativer Ansatz:** Den Caller selbst patchen (conditional jump bei 0x58E7C6 zu unconditional jump machen)
+5. **SCENARIOMENU-Problem separat:** Dort gibt es keinen Loop im Caller — `mod_menu_variant_runner` (write_jump auf 0x4ADAF0) gibt Index zurück, aber der Caller loopt nicht
+
+**Änderungen dieser Sitzung (teilweise zurückzusetzen wenn nicht hilfreich):**
+- `sr_modal_handle_utility_key()` in modal_utils.cpp — Ctrl+F12 Debug-Toggle in allen ~20 Modal-Loops (BEHALTEN, funktioniert)
+- `mod_startup_menu_runner` Re-Entry-Logik in gui.cpp — zeigt Modal erneut wenn Spiel erneut aufruft (evtl. hilfreich aber Caller loopt nicht zurück)
+- `*(int*)0x9B2074 = 0` in sr_hook_load_game — hat nicht geholfen, entfernen oder anpassen
 
 ### Low-Risk Refactoring — Done (2026-03-07)
 
@@ -513,6 +549,10 @@ Four bugs fixed in this session:
 - 6 new loc strings (en+de), getter/setter in screen_reader.h/cpp, early-exit in ModWinProc.
 - **Test**: On world map, Ctrl+Shift+A → "Screen reader off" → arrows scroll normally → Ctrl+Shift+A → "Screen reader on". Ctrl+Shift+T → "Thinker AI disabled" → Ctrl+Shift+T → "Thinker AI enabled".
 
+### Last Session (2026-03-12)
+
+- **File Browser Escape crash FIXED**: Load Game → Escape caused crash. Root cause: `sr_hook_load_game` returned 0 on cancel, but the TOPMENU caller interprets return 0 + flag 0 as "exit menu function" (not "go back to menu"). Game exited menu entirely, tried to start game with no valid data → crash. Fix: `return -1` (non-zero tells caller to loop back to menu). Verified via disassembly of TOPMENU dispatch at 0x58E7A1. Lesson documented in docs/popup-menu-internals.md and memory ("Always Disassemble the Caller").
+
 ### Pending Tests
 
 0z3. **$TECH0 Variable Fix in tech_achieved Popups** — Added 2026-03-07. Bug: Technologie-Entdeckungs-Popups (z.B. TREETIME in tutor.txt) zeigten den Basisnamen statt den Technologienamen, weil mod_random_events in game.cpp parse_says(0, base->name) global setzt und tech_achieved den Slot nicht zurücksetzt. Fix: Inline-Hook auf tech_achieved (0x5BB000) speichert tech_id in sr_current_tech_achieved_id, tech_achieved_pop3 setzt parse_says(0, Tech[tech_id].name) vor jedem Popup. Tech-Namen kommen aus alphax.txt und sind deutsch lokalisiert. Dateien: screen_reader.cpp (Hook), screen_reader.h (extern), gui_dialog.cpp (parse_says Fix). Test: Technologie erforschen die Terraforming freischaltet (z.B. Centauri-Ökologie für Wälder). Popup sollte den richtigen Tech-Namen statt des Basisnamens zeigen.
@@ -823,29 +863,16 @@ SMAC scenarios can be partially defined through text files:
 - **Map files (.mp)**: Binary format, but map generators exist
 - Investigate: What scenario features can be fully configured via text editing? Could a text-based workflow replace most editor functions for blind users?
 
-## Future: Accessible Popup Menu Replacement (TOPMENU, MAPMENU, etc.)
+## Completed: Accessible Popup Menu Replacement (all 4 startup menus)
 
-**Status:** Attempted 2026-03-07, reverted. Pattern A replacement not feasible with current hook points.
+**Status:** DONE (2026-03-12). All startup menus replaced with Pattern A modals.
 
-**Goal:** Replace the mouse-driven popup menus (TOPMENU, MAPMENU, MULTIMENU, SCENARIOMENU) with keyboard-navigable modals (Pattern A). Currently these use the fragile mcache/Trigger-2 text-capture approach (Pattern B) which has timing issues and inaccuracies.
+All four startup menus now use keyboard-navigable accessible modals:
+- **TOPMENU** + **MAPMENU**: Hooked via `write_call` at call sites of 0x4ADB20 (`mod_startup_menu_runner`). Flag set in `mod_BasePop_start`, consumed in hook.
+- **SCENARIOMENU** + **MULTIMENU**: Hooked via `write_jump` on 0x4ADAF0 (`mod_menu_variant_runner`). These use a different code path (variant runner) that was reverse-engineered on 2026-03-12. Manual trampoline (6-byte prologue copy + JMP). No BasePop_start flagging needed — items parsed directly from SCRIPT.TXT in the hook.
 
-**What was tried and why it failed:**
-- Hook `mod_BasePop_start` (0x601BF0): Fires for these menus, but is only the *inner* init function. Returning early skips buffer allocation → Caller's destructor crashes ("Unable to allocate draw-buffer").
-- Hook `popp` (0x48C0A0): Game setup menus do NOT go through `popp`. Hook never fires for TOPMENU.
-- Hook `X_pop` (0x5BF480): Same — game setup menus don't use `X_pop`. Hook never fires.
-- Inline hook on `Popup_start` (0x406380): This IS the function the game calls for TOPMENU. But `Popup_start` allocates a Win object (1092 bytes) + draw buffer. Returning early without init crashes the destructor. Existing `write_call` patches at 0x4063CB/0x40649A/0x4064BE (inside Popup_start body) complicate inline hooking.
+**Key insight:** The game has TWO menu runner functions:
+- 0x4ADB20: Used by TOPMENU/MAPMENU (3 args: container, Win, flag)
+- 0x4ADAF0: Used by SCENARIOMENU/MULTIMENU (4 args: container, label, arg2, arg3). Wrapper that validates arg2==1, then calls 0x4ADB70 internally.
 
-**The core problem:** `Popup_start` creates a Win object with a draw buffer. The calling function (in terranx.exe) expects the Win object to be fully initialized after the call and will destroy it later. We cannot skip initialization without crashing cleanup.
-
-**Viable approaches for a future attempt:**
-1. **Find the TOPMENU caller in terranx.exe**: Disassemble the game binary to find the function that calls `Popup_start` with "TOPMENU". Patch that specific CALL instruction to redirect to our handler, which never creates the Win object at all. The caller function likely looks like: create Win on stack → call Popup_start → switch on result → destroy Win. If we replace the entire caller, no buffer/destructor issue.
-2. **Zero-init the Win object**: In our `Popup_start` hook, `memset(this_ptr, 0, sizeof(Win))` (1092 bytes) before returning. If the destructor checks for NULL buffer pointers before freeing, this would work. Needs testing — destructor may not be NULL-safe.
-3. **Let Popup_start run, inject keyboard control**: Call the original `Popup_start` (buffer gets allocated normally), but inject keyboard events into the popup's own event loop from ModWinProc. This is Pattern C (shared control) which historically breaks, but menu popups might be simpler than other dialogs.
-
-**Data already gathered:**
-- TOPMENU items (from xscript.txt): START GAME, QUICK START, SCENARIO, LOAD GAME, MULTIPLAYER, VIEW CREDITS, EXIT GAME (7 items, 0-based index returned)
-- MAPMENU: MAKE RANDOM MAP, CUSTOMIZE RANDOM MAP, THE MAP OF PLANET, HUGE MAP OF PLANET, LOAD MAP FILE (5 items)
-- MULTIMENU: New Multiplayer Game, Multiplayer Scenario, Load Multiplayer Game (3 items)
-- SCENARIOMENU: PLAY SCENARIO, CREATE SCENARIO, LOAD MAP FILE, EDIT SCENARIO (4 items)
-- `Popup_start` prologue bytes at 0x406380: `55 8B EC 51 A1 0C 1B 69 00 53 56 8B 75 08 57 8B` (push ebp; mov ebp,esp; push ecx; mov eax,[0x691B0C]; ...)
-- `BasePop_start` at 0x601BF0 is a different (inner) function called BY Popup_start
+See `docs/popup-menu-internals.md` for full reverse-engineering details.

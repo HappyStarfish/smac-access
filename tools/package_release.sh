@@ -3,7 +3,8 @@
 # SmacAccess Release Packager
 # Creates a ZIP file with all files needed to install SmacAccess.
 #
-# Usage: ./tools/package_release.sh [output_dir]
+# Usage: ./tools/package_release.sh [version] [output_dir]
+#   version:    release version (e.g. 0.1.2) — prompted if omitted
 #   output_dir: where to place the ZIP (default: ./rel)
 #
 # Run from the project root directory.
@@ -11,8 +12,18 @@
 
 set -e
 
+# Version
+VERSION="$1"
+if [ -z "$VERSION" ]; then
+    read -rp "Enter release version (e.g. 0.1.2): " VERSION
+fi
+if [ -z "$VERSION" ]; then
+    echo "ERROR: Version is required."
+    exit 1
+fi
+
 # Config
-OUTPUT_DIR="${1:-rel}"
+OUTPUT_DIR="${2:-rel}"
 BUILD_DIR="build_cmake"
 TOLK_DIR="tolk/x86"
 LANG_DIR="sr_lang"
@@ -99,7 +110,7 @@ echo "  + Documentation (README, Details, License)"
 mkdir -p "$OUTPUT_DIR"
 
 # Generate ZIP filename
-ZIP_NAME="SmacAccess.zip"
+ZIP_NAME="SmacAccess_v${VERSION}.zip"
 ZIP_PATH="$OUTPUT_DIR/$ZIP_NAME"
 
 # Remove old ZIP if exists

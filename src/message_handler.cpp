@@ -4,6 +4,7 @@
 #include "gui.h"
 #include "screen_reader.h"
 #include "localization.h"
+#include "modal_utils.h"
 #include "world_map_handler.h"
 #include "game_log.h"
 
@@ -128,6 +129,7 @@ void OpenBrowser() {
             }
             if (modal_msg.message == WM_KEYDOWN) {
                 WPARAM k = modal_msg.wParam;
+                if (sr_modal_handle_utility_key(k)) continue;
                 if (k == VK_ESCAPE) {
                     want_close = true;
                 } else if (k == VK_RETURN) {

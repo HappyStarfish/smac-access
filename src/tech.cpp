@@ -302,6 +302,7 @@ static bool sr_tech_pick_pump(int* current, int count,
             if (msg_loop.message == WM_KEYDOWN) {
                 bool ctrl = (GetKeyState(VK_CONTROL) & 0x8000) != 0;
                 WPARAM key = msg_loop.wParam;
+                if (sr_modal_handle_utility_key(key)) continue;
 
                 if (key == VK_DOWN && !ctrl) {
                     if (*current < count - 1) (*current)++;

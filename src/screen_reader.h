@@ -80,6 +80,11 @@ bool sr_read_popup_text(const char* filename, const char* label,
 bool sr_defer_active();
 void sr_defer_set(bool active);
 
+// Accessible menu modal: replaces startup menus with keyboard navigation.
+// Returns 0-based index of selected item, or -1 if cancelled.
+int sr_accessible_menu_modal(const char* title,
+    char items[][256], int count);
+
 // Popup list navigation: tracks selectable options in popup dialogs
 // that use highlight bars instead of re-rendering text on arrow nav.
 // Options are parsed from the script file (blank line separates
