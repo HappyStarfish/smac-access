@@ -1088,6 +1088,16 @@ bool patch_setup(Config* cf) {
     write_call(0x62794B, (int)mod_BasePop_start); // pop_ask
     write_call(0x627C90, (int)mod_BasePop_start); // pop_ask_number
 
+    // Startup menu modal replacement: intercept menu display (0x4ADB20)
+    // at specific call sites so we can show an accessible modal instead.
+    write_call(0x58E71D, (int)mod_startup_menu_runner); // TOPMENU
+    write_call(0x58D74E, (int)mod_startup_menu_runner); // MAPMENU
+
+    // Variant menu runner (0x4ADAF0): used by SCENARIOMENU/MULTIMENU.
+    // Build trampoline BEFORE write_jump overwrites the prologue.
+    sr_menu_variant_init_trampoline();
+    write_jump(0x4ADAF0, (int)mod_menu_variant_runner);
+
     // Replace standard library file locking
     write_call(0x6455AE, (int)mod_lock_file); // _fclose
     write_call(0x646046, (int)mod_lock_file); // _fwrite

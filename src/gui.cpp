@@ -3068,6 +3068,16 @@ int __thiscall mod_NetMsg_pop(void* This, const char* label, int delay, int a4, 
     return NetMsg_pop(This, label, -1, a4, a5);
 }
 
+// Pre-game startup menus that get full modal replacement (Pattern A).
+static bool sr_is_startup_menu(const char* label) {
+    static const char* menus[] = {
+        "TOPMENU", "MAPMENU", "MULTIMENU", "SCENARIOMENU"
+    };
+    for (int i = 0; i < 4; i++)
+        if (_stricmp(label, menus[i]) == 0) return true;
+    return false;
+}
+
 // Labels that are navigable menus — announce only the menu name, not body.
 // Returns a friendly name for the menu, or NULL if not a menu label.
 static const char* sr_menu_name(const char* label) {
@@ -3095,6 +3105,85 @@ static const char* sr_menu_name(const char* label) {
         }
     }
     return NULL;  // not a menu
+}
+
+// State for startup menu modal replacement.
+// Set by mod_BasePop_start, consumed by mod_startup_menu_runner.
+static bool sr_startup_menu_pending = false;
+static char sr_startup_menu_label[64] = "";
+
+// Original menu display function at 0x4ADB20.
+typedef int(__thiscall *FMenuRunner)(void*, void*, int);
+static FMenuRunner OrigMenuRunner = (FMenuRunner)0x4ADB20;
+
+/// Hook for the menu display call (0x4ADB20) at TOPMENU/MAPMENU call sites.
+/// When a startup menu is pending, shows our accessible modal instead of
+/// the game's mouse-driven popup menu. The Win object is fully constructed
+/// so destructors run safely afterward.
+int __thiscall mod_startup_menu_runner(void* ContainerThis, void* WinObj, int flag) {
+    if (sr_startup_menu_pending && sr_is_available() && sr_popup_list.count > 0) {
+        sr_startup_menu_pending = false;
+        const char* title = sr_menu_name(sr_startup_menu_label);
+        int result = sr_accessible_menu_modal(
+            (title && title[0]) ? title : sr_startup_menu_label,
+            sr_popup_list.items, sr_popup_list.count);
+        sr_popup_list_clear();
+        sr_debug_log("MENU-MODAL %s: result=%d", sr_startup_menu_label, result);
+        return result;
+    }
+    sr_startup_menu_pending = false;
+    return OrigMenuRunner(ContainerThis, WinObj, flag);
+}
+
+// Trampoline for 0x4ADAF0 — the "variant" menu runner used by SCENARIOMENU/MULTIMENU.
+// These menus are called via 0x4ADAF0 instead of 0x4ADB20 (which TOPMENU/MAPMENU use).
+static uint8_t* sr_menu_variant_trampoline = NULL;
+
+/// Allocate trampoline memory and copy the original prologue of 0x4ADAF0
+/// before write_jump overwrites it. Must be called from patch_setup().
+void sr_menu_variant_init_trampoline() {
+    // Original bytes at 0x4ADAF0: 55 8B EC 8B 45 0C (6 bytes, 3 complete instructions)
+    // push ebp; mov ebp, esp; mov eax, [ebp+0xc]
+    sr_menu_variant_trampoline = (uint8_t*)VirtualAlloc(
+        NULL, 32, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+    if (!sr_menu_variant_trampoline) {
+        debug("sr_menu_variant_init_trampoline: VirtualAlloc FAILED\n");
+        return;
+    }
+    // Copy first 6 bytes of original function
+    memcpy(sr_menu_variant_trampoline, (void*)0x4ADAF0, 6);
+    // Append JMP to 0x4ADAF6 (rest of original function)
+    sr_menu_variant_trampoline[6] = 0xE9;
+    int32_t jmp_target = 0x4ADAF6 - ((int32_t)(sr_menu_variant_trampoline + 6) + 5);
+    *(int32_t*)(sr_menu_variant_trampoline + 7) = jmp_target;
+}
+
+/// Hook for 0x4ADAF0 — intercepts SCENARIOMENU/MULTIMENU (and any other
+/// menus using this code path) for accessible modal replacement.
+int __thiscall mod_menu_variant_runner(
+    void* ContainerThis, const char* label, int arg2, int arg3)
+{
+    if (sr_is_available() && label && sr_is_startup_menu(label)) {
+        sr_popup_list_parse("SCRIPT", label);
+        if (sr_popup_list.count > 0) {
+            const char* title = sr_menu_name(label);
+            int result = sr_accessible_menu_modal(
+                (title && title[0]) ? title : label,
+                sr_popup_list.items, sr_popup_list.count);
+            sr_popup_list_clear();
+            sr_debug_log("MENU-VARIANT %s: result=%d", label, result);
+            return result;
+        }
+        sr_popup_list_clear();
+    }
+    // Not a startup menu or SR not available — call original via trampoline
+    if (sr_menu_variant_trampoline) {
+        typedef int (__thiscall *FMenuVariant)(void*, const char*, int, int);
+        FMenuVariant orig = (FMenuVariant)sr_menu_variant_trampoline;
+        return orig(ContainerThis, label, arg2, arg3);
+    }
+    // Trampoline failed — cannot call original, return -1 (cancel)
+    return -1;
 }
 
 int __thiscall mod_BasePop_start(
@@ -3132,6 +3221,25 @@ void* This, const char* filename, const char* label, int a4, int a5, int a6, int
     // Only when not inside a popp/popb wrapper (which handles its own list).
     if (!sr_popup_is_active()) {
         sr_popup_list_clear();
+    }
+    // Flag startup menus for modal replacement in mod_startup_menu_runner.
+    // We let BasePop_start run normally (Win object must be fully constructed
+    // for destructors to work). The actual menu display call (0x4ADB20) is
+    // patched to check this flag and show our accessible modal instead.
+    // Note: Only TOPMENU/MAPMENU use the 0x4ADB20 path and need flagging.
+    // SCENARIOMENU/MULTIMENU use 0x4ADAF0 (mod_menu_variant_runner) directly.
+    if (!sr_popup_is_active() && sr_is_available() && filename && label
+        && (_stricmp(label, "TOPMENU") == 0 || _stricmp(label, "MAPMENU") == 0)) {
+        sr_popup_list_parse(filename, label);
+        if (sr_popup_list.count > 0) {
+            sr_startup_menu_pending = true;
+            strncpy(sr_startup_menu_label, label, sizeof(sr_startup_menu_label) - 1);
+            sr_startup_menu_label[sizeof(sr_startup_menu_label) - 1] = '\0';
+            sr_debug_log("MENU-FLAG: %s flagged for modal (%d items)",
+                label, sr_popup_list.count);
+        } else {
+            sr_popup_list_clear();
+        }
     }
     if (!sr_popup_is_active() && sr_is_available() && filename && label) {
         // Suppress multiplayer sync progress popups (rapid-fire, not useful)
