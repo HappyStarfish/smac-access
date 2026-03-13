@@ -107,7 +107,7 @@ void __cdecl reset_netmsg_status();
 int __thiscall mod_NetMsg_pop(void* This, const char* label, int delay, int a4, const char* a5);
 int __thiscall mod_BasePop_start(
     void* This, const char* filename, const char* label, int a4, int a5, int a6, int a7);
-int __thiscall mod_startup_menu_runner(void* ContainerThis, void* WinObj, int flag);
+int __thiscall mod_startup_menu_runner(void* ContainerThis, void* WinObj, int flag, int extra);
 int __thiscall mod_menu_variant_runner(void* ContainerThis, const char* label, int arg2, int arg3);
 void sr_menu_variant_init_trampoline();
 int __cdecl mod_design_new_veh(int faction_id, int unit_id);

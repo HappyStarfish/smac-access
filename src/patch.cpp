@@ -1092,6 +1092,7 @@ bool patch_setup(Config* cf) {
     // at specific call sites so we can show an accessible modal instead.
     write_call(0x58E71D, (int)mod_startup_menu_runner); // TOPMENU
     write_call(0x58D74E, (int)mod_startup_menu_runner); // MAPMENU
+    write_call(0x58A045, (int)mod_startup_menu_runner); // USERULES
 
     // Variant menu runner (0x4ADAF0): used by SCENARIOMENU/MULTIMENU.
     // Build trampoline BEFORE write_jump overwrites the prologue.

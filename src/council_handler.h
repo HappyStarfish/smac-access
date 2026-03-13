@@ -51,4 +51,18 @@ void CheckAndAnnounceResults();
 /// Detects vote screen, builds popup_list from faction columns.
 void TryBuildVoteList();
 
+/// Returns true if we are currently inside a buy_council_vote call.
+/// Used by the 0x602600 hook to detect BUYVOTEMENU context.
+bool InBuyVotes();
+
+/// Set/clear the buy-votes flag. Called around buy_council_vote calls.
+void SetBuyVotes(bool active);
+
+/// Mark that a BUYVOTEMENU popup (actual vote-buying menu) is pending.
+/// Set in mod_BasePop_start when label starts with "BUYVOTE".
+void SetBuyMenuPending(bool v);
+
+/// Check and clear the buy-menu flag. Returns true if a buy menu was pending.
+bool ConsumeBuyMenuFlag();
+
 }

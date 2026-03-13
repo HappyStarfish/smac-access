@@ -838,6 +838,14 @@ enum SrStr {
     SR_COUNCIL_PROPOSAL_VOTED,  // "Voted: %s"
     SR_COUNCIL_RESULT_PASSED,   // "%s: Passed, %d to %d."
     SR_COUNCIL_RESULT_FAILED,   // "%s: Failed, %d to %d."
+    SR_COUNCIL_BUY_PROMPT,      // "%s: %s. Up/Down: choose, Enter: confirm."
+    SR_COUNCIL_BUY_CANCEL,      // "Decline"
+    SR_COUNCIL_BUY_ENERGY,      // "Pay %d energy credits"
+    SR_COUNCIL_BUY_TECH,        // "Give technology: %s"
+    SR_COUNCIL_BUY_TECHS,       // "Give technologies: %s"
+    SR_COUNCIL_BUY_PAID,        // "Paid %d energy credits to %s."
+    SR_COUNCIL_BUY_GAVE_TECH,   // "Gave technologies to %s."
+    SR_COUNCIL_BUY_DECLINED,    // "Declined."
 
     // ===== Base Operations Status (F4) =====
     SR_BASEOPS_OPEN,        // "Base Operations, %d bases"

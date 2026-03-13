@@ -95,7 +95,8 @@
 11. **Pattern-C-Handler (Shared Control) müssen umgebaut werden**: Analyse ergab, dass Handler die eigenen State + simulierte Clicks/PostMessage mischen (Pattern C) immer brechen, weil SMACX GetAsyncKeyState-Polling nutzt statt WinProc-Messages. Zwei Handler noch betroffen:
     - **multiplayer_handler.cpp**: simulate_click() für NetWin-Settings. Später auf Pattern A (direkter Speicherzugriff) oder AlphaIniPref-Writes umbauen.
     - **netsetup_settings_handler.cpp**: WinProc-Injection für Popup-Navigation. Später auf Pattern A (Full Modal) umbauen.
-    - ~~**council_handler.cpp**: Vote-Screen~~ — GELÖST (2026-03-07). Komplett auf Pattern A (Full Modal) umgebaut: Gouverneurswahl via 0x602600 Hook, Antragsabstimmung via 0x427230 Hook. Buy-Votes-Diplomatie wird übersprungen (siehe 0s).
+    - ~~**council_handler.cpp**: Vote-Screen~~ — GELÖST (2026-03-07). Komplett auf Pattern A (Full Modal) umgebaut: Gouverneurswahl via 0x602600 Hook, Antragsabstimmung via 0x427230 Hook. Buy-Votes-Diplomatie via 0x602600 Hook mit accessible Modal (2026-03-13).
+12. **ENDOFTURN Tastenkürzel für FR/ES unbekannt**: Fix für "EINGABE"→"Strg+EINGABE" (DE) und "Enter"→"Ctrl+Enter" (EN) ist implementiert. Für Französisch und Spanisch fehlt der entsprechende Text aus deren SCRIPT.TXT — wir haben keine FR/ES-Sprachpakete. Fix ist einfach erweiterbar (strstr + memmove in gui.cpp mod_BasePop_start), sobald ein User den Text meldet.
     - ~~**Rules (sr_intercept_rules_popup)**~~: FIXED (2026-03-07). Umgebaut auf Pattern A mit Deferred Memory Write in init_world_config().
 
 ## Resolved Issues
@@ -180,8 +181,10 @@ Filters from triggers 1-3:
 - src/score_handler.cpp — ScoreHandler (F8 faction score/rankings)
 - src/localization.h — SrStr enum, loc(), loc_init()
 - src/localization.cpp — English defaults, UTF-8 file loader, key mapping
-- sr_lang/en.txt — English SR strings (~220 strings)
-- sr_lang/de.txt — German SR strings (~220 strings)
+- sr_lang/en.txt — English SR strings (~1248 strings)
+- sr_lang/de.txt — German SR strings (~1248 strings)
+- sr_lang/es.txt — Spanish SR strings (~1248 strings)
+- sr_lang/fr.txt — French SR strings (~1248 strings)
 - docs/keybindings.md — Complete SMAC keybindings reference
 - docs/game-api.md — Game API documentation
 
@@ -549,7 +552,11 @@ Four bugs fixed in this session:
 - 6 new loc strings (en+de), getter/setter in screen_reader.h/cpp, early-exit in ModWinProc.
 - **Test**: On world map, Ctrl+Shift+A → "Screen reader off" → arrows scroll normally → Ctrl+Shift+A → "Screen reader on". Ctrl+Shift+T → "Thinker AI disabled" → Ctrl+Shift+T → "Thinker AI enabled".
 
-### Last Session (2026-03-12)
+### Last Session (2026-03-13)
+
+- **Spanish + French localization added**: Created `sr_lang/es.txt` and `sr_lang/fr.txt` with complete translations of all ~1248 screen reader strings. Activate via `sr_language=es` or `sr_language=fr` in thinker.ini. No C++ changes needed — existing localization system loads any language file automatically.
+
+### Session (2026-03-12)
 
 - **File Browser Escape crash FIXED**: Load Game → Escape caused crash. Root cause: `sr_hook_load_game` returned 0 on cancel, but the TOPMENU caller interprets return 0 + flag 0 as "exit menu function" (not "go back to menu"). Game exited menu entirely, tried to start game with no valid data → crash. Fix: `return -1` (non-zero tells caller to loop back to menu). Verified via disassembly of TOPMENU dispatch at 0x58E7A1. Lesson documented in docs/popup-menu-internals.md and memory ("Always Disassemble the Caller").
 
@@ -566,12 +573,12 @@ Four bugs fixed in this session:
 0s. **Council Handler (Planetary Council Accessibility)** — **DURCHBRUCH 2026-03-07**. Beide Council-Abstimmungstypen sind jetzt per Tastatur bedienbar:
     - **Gouverneurswahl**: Inline-Hook auf 0x602600 (gfx event loop). Unser Hook fängt den Blocking-Call ab und zeigt ein tastaturgesteuertes Modal mit allen wählbaren Kandidaten (Enthaltung + eligible Fraktionen mit Stimmzahlen). GETESTET OK.
     - **Antragsabstimmung** (Repeal UN Charter, Global Trade Pact, etc.): Inline-Hook auf 0x427230 (buy-votes/vote-interaction). Diese Funktion nutzt einen ANDEREN Blocking-Mechanismus als 0x602600 (nicht identifiziert). Unser Hook überspringt die Originalfunktion komplett und zeigt ein Ja/Nein/Enthaltung-Modal. Stimme wird direkt in CouncilWin->votes[faction] geschrieben. GETESTET OK.
-    - **Übersprungene Funktion: Buy-Votes-Diplomatie** (0x427230): Normalerweise können KI-Fraktionen dem Spieler Bestechungsangebote machen ("Stimm für mich, ich gebe dir Technologie X"). Diese Phase wird komplett übersprungen, weil:
-      (a) Die Funktion einen unbekannten Blocking-Mechanismus nutzt (nicht 0x602600, kein PeekMessage/GetMessage, möglicherweise custom polling loop)
-      (b) Wir den Mechanismus nach extensivem Reverse Engineering nicht identifizieren konnten
-      (c) Der Spieler trotzdem abstimmen kann — nur die Bestechungs-Verhandlungen fehlen
-    - **Singleplayer-Auswirkung**: Minimal. KI-Bestechungen ändern selten das Ergebnis drastisch. Der Spieler verliert nur die Möglichkeit, Bestechungsangebote anzunehmen/abzulehnen.
-    - **Multiplayer-Lücke**: Andere menschliche Spieler können dem Spieler keine Stimmkauf-Angebote machen. Für Multiplayer müsste die Buy-Votes-Phase als eigener zugänglicher Dialog nachgebaut werden (Pattern A Modal mit Angebotsliste).
+    - **Buy-Votes-Diplomatie** (2026-03-13): Stimmen kaufen ist jetzt zugänglich. buy_council_vote (0x53EB50) wird nach der Antragsabstimmung für jede AI-Fraktion aufgerufen. Zwei-Flag-System unterscheidet Angebot-Popups (BUYVOTE*) von Ablehnungs-Popups (BUYNO etc.):
+      - Ablehnungen (BUYNO, BUYNOTALK, BUYPROMISED, BUYALREADY): werden vorgelesen, User drückt Enter zum Schließen
+      - Angebote (BUYVOTENAY, BUYVOTEYEA + Ziffernsuffix): GFX-Hook fängt 0x602600 ab, zeigt zugängliches Modal mit Optionen: Ablehnen / Energie zahlen / Technologien geben
+      - Daten aus Game-Globals: ParseNumTable[0] = Energiepreis, Tech-Slots 0x93FAA8/0x93FA18/0x93FA1C/0x93FA28
+      - buy_council_vote übernimmt Zahlung/Tech-Transfer intern — wir geben nur den Index zurück
+      - DEPLOYED, TESTEN AUSSTEHEND
     - ~~**Noch offen**: Antragsname im Modal anzeigen~~ — GELÖST (2026-03-07). Proposal[arg2].name wird via sr_game_str() im Modal angezeigt.
     - **Ergebnis-Ansage** (2026-03-07): Nach Abstimmung wird Ergebnis mit Stimmzahlen angesagt ("Antrag: Angenommen, 12 zu 8" / "Proposal: Failed, 5 to 15"). AI-Stimmen via council_get_vote() berechnet. Ergebnis wird in OnCouncilClose() zusammen mit "Rat beendet" ausgegeben.
     - **AI-einberufener Rat** (2026-03-07): CALLSCOUNCIL-Popup in mod_BasePop_start erkannt → OnAICouncilCalled() aktiviert Council-Tracking für menschliche Abstimmung. OnCouncilOpen() nur noch für menschliche Aufrufer aktiv (kein AI-Spam mehr). Popup-Flag-System (OnPopupOpened/ConsumePopupFlag) statt Counter für korrekte Popup-Durchleitung. DEPLOYED, TESTEN AUSSTEHEND.

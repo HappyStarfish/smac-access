@@ -824,6 +824,14 @@ council_proposal_no=No
 council_proposal_voted=Voted: %s.
 council_result_passed=%s: Passed, %d to %d.
 council_result_failed=%s: Failed, %d to %d.
+council_buy_prompt=%s: %s. Up/Down: choose, Enter: confirm.
+council_buy_cancel=Decline
+council_buy_energy=Pay %d energy credits
+council_buy_tech=Give technology: %s
+council_buy_techs=Give technologies: %s
+council_buy_paid=Paid %d energy credits to %s.
+council_buy_gave_tech=Gave technologies to %s.
+council_buy_declined=Declined.
 
 # Base Operations (F4)
 baseops_open=Base Operations, %d bases. Up/Down: navigate, S: summary, D: detail, Ctrl+F1: help.

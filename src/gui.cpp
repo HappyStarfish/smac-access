@@ -3071,9 +3071,9 @@ int __thiscall mod_NetMsg_pop(void* This, const char* label, int delay, int a4, 
 // Pre-game startup menus that get full modal replacement (Pattern A).
 static bool sr_is_startup_menu(const char* label) {
     static const char* menus[] = {
-        "TOPMENU", "MAPMENU", "MULTIMENU", "SCENARIOMENU"
+        "TOPMENU", "MAPMENU", "MULTIMENU", "SCENARIOMENU", "USERULES"
     };
-    for (int i = 0; i < 4; i++)
+    for (int i = 0; i < 5; i++)
         if (_stricmp(label, menus[i]) == 0) return true;
     return false;
 }
@@ -3086,6 +3086,7 @@ static const char* sr_menu_name(const char* label) {
         {"MAPMENU",       SR_MENU_MAP_MENU},
         {"MULTIMENU",     SR_MENU_MULTIPLAYER},
         {"SCENARIOMENU",  SR_MENU_SCENARIO_MENU},
+        {"USERULES",      SR_TMENU_RULES},
         {"MAINMENU",      SR_MENU_THINKER},
         {"GAMEMENU",      SR_MENU_GAME_MENU},
     };
@@ -3097,7 +3098,7 @@ static const char* sr_menu_name(const char* label) {
     // Menus that read #caption from file (return empty string)
     static const char* caption_menus[] = {
         "WORLDSIZE", "WORLDLAND", "WORLDTIDES", "WORLDORBIT",
-        "WORLDLIFE", "WORLDCLOUD", "WORLDNATIVE",
+        "WORLDLIFE", "WORLDCLOUDS", "WORLDNATIVE",
     };
     for (int i = 0; i < (int)(sizeof(caption_menus) / sizeof(caption_menus[0])); i++) {
         if (_stricmp(label, caption_menus[i]) == 0) {
@@ -3113,14 +3114,14 @@ static bool sr_startup_menu_pending = false;
 static char sr_startup_menu_label[64] = "";
 
 // Original menu display function at 0x4ADB20.
-typedef int(__thiscall *FMenuRunner)(void*, void*, int);
+typedef int(__thiscall *FMenuRunner)(void*, void*, int, int);
 static FMenuRunner OrigMenuRunner = (FMenuRunner)0x4ADB20;
 
 /// Hook for the menu display call (0x4ADB20) at TOPMENU/MAPMENU call sites.
 /// When a startup menu is pending, shows our accessible modal instead of
 /// the game's mouse-driven popup menu. The Win object is fully constructed
 /// so destructors run safely afterward.
-int __thiscall mod_startup_menu_runner(void* ContainerThis, void* WinObj, int flag) {
+int __thiscall mod_startup_menu_runner(void* ContainerThis, void* WinObj, int flag, int extra) {
     if (sr_startup_menu_pending && sr_is_available() && sr_popup_list.count > 0) {
         sr_startup_menu_pending = false;
         const char* title = sr_menu_name(sr_startup_menu_label);
@@ -3148,7 +3149,7 @@ int __thiscall mod_startup_menu_runner(void* ContainerThis, void* WinObj, int fl
         sr_popup_list_clear();
     }
     sr_startup_menu_pending = false;
-    return OrigMenuRunner(ContainerThis, WinObj, flag);
+    return OrigMenuRunner(ContainerThis, WinObj, flag, extra);
 }
 
 // Trampoline for 0x4ADAF0 — the "variant" menu runner used by SCENARIOMENU/MULTIMENU.
@@ -3210,6 +3211,13 @@ void* This, const char* filename, const char* label, int a4, int a5, int a6, int
             filename, label, sr_popup_is_active());
         if (CouncilHandler::IsActive()) {
             CouncilHandler::OnPopupOpened();
+            // Mark BUYVOTEMENU popups for accessible modal replacement.
+            // Labels: BUYVOTEYEA0-4, BUYVOTENAY0-4, BUYVOTEABSTAIN0-4, BUYVOTEGOV0-4
+            if (CouncilHandler::InBuyVotes()
+                && _strnicmp(label, "BUYVOTE", 7) == 0) {
+                CouncilHandler::SetBuyMenuPending(true);
+                sr_debug_log("BASEPOP: BUYVOTEMENU detected (%s), flagged for modal", label);
+            }
         }
         // Detect AI-called council: CALLSCOUNCIL popup appears when an AI
         // faction calls a council vote. Activate council tracking so our
@@ -3245,7 +3253,8 @@ void* This, const char* filename, const char* label, int a4, int a5, int a6, int
     // Note: Only TOPMENU/MAPMENU use the 0x4ADB20 path and need flagging.
     // SCENARIOMENU/MULTIMENU use 0x4ADAF0 (mod_menu_variant_runner) directly.
     if (!sr_popup_is_active() && sr_is_available() && filename && label
-        && (_stricmp(label, "TOPMENU") == 0 || _stricmp(label, "MAPMENU") == 0)) {
+        && (_stricmp(label, "TOPMENU") == 0 || _stricmp(label, "MAPMENU") == 0
+            || _stricmp(label, "USERULES") == 0)) {
         sr_popup_list_parse(filename, label);
         if (sr_popup_list.count > 0) {
             sr_startup_menu_pending = true;
@@ -3297,7 +3306,28 @@ void* This, const char* filename, const char* label, int a4, int a5, int a6, int
                         sr_output(combined, true);
                     }
                 } else {
-                    sr_output(buf, true);
+                    // Fix incorrect key hint in end-of-turn popups:
+                    // Game says "EINGABE"/"Enter" but it's actually Ctrl+Enter.
+                    if (_strnicmp(label, "ENDOFTURN", 9) == 0
+                        || _stricmp(label, "ENDYOURTURN") == 0) {
+                        // Fix: game says "EINGABE"/"Enter" but it's actually Ctrl+Enter
+                        char* p = strstr(buf, "EINGABE");
+                        if (p && (int)strlen(buf) + 5 < 2048) {
+                            int rest = (int)strlen(p);
+                            memmove(p + 5, p, rest + 1);
+                            memcpy(p, "Strg+", 5);
+                        }
+                        p = strstr(buf, "Enter");
+                        if (p && (int)strlen(buf) + 5 < 2048) {
+                            int rest = (int)strlen(p);
+                            memmove(p + 5, p, rest + 1);
+                            memcpy(p, "Ctrl+", 5);
+                        }
+                    }
+                    // Buy-votes popups: queue so offer text finishes before modal prompt
+                    bool buy_interrupt = !(CouncilHandler::InBuyVotes() && label
+                        && _strnicmp(label, "BUYVOTE", 7) == 0);
+                    sr_output(buf, buy_interrupt);
                 }
             }
             // File browser confirmation dialogs: append key hint

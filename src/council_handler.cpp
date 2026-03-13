@@ -298,4 +298,25 @@ void OnAICouncilCalled() {
     sr_debug_log("COUNCIL: AI council activated, faction=%d", _councilFaction);
 }
 
+static bool _inBuyVotes = false;
+static bool _buyMenuPending = false;
+
+bool InBuyVotes() {
+    return _inBuyVotes;
+}
+
+void SetBuyVotes(bool active) {
+    _inBuyVotes = active;
+}
+
+void SetBuyMenuPending(bool v) {
+    _buyMenuPending = v;
+}
+
+bool ConsumeBuyMenuFlag() {
+    bool was = _buyMenuPending;
+    _buyMenuPending = false;
+    return was;
+}
+
 } // namespace CouncilHandler

@@ -8,6 +8,7 @@
 #include "game_log.h"
 #include "localization.h"
 #include "modal_utils.h"
+#include "council_handler.h"
 #include <stdarg.h>
 #include <stdlib.h>
 
@@ -635,6 +636,14 @@ void sr_record_text(const char* text, int x, int y, void* buf) {
         sr_text_pos += len;
         sr_text_buf[sr_text_pos++] = '\n';
         sr_text_buf[sr_text_pos] = '\0';
+    }
+
+    // Council popup description column filter: the COUNCILISSUES popup renders
+    // proposal names (x~3) and descriptions (x>1000) side by side. Filter out
+    // the description column so only proposal names appear as navigable items.
+    if (CouncilHandler::IsActive() && x > 1000) {
+        sr_debug_log("FILTERED council-desc x=%d y=%d: %s", x, y, text);
+        return;
     }
 
     // Capture as individual item with prefix dedup:
@@ -1758,8 +1767,6 @@ static int __cdecl sr_hook_save_game(int a) {
 
 // ========== Planetary Council Hook ==========
 
-#include "council_handler.h"
-
 static fp_1int sr_orig_call_council = NULL;
 
 static int __cdecl sr_hook_call_council(int faction_id) {
@@ -1924,6 +1931,159 @@ static int __fastcall sr_council_vote_hook(void* this_ptr, void* edx_unused,
         return sr_orig_gfx_event_loop(this_ptr, edx_unused, arg1, callback);
     }
 
+    // Buy-votes menu: BUYVOTEMENU popup detected during buy_council_vote.
+    // Show accessible modal instead of passing through to the game's visual UI.
+    if (CouncilHandler::InBuyVotes() && CouncilHandler::ConsumeBuyMenuFlag()) {
+        CouncilHandler::ConsumePopupFlag(); // also clear popup flag
+        sr_debug_log("GFX-HOOK: BUYVOTEMENU intercepted, showing buy-votes modal");
+
+        // Read game globals set by buy_council_vote before calling 0x602600:
+        int target = *diplo_second_faction;
+        int energy_price = ParseNumTable[0]; // $NUM0 = energy cost
+        int techs[4] = {
+            *diplo_entry_id,       // 0x93FAA8 = tech slot 0
+            *diplo_tech_id2,       // 0x93FA18 = tech slot 1
+            *(int*)0x93FA1C,       // tech slot 2
+            *(int*)0x93FA28,       // tech slot 3
+        };
+
+        // Count available techs and build tech name string
+        int num_techs = 0;
+        char tech_names[512] = {};
+        int tn_offset = 0;
+        for (int t = 0; t < 4; t++) {
+            if (techs[t] < 0) break;
+            const char* tname = (Tech[techs[t]].name)
+                ? sr_game_str(Tech[techs[t]].name) : "???";
+            if (num_techs > 0 && tn_offset + 4 < (int)sizeof(tech_names)) {
+                memcpy(tech_names + tn_offset, ", ", 2);
+                tn_offset += 2;
+            }
+            int tlen = (int)strlen(tname);
+            if (tn_offset + tlen < (int)sizeof(tech_names)) {
+                memcpy(tech_names + tn_offset, tname, tlen);
+                tn_offset += tlen;
+            }
+            num_techs++;
+        }
+        tech_names[tn_offset] = '\0';
+
+        sr_debug_log("GFX-HOOK: buy-votes target=%d price=%d techs=%d (%s)",
+            target, energy_price, num_techs, tech_names);
+
+        // Build options: Cancel, Pay energy, [Give techs]
+        struct BuyOption { int ret_val; char label[256]; };
+        BuyOption options[3];
+        int opt_count = 0;
+
+        // Option 0: Cancel
+        snprintf(options[opt_count].label, sizeof(options[opt_count].label),
+            "%s", loc(SR_COUNCIL_BUY_CANCEL));
+        options[opt_count].ret_val = 0;
+        opt_count++;
+
+        // Option 1: Pay energy
+        snprintf(options[opt_count].label, sizeof(options[opt_count].label),
+            loc(SR_COUNCIL_BUY_ENERGY), energy_price);
+        options[opt_count].ret_val = 1;
+        opt_count++;
+
+        // Option 2: Give techs (only if techs available)
+        if (num_techs > 0) {
+            const char* fmt = (num_techs == 1)
+                ? loc(SR_COUNCIL_BUY_TECH)
+                : loc(SR_COUNCIL_BUY_TECHS);
+            snprintf(options[opt_count].label, sizeof(options[opt_count].label),
+                fmt, tech_names);
+            // Return value: 1 + num_techs (so game transfers all available techs)
+            options[opt_count].ret_val = 1 + num_techs;
+            opt_count++;
+        }
+
+        // Announce prompt: "FactionName: offer text"
+        const char* target_name = (target > 0 && target < MaxPlayerNum)
+            ? sr_game_str(MFactions[target].adj_name_faction) : "???";
+        char prompt[512];
+        snprintf(prompt, sizeof(prompt), loc(SR_COUNCIL_BUY_PROMPT),
+            target_name, options[1].label);
+        sr_output(prompt, false);
+
+        // Modal loop
+        int index = 0;
+        bool want_close = false;
+        int result = 0;
+        char buf[512];
+
+        MSG msg;
+        while (!want_close) {
+            if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
+                if (msg.message == WM_QUIT) {
+                    PostQuitMessage((int)msg.wParam);
+                    break;
+                }
+                if (msg.message == WM_KEYDOWN) {
+                    WPARAM key = msg.wParam;
+                    if (sr_modal_handle_utility_key(key)) continue;
+                    bool announce = false;
+
+                    switch (key) {
+                    case VK_UP:
+                        index = (index + opt_count - 1) % opt_count;
+                        announce = true;
+                        break;
+                    case VK_DOWN:
+                        index = (index + 1) % opt_count;
+                        announce = true;
+                        break;
+                    case VK_RETURN:
+                        result = options[index].ret_val;
+                        want_close = true;
+                        break;
+                    case VK_ESCAPE:
+                        result = 0; // cancel
+                        want_close = true;
+                        break;
+                    }
+
+                    if (announce && !want_close) {
+                        snprintf(buf, sizeof(buf), "%d / %d: %s",
+                            index + 1, opt_count, options[index].label);
+                        sr_output(buf, true);
+                    }
+                    continue;
+                }
+                if (msg.message == WM_KEYUP || msg.message == WM_CHAR
+                    || msg.message == WM_SYSKEYDOWN || msg.message == WM_SYSKEYUP) {
+                    continue;
+                }
+                TranslateMessage(&msg);
+                DispatchMessage(&msg);
+            } else {
+                Sleep(10);
+            }
+        }
+
+        // Drain leftover keyboard messages
+        MSG drain;
+        while (PeekMessage(&drain, NULL, WM_CHAR, WM_CHAR, PM_REMOVE)) {}
+        while (PeekMessage(&drain, NULL, WM_KEYUP, WM_KEYUP, PM_REMOVE)) {}
+
+        // Announce result
+        if (result == 1) {
+            snprintf(buf, sizeof(buf), loc(SR_COUNCIL_BUY_PAID),
+                energy_price, target_name);
+            sr_output(buf, true);
+        } else if (result >= 2) {
+            snprintf(buf, sizeof(buf), loc(SR_COUNCIL_BUY_GAVE_TECH), target_name);
+            sr_output(buf, true);
+        } else {
+            sr_output(loc(SR_COUNCIL_BUY_DECLINED), true);
+        }
+
+        sr_debug_log("GFX-HOOK: buy-votes modal result=%d (index=%d)", result, index);
+        return result;
+    }
+
     // If a BasePop (popup) was just loaded, this 0x602600 call is the event loop
     // for that popup (COUNCILISSUES, COUNCILRECENTPROP, etc.). Pass through so
     // the game handles it. Only intercept when NO popup is pending = governor vote.
@@ -1932,8 +2092,8 @@ static int __fastcall sr_council_vote_hook(void* this_ptr, void* edx_unused,
         return sr_orig_gfx_event_loop(this_ptr, edx_unused, arg1, callback);
     }
 
-    sr_debug_log("GFX-HOOK: no popup pending, this=%p arg1=%d — governor vote",
-        this_ptr, arg1);
+    sr_debug_log("GFX-HOOK: no popup pending, this=%p arg1=%d inBuyVotes=%d",
+        this_ptr, arg1, CouncilHandler::InBuyVotes());
 
     // Check if this is a governor vote (eligible candidates exist)
     // or a proposal buy-votes screen (no eligible candidates).
@@ -2121,6 +2281,27 @@ static int __fastcall sr_council_buy_votes_hook(void* this_ptr, void* edx_unused
     int* vote_array = (int*)((char*)this_ptr + 0xA54);
     vote_array[voter] = vote_value;
     sr_debug_log("BUY-VOTES-HOOK: wrote vote_array[%d] = %d", voter, vote_value);
+
+    // === Phase 1: Buy votes diagnostic ===
+    // Try calling buy_council_vote for each AI faction.
+    // buy_council_vote uses 0x602600 for its BUYVOTEMENU, which we hook.
+    // vote_for: -1=YEA, -2=NAY (for proposals, vote_type=1)
+    int buy_vote_for = (vote_result > 0) ? -1 : -2; // Buy votes matching player's vote
+    sr_debug_log("BUY-VOTES-HOOK: starting buy_council_vote phase, vote_for=%d", buy_vote_for);
+
+    for (int i = 1; i < MaxPlayerNum; i++) {
+        if (!is_alive(i) || is_alien(i)) continue;
+        if (i == voter) continue; // Don't try to buy own vote
+
+        sr_debug_log("BUY-VOTES-HOOK: calling buy_council_vote(%d, %d, 1, %d)",
+            voter, i, buy_vote_for);
+        CouncilHandler::SetBuyVotes(true);
+        buy_council_vote(voter, i, 1, buy_vote_for);
+        CouncilHandler::SetBuyVotes(false);
+        sr_debug_log("BUY-VOTES-HOOK: buy_council_vote returned for faction %d", i);
+    }
+
+    sr_debug_log("BUY-VOTES-HOOK: buy_council_vote phase complete");
 
     // Fill in AI votes using council_get_vote and count results.
     // council_get_vote(faction, proposal_index, governor_result)

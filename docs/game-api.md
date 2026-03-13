@@ -666,16 +666,31 @@ Fix needed:
 - `diplo_second_faction` (0x93F7CC, int*) — faction ID of the other party in diplomacy
 - `diplo_third_faction` (0x93F7D4, int*) — third faction (for three-way negotiations)
 - `diplo_tech_faction` (0x93FA38, int*) — faction for tech trade context
-- `diplo_entry_id` (0x93FAA8, int*) — tech entry for trade
+- `diplo_entry_id` (0x93FAA8, int*) — tech entry for trade / buy_council_vote tech slot 0
+- `diplo_tech_slot_1` (0x93FA18, int*) — buy_council_vote tech offer slot 1
+- `diplo_tech_slot_2` (0x93FA1C, int*) — buy_council_vote tech offer slot 2
+- `diplo_tech_slot_3` (0x93FA28, int*) — buy_council_vote tech offer slot 3
 - `diplo_current_proposal_id` (0x93FA34, int*) — active proposal type
 - `diplo_counter_proposal_id` (0x93FAB0, int*) — counter-proposal type
 - `diplo_ask_base_swap_id` (0x93FA7C, int*) — base being asked for
 - `diplo_bid_base_swap_id` (0x93FA30, int*) — base being offered
+- `diplo_dialog_type` (0x703DE0, int*) — nonzero when in diplomacy dialog; affects buy_council_vote pricing
+- `diplo_flags_array` (0x96C9F8) — diplomacy relationship flags, indexed by faction_pair_index * 4
+- `diplo_promised_vote` (0x96CDE0) — who a faction promised their council vote to
+- `diplo_promised_holder` (0x96CE0C) — the faction that holds the promised vote
+- `faction_income` (0x96CCDC + offset) — per-faction income (faction_offset = complex MFaction calc)
+- `faction_expenses` (0x96CCE0 + offset) — per-faction expenses
+- `faction_energy_reserves` (0x96CC00 + offset) — per-faction energy reserves (buy_council_vote deducts from here)
+- `faction_savings` (0x96DA3C + offset) — per-faction savings/reserves
+- `diplo_string_buffer` (0x9B86A0) — global buffer for formatted diplomacy text
+- `diplo_rendered_text` (0x9B7D00, char**) — pointer to last rendered diplomacy text
+- `tech_names_array` (0x94F35C) — tech name strings, indexed as tech_id * 0x2C + 0x94F35C
 
 ### Key Functions
 - `communicate` (0x54FFD0, fp_3int) — Main diplomacy session. Args: (faction1, faction2, flag). Has its own modal loop — CANNOT be replaced. Flag=1 for player-initiated contact.
 - `proposal_menu` (0x54DCF0, fp_2int) — Shows proposal options (what to offer/demand)
 - `make_a_proposal` (0x54F420, fp_3int) — Executes a specific proposal
+- `buy_council_vote` (0x53EB50, fp_4int) — Buy a faction's council vote. Args: (buyer, target, vote_type, vote_for). vote_type: 0=governor, 1=proposal. vote_for: faction_id (governor) or -1=YEA/-2=NAY/-3=ABSTAIN (proposal). Internally uses 0x602600 for BUYVOTEMENU. See docs/council-vote-reversing.md for full disassembly notes.
 - `commlink_attempter` (0x5589E0, fp_2int) — Game's F12 handler. Shows its own faction popup, THEN calls communicate. NOT usable for accessible F12 (its popup is inaccessible).
 - `commlink_attempt` (0x558C60, fp_1int) — Simpler commlink, takes only target faction. Did NOT open diplomacy in testing.
 - `diplo_lock` (0x539820, fp_1int) — Lock/initialize diplomacy state for a faction

@@ -1,0 +1,1232 @@
+# Textes français pour le lecteur d'écran du mod Thinker Accessibility
+
+# Général
+mod_loaded=Thinker Accessibility Mod chargé.
+debug_on=Journalisation de débogage activée.
+debug_off=Journalisation de débogage désactivée.
+no_text=Aucun texte capturé.
+
+# Carte du monde
+map_edge=Bord de la carte.
+world_map=Carte du monde
+design_workshop=Atelier de conception
+your_turn=Votre tour. %s à (%d, %d)
+unit_moves_to=%s se déplace vers (%d, %d)
+tab_fmt=Onglet : %s
+tab_resources=Ressources
+tab_citizens=Citoyens
+tab_production=Production
+terrain_ocean=Océan
+terrain_shelf=Plateau continental
+terrain_rocky=Rocheux
+terrain_rolling=Vallonné
+terrain_flat=Plat
+feature_fungus=Champignon
+feature_forest=Forêt
+feature_river=Rivière
+feature_farm=Ferme
+feature_mine=Mine
+feature_solar=Solaire
+feature_road=Route
+feature_condenser=Condenseur
+feature_borehole=Forage
+feature_bunker=Bunker
+feature_airbase=Base aérienne
+feature_sensor=Capteur
+feature_supply_pod=Capsule de ravitaillement
+feature_monolith=Monolithe
+feature_magtube=Magtube
+feature_soil_enricher=Enrichisseur de sol
+feature_ech_mirror=Miroir Echelon
+terrain_trench=Océan profond
+terrain_arid=Aride
+terrain_moist=Humide
+terrain_rainy=Pluvieux
+terrain_high=Altitude %d
+tile_yields=%d nourriture, %d minéraux, %d énergie
+tile_owner=Territoire : %s
+tile_in_radius=Dans le rayon de la base
+tile_unowned=Non réclamé
+tile_owner_diplo=Territoire : %s (%s)
+tile_worked=, exploitée
+foreign_unit_at=. Unité : %s %s
+unit_terraform=, construction de %s
+monolith_used= (utilisé)
+tile_unexplored=Inexploré
+# Scanner
+scan_all=Scanner : Tout
+scan_own_bases=Scanner : Bases alliées
+scan_enemy_bases=Scanner : Bases ennemies
+scan_enemy_units=Scanner : Unités ennemies
+scan_own_units=Scanner : Unités alliées
+scan_own_formers=Scanner : Formateurs alliés
+scan_fungus=Scanner : Champignons
+scan_pods=Scanner : Capsules et monolithes
+scan_improvements=Scanner : Améliorations
+scan_nature=Scanner : Terrain et nature
+scan_not_found=Scanner : Rien trouvé
+scan_no_more=Scanner : Plus rien trouvé
+
+base_at=. Base : %s
+unit_at=. Unité : %s
+more_units= (+%d de plus)
+
+# Écran de base
+base_screen=Écran de base
+sec_overview=Aperçu
+sec_resources=Ressources
+sec_production=Production
+sec_economy=Économie
+sec_facilities=Installations
+sec_status=Statut
+fmt_overview=Aperçu : %s, Population %d. Talents %d, Mécontents %d, Spécialistes %d.
+fmt_resources=Ressources : Nutriments %d excédent (%d revenu), Minéraux %d excédent (%d revenu), Énergie %d excédent (%d revenu).
+fmt_production=Production : %s, %d sur %d minéraux.
+fmt_queue= File d'attente :
+fmt_hurry_cost= Coût d'urgence : %d énergie.
+fmt_economy=Économie : %d économie, %d psyché, %d labos.
+fmt_facilities=Installations :
+fmt_facilities_none=Installations : Aucune.
+fmt_status=Statut :
+fmt_status_normal=Statut : Normal.
+fmt_drone_riots= Émeutes !
+fmt_golden_age= Âge d'or.
+fmt_eco_damage= Dégâts écologiques %d%%.
+fmt_governor= Gouverneur actif.
+fmt_nerve_staple= Agrafe neurale %d tours.
+fmt_base_open=Base : %s, Population %d. Construction de %s, %d sur %d.
+
+# Écran de base (amélioré)
+sec_units=Unités
+fmt_overview_v2=Aperçu : %s à (%d, %d), Population %d. %s. Talents %d, Mécontents %d.
+fmt_resources_v2=Ressources : Nutriments +%d (%d sur %d, %s). Minéraux +%d. Énergie +%d.
+fmt_production_v2=Production : %s, %d sur %d minéraux, %s.
+fmt_economy_v2=Économie : %d économie, %d psyché, %d labos. %s.
+fmt_facilities_v2=Installations : %s.
+fmt_units=%d en garnison.
+fmt_units_none=Unités : Aucune en garnison.
+fmt_base_open_v2=Base : %s, Population %d. Construction de %s, %d sur %d, %s. Ctrl+F1 : Aide.
+fmt_workers=%d travailleurs
+base_help=Left/Right : Base précédente/suivante. Ctrl+Up/Down : Sections. Ctrl+Left/Right : Onglets. Ctrl+I : Répéter. Ctrl+H : Urgence. Ctrl+Shift+P : Changer production. Ctrl+Q : File d'attente. Ctrl+D : Démolir. Ctrl+U : Garnison. Ctrl+W : Citoyens. Ctrl+G : Gouverneur. Ctrl+N : Agrafe neurale. F2 : Renommer. Ctrl+F1 : Aide. Escape : Fermer.
+fmt_turns=%d tours
+fmt_growth_never=pas de croissance
+fmt_faction_credits=%d crédits d'énergie
+fmt_facilities_count=%d construites, %d maintenance
+
+# Retour sur urgence
+hurry_ok=Urgence %s. %d crédits dépensés, %d restants.
+hurry_no_credits=Impossible : besoin de %d crédits, vous avez %d.
+hurry_cannot=Impossible d'accélérer la production.
+
+# Sélecteur de production
+prod_picker_open=Changer la production : %d éléments disponibles. Up/Down pour parcourir, Enter pour sélectionner, Escape pour annuler.
+prod_picker_item=%d sur %d : %s, %d minéraux, %s
+prod_picker_select=Construction de %s.
+prod_picker_cancel=Production inchangée.
+prod_picker_empty=Aucun élément disponible.
+prod_picker_current=Construction en cours : %s, %d sur %d minéraux, %s.
+prod_picker_current_none=Construction en cours : rien.
+prod_detail_fac=%s. %s. Coût : %d minéraux, Maintenance : %d par tour.
+prod_detail_project=%s. %s. Coût : %d minéraux. Projet secret.
+prod_detail_unit=%s. %s, %s %d, %s %d, %s, %d mouvements, %d PV.
+unit_abilities= Capacités :
+
+# Gestion de la file d'attente
+queue_open=File d'attente : %d éléments. Up/Down naviguer, Shift+Up/Down réordonner, Delete supprimer, Insert ajouter, Escape fermer.
+queue_open_one=File d'attente : 1 élément. %s. Insert pour ajouter, Escape fermer.
+queue_item=%d sur %d : %s, %d minéraux, %s.
+queue_item_current=%d sur %d : %s, %d sur %d minéraux, %s. Production actuelle.
+queue_moved=%s déplacé en position %d.
+queue_removed=Supprimé %s. %d éléments restants.
+queue_added=Ajouté %s en position %d.
+queue_full=Impossible : file d'attente pleine, 10 éléments.
+queue_cannot_move_current=Impossible de déplacer la production actuelle.
+queue_cannot_remove_current=Impossible de supprimer la production actuelle. Utilisez Ctrl+Shift+P pour changer.
+queue_closed=File d'attente fermée.
+queue_empty=File d'attente vide.
+
+# Mouvement et navigation
+movement_points=%d sur %d mouvements
+cannot_move=Impossible de se déplacer là.
+cannot_move_no_mp=Impossible : pas de points de mouvement.
+cannot_move_ocean=Impossible : eau.
+cannot_move_land=Impossible : terre.
+cannot_move_zoc=Impossible : zone de contrôle ennemie.
+cannot_move_edge=Impossible : bord de la carte.
+no_base_here=Pas de base à cet emplacement.
+
+# Aide contextuelle (Ctrl+F1)
+help_header=Commandes :
+help_move=Shift+Arrows : Déplacer
+help_explore=Arrows : Explorer
+help_skip=Space : Passer l'unité
+help_hold=H : Maintenir
+help_read=Ctrl+R : Route vers curseur, Ctrl+T : Tube vers curseur
+help_goto=Shift+Space : Aller au curseur
+help_build_base=B : Construire une base
+help_build_road=R : Construire une route
+help_build_magtube=R : Construire un mag tube
+help_build_farm=F : Construire une ferme
+help_build_mine=M : Construire une mine
+help_build_solar=S : Construire un collecteur solaire
+help_build_forest=Shift+F : Planter une forêt
+help_build_sensor=O : Construire un capteur
+help_build_condenser=N : Construire un condenseur
+help_build_borehole=Shift+N : Construire un forage
+help_build_airbase=. : Construire une base aérienne
+help_build_bunker=Shift+. : Construire un bunker
+help_remove_fungus=F : Retirer le champignon
+help_automate=Shift+A : Automatiser
+help_convoy=O : Convoi de ressources
+help_unload=U : Décharger le transport
+help_open_base=Enter : Ouvrir la base
+help_monolith=Monolithe ici : Enter pour améliorer
+help_supply_pod=Capsule ici : déplacez-vous dessus
+help_attack=Shift+Arrows : Attaquer adjacent
+help_probe=Shift+Arrows : Sonder adjacent
+help_airdrop=I : Largage aérien
+
+# Barre de menu (carte du monde)
+menu_game=Partie : Ctrl+S Sauvegarder, Ctrl+L Charger, Ctrl+Q Quitter
+menu_hq=QG : E Ingénierie sociale, U Atelier de conception, F1 Datalinks
+menu_network=Réseau : Ctrl+C Chat, Ctrl+Enter Fin de tour
+menu_map=Carte : F2 Zoom, Ctrl+Shift+M Centrer
+menu_action=Action : Space Passer, H Maintenir, Shift+A Automatiser
+menu_terraform=Terraformer : F Ferme, M Mine, S Solaire, R Route
+menu_scenario=Scénario
+menu_editmap=Éditer la carte
+menu_help=Aide : F1 Datalinks, Shift+F1 Commandes
+menu_closed=Menu fermé.
+menu_entry_fmt=%s, %d entrées
+menu_item_fmt=%s, %s
+menu_item_nohk=%s
+menu_nav_fmt=%d sur %d : %s
+
+# Crédits
+credits_hint=Les crédits sont chargés depuis CREDITS.TXT dans le répertoire du jeu.
+
+# Menus contextuels
+menu_main=Menu principal
+menu_map_menu=Menu de la carte
+menu_multiplayer=Multijoueur
+menu_scenario_menu=Scénario
+menu_thinker=Menu Thinker
+menu_game_menu=Menu de partie
+menu_file_select=Sélection de fichier
+file_load_game=Charger une partie
+file_save_game=Sauvegarder la partie
+file_folder=Dossier
+file_item_fmt=%d sur %d : %s, %s
+file_parent_dir=Répertoire parent
+file_overwrite_hint=Enter pour confirmer, Escape pour annuler.
+file_nav_hint=Up/Down : naviguer, Enter : sélectionner, Backspace : parent, Escape : annuler.
+file_empty_dir=Répertoire vide.
+file_at_root=Déjà au niveau supérieur.
+file_load_cancelled=Chargement annulé.
+file_save_cancelled=Sauvegarde annulée.
+file_help=Up/Down : naviguer dans les fichiers. Enter : ouvrir le dossier ou sélectionner le fichier. Backspace : répertoire parent. Home/End : premier/dernier. Escape : annuler. Ctrl+F1 : cette aide.
+
+# Navigation de liste contextuelle
+popup_list_fmt=%d sur %d : %s
+popup_continue=Enter pour continuer.
+
+# Ingénierie sociale
+soceng_title=Ingénierie sociale
+soceng_category_fmt=Catégorie %d sur 4 : %s. Actuel : %s
+soceng_model_fmt=%d sur %d : %s
+soceng_effects=Effets : %s
+soceng_no_effect=Aucun effet
+soceng_unavailable_tech=Non disponible, nécessite %s
+soceng_unavailable_opposition=Non disponible, opposition de faction
+soceng_selected=Sélectionné : %s
+soceng_current=Sélection actuelle
+soceng_pending=Changement en attente vers %s
+soceng_summary_fmt=%s : %s
+soceng_upheaval_cost=Coût de bouleversement : %d crédits d'énergie
+soceng_help=Up/Down : Catégories. Left/Right : Modèles. G : Effets totaux. W : Mode d'allocation d'énergie. I : Info recherche. S ou Tab : Résumé. Ctrl+I : Répéter. Enter : Confirmer. Escape : Annuler.
+soceng_closed=Ingénierie sociale fermée.
+
+# Préférences
+pref_title=Préférences
+pref_tab_fmt=Préférences, Onglet : %s, %d options
+pref_option_fmt=%d sur %d : %s, %s
+pref_toggled_fmt=%s, %s
+pref_saved=Préférences sauvegardées.
+pref_cancelled=Préférences annulées.
+pref_help=Left/Right : Onglets. Up/Down : Options. Space : Basculer. S ou Tab : Résumé. Ctrl+I : Répéter. Ctrl+F1 : Aide. Enter : Sauvegarder. Escape : Annuler.
+pref_summary_fmt=%s : %s
+pref_enabled=activé
+pref_disabled=désactivé
+
+# Préférences : Noms des onglets
+pref_tab_general=Général
+pref_tab_warnings=Avertissements
+pref_tab_advanced=Avancé
+pref_tab_automation=Automatisation
+pref_tab_audio_visual=Audio et visuel
+pref_tab_map_display=Affichage de la carte
+
+# Préférences : Onglet général
+pref_pause_end_turn=Pause en fin de tour
+pref_autosave=Sauvegarde automatique chaque tour
+pref_quick_enemy=Déplacement rapide des véhicules ennemis
+pref_tutorial=Messages du tutoriel
+pref_mouse_edge_scroll=Défilement par bord de souris
+pref_auto_design=Conception automatique des véhicules
+pref_quick_ally=Déplacement rapide des véhicules alliés
+pref_auto_prune=Suppression automatique des véhicules obsolètes
+
+# Préférences : Onglet avertissements
+pref_warn_fac_built=Installation construite
+pref_warn_non_combat_built=Unité non-combattante construite
+pref_warn_prototype=Prototype terminé
+pref_warn_drone_riots=Émeutes
+pref_warn_drone_riots_end=Fin des émeutes
+pref_warn_golden_age=Âge d'or
+pref_warn_golden_age_end=Fin de l'âge d'or
+pref_warn_nutrient_shortage=Pénurie de nutriments
+pref_warn_build_out_of_date=Construction obsolète
+pref_warn_combat_built=Unité de combat construite
+pref_warn_pop_limit=Limite de population atteinte
+pref_warn_delay_transcend=Retard de transcendance
+pref_warn_built_via_queue=Construit par file du gouverneur
+pref_warn_starvation=Famine
+pref_warn_mineral_shortage=Pénurie de minéraux
+pref_warn_energy_shortage=Pénurie d'énergie
+pref_warn_random_event=Événement aléatoire
+
+# Préférences : Onglet avancé
+pref_fast_battle=Résolution rapide des combats
+pref_no_center_orders=Ne pas centrer sur l'unité avec ordres
+pref_pause_after_battle=Pause après les combats
+pref_zoom_no_recenter=Zoom base sans recentrer
+pref_quick_move_orders=Ordres de déplacement rapide
+pref_quick_move_all=Déplacement rapide de tous les véhicules
+pref_right_click_menu=Menu contextuel clic droit
+pref_detail_right_click=Menus détaillés clic droit
+pref_confirm_odds=Confirmer les chances avant d'attaquer
+pref_detail_main_menus=Menus principaux détaillés
+pref_radio_single_click=Bouton radio clic unique
+
+# Préférences : Onglet automatisation
+pref_former_raise_lower=Formateur : élever et abaisser le terrain
+pref_former_plant_forest=Formateur : planter des forêts
+pref_former_build_adv=Formateur : construire avancé
+pref_former_remove_fungus=Formateur : retirer le champignon
+pref_former_build_sensors=Formateur : construire des capteurs
+pref_former_build_roads=Formateur : construire routes et tubes
+pref_end_move_pact=Fin de mouvement : véhicule de pacte
+pref_end_move_treaty=Fin de mouvement : véhicule de traité
+pref_end_move_truce=Fin de mouvement : véhicule de trêve
+pref_end_move_war=Fin de mouvement : véhicule en guerre
+pref_end_move_diff_triad=Fin de mouvement : triade différente
+pref_air_return_home=Véhicule aérien retour à la base
+pref_wake_on_land=Réveiller véhicule sur terre
+pref_always_inspect_monolith=Toujours inspecter le monolithe
+
+# Préférences : Onglet audio/visuel
+pref_sound_effects=Effets sonores
+pref_background_music=Musique de fond
+pref_map_animations=Animations de la carte
+pref_sliding_windows=Fenêtres glissantes
+pref_project_movies=Films de projets secrets
+pref_interludes=Interludes
+pref_voiceover=Narration
+pref_stop_voice_close=Arrêter la voix à la fermeture
+pref_sliding_scrollbars=Barres de défilement glissantes
+pref_whole_veh_blinks=Véhicule entier clignote
+pref_monuments=Monuments
+
+# Préférences : Onglet affichage de la carte
+pref_show_grid=Afficher la grille
+pref_show_base_grid=Afficher la grille de base
+pref_fog_of_war=Brouillard de guerre
+pref_base_names=Noms des bases
+pref_prod_with_names=Production avec noms de base
+pref_flat_terrain=Terrain plat
+pref_grid_ocean=Grille sur l'océan
+pref_show_goto_path=Afficher le chemin de destination
+
+# Gestion des spécialistes (Ctrl+W)
+spec_open=Citoyens : %s
+spec_close=Citoyens fermé.
+spec_worker=%d sur %d : Travailleur. %s
+spec_specialist=%d sur %d : %s. %s
+spec_bonus=+%d Économie, +%d Psyché, +%d Labos
+spec_to_specialist=Converti en %s.
+spec_to_worker=Converti en travailleur.
+spec_type_changed=Changé en %s.
+spec_cannot_more=Impossible : base trop petite pour plus de spécialistes.
+spec_cannot_less=Impossible : pas de spécialistes à convertir.
+spec_cannot_center=Impossible : le centre de base est toujours exploité.
+spec_help=Up/Down : Naviguer les citoyens. Enter : Basculer travailleur/spécialiste. Left/Right : Changer le type de spécialiste. S : Résumé. Escape : Fermer.
+spec_summary=%d travailleurs, %d spécialistes.
+spec_center=Centre de base.
+spec_no_other_type=Pas d'autres types de spécialiste disponibles.
+spec_worker_no_type=Les travailleurs n'ont pas de type. Utilisez Enter pour convertir.
+
+# Démolition d'installations (Ctrl+D)
+demolition_open=Démolition d'installations. %d installations. %d sur %d : %s
+demolition_item=%d sur %d : %s, maintenance %d
+demolition_detail=%s. %s. Coût %d, maintenance %d
+demolition_confirm=Appuyez sur Delete à nouveau pour démolir %s
+demolition_done=%s démoli
+demolition_blocked=Impossible : une installation déjà démantelée ce tour
+demolition_empty=Pas d'installations à démolir
+demolition_cancel=Mode démolition fermé
+
+# Mode cible et aller à la base
+targeting_mode=Sélection de cible. Les flèches déplacent le curseur, Enter confirme, Escape annule.
+targeting_cancel=Annulé.
+go_to_base=Aller à la base : %d bases. Up/Down pour parcourir, Enter pour envoyer, Escape pour annuler.
+base_list_fmt=%d sur %d : %s (%d, %d), %d cases de distance
+base_list_empty=Aucune base disponible.
+going_home=En route vers la base d'origine : %s
+going_to_base=En route vers %s
+no_unit_selected=Aucune unité sélectionnée.
+group_go_to_base=Groupe aller à la base : %d unités, %d bases. Up/Down pour parcourir, Enter pour envoyer tous, Escape pour annuler.
+group_going_to_base=Envoi de %d unités vers %s
+help_go_to_base=G : Aller à la base
+help_go_home=Shift+G : Aller à la base d'origine
+help_group_goto=J : Groupe aller à
+help_patrol=P : Patrouiller
+help_artillery=F : Tir à longue portée
+help_scan_filter=Ctrl+PgUp/PgDn : Filtre du scanner
+help_scan_jump=Ctrl+Left/Right : Sauter à la correspondance
+airdrop_no_ability=Impossible : l'unité n'a pas la capacité de largage ou a déjà largué ce tour.
+airdrop_base=Largage aérien : %d bases à portée. Up/Down pour parcourir, Enter pour larguer, Escape pour annuler.
+airdrop_base_fmt=%d sur %d : %s (%d, %d), %d cases de distance
+airdrop_confirm=Largué à %s
+airdrop_blocked=Impossible : pas de cibles valides à portée.
+airdrop_cursor=C : Larguer au curseur (%d, %d), %d cases de distance
+airdrop_cursor_confirm=Largué à (%d, %d)
+airdrop_cursor_invalid=Impossible de larguer au curseur : cible invalide.
+patrol_confirm=Patrouille vers (%d, %d).
+patrol_cannot=Impossible de patrouiller.
+patrol_prompt=Patrouiller vers (%d, %d) ? Enter pour confirmer, Escape pour annuler.
+road_to_confirm=Construction de route vers (%d, %d).
+road_to_prompt=Construire une route vers (%d, %d) ? Enter pour confirmer, Escape pour annuler.
+tube_to_confirm=Construction de mag tube vers (%d, %d).
+tube_to_prompt=Construire un mag tube vers (%d, %d) ? Enter pour confirmer, Escape pour annuler.
+road_to_cannot=Impossible : aucun formateur sélectionné.
+arty_cannot=Impossible de tirer à l'artillerie.
+arty_no_targets=Aucune cible à portée (%d cases).
+arty_open=Artillerie : %d cibles à portée (%d cases). Up/Down pour parcourir, C pour curseur, Enter pour tirer, Escape pour annuler.
+arty_target_fmt=%d sur %d : %s (%d, %d), %d cases de distance
+arty_cursor=C : Tirer au curseur (%d, %d), %d cases de distance
+arty_cursor_oor=C : Curseur (%d, %d), %d cases — hors de portée (%d max)
+arty_fired=Tir sur %s.
+arty_help=Up/Down : parcourir les cibles. C : position du curseur. Enter : tirer. Escape : annuler.
+
+help_cursor_to_unit=Ctrl+Space : Sauter le curseur à l'unité
+
+# Statut de faction (Ctrl+F3)
+status_header=Année %d M.Y.
+status_credits=%d crédits d'énergie.
+status_alloc=Écon %d%%, Psyché %d%%, Labos %d%%.
+status_income=Commerce : %d. Brut : %d. Maintenance : %d. Net : %d.
+status_research=Recherche de %s, %d sur %d (%d%%).
+status_research_none=Aucune recherche en cours.
+status_bases=%d bases, %d population.
+status_help=Ctrl+F3 : Statut de faction.
+
+# Diplomatie
+diplo_open=Diplomatie avec %s.
+diplo_closed=Diplomatie terminée.
+diplo_help=S ou Tab : Résumé avec profil du dirigeant, traité, patience. Les options se naviguent avec les flèches. Ctrl+F1 : Cette aide.
+diplo_summary=%s. %s. %s. %s. %s. %s
+diplo_status_pact=Pacte
+diplo_status_treaty=Traité d'amitié
+diplo_status_truce=Trêve
+diplo_status_vendetta=Vendetta
+diplo_status_none=Pas d'accord formel
+diplo_patience=Patience : %s
+diplo_patience_thin=s'épuise
+diplo_patience_wearing=modérée
+diplo_patience_ok=patient
+diplo_surrendered=S'est rendu
+diplo_infiltrator=Nous avons un infiltré
+diplo_netmsg=%s
+diplo_commlink_open=Commlink : %d factions. Up/Down pour parcourir, Enter pour contacter, K pour le Conseil, Escape pour annuler.
+diplo_commlink_item=%d sur %d : %s, %s, %d votes
+diplo_commlink_empty=Aucune faction avec commlink.
+diplo_commlink_contact=Contact de %s
+diplo_profile=Profil : %s %s, %s. %s. %s. %s
+diplo_profile_priority=Priorité : %s %s
+diplo_profile_opposition=Opposition : %s %s
+diplo_profile_male=Masculin
+diplo_profile_female=Féminin
+diplo_status_changed=Statut diplomatique : %s
+
+# Dialogues de saisie
+input_number=Saisie numérique. Par défaut : %d. Tapez les chiffres, Enter pour confirmer, Escape pour la valeur par défaut.
+input_number_empty=Vide
+input_number_done=Saisi %d.
+
+# Curseur / Pavé numérique
+cursor_to_unit=Curseur sur l'unité.
+
+# Info de tour
+new_turn=Année %d M.Y.
+unit_skipped=Passée. Unité suivante : %s
+unit_damaged=Endommagée : %d sur %d PV
+
+# Atelier de conception
+design_proto_list=Conceptions d'unités : %d prototypes.
+design_proto_fmt=%d sur %d : %s, Attaque %d Défense %d Vitesse %d, %d minéraux
+design_category=%s : %s
+design_cat_chassis=Châssis
+design_cat_weapon=Arme
+design_cat_armor=Blindage
+design_cat_reactor=Réacteur
+design_chassis_fmt=%s, Vitesse %d, %s
+design_weapon_fmt=%s, Attaque %d
+design_armor_fmt=%s, Défense %d
+design_reactor_fmt=%s, Niveau %d
+design_ability_fmt=Capacité %d : %s
+design_ability_none=Aucune
+design_cost=Coût total : %d minéraux
+design_saved=Conception sauvegardée : %s
+design_cancelled=Conception annulée.
+design_new=Nouvelle conception d'unité.
+design_retired=%s retiré.
+design_retire_confirm=Appuyez sur Delete à nouveau pour retirer %s.
+design_help=Up/Down : parcourir. Enter : éditer. N : nouveau. R : renommer. O : obsolète. U : améliorer. Delete : retirer. Escape : fermer.
+design_edit_help=Left/Right : catégorie. Up/Down : option. Enter : sauvegarder. S : résumé. Escape : annuler.
+design_triad_land=Terre
+design_triad_sea=Mer
+design_triad_air=Air
+design_equipment=Équipement : %s
+design_rename_open=Renommer l'unité : %s. Tapez le nouveau nom, Enter pour confirmer, Escape pour annuler.
+design_rename_done=Unité renommée en %s.
+design_rename_cancel=Renommage annulé.
+design_obsolete_on=%s marqué obsolète.
+design_obsolete_off=%s restauré d'obsolète.
+design_upgrade_offer=Améliorer %d %s en %s ? Coût : %d énergie. Appuyez sur U à nouveau pour confirmer.
+design_upgrade_confirm=Amélioré %d %s en %s.
+design_upgrade_done=Amélioration terminée.
+design_upgrade_none=Pas d'amélioration disponible pour %s.
+design_upgrade_cost=Impossible : pas assez d'énergie. Besoin de %d, vous avez %d.
+design_obsolete_status= (obsolète)
+
+# Statut de terraformation
+terraform_order=Construction de %s, %d tours
+terraform_status=Construction de %s, %d sur %d tours
+terraform_complete=%s terminé
+terraform_order_remove=Suppression de %s, %d tours
+terraform_status_remove=Suppression de %s, %d sur %d tours
+
+# Agrafe neurale (Ctrl+N)
+nerve_staple_confirm=Appuyez sur Ctrl+N à nouveau pour appliquer l'agrafe neurale à %s.
+nerve_staple_done=Agrafe neurale appliquée à %s. %d tours.
+nerve_staple_cannot=Impossible : agrafe neurale non autorisée.
+
+# Renommer la base (F2)
+rename_open=Renommer la base : %s. Tapez le nouveau nom, Enter pour confirmer, Escape pour annuler.
+rename_char_fmt=%c
+rename_done=Base renommée en %s.
+rename_cancel=Renommage annulé.
+
+# Ouverture de base (annonce étendue)
+fmt_base_open_name=Base : %s, Population %d.
+fmt_base_open_resources=Nutriments %+d, %s. Minéraux %+d. Énergie %+d.
+fmt_base_open_mood=Talents %d, Mécontents %d.
+fmt_base_open_prod=Construction de %s, %d sur %d, %s.
+
+# Configuration du gouverneur (Ctrl+G)
+gov_title=Configuration du gouverneur. %d options.
+gov_option_fmt=%d sur %d : %s, %s
+gov_on=activé
+gov_off=désactivé
+gov_help=Up/Down : Options. Space : Basculer. Left/Right : Changer la priorité. S : Résumé. Enter : Sauvegarder. Escape : Annuler.
+gov_summary_fmt=Gouverneur : %d sur %d activés.
+gov_saved=Paramètres du gouverneur sauvegardés.
+gov_cancelled=Paramètres du gouverneur annulés.
+gov_priority_fmt=Priorité : %s. Left/Right pour changer.
+gov_priority_none=Aucune
+gov_priority_explore=Explorer
+gov_priority_discover=Découvrir
+gov_priority_build=Construire
+gov_priority_conquer=Conquérir
+
+# Ingénierie sociale (étendue)
+soceng_total_effects=Effets totaux : %s
+soceng_no_total_effect=Aucun effet total
+soceng_alloc_fmt=Allocation d'énergie : Économie %d%%, Psyché %d%%, Labos %d%%
+soceng_alloc_mode=Mode d'allocation d'énergie. Up/Down : sélectionner le curseur. Left/Right : ajuster.
+soceng_alloc_slider=%s : %d%%
+soceng_info_fmt=Recherche de %s. %d sur %d labos, %d tours. Énergie : %d crédits, %+d par tour
+soceng_alloc_econ=Économie
+soceng_alloc_psych=Psyché
+soceng_alloc_labs=Labos
+soceng_alloc_mode_open=Allocation d'énergie. %s Up/Down : sélectionner le curseur, Left/Right : ajuster. Enter : confirmer, Escape : annuler.
+soceng_alloc_mode_closed=Allocation d'énergie fermée.
+
+# Noms des effets d'ingénierie sociale
+soceng_eff_economy=Économie
+soceng_eff_efficiency=Efficacité
+soceng_eff_support=Soutien
+soceng_eff_talent=Talent
+soceng_eff_morale=Moral
+soceng_eff_police=Police
+soceng_eff_growth=Croissance
+soceng_eff_planet=Planète
+soceng_eff_probe=Sonde
+soceng_eff_industry=Industrie
+soceng_eff_research=Recherche
+
+# Liste de garnison (Ctrl+U)
+garrison_open=Garnison : %d unités. Up/Down : naviguer, D : détails, Enter : activer, B : base d'origine, H : urgence, Escape : fermer.
+garrison_item=%d sur %d : %s, %d/%d PV, %s
+garrison_detail=%s. %s %d, %s %d, %s, %d mouvements. Base : %s. %s
+garrison_activate=Activé : %s
+garrison_home_set=Base d'origine définie : %s
+garrison_empty=Aucune unité en garnison.
+garrison_close=Liste de garnison fermée.
+
+# Journal des messages (Ctrl+M)
+msg_open=Journal des messages. %d messages.
+msg_item=%d sur %d : %s
+msg_item_loc=%d sur %d : %s (%d, %d)
+msg_empty=Aucun message.
+msg_closed=Journal des messages fermé.
+msg_no_location=Pas de localisation pour ce message.
+msg_summary=%d messages. Tour %d.
+msg_help=Up/Down : Parcourir. Enter : Aller à la localisation. S : Résumé. Escape : Fermer.
+msg_notification=Message : %s
+
+# Contrôles de temps (Shift+T)
+tc_open=Contrôles de temps, %d préréglages. Actuel : %s. Up/Down pour parcourir, Enter pour sélectionner, Escape pour annuler.
+tc_item=%d sur %d : %s, %d secondes par tour, %d par base, %d par unité
+tc_set=Contrôles de temps définis à %s
+tc_cancelled=Contrôles de temps annulés
+
+# Chat (Ctrl+C)
+chat_open=Chat
+
+# Écran de base : Ressources/Économie/Statut étendus
+fmt_resources_v3=Ressources : Nutriments %+d (%d sur %d, %s), consommation %d. Minéraux %+d, soutien %d. Énergie %+d, inefficacité %d.
+fmt_starvation=Famine !
+fmt_low_minerals=Minéraux insuffisants.
+fmt_economy_v3=Économie : %d économie, %d psyché, %d labos. Commerce %d. %s.
+fmt_commerce=Commerce : %d énergie du commerce.
+fmt_inefficiency= Inefficacité : %d énergie perdue.
+fmt_no_hq= Pas de quartier général !
+fmt_high_support= Soutien élevé : %d minéraux.
+fmt_undefended= Sans défense !
+fmt_police_units= %d unités de police.
+
+# Unités soutenues (Ctrl+Shift+S)
+support_open=Unités soutenues : %d unités, %d soutien minéral. Up/Down : naviguer, D : détails, Enter : activer, Escape : fermer.
+support_item=%d sur %d : %s, à (%d, %d), %d sur %d PV
+support_detail=%s. %s %d, %s %d, %s, %d mouvements. Base : %s. À (%d, %d). %s
+support_empty=Aucune unité soutenue.
+support_close=Liste de soutien fermée.
+support_activate=Activé : %s
+
+# Détail psyché (Ctrl+Shift+Y)
+psych_detail=Détail psyché : %d unités de police. Production psyché %d. Talents %d, Mécontents %d. %s
+
+# Aide de base (mise à jour)
+base_help_v2=Left/Right : Base précédente/suivante. Ctrl+Up/Down : Sections. Ctrl+Left/Right : Onglets. Ctrl+I : Répéter. Ctrl+H : Urgence. Ctrl+Shift+P : Changer production. Ctrl+Q : File d'attente. Ctrl+D : Démolir. Ctrl+U : Garnison. Ctrl+Shift+S : Unités soutenues. Ctrl+W : Citoyens. Ctrl+T : Assignation de cases. Ctrl+G : Gouverneur. Ctrl+N : Agrafe neurale. Ctrl+Shift+Y : Détail psyché. F2 : Renommer. Ctrl+F1 : Aide. Escape : Fermer.
+
+# Assignation de cases (Ctrl+T)
+tile_assign_open=Assignation de cases : %d cases, %d exploitées. Up/Down : parcourir, Space : basculer, S : résumé, Escape : fermer.
+tile_assign_worked=%d sur %d : Exploitée. (%d, %d) %s. %d nourriture, %d minéraux, %d énergie.
+tile_assign_available=%d sur %d : Disponible. (%d, %d) %s. %d nourriture, %d minéraux, %d énergie.
+tile_assign_center=%d sur %d : Centre de base, toujours exploité. (%d, %d) %s. %d nourriture, %d minéraux, %d énergie.
+tile_assign_unavail=%d sur %d : Non disponible, %s. (%d, %d) %s.
+tile_assign_assigned=Travailleur assigné. %d nourriture, %d minéraux, %d énergie.
+tile_assign_removed=Travailleur retiré. Converti en %s.
+tile_assign_cannot_center=Impossible : le centre de base est toujours exploité.
+tile_assign_cannot_unavail=Impossible : case non disponible.
+tile_assign_cannot_no_free=Impossible : pas de citoyens libres. Retirez un travailleur ou utilisez Ctrl+W d'abord.
+tile_assign_summary=Cases : %d exploitées sur %d total, %d spécialistes. Total : %d nourriture, %d minéraux, %d énergie.
+tile_assign_close=Assignation de cases fermée.
+tile_unavail_foreign=territoire étranger
+tile_unavail_other_base=exploitée par une autre base
+tile_unavail_vehicle=bloquée par un véhicule
+tile_unavail_unexplored=inexplorée
+
+# Bonus de ressources
+bonus_nutrient=Bonus de nutriments
+bonus_mineral=Bonus de minéraux
+bonus_energy=Bonus d'énergie
+
+# Points de repère
+landmark_crater=Cratère
+landmark_volcano=Volcan
+landmark_jungle=Jungle
+landmark_uranium=Plaines d'uranium
+landmark_sargasso=Mer des Sargasses
+landmark_ruins=Ruines
+landmark_dunes=Dunes
+landmark_fresh=Mer d'eau douce
+landmark_mesa=Mesa
+landmark_canyon=Canyon
+landmark_geothermal=Géothermique
+landmark_ridge=Crête
+landmark_borehole=Grand forage
+landmark_nexus=Nexus Manifold
+landmark_unity=Épave du Unity
+landmark_fossil=Crête fossile
+
+# Mode mouvement/vue
+mode_move=Mode mouvement
+mode_view=Mode vue
+
+# Configuration multijoueur
+netsetup_open=Configuration multijoueur. Tab : zones, Flèches : naviguer, Enter : activer, Ctrl+F1 : aide.
+netsetup_help=Tab/Shift+Tab : zones. Up/Down : éléments. Enter/Space : activer. S : résumé. Escape : annuler.
+netsetup_zone_settings=Paramètres
+netsetup_zone_players=Joueurs
+netsetup_zone_checkboxes=Options
+netsetup_zone_buttons=Boutons
+netsetup_item_fmt=%d sur %d : %s
+netsetup_checkbox_fmt=%d sur %d : %s, %s
+netsetup_player_fmt=%d sur %d : %s
+netsetup_player_empty=Vide
+netsetup_set_difficulty=Difficulté
+netsetup_set_time=Contrôles de temps
+netsetup_set_gametype=Type de partie
+netsetup_set_planetsize=Taille de la planète
+netsetup_set_ocean=Couverture océanique
+netsetup_set_erosion=Forces érosives
+netsetup_set_natives=Formes de vie natives
+netsetup_set_cloud=Couverture nuageuse
+netsetup_cb_simultaneous=Mouvements simultanés
+netsetup_cb_transcendence=Victoire par transcendance
+netsetup_cb_conquest=Victoire par conquête
+netsetup_cb_diplomatic=Victoire diplomatique
+netsetup_cb_economic=Victoire économique
+netsetup_cb_cooperative=Victoire coopérative
+netsetup_cb_do_or_die=Vaincre ou mourir
+netsetup_cb_look_first=Explorer d'abord
+netsetup_cb_tech_stagnation=Stagnation technologique
+netsetup_cb_spoils=Butin de guerre
+netsetup_cb_blind_research=Recherche aveugle
+netsetup_cb_intense_rivalry=Rivalité intense
+netsetup_cb_no_unity_survey=Pas de reconnaissance Unity
+netsetup_cb_no_unity_scatter=Pas de dispersion Unity
+netsetup_cb_bell_curve=Courbe en cloche
+netsetup_cb_time_warp=Saut temporel
+netsetup_cb_rand_personality=Personnalités aléatoires
+netsetup_cb_rand_social=Agendas sociaux aléatoires
+netsetup_btn_cancel=Annuler
+netsetup_btn_start=Lancer la partie
+netsetup_player_joined=Joueur rejoint : %s
+netsetup_player_left=Joueur parti : emplacement %d
+netsetup_summary=Zone %s, %d sur %d : %s
+netsetup_enabled=activé
+netsetup_disabled=désactivé
+netsetup_diff_citizen=Citoyen
+netsetup_diff_specialist=Spécialiste
+netsetup_diff_talent=Talent
+netsetup_diff_librarian=Bibliothécaire
+netsetup_diff_thinker=Thinker
+netsetup_diff_transcend=Transcendance
+netsetup_size_tiny=Planète minuscule
+netsetup_size_small=Petite planète
+netsetup_size_standard=Planète standard
+netsetup_size_large=Grande planète
+netsetup_size_huge=Planète immense
+netsetup_ocean_30=30-50% de la surface
+netsetup_ocean_50=50-70% de la surface
+netsetup_ocean_70=70-90% de la surface
+netsetup_erosion_strong=Forces érosives fortes
+netsetup_erosion_avg=Forces érosives moyennes
+netsetup_erosion_weak=Forces érosives faibles
+netsetup_native_rare=Vie native rare
+netsetup_native_avg=Vie native moyenne
+netsetup_native_abund=Vie native abondante
+netsetup_cloud_sparse=Couverture nuageuse clairsemée
+netsetup_cloud_avg=Couverture nuageuse moyenne
+netsetup_cloud_dense=Couverture nuageuse dense
+netsetup_not_supported=pas encore supporté
+netsetup_cancelled=Annulé.
+netsetup_of=sur
+netsetup_gametype_todo=La sélection du type de partie n'est pas encore supportée.
+netsetup_gt_random=Nouvelle partie (carte aléatoire)
+netsetup_gt_scenario=Scénario
+netsetup_gt_load_map=Charger une carte
+netsetup_start_no_players=Impossible : pas assez de joueurs.
+
+# Menu d'actions d'unité (Shift+F10)
+act_menu_open=Actions d'unité, %d éléments. Up/Down, Enter, Escape.
+act_menu_item=%d sur %d : %s
+act_menu_cancel=Annulé.
+act_menu_empty=Aucune action disponible.
+act_skip=Passer le tour, Space
+act_hold=Maintenir, H
+act_explore=Explorer, X
+act_goto_base=Aller à la base, G
+act_patrol=Patrouiller, P
+act_build_road=Construire une route, R
+act_build_magtube=Construire un mag tube, R
+act_build_farm=Construire une ferme, F
+act_build_mine=Construire une mine, M
+act_build_solar=Construire un collecteur solaire, S
+act_build_forest=Planter une forêt, Shift+F
+act_build_sensor=Construire un capteur, O
+act_build_condenser=Construire un condenseur, N
+act_build_borehole=Construire un forage, Shift+N
+act_build_airbase=Construire une base aérienne, Period
+act_build_bunker=Construire un bunker, Shift+Period
+act_remove_fungus=Retirer le champignon, F
+act_automate=Automatiser, Shift+A
+act_build_base=Construire une base, B
+act_long_range=Tir à longue portée, F
+act_convoy=Convoi de ressources, O
+act_unload=Décharger le transport, U
+act_airdrop=Largage aérien, I
+act_open_base=Ouvrir la base, Enter
+act_menu_help=Shift+F10 : Menu d'actions
+act_done_hold=En position.
+act_done_explore=Auto-exploration.
+act_done_unload=Déchargement.
+act_done_destroy=Destruction des améliorations.
+
+# Automatisation (Shift+A)
+auto_open=Automatiser : %d options. Up, Down, Enter, Escape.
+auto_item=%d sur %d : %s
+auto_confirm=Automatisé : %s
+auto_cancel=Annulé
+auto_not_former=Impossible : pas un formateur
+auto_full=Terraformation complète
+auto_road=Routes automatiques
+auto_magtube=Magtubes automatiques
+auto_improve_base=Améliorer la base automatiquement
+auto_farm_solar=Ferme+Solaire+Route
+auto_farm_mine=Ferme+Mine+Route
+auto_fungus=Suppression automatique des champignons
+auto_sensor=Capteurs automatiques
+
+# Conseil
+council_open=Conseil planétaire, %s. %s
+council_closed=Conseil terminé.
+council_help=S ou Tab : Résumé des votes. Ctrl+F1 : Aide. Le jeu gère la navigation et le vote.
+council_vote_line=%s : %d votes
+council_total=Total : %d votes. Majorité : %d.
+council_your_votes=Vos votes : %d sur %d.
+council_governor=Gouverneur : %s
+council_no_governor=Pas de gouverneur.
+council_can_call=Vous pouvez convoquer le Conseil planétaire.
+council_cannot_call=Impossible de convoquer le Conseil planétaire.
+council_abstain=Abstention
+council_candidates=Candidats : %s. Up/Down : naviguer, Enter : voter.
+council_result=Résultat : %s
+council_your_faction=vous
+council_vote_prompt=Vote : %s. Up/Down : naviguer, Enter : confirmer, Escape : abstention.
+council_vote_selected=Voté pour %s.
+council_proposal_prompt=Vote de proposition : %s. Up/Down pour choisir, Enter pour confirmer.
+council_proposal_yes=Oui
+council_proposal_no=Non
+council_proposal_voted=Voté : %s.
+council_result_passed=%s : Adopté, %d contre %d.
+council_result_failed=%s : Rejeté, %d contre %d.
+council_buy_prompt=%s : %s. Up/Down : choisir, Enter : confirmer.
+council_buy_cancel=Refuser
+council_buy_energy=Payer %d crédits d'énergie
+council_buy_tech=Donner la technologie : %s
+council_buy_techs=Donner les technologies : %s
+council_buy_paid=Payé %d crédits d'énergie à %s.
+council_buy_gave_tech=Technologies données à %s.
+council_buy_declined=Refusé.
+
+# Opérations de base (F4)
+baseops_open=Opérations de base, %d bases. Up/Down : naviguer, S : résumé, D : détail, Ctrl+F1 : aide.
+baseops_closed=Opérations de base fermé.
+baseops_base_fmt=%s, %d sur %d : Population %d, Nutriments %+d, Minéraux %+d, Énergie %+d, Construction de %s, %d tours
+baseops_base_fmt_stall=%s, %d sur %d : Population %d, Nutriments %+d, Minéraux %+d, Énergie %+d, Construction de %s, bloqué
+baseops_summary=%d bases, Population %d, Énergie %d
+baseops_help=Up/Down : naviguer les bases. S : résumé. D : détail. Escape : fermer. Ctrl+F1 : cette aide.
+baseops_empty=Aucune base.
+baseops_detail=%s : Talents %d, Mécontents %d, Spécialistes %d. Économie %d, Psyché %d, Labos %d. Dégâts éco %d. Élévation %d. %s
+
+# Statut de recherche (F2)
+labs_open=Statut de recherche. S : résumé, D : détail par base, Ctrl+F1 : aide.
+labs_closed=Statut de recherche fermé.
+labs_summary=Recherche de %s, %d sur %d, %d tours. Labos par tour : %d. Techs découvertes : %d. Allocation : Économie %d%%, Psyché %d%%, Labos %d%%.
+labs_summary_done=Recherche : %s. Labos par tour : %d. Techs découvertes : %d. Allocation : Économie %d%%, Psyché %d%%, Labos %d%%.
+labs_detail_header=Labos par base : %d bases, %d labos totaux.
+labs_detail_base=%s, %d sur %d : %d labos
+labs_no_bases=Aucune base.
+labs_help=S : Résumé de recherche. D : Labos par base. Escape : Fermer. Ctrl+F1 : Cette aide.
+
+# Projets secrets (F5)
+projects_open=Projets secrets, %d projets. Up/Down : naviguer, S : résumé, Ctrl+F1 : aide.
+projects_closed=Projets secrets fermé.
+projects_built=%s, %d sur %d : Construit par %s à %s
+projects_unbuilt=%s, %d sur %d : Non construit
+projects_destroyed=%s, %d sur %d : Détruit
+projects_summary=%d projets : %d construits, %d non construits, %d détruits
+projects_empty=Aucun projet secret.
+projects_help=Up/Down : Parcourir les projets. D : Détails. S : Résumé. Escape : Fermer. Ctrl+F1 : Cette aide.
+
+# Statut orbital (F6)
+orbital_open=Statut orbital. S : résumé, D : comparer les factions, Ctrl+F1 : aide.
+orbital_closed=Statut orbital fermé.
+orbital_summary=%d satellites : %d nutriments, %d minéraux, %d énergie, %d défense.
+orbital_player=%s : %d satellites
+orbital_faction=%s : %d satellites
+orbital_help=S : Vos satellites. D : Comparer les factions. Escape : Fermer. Ctrl+F1 : Cette aide.
+
+# Statut militaire (F7)
+military_open=Statut militaire. S : classements, D : détail d'unité, Ctrl+F1 : aide.
+military_closed=Statut militaire fermé.
+military_summary=Unités de combat : %d. Bases : %d. Population : %d. Force : %d, %s. Meilleure arme : %d, blindage : %d, vitesse : %d. Destructeurs planétaires : %d.
+military_unit=%s, %d sur %d : %d actifs
+military_detail_open=Types d'unité : %d. Up/Down pour parcourir, Escape pour revenir.
+military_detail_closed=Détail d'unité fermé.
+military_no_units=Aucun type d'unité actif.
+military_rankings_header=Classement de puissance :
+military_rank_entry=%d. %s, force %d
+military_help=S : Classement de puissance. D : Types d'unité (puis D à nouveau pour détails). Escape : Fermer. Ctrl+F1 : Cette aide.
+
+# Score (F8)
+score_open=Score, %d factions. Up/Down : naviguer, S : votre rang, Ctrl+F1 : aide.
+score_closed=Score fermé.
+score_faction=%d. %s, %d sur %d : Bases %d, Population %d, Techs %d
+score_player=Votre rang : %s, %d sur %d. Bases %d, Population %d, Techs %d.
+score_empty=Aucune faction.
+score_help=Up/Down : Parcourir les classements. D : Détails. S : Votre rang. Escape : Fermer. Ctrl+F1 : Cette aide.
+
+# Fin de partie
+victory_conquest=Victoire par conquête !
+victory_diplomatic=Victoire diplomatique !
+victory_economic=Victoire économique !
+victory_transcendence=Victoire par transcendance !
+defeat=Défaite. Votre faction a été éliminée.
+game_over=Partie terminée.
+replay_screen=Carte de replay. Ceci est une animation visuelle. Appuyez sur Escape pour continuer.
+
+# Datalinks (F1)
+dl_open=Datalinks, %d catégories. Left/Right : catégorie, Up/Down : éléments, D : détail, S : résumé, Escape : fermer.
+dl_closed=Datalinks fermé.
+dl_help=Left/Right : Changer de catégorie. Up/Down : Parcourir les éléments. Home/End : Premier/Dernier. D : Détail. S : Résumé. Escape : Fermer. Ctrl+F1 : Cette aide.
+dl_empty=Aucune entrée dans cette catégorie.
+dl_category_fmt=%s, %d entrées.
+dl_summary=%s, %d entrées. Technologies connues : %d sur %d.
+dl_known=connue
+dl_unknown=inconnue
+dl_unlocks=Débloque :
+dl_preq_none=Aucun
+dl_preq_disabled=Désactivé
+dl_cat_tech=Technologies
+dl_cat_facility=Installations de base
+dl_cat_project=Projets secrets
+dl_cat_weapon=Armes
+dl_cat_armor=Blindage
+dl_cat_chassis=Châssis
+dl_cat_reactor=Réacteurs
+dl_cat_ability=Capacités
+dl_cat_concept=Concepts du jeu
+dl_tcat_explore=Explorer
+dl_tcat_discover=Découvrir
+dl_tcat_build=Construire
+dl_tcat_conquer=Conquérir
+dl_item_tech=%d sur %d : %s (%s)
+dl_item_facility=%d sur %d : %s, Coût %d, Maint %d
+dl_item_project=%d sur %d : %s, non construit
+dl_item_project_built=%d sur %d : %s, construit par %s
+dl_item_weapon=%d sur %d : %s, Attaque %d
+dl_item_armor=%d sur %d : %s, Défense %d
+dl_item_chassis=%d sur %d : %s, Vitesse %d, %s
+dl_item_reactor=%d sur %d : %s, Puissance %d
+dl_item_ability=%d sur %d : %s
+dl_item_concept=%d sur %d : %s
+dl_detail_tech=%s. Nécessite : %s, %s. Catégorie : %s. Niveau %d. %s
+dl_detail_tech_v2=%s. Nécessite : %s. Catégorie : %s. Niveau %d. %s
+dl_detail_facility=%s. Coût %d, Maintenance %d. Nécessite : %s. %s
+dl_detail_project=%s. Coût %d. Nécessite : %s. Non construit. %s
+dl_detail_project_built=%s. Coût %d. Nécessite : %s. Construit par %s à %s. %s
+dl_detail_weapon=%s. Attaque %d, Coût %d. Nécessite : %s
+dl_detail_armor=%s. Défense %d, Coût %d. Nécessite : %s
+dl_detail_chassis=%s. Vitesse %d, %s, Portée %d. Nécessite : %s
+dl_detail_reactor=%s. Puissance %d. Nécessite : %s
+dl_detail_ability=%s. %s. Nécessite : %s
+dl_detail_concept=%s. %s
+# Choix de recherche
+tech_pick_title=Choisir un objectif de recherche. Sélectionnez une technologie à rechercher. %d options disponibles.
+tech_pick_item=%d sur %d : %s, %s
+tech_pick_help=Up/Down : Naviguer les options. Enter : Sélectionner l'objectif de recherche. Escape : Annuler. Ctrl+F1 : Aide.
+tech_pick_closed=Recherche sélectionnée.
+tech_pick_dir=%d sur %d : %s
+tech_pick_blind_status=Recherche aveugle. Direction actuelle : %s.
+tech_pick_blind_mixed=Recherche aveugle. Pas de direction spécifique.
+tech_pick_blind_done=Direction définie à %s.
+tech_pick_status=Direction actuelle : %s.
+tech_pick_status_mixed=Pas de direction spécifique.
+dl_concept_no_text=Pas de description disponible.
+
+# Sélection de faction
+faction_help=Up, Down : choisir la faction. Enter : jouer. G : éditer le groupe. I : info faction. R : groupe aléatoire. Escape : annuler. Ctrl+F1 : aide.
+faction_no_info=Pas d'information de faction disponible.
+
+# Actions de la carte du monde
+research_priorities=Priorités de recherche.
+group_dialog=Dialogue de groupe.
+grid_on=Grille activée.
+grid_off=Grille désactivée.
+terrain_flat_on=Terrain plat activé.
+terrain_flat_off=Terrain plat désactivé.
+centered=Centré.
+monuments_info=Monuments. Affichage visuel des réalisations de votre faction. Pas encore accessible.
+hall_of_fame_info=Temple de la renommée. Liste des parties terminées. Pas encore accessible.
+
+# Monuments (F9)
+monument_open=Monuments, %d sur %d accomplis. Visualisation des réalisations, la liste peut être inexacte. Up/Down : naviguer, S : résumé, Escape : fermer.
+monument_closed=Monuments fermé.
+monument_item_achieved=%d sur %d : %s, Tour %d.
+monument_item_locked=%d sur %d : %s, non accompli.
+monument_summary=%d sur %d réalisations débloquées.
+monument_help=Up/Down : Parcourir les réalisations. Home/End : Premier/Dernier. S : Résumé. Escape : Fermer. Ctrl+F1 : Cette aide.
+monument_type_0=Colonie fondée
+monument_type_1=Technologie découverte
+monument_type_2=Secrets de la technologie
+monument_type_3=Prototype construit
+monument_type_4=Installation construite
+monument_type_5=Projet secret terminé
+monument_type_6=Ennemi détruit
+monument_type_7=Base conquise
+monument_type_8=Unité navale construite
+monument_type_9=Unité aérienne construite
+monument_type_10=Vie native élevée
+monument_type_11=Premier dans l'espace
+monument_type_12=Réserve construite
+monument_type_13=Planète unifiée
+monument_type_14=Victoire par transcendance
+monument_type_15=Faction éliminée
+
+# Bascules en cours de jeu
+thinker_ai_on=Thinker AI activée.
+thinker_ai_off=Thinker AI désactivée. Utilisation de l'IA originale du jeu.
+accessibility_on=Lecteur d'écran activé.
+accessibility_off=Lecteur d'écran désactivé.
+help_toggle_ai=Ctrl+Shift+T : basculer Thinker AI
+help_toggle_sr=Ctrl+Shift+A : basculer lecteur d'écran
+
+# Éditeur de paramètres de partie (Ctrl+F10)
+gsettings_open=Paramètres de partie. Tab : changer de catégorie. Up/Down : naviguer. Left/Right : changer la valeur. Enter : sauvegarder. Escape : annuler.
+gsettings_saved=Paramètres sauvegardés.
+gsettings_cancelled=Paramètres annulés.
+gsettings_help=Tab/Shift+Tab : Changer de catégorie. Up/Down : Naviguer les paramètres. Left/Right : Changer la valeur. Enter/Space : Basculer (Règles). D : Description. I : Info faction. S : Résumé. Enter : Sauvegarder et fermer. Escape : Annuler. Ctrl+F1 : Cette aide.
+gsettings_cat_fmt=Catégorie %d sur %d : %s, %d paramètres
+gsettings_item_fmt=%d sur %d : %s : %s
+gsettings_toggle_fmt=%d sur %d : %s : %s
+gsettings_summary_fmt=Difficulté %s, %s, Carte %s, %d règles actives
+gsettings_cat_general=Général
+gsettings_cat_faction=Faction
+gsettings_cat_map=Carte
+gsettings_cat_rules=Règles
+gsettings_difficulty=Difficulté
+gsettings_faction=Faction
+gsettings_map_size=Taille de la planète
+gsettings_ocean=Couverture océanique
+gsettings_land=Couverture terrestre
+gsettings_erosion=Érosion
+gsettings_clouds=Couverture nuageuse
+gsettings_natives=Vie native
+gsettings_land_sparse=Clairsemée
+gsettings_land_avg=Moyenne
+gsettings_land_dense=Dense
+gsettings_on=Activé
+gsettings_off=Désactivé
+gsettings_rule_conquest=Victoire par conquête
+gsettings_rule_economic=Victoire économique
+gsettings_rule_diplomatic=Victoire diplomatique
+gsettings_rule_transcendence=Victoire par transcendance
+gsettings_rule_cooperative=Victoire coopérative
+gsettings_rule_do_or_die=Vaincre ou mourir
+gsettings_rule_look_first=Explorer d'abord
+gsettings_rule_tech_stagnation=Stagnation technologique
+gsettings_rule_intense_rivalry=Rivalité intense
+gsettings_rule_time_warp=Saut temporel
+gsettings_rule_no_unity_survey=Pas de reconnaissance Unity
+gsettings_rule_blind_research=Recherche aveugle
+gsettings_rule_no_unity_scatter=Pas de dispersion Unity
+gsettings_rule_spoils_of_war=Butin de guerre
+gsettings_rule_bell_curve=Courbe en cloche
+gsettings_rule_desc_conquest=Gagner en conquérant toutes les autres factions.
+gsettings_rule_desc_economic=Gagner en accaparant le Marché mondial de l'énergie.
+gsettings_rule_desc_diplomatic=Gagner en étant élu Gouverneur planétaire ou Chef suprême.
+gsettings_rule_desc_transcendence=Gagner en complétant l'Ascension vers la transcendance.
+gsettings_rule_desc_cooperative=Les factions alliées partagent la victoire.
+gsettings_rule_desc_do_or_die=Les factions éliminées ne peuvent pas redémarrer.
+gsettings_rule_desc_look_first=Explorer la carte avant de choisir un site d'atterrissage.
+gsettings_rule_desc_tech_stagnation=La recherche ralentit en apprenant plus de technologies.
+gsettings_rule_desc_intense_rivalry=Comportement IA plus agressif.
+gsettings_rule_desc_time_warp=Accélérer le début en sautant les premiers tours.
+gsettings_rule_desc_no_unity_survey=Pas de reconnaissance orbitale initiale de la carte.
+gsettings_rule_desc_blind_research=Impossible de choisir des technologies spécifiques à rechercher.
+gsettings_rule_desc_no_unity_scatter=Pas de capsules de ravitaillement dispersées de l'épave du Unity.
+gsettings_rule_desc_spoils_of_war=Capturer la technologie en conquérant les bases ennemies.
+gsettings_rule_desc_bell_curve=Les résultats de combat suivent une distribution en courbe de cloche.
+gsettings_no_desc=Pas de description disponible.
+gsettings_press_d=Appuyez sur D pour les détails.
+gsettings_faction_info=Appuyez sur I pour info faction.
+
+# Liste d'unités (touche U)
+unit_list_open=Liste d'unités, %d unités. Up/Down : parcourir, D : détails, Enter : sélectionner, Escape : fermer.
+unit_list_fmt=%d sur %d : %s à (%d, %d)
+unit_list_moves=%d sur %d mouvements
+unit_list_health=santé %d sur %d
+unit_list_home=base d'origine : %s
+unit_list_selected=Sélectionné %s
+unit_list_empty=Aucune unité disponible.
+unit_list_help=Up/Down : Parcourir. Home/End : Premier/Dernier. D : Détails. Enter : Sélectionner et activer l'unité. Escape : Fermer. Ctrl+F1 : Cette aide.
+order_idle=inactif
+order_hold=maintenir
+order_sentry=sentinelle
+order_explore=explorer
+order_goto=aller à
+order_convoy=convoi
+
+# Liste des unités ennemies (Shift+U)
+enemy_list_open=Unités étrangères, %d visibles. Up/Down : parcourir, D : détails, C : aperçu combat, Enter : aller à l'unité, Escape : fermer.
+enemy_list_fmt=%d sur %d : %s, %s (%s) à (%d, %d)
+enemy_list_native=Natif
+enemy_list_empty=Aucune unité étrangère visible.
+enemy_list_help=Up/Down : Parcourir. Home/End : Premier/Dernier. D : Détails. Enter : Aller à l'unité sur la carte. Escape : Fermer. Ctrl+F1 : Cette aide.
+enemy_list_jump=Sauté à %s à (%d, %d)
+enemy_list_triad_land=Terre
+enemy_list_triad_sea=Mer
+enemy_list_triad_air=Air
+unit_list_detail=%s. %s, %s %d, %s %d, %s, %s, %d sur %d PV.
+enemy_list_detail=%s. %s, %s %d, %s %d, %s, %s, %d sur %d PV.
+enemy_list_detail_limited=%s. %s, %s.
+unit_list_focused=Focalisé sur %s, pas de points de mouvement.
+
+# Cycle de pile (Tab)
+tab_cycle_fmt=%s, %d sur %d sur la case
+tab_cycle_none=Pas d'unités alliées au curseur.
+
+# Paramètres de réseau (Ctrl+Shift+F10)
+netsettings_open=Éditeur de paramètres de salon. Tab : catégories, Up/Down : naviguer, Left/Right : changer. Enter : sauvegarder, Escape : annuler.
+netsettings_saved=Paramètres appliqués.
+netsettings_cancelled=Paramètres annulés.
+netsettings_help=Tab/Shift+Tab : Changer de catégorie. Up/Down : Naviguer les éléments. Left/Right : Changer la valeur ou basculer. Space : Basculer la case. S : Résumé. Enter : Sauvegarder et fermer. Escape : Annuler. Ctrl+F1 : Cette aide.
+netsettings_cat_fmt=Catégorie %d sur %d : %s, %d éléments
+netsettings_cat_settings=Paramètres
+netsettings_cat_rules=Règles
+netsettings_summary_fmt=Difficulté : %s, Planète : %s. %d paramètres modifiés, %d règles modifiées.
+netsettings_time_none=Aucun
+netsettings_time_other=Personnalisé
+
+# Chaînes de détail (touche D)
+projects_detail=%s. %s. Coût : %d minéraux. %s
+projects_detail_built=Construit par %s à %s.
+projects_detail_destroyed=Détruit.
+projects_detail_unbuilt=Pas encore construit.
+military_unit_detail=%s (%d actifs). %s, %s %d, %s %d, %s, %d mouvements, %d PV.
+score_detail=%s. Bases : %d, Population : %d, Techs : %d. Force militaire : %d. %s
+
+# Résultats de combat
+combat_victory=Victoire : %s a vaincu %s. %d sur %d PV.
+combat_defeat=Défaite : %s détruit par %s.
+combat_defense_win=Défense : %s a détruit %s. %d sur %d PV.
+combat_defense_loss=Perdu : %s détruit par %s.
+combat_draw=%s vs %s, les deux ont survécu. %s : %d sur %d PV.
+combat_retreat=%s s'est retiré.
+combat_capture=%s capturé.
+combat_promoted= Promu à %s.
+combat_nerve_gas= Gaz neurotoxique utilisé !
+combat_intercepted=Intercepté par %s (%s).
+
+# Artillerie
+combat_arty_result=Artillerie : %s a bombardé (%d, %d). %d unités touchées.
+combat_arty_damage=%s : %d dégâts, %d sur %d PV.
+combat_arty_no_effect=Artillerie : Aucun effet.
+
+# Chances de combat (Shift+U)
+combat_odds=Chances %d:%d
+combat_odds_favorable=Favorable
+combat_odds_unfavorable=Défavorable
+combat_odds_even=Égal
+combat_preview=Combat : %s (%s %d, %s, %d/%d PV) vs %s (%s %d, %s, %d/%d PV). Chances %d:%d.
+combat_preview_psi_fmt=Combat Psi : %s (%s, %d/%d PV) vs %s (%s, %d/%d PV). Chances %d:%d.
+combat_preview_no_unit=Aucune unité de combat sélectionnée.
+combat_preview_psi=Combat Psi
+enemy_list_help_combat=Up/Down : Parcourir. Home/End : Premier/Dernier. D : Détails. C : Aperçu combat. Enter : Aller à l'unité sur la carte. Escape : Fermer. Ctrl+F1 : Cette aide.
+
+# Éditeur de scénario
+editor_not_accessible=Éditeur de scénario. Pas encore accessible avec le lecteur d'écran. Les scénarios peuvent aussi être édités via des fichiers texte (alphax.txt, scenario.txt).
+
+# Menu Thinker (Alt+T)
+tmenu_title=Menu Thinker
+tmenu_item_fmt=%d sur %d : %s
+tmenu_stats=Statistiques
+tmenu_options=Options du mod
+tmenu_homepage=Ouvrir la page web
+tmenu_close=Fermer
+tmenu_rules=Règles du jeu
+tmenu_rules_saved=Règles du jeu appliquées.
+tmenu_rules_cancelled=Règles du jeu annulées.
+tmenu_rule_no_council=Pas de Conseil planétaire
+tmenu_rule_no_social_eng=Pas d'Ingénierie sociale
+tmenu_version_fmt=Thinker Access Mod. %s, Build %s
+tmenu_gametime_fmt=Temps de jeu : %d heures, %d minutes
+tmenu_opt_fmt=%d sur %d : %s : %s
+tmenu_opt_on=Activé
+tmenu_opt_off=Désactivé
+tmenu_opt_saved=Options du mod sauvegardées.
+tmenu_opt_cancelled=Options du mod annulées.
+tmenu_help=Up/Down : Naviguer. Enter : Sélectionner. Escape : Fermer. Ctrl+F1 : Cette aide.
+tmenu_opt_help=Up/Down : Naviguer. Space : Basculer. S : Résumé. Enter : Sauvegarder. Escape : Annuler. Ctrl+F1 : Cette aide.
+tmenu_stat_header=Statistiques du jeu.
+tmenu_stat_world=Monde : %d bases, %d unités, %d population, %d minéraux, %d énergie.
+tmenu_stat_faction=Votre faction : %d bases, %d unités, %d population, %d minéraux, %d énergie.
+tmenu_opt_new_world=Nouveau générateur de carte
+tmenu_opt_continents=Continents du monde
+tmenu_opt_landmarks=Points de repère modifiés
+tmenu_opt_polar_caps=Calottes polaires
+tmenu_opt_mirror_x=Miroir horizontal de la carte
+tmenu_opt_mirror_y=Miroir vertical de la carte
+tmenu_opt_auto_bases=Gérer les bases du joueur
+tmenu_opt_auto_units=Gérer les unités du joueur
+tmenu_opt_former_warn=Avertir au remplacement de formateur
+tmenu_opt_base_info=Afficher info de base sur la carte
+tmenu_opt_treaty_popup=Fenêtre de traité étranger
+tmenu_opt_auto_minimise=Minimiser la fenêtre automatiquement
+
+# Requête de détail de case (touches 1-8)
+detail_no_units=Pas d'unités
+detail_no_base=Pas de base
+detail_no_improvements=Pas d'améliorations
+detail_no_landmarks=Pas de points de repère
+detail_no_work=Pas dans le rayon de base
+
+# Historique de parole
+history_empty=Pas d'historique de parole
+history_oldest=Entrée la plus ancienne
+history_fmt=%d sur %d : %s
+
+# Fenêtre de nom/genre
+name_gender_hint=Tab : Changer le genre
+
+# Fenêtre de règles de configuration
+setup_rules_help=Up/Down : Naviguer. Space : Basculer la règle. Enter : Accepter. Escape : Annuler. Ctrl+F1 : Cette aide.
+
+# Ctrl+Tab cycle des unités mobiles
+cycle_movable_fmt=%s à (%d,%d), %d sur %d mouvements, unité %d sur %d
+cycle_movable_none=Aucune unité avec des points de mouvement.
+
+# Corrections de chaînes codées en dur
+design_no_slots=Impossible : pas d'emplacements de prototype vides
+combat_psi=Psi
+combat_atk_def=Atq %d Déf %d
+
+# Aide de la carte du monde (Ctrl+F1 supplémentaire)
+help_disband=D : Dissoudre l'unité
+help_view_hex=V : Voir la case
+help_terrain=T : Détail du terrain
+help_combat_preview=C : Aperçu combat
+help_tab_cycle=Tab : Cycle des unités sur la case
+help_ctrl_tab_cycle=Ctrl+Tab : Cycle des unités mobiles
+help_fkeys=F1 : Datalinks. F2 : Labos. F3 : Social. F4 : Statut. F5 : Projets. F6 : Orbital. F7 : Militaire. F8 : Score. F9 : Monuments
+help_f12_commlink=F12 : Commlink
+help_msg_log=Ctrl+M : Journal des messages
+help_diary=E : Journal d'événements
+help_silence=Ctrl+Shift+R : Couper la parole
+help_design=Shift+D : Atelier de conception
+help_prefs=Ctrl+P : Préférences

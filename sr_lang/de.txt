@@ -824,6 +824,14 @@ council_proposal_no=Nein
 council_proposal_voted=Gestimmt: %s.
 council_result_passed=%s: Angenommen, %d zu %d.
 council_result_failed=%s: Abgelehnt, %d zu %d.
+council_buy_prompt=%s: %s. Hoch/Runter: wählen, Eingabe: bestätigen.
+council_buy_cancel=Ablehnen
+council_buy_energy=%d Energieeinheiten zahlen
+council_buy_tech=Technologie geben: %s
+council_buy_techs=Technologien geben: %s
+council_buy_paid=%d Energieeinheiten an %s gezahlt.
+council_buy_gave_tech=Technologien an %s gegeben.
+council_buy_declined=Abgelehnt.
 
 # Basisoperationen (F4)
 baseops_open=Basisoperationen, %d Basen. Hoch/Runter: navigieren, S: Zusammenfassung, D: Detail, Strg+F1: Hilfe.
