@@ -6,6 +6,21 @@ followed by the upstream Thinker changelog for reference.
 
 ---
 
+## SmacAccess v0.1.3-alpha (2026-03-13)
+
+### Council Voting
+- Buy votes from AI factions during proposal voting (pay energy or give technology)
+- Rejection reasons are read aloud (already promised, no diplomacy, etc.)
+
+### Game Setup
+- Rules menu now fully keyboard-accessible (was mouse-only)
+- End-of-turn popups show correct key hint (Ctrl+Enter instead of Enter)
+
+### Localization
+- Added Spanish and French translations (requires the corresponding game language pack; activate with sr_language=es or sr_language=fr in thinker.ini)
+
+---
+
 ## SmacAccess v0.1.2-alpha (2026-03-12)
 
 ### Accessible Startup Menus
