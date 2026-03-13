@@ -67,9 +67,14 @@ echo "  + Tolk DLLs (4 files)"
 
 # Screen reader language files
 mkdir -p "$STAGING/sr_lang"
-cp "$LANG_DIR/en.txt" "$STAGING/sr_lang/"
-cp "$LANG_DIR/de.txt" "$STAGING/sr_lang/"
-echo "  + sr_lang/en.txt, sr_lang/de.txt"
+LANG_COUNT=0
+for lang_file in "$LANG_DIR"/*.txt; do
+    if [ -f "$lang_file" ]; then
+        cp "$lang_file" "$STAGING/sr_lang/"
+        LANG_COUNT=$((LANG_COUNT + 1))
+    fi
+done
+echo "  + sr_lang/ ($LANG_COUNT language files)"
 
 # SMAC mod files (smac_only mode)
 SMAC_MOD_DIR="smac_mod"
@@ -146,8 +151,7 @@ echo "  Tolk.dll             - Screen reader library"
 echo "  nvdaControllerClient32.dll - NVDA support"
 echo "  SAAPI32.dll          - SAPI support"
 echo "  dolapi32.dll         - JAWS support"
-echo "  sr_lang/en.txt       - English screen reader text"
-echo "  sr_lang/de.txt       - German screen reader text"
+echo "  sr_lang/             - Screen reader language files (en, de, es, fr, ...)"
 echo "  smac_mod/            - SMAC-in-SMACX mod files (English)"
 echo "  smac_mod/de/         - SMAC-in-SMACX mod files (German)"
 echo "  README.md            - Installation instructions"
