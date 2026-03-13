@@ -190,6 +190,26 @@ Filters from triggers 1-3:
 
 ## Notes for Next Session
 
+### Refactoring: screen_reader.cpp aufteilen (2026-03-13, OFFEN)
+
+**Erledigt:** gui.cpp von 3420 → 2515 Zeilen (gui_base.cpp + gui_video.cpp extrahiert). Build OK.
+
+**Nächster Schritt:** screen_reader.cpp (3088 Zeilen) aufteilen in 6 neue Dateien:
+1. **sr_council_hooks.cpp** (~590 Z.) — Council-Vote + Proposal + Buy-Votes Modals (Zeilen ~1770-2360)
+2. **sr_popup_hooks.cpp** (~590 Z.) — popp/popb/X_pop Hooks, Popup-Text-Lesen, Rules-Modal (Zeilen ~806-1600)
+3. **sr_text_capture.cpp** (~470 Z.) — Text-Buffer, Items, Snapshot, Tree-Walking (Zeilen ~37-60 + 573-759 + 2733-2841)
+4. **sr_inline_hooks.cpp** (~380 Z.) — x86-Hook-Infra + Buffer_write Hooks (Zeilen ~2461-2741)
+5. **sr_misc_hooks.cpp** (~340 Z.) — File-Browser, Tech-Achievement, Planetfall, Number-Input (Zeilen ~1610-2459)
+6. **sr_tolk.cpp** (~370 Z.) — Tolk-Init, Output, History, Logging, Encoding (Zeilen ~15-456)
+
+**Bleibt in screen_reader.cpp** (~500 Z.): Hook-Installation (sr_install_text_hooks), öffentliche State-Variablen, Koordinationsfunktionen.
+
+**Vorsicht bei:**
+- `trampoline_mem` (statisch, geteilt zwischen sr_inline_hooks und sr_install_text_hooks)
+- `sr_popup_list` (geteilt zwischen sr_popup_hooks und gui.cpp)
+- `sr_tutorial_announce_time` (extern, von gui.cpp genutzt)
+- Gleicher Ablauf: eine Datei extrahieren → cmake reconfigure → build → nächste
+
 ### KRITISCH: Escape in Laden-Dialog beendet Spiel (2026-03-12, UNGELÖST)
 
 **Problem:** Wenn man im TOPMENU "Spiel laden" wählt und im Datei-Browser Escape drückt, beendet sich das Spiel statt zum Menü zurückzukehren. Gleiches Problem bei SCENARIOMENU → "Szenario bearbeiten" → Escape.
