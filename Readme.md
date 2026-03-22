@@ -1,16 +1,20 @@
-#SmacAccess
-**Screen reader accessibility mod for Sid Meier's Alpha Centauri + Alien Crossfire.**
+SmacAccess
+--
+**Screen reader accessibility mod for Sid Meier's Alpha Centauri plus Alien Crossfire.**
+
 SmacAccess is a fork of [Thinker Mod](https://github.com/induktio/thinker) that adds full screen reader support to SMACX, making this classic 4X strategy game playable for blind and visually impaired players. It works with NVDA, JAWS, and potentially other screen readers via the [Tolk](https://github.com/ndarilek/tolk) library.
 
-##Quickstart:
+Quickstart:--
+-
 1. Install Alpha Centauri Planetary Pack. I've tested both the Steam and Gog version, they are identical. Other sources might work too, but I can't promise anything.
 2. Unpack the mod .zip file to the directory where the game is installed.
 Direkt download link:
-
+https://github.com/HappyStarfish/smac-access/releases/download/v0.1.4-alpha/SmacAccess_v0.1.4.zip
 3. Run thinker.exe (not terranx.dxe). The first time you try, Windows defender might display a warning. To circumvent it, click "more info" and then "run anyway".
 4. Have a look at the next couple of sections in this document in order to familiarize yourself with the game: it's rather complex both strategically and mod-handling-wise. I tried to make it as intuitive as possible, and I'm open for suggestions to improve it further.
 
-##Important keys and concepts:
+Important keys and concepts:
+--
 ctrl+f1: Should show context-sensitive help everywhere, might still be messy or missing in a few places.
 Ctrl+f2: Opens the menu bar with loads of sections.
 On the world map:
@@ -28,10 +32,12 @@ There are loads more hotkeys on the world map, for example all the f-keys open s
 For a complete list of original SMAC keys, see the in-game help or the game manual.
 You might sometimes get error messages from the game when trying to execute actions like terraforming. This is due to a build-in feature: The game always marks one specific unit at a time as active, usually indicated by a flashing cursor. Just press Ctrl+Space to check if the currently active unit is the right one for the type of action you want to take.
 
-###A word on navigating the grid coordinates
+A word on navigating the grid coordinates:
+--
 The grid has only fully odd and fully even coordinates. Think like a chess board. You can always move to any of the eight directly neighbouring fields. The cardinal neighbours are two coordinates apart from each other, the non-cardinal ones translate to one coordinate-step in botht the horizontal and vertical direction. Don't worry if you don't get my explanation though. Firstly the explanation is crap, secondly you'll probably manage to find your way around just fine once you've started getting into the game.
 
-##Known issues:
+Known issues:
+--
 There are major issues with the planet council, bribes might not work as expected and the whole council may be unstable. Sometimes the game will prompt you to propose something to the council even though it isn't open.
 Only hot seat multiplayer works reliably. When playing over the internet, you can't choose which faction to play, and some other settings might be broken as well. I'm working on this.
 When starting the game, it'll probably tell you that you don't have the original SMAC CD in your computer. Well what a surprise...
@@ -41,15 +47,15 @@ You can't rename your save files within the game yet.
 Some status screens don't work properly yet, e.g. monolith and hall of fame. But they aren't crucial for progressing in the game as far as I can tell.
 The scenario editor is not at all accessible for now. Please let me know how big of a deal that is for passionate fans of the game, I might be able to implement it at some point.
 
-##Sections which are not thoroughly tested yet:
+Sections which are not thoroughly tested yet:
+--
 Spanish and French language pack. English and German are somewhat tested. If you want to play in a different language, please provide a download link to the according files and I'll see if <i can loop it in witht he mod.
 Ranged Combat
 What happens when you win the game (I desperately need playtesters who don't constantly get wiped out after like 100 turns!)
 and probably there are quite some more issues which I haven't encountered so far.
 
-##Features
---------
-
+Features:
+---
 **Screen Reader Integration**
 - World map, all menus, dialogs, and popups announced via screen reader
 - Localization support (English and German tested, Spanish and French also included)
