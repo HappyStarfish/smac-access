@@ -19,6 +19,7 @@
 #include "netsetup_settings_handler.h"
 #include "screen_reader.h"
 #include "localization.h"
+#include "engine.h"
 
 // Game globals (from engine.h / engine.cpp)
 extern Win* NetWin;
@@ -30,6 +31,83 @@ extern int __thiscall Win_is_visible(Win* This);
 
 // Forward declaration for popup list state
 extern SrPopupList sr_popup_list;
+
+// Player slot data array (reverse-engineered from terranx.exe click handler at 0x47B760).
+// Array at 0x90DB98 with 0x17C (380) byte stride, 1-based indexing (slots 1-7).
+static const unsigned int SLOT_ARRAY_BASE = 0x90DB98;
+static const int SLOT_STRIDE = 0x17C;
+// Per-slot field offsets
+static const int SLOT_OFF_STATUS     = 0x00;  // byte: 0x01=Human, 0xFF=Computer, 0x00=Closed
+static const int SLOT_OFF_DIFFICULTY = 0x02;  // byte: 0-5
+static const int SLOT_OFF_FACTION    = 0x03;  // byte: 0xFF=random, 0-13=faction
+static const int SLOT_OFF_NAME       = 0x05;  // char[24]: leader name
+
+// --- Popup override for calling game's faction/difficulty handlers ---
+// When set to >= 0, the hooked popup call returns this value instead of showing UI.
+// The game handler then processes the result normally (init, broadcast, etc.)
+static int _popupOverride = -1;
+
+// Original popup function at 0x59D250 (__thiscall, ecx=popup_obj, returns int)
+typedef int(__thiscall *FPopupDisplay)(void* This);
+static FPopupDisplay _origPopupDisplay = (FPopupDisplay)0x59D250;
+
+// Hook for popup calls inside faction/difficulty handlers.
+// If override is set, return it. Otherwise call original.
+static int __fastcall hook_popup_display(void* This, void* /*edx*/) {
+    if (_popupOverride >= 0) {
+        int result = _popupOverride;
+        sr_debug_log("NETSETUP: popup override -> %d", result);
+        return result;
+    }
+    return _origPopupDisplay(This);
+}
+
+// Spot coordinates for player slots (from SpotList log data).
+// type=3 = faction column, type=4 = difficulty column, type=5 = status toggle.
+// Center of each spot rect, indexed by slot 0-6 (display order).
+static const int SPOT_FACTION_X = 603;   // center of (533,673)
+static const int SPOT_DIFFICULTY_X = 734; // center of (675,793)
+static const int SPOT_STATUS_X = 343;    // center of (335,351)
+static const int SPOT_Y[] = { 68, 90, 112, 134, 156, 178, 200 }; // center of 20px rows
+
+// Player zone sub-columns
+enum PlayerColumn { PCOL_STATUS = 0, PCOL_FACTION, PCOL_DIFFICULTY, PCOL_COUNT };
+
+static unsigned char* slot_ptr(int slot_1based) {
+    return (unsigned char*)(SLOT_ARRAY_BASE + slot_1based * SLOT_STRIDE);
+}
+
+static const char* slot_status_str(int slot_1based) {
+    unsigned char status = slot_ptr(slot_1based)[SLOT_OFF_STATUS];
+    if (status == 0x01) return loc(SR_NETSETUP_SLOT_HUMAN);
+    if (status == 0xFF) return loc(SR_NETSETUP_SLOT_COMPUTER);
+    return loc(SR_NETSETUP_SLOT_CLOSED);
+}
+
+// Max valid faction ID for SMACX (factions 1-14 in MFactions array)
+static const int MAX_FACTION_ID = 14;
+
+static const char* slot_faction_str(int slot_1based) {
+    signed char fid = (signed char)slot_ptr(slot_1based)[SLOT_OFF_FACTION];
+    if (fid < 1 || fid > MAX_FACTION_ID) return loc(SR_NETSETUP_FACTION_RANDOM);
+    // Read faction adjective name from MFactions array (Windows-1252 -> UTF-8)
+    if (MFactions && !IsBadReadPtr(&MFactions[fid], sizeof(MFaction))) {
+        const char* name = MFactions[fid].adj_name_faction;
+        if (name && name[0]) return sr_game_str(name);
+    }
+    return loc(SR_NETSETUP_FACTION_RANDOM);
+}
+
+static const char* slot_difficulty_str(int slot_1based) {
+    int diff = slot_ptr(slot_1based)[SLOT_OFF_DIFFICULTY];
+    static const SrStr diff_keys[] = {
+        SR_NETSETUP_DIFF_CITIZEN, SR_NETSETUP_DIFF_SPECIALIST,
+        SR_NETSETUP_DIFF_TALENT, SR_NETSETUP_DIFF_LIBRARIAN,
+        SR_NETSETUP_DIFF_THINKER, SR_NETSETUP_DIFF_TRANSCEND
+    };
+    if (diff >= 0 && diff <= 5) return loc(diff_keys[diff]);
+    return "?";
+}
 
 namespace MultiplayerHandler {
 
@@ -55,34 +133,36 @@ static SettingItem settings[] = {
 };
 static const int SETTINGS_COUNT = 8;
 
-// Checkbox items (bottom, two columns)
+// Checkbox items with direct memory addresses for toggle.
+// Addresses and bitmasks from disassembly of click handler at 0x47B760.
+// Game stores checkbox state as XOR bits in globals at 0x90E8EC/F0/F4.
 struct CheckboxItem {
     SrStr nameKey;
-    int clickX;
-    int clickY;
+    uint32_t* addr;   // global address (0x90E8EC, 0x90E8F0, or 0x90E8F4)
+    uint32_t mask;     // XOR bitmask for this checkbox
 };
 
 static const CheckboxItem checkboxes[] = {
-    // Left column
-    { SR_NETSETUP_CB_SIMULTANEOUS,    15, 415 },
-    { SR_NETSETUP_CB_TRANSCENDENCE,   15, 435 },
-    { SR_NETSETUP_CB_CONQUEST,        15, 455 },
-    { SR_NETSETUP_CB_DIPLOMATIC,      15, 475 },
-    { SR_NETSETUP_CB_ECONOMIC,        15, 495 },
-    { SR_NETSETUP_CB_COOPERATIVE,     15, 515 },
-    { SR_NETSETUP_CB_DO_OR_DIE,       15, 535 },
-    { SR_NETSETUP_CB_LOOK_FIRST,      15, 555 },
-    { SR_NETSETUP_CB_TECH_STAGNATION, 15, 575 },
-    // Right column
-    { SR_NETSETUP_CB_SPOILS,          409, 415 },
-    { SR_NETSETUP_CB_BLIND_RESEARCH,  409, 435 },
-    { SR_NETSETUP_CB_INTENSE_RIVALRY, 409, 455 },
-    { SR_NETSETUP_CB_NO_UNITY_SURVEY, 409, 475 },
-    { SR_NETSETUP_CB_NO_UNITY_SCATTER,409, 495 },
-    { SR_NETSETUP_CB_BELL_CURVE,      409, 515 },
-    { SR_NETSETUP_CB_TIME_WARP,       409, 535 },
-    { SR_NETSETUP_CB_RAND_PERSONALITY,409, 555 },
-    { SR_NETSETUP_CB_RAND_SOCIAL,     409, 575 },
+    // Left column (spot positions: 100, 0-7)
+    { SR_NETSETUP_CB_SIMULTANEOUS,    (uint32_t*)0x90E8F4, 0x10 },
+    { SR_NETSETUP_CB_TRANSCENDENCE,   (uint32_t*)0x90E8EC, 0x0800 },
+    { SR_NETSETUP_CB_CONQUEST,        (uint32_t*)0x90E8EC, 0x02 },
+    { SR_NETSETUP_CB_DIPLOMATIC,      (uint32_t*)0x90E8EC, 0x08 },
+    { SR_NETSETUP_CB_ECONOMIC,        (uint32_t*)0x90E8EC, 0x04 },
+    { SR_NETSETUP_CB_COOPERATIVE,     (uint32_t*)0x90E8EC, 0x1000 },
+    { SR_NETSETUP_CB_DO_OR_DIE,       (uint32_t*)0x90E8EC, 0x01 },
+    { SR_NETSETUP_CB_LOOK_FIRST,      (uint32_t*)0x90E8EC, 0x10 },
+    { SR_NETSETUP_CB_TECH_STAGNATION, (uint32_t*)0x90E8EC, 0x20 },
+    // Right column (spot positions: 8-14, 16-17)
+    { SR_NETSETUP_CB_SPOILS,          (uint32_t*)0x90E8EC, 0x4000 },
+    { SR_NETSETUP_CB_BLIND_RESEARCH,  (uint32_t*)0x90E8EC, 0x0200 },
+    { SR_NETSETUP_CB_INTENSE_RIVALRY, (uint32_t*)0x90E8EC, 0x40 },
+    { SR_NETSETUP_CB_NO_UNITY_SURVEY, (uint32_t*)0x90E8EC, 0x0100 },
+    { SR_NETSETUP_CB_NO_UNITY_SCATTER,(uint32_t*)0x90E8EC, 0x2000 },
+    { SR_NETSETUP_CB_BELL_CURVE,      (uint32_t*)0x90E8EC, 0x8000 },
+    { SR_NETSETUP_CB_TIME_WARP,       (uint32_t*)0x90E8EC, 0x80 },
+    { SR_NETSETUP_CB_RAND_PERSONALITY,(uint32_t*)0x90E8F0, 0x800000 },
+    { SR_NETSETUP_CB_RAND_SOCIAL,     (uint32_t*)0x90E8F0, 0x1000000 },
 };
 static const int CHECKBOXES_COUNT = 18;
 
@@ -112,8 +192,10 @@ static void announce_current();
 static bool _active = false;
 static bool _launching = false;  // true after Start clicked, suppresses OnTimer
 static bool _inDialog = false;   // true during setting dialog, suppresses OnTimer
+static DWORD _suppressTimerUntil = 0;  // suppress OnTimer until this tick count
 static int _currentZone = ZONE_SETTINGS;
 static int _currentIndex = 0;
+static int _playerColumn = PCOL_STATUS;  // current column in player zone
 
 // Deferred click: fires after a short timer, completely outside any WinProc call
 static int _pendingSettingClick = -1;
@@ -127,8 +209,8 @@ void CALLBACK SettingClickTimerProc(HWND, UINT, UINT_PTR id, DWORD) {
     sr_debug_log("NETSETUP: setting click disabled (finding field offsets first)");
 }
 
-// Local checkbox state tracking (toggled on each click)
-static bool _cbState[CHECKBOXES_COUNT];
+// Checkbox state is read directly from game memory (0x90E8EC/F0/F4).
+// No local tracking needed.
 
 // Player text change detection
 static char _lastPlayerText[PLAYER_COUNT][256];
@@ -206,22 +288,23 @@ static void direct_click(int netwin_x, int netwin_y) {
     onClick(NetWin, netwin_x, netwin_y, MK_LBUTTON);
 }
 
-// Known NetWin field offsets for settings (found by memory scan).
-// -1 means not yet discovered.
+// Settings are stored as individual BYTES in a global block at 0x90E8E0.
+// Discovered by disassembling the click handler and byte-scanning the block.
+// The handler functions (0x47E340 etc.) write popup results as single bytes.
 struct SettingField {
-    int offset;     // byte offset in NetWin struct
-    int max_val;    // maximum stored value (cycles 0..max_val)
+    unsigned char* addr;  // global byte address (NULL = not discovered)
+    int max_val;          // maximum value (cycles 0..max_val)
 };
 
 static SettingField setting_fields[] = {
-    { 0xE68, 5 },  // [0] Difficulty: 0=Spezialist .. 5=Transzendenz (6 values)
-    { -1, 0 },     // [1] Time controls: offset unknown
-    { -1, 0 },     // [2] Game type: offset unknown
-    { -1, 0 },     // [3] Planet size: offset unknown
-    { -1, 0 },     // [4] Ocean coverage: offset unknown
-    { -1, 0 },     // [5] Erosion: offset unknown
-    { -1, 0 },     // [6] Native life: offset unknown
-    { -1, 0 },     // [7] Cloud cover: offset unknown
+    { (unsigned char*)0x90E8E2, 5 },  // [0] Difficulty: 0-5
+    { (unsigned char*)0x90E8E3, 5 },  // [1] Time controls: 0=Aus,1=Kurz,...
+    { NULL, 0 },                       // [2] Game type: byte unknown
+    { (unsigned char*)0x90E8E6, 4 },  // [3] Planet size: 0-4
+    { (unsigned char*)0x90E8E7, 2 },  // [4] Ocean coverage: 0-2
+    { (unsigned char*)0x90E8E8, 2 },  // [5] Erosion: 0-2
+    { (unsigned char*)0x90E8E9, 2 },  // [6] Native life: 0-2
+    { (unsigned char*)0x90E8EA, 2 },  // [7] Cloud cover: 0-2
 };
 
 /// Read the current rendered value text for a setting from the last redraw.
@@ -254,28 +337,33 @@ static void read_setting_text(int idx, char* out, int out_size) {
     }
 }
 
-/// Cycle a setting value: increment (or decrement with dir=-1), write to
-/// NetWin memory, force redraw, and announce the new value text.
+/// Cycle a setting value: increment (or decrement with dir=-1), write byte
+/// to global address, force redraw, and announce the new value text.
 static void cycle_setting(int idx, int dir) {
     if (idx < 0 || idx >= SETTINGS_COUNT) return;
     if (!NetWin) return;
 
     SettingField& f = setting_fields[idx];
-    if (f.offset < 0) {
-        // Offset not known — open the settings editor at this item
-        NetSetupSettingsHandler::RunModalAt(0, idx);
+    if (!f.addr) {
+        // Address not known — just re-announce current value
+        char val_text[256];
+        read_setting_text(idx, val_text, sizeof(val_text));
+        char buf[512];
+        snprintf(buf, sizeof(buf), "%s: %s",
+            loc(settings[idx].nameKey), val_text[0] ? val_text : "?");
+        sr_output(buf, true);
         return;
     }
 
-    int* field = (int*)((unsigned char*)NetWin + f.offset);
-    int old_val = *field;
+    int old_val = *f.addr;
     int new_val = old_val + dir;
     if (new_val > f.max_val) new_val = 0;
     if (new_val < 0) new_val = f.max_val;
-    *field = new_val;
+    *f.addr = (unsigned char)new_val;
 
-    sr_debug_log("NETSETUP: cycle setting %d (%s) offset=0x%X: %d -> %d",
-        idx, loc(settings[idx].nameKey), f.offset, old_val, new_val);
+    sr_debug_log("NETSETUP: cycle setting %d (%s) @0x%X: %d -> %d",
+        idx, loc(settings[idx].nameKey), (unsigned int)(uintptr_t)f.addr,
+        old_val, new_val);
 
     // Force redraw to update displayed text
     sr_force_snapshot();
@@ -291,12 +379,21 @@ static void cycle_setting(int idx, int dir) {
     sr_output(buf, true);
 }
 
-/// Activate a checkbox: simulate click to toggle, then flip local state and announce.
+/// Toggle a checkbox by directly XORing the bit in game memory.
+/// Same operation as the game's click handler at 0x47B760.
 static void activate_checkbox(int idx) {
     if (idx < 0 || idx >= CHECKBOXES_COUNT) return;
-    sr_debug_log("NETSETUP: toggle checkbox %d (%s)", idx, loc(checkboxes[idx].nameKey));
-    simulate_click(checkboxes[idx].clickX, checkboxes[idx].clickY);
-    _cbState[idx] = !_cbState[idx];
+    const CheckboxItem& cb = checkboxes[idx];
+    uint32_t old_val = *cb.addr;
+    *cb.addr ^= cb.mask;
+    bool now_enabled = (*cb.addr & cb.mask) != 0;
+    sr_debug_log("NETSETUP: toggle checkbox %d (%s) @0x%X ^= 0x%X: 0x%X -> 0x%X (%s)",
+        idx, loc(cb.nameKey), (unsigned int)(uintptr_t)cb.addr, cb.mask,
+        old_val, *cb.addr, now_enabled ? "ON" : "OFF");
+    // Force redraw so the visual display matches
+    if (NetWin) {
+        GraphicWin_redraw(NetWin);
+    }
     announce_current();
 }
 
@@ -310,9 +407,17 @@ static void activate_button(int idx) {
     simulate_click(10, 10);
     // Actual button click
     simulate_click(buttons[idx].clickX, buttons[idx].clickY);
-    // If Start button, stop OnTimer to prevent sync spam
+    // If Start button, dump slot data before launch for diagnostics
     if (idx == 1) {
         _launching = true;
+        sr_debug_log("NETSETUP: === SLOT DATA AT START ===");
+        unsigned char* slot_base = (unsigned char*)SLOT_ARRAY_BASE;
+        for (int s = 1; s <= 7; s++) {
+            unsigned char* sp = slot_base + s * SLOT_STRIDE;
+            if (IsBadReadPtr(sp, SLOT_STRIDE)) continue;
+            sr_debug_log("  slot[%d]: status=0x%02X diff=%d faction=%d name=[%.24s]",
+                s, sp[0], sp[2], (int)(signed char)sp[3], (const char*)(sp + 5));
+        }
     }
 }
 
@@ -329,22 +434,20 @@ static void announce_current() {
                 loc(settings[_currentIndex].nameKey));
             break;
         case ZONE_PLAYERS: {
-            const char* text = _lastPlayerText[_currentIndex];
-            if (text[0] == '\0') {
-                snprintf(buf, sizeof(buf), loc(SR_NETSETUP_PLAYER_FMT),
-                    _currentIndex + 1, count,
-                    loc(SR_NETSETUP_PLAYER_EMPTY));
-            } else {
-                snprintf(buf, sizeof(buf), loc(SR_NETSETUP_PLAYER_FMT),
-                    _currentIndex + 1, count, text);
-            }
+            int slot = _currentIndex + 1;
+            const char* status = slot_status_str(slot);
+            const char* faction = slot_faction_str(slot);
+            const char* diff = slot_difficulty_str(slot);
+            snprintf(buf, sizeof(buf), loc(SR_NETSETUP_SLOT_FMT),
+                _currentIndex + 1, count, status, faction, diff);
             break;
         }
         case ZONE_CHECKBOXES: {
-            bool enabled = _cbState[_currentIndex];
+            const CheckboxItem& cb = checkboxes[_currentIndex];
+            bool enabled = (*cb.addr & cb.mask) != 0;
             snprintf(buf, sizeof(buf), loc(SR_NETSETUP_CHECKBOX_FMT),
                 _currentIndex + 1, count,
-                loc(checkboxes[_currentIndex].nameKey),
+                loc(cb.nameKey),
                 enabled ? loc(SR_NETSETUP_ENABLED) : loc(SR_NETSETUP_DISABLED));
             break;
         }
@@ -356,6 +459,26 @@ static void announce_current() {
     }
     sr_output(buf, true);
     sr_debug_log("NETSETUP: announce zone=%d idx=%d: %s", _currentZone, _currentIndex, buf);
+}
+
+/// Announce only the current player column value (short form for Left/Right and Enter).
+static void announce_player_column() {
+    int slot = _currentIndex + 1;
+    char buf[256];
+    const char* col_name = "";
+    const char* value = "";
+    if (_playerColumn == PCOL_STATUS) {
+        col_name = loc(SR_NETSETUP_COL_STATUS);
+        value = slot_status_str(slot);
+    } else if (_playerColumn == PCOL_FACTION) {
+        col_name = loc(SR_NETSETUP_COL_FACTION);
+        value = slot_faction_str(slot);
+    } else if (_playerColumn == PCOL_DIFFICULTY) {
+        col_name = loc(SR_NETSETUP_COL_DIFFICULTY);
+        value = slot_difficulty_str(slot);
+    }
+    snprintf(buf, sizeof(buf), "%s: %s", col_name, value);
+    sr_output(buf, true);
 }
 
 /// Announce zone change.
@@ -386,14 +509,13 @@ void OnOpen() {
     _launching = false;
     _currentZone = ZONE_SETTINGS;
     _currentIndex = 0;
+    _playerColumn = PCOL_STATUS;
     // Clear player text
     for (int i = 0; i < PLAYER_COUNT; i++) {
         _lastPlayerText[i][0] = '\0';
     }
-    // Initialize checkbox state tracking (all off — defaults unknown)
-    for (int i = 0; i < CHECKBOXES_COUNT; i++) {
-        _cbState[i] = false;
-    }
+    // Checkbox state is read directly from game memory (0x90E8EC/F0/F4).
+    // No local init needed — announce_current reads the real bits.
     // Player text is rendered to NetWin's main canvas (GraphicWin oCanvas at +0x444).
     // Use this as buffer filter in OnTimer.
     _playerBuffer = nullptr;
@@ -487,52 +609,36 @@ void OnOpen() {
         }
     }
 
-    // Memory dump: check game globals AND NetWin fields after SpotList.
-    // Previous dump showed 0xA14-0xD34 is all RECT layout data.
-    if (NetWin) {
-        // 1. Check if game globals are really zero during NetWin
-        sr_debug_log("NETSETUP: === GAME GLOBALS CHECK ===");
-        sr_debug_log("  DiffLevel(@0x9A64C4) = %d", *DiffLevel);
-        sr_debug_log("  MapSizePlanet(@0x94A2A0) = %d", *(int*)0x94A2A0);
-        sr_debug_log("  MapOceanCoverage(@0x94A2A4) = %d", *(int*)0x94A2A4);
-        sr_debug_log("  MapErosiveForces(@0x94A2AC) = %d", *(int*)0x94A2AC);
-        sr_debug_log("  MapNativeLifeForms(@0x94A2B8) = %d", *(int*)0x94A2B8);
-        sr_debug_log("  MapCloudCover(@0x94A2B4) = %d", *(int*)0x94A2B4);
-        sr_debug_log("  GameRules(@0x9A649C) = 0x%X", *(int*)0x9A649C);
-
-        // 2. Dump NetWin after SpotList (0xD40 to 0xF00)
-        unsigned char* base = (unsigned char*)NetWin;
-        const int dump_start = 0xD40;
-        const int dump_end = 0xF00;
-        if (!IsBadReadPtr(base + dump_start, dump_end - dump_start)) {
-            sr_debug_log("NETSETUP: === MEMORY DUMP NetWin+0x%X to +0x%X ===", dump_start, dump_end);
-            for (int off = dump_start; off < dump_end; off += 16) {
-                int len = dump_end - off;
-                if (len > 16) len = 16;
-                char hex[80];
-                int pos = 0;
-                for (int b = 0; b < len; b++) {
-                    pos += snprintf(hex + pos, sizeof(hex) - pos, "%02X ", base[off + b]);
-                }
-                sr_debug_log("  +0x%04X: %s", off, hex);
+    // Dump player slot data from the per-slot array at 0x90DB98.
+    // Stride: 0x17C (380 bytes), 1-based indexing (slots 1-7).
+    // Fields: +0x00=status, +0x02=difficulty, +0x03=faction, +0x05=name, +0x178=H/C flag
+    {
+        sr_debug_log("NETSETUP: === PLAYER SLOT DATA (0x90DB98 + N*0x17C) ===");
+        unsigned char* slot_base = (unsigned char*)0x90DB98;
+        for (int s = 1; s <= 7; s++) {
+            unsigned char* slot = slot_base + s * 0x17C;
+            if (IsBadReadPtr(slot, 0x17C)) {
+                sr_debug_log("  slot[%d]: UNREADABLE at %p", s, (void*)slot);
+                continue;
             }
-            sr_debug_log("NETSETUP: === INT32 VALUES (0xD40-0xF00) ===");
-            for (int off = dump_start; off < dump_end; off += 4) {
-                int val = *(int*)(base + off);
-                if (val >= 0 && val <= 10) {
-                    sr_debug_log("  +0x%04X = %d  <-- small int", off, val);
-                }
+            int status = slot[0];
+            int difficulty = slot[2];
+            int faction = (int)(signed char)slot[3];
+            const char* name = (const char*)(slot + 5);
+            int hc_flag = *(int*)(slot + 0x178);
+            // Also dump first 16 bytes for field verification
+            char hex[64];
+            int pos = 0;
+            for (int b = 0; b < 16; b++) {
+                pos += snprintf(hex + pos, sizeof(hex) - pos, "%02X ", slot[b]);
             }
+            sr_debug_log("  slot[%d] @0x%X: status=0x%02X diff=%d faction=%d hc=%d name=[%.24s]",
+                s, (unsigned int)(uintptr_t)slot, status, difficulty, faction, hc_flag, name);
+            sr_debug_log("    raw: %s", hex);
         }
-
-        // 3. Also check AlphaIniPref at 0x94B464 (from OpenSMACX)
-        int* prefs = (int*)0x94B464;
-        if (!IsBadReadPtr(prefs, 40)) {
-            sr_debug_log("NETSETUP: === AlphaIniPref @0x94B464 ===");
-            for (int i = 0; i < 10; i++) {
-                sr_debug_log("  [%d] = 0x%08X (%d)", i, prefs[i], prefs[i]);
-            }
-        }
+        // Also log key globals
+        sr_debug_log("  LocalPlayerID(@0x93D4F0) = %d", *(int*)0x93D4F0);
+        sr_debug_log("  NetworkMode(@0x90E778) = %d", *(int*)0x90E778);
     }
 
     sr_output(loc(SR_NETSETUP_OPEN), true);
@@ -606,18 +712,29 @@ bool Update(UINT msg, WPARAM wParam) {
         return true;
     }
 
-    // Left/Right: cycle setting value (settings zone only)
-    if ((wParam == VK_LEFT || wParam == VK_RIGHT) && _currentZone == ZONE_SETTINGS) {
+    // Left/Right: context-dependent
+    if (wParam == VK_LEFT || wParam == VK_RIGHT) {
         int dir = (wParam == VK_RIGHT) ? 1 : -1;
-        cycle_setting(_currentIndex, dir);
-        return true;
+        if (_currentZone == ZONE_SETTINGS) {
+            cycle_setting(_currentIndex, dir);
+            return true;
+        }
+        if (_currentZone == ZONE_PLAYERS) {
+            // Switch column within player zone
+            _playerColumn += dir;
+            if (_playerColumn < 0) _playerColumn = PCOL_COUNT - 1;
+            if (_playerColumn >= PCOL_COUNT) _playerColumn = 0;
+            announce_player_column();
+            return true;
+        }
+        return false;
     }
 
     // Enter or Space: activate
     if (wParam == VK_RETURN || wParam == VK_SPACE) {
         switch (_currentZone) {
             case ZONE_SETTINGS:
-                cycle_setting(_currentIndex, 1);  // cycle forward
+                cycle_setting(_currentIndex, 1);
                 break;
             case ZONE_CHECKBOXES:
                 activate_checkbox(_currentIndex);
@@ -625,61 +742,60 @@ bool Update(UINT msg, WPARAM wParam) {
             case ZONE_BUTTONS:
                 activate_button(_currentIndex);
                 break;
-            case ZONE_PLAYERS:
-                // Read-only, just re-announce
-                announce_current();
+            case ZONE_PLAYERS: {
+                int slot = _currentIndex + 1;  // 1-based
+                unsigned char* sp = slot_ptr(slot);
+
+                if (_playerColumn == PCOL_STATUS) {
+                    unsigned char cur = sp[SLOT_OFF_STATUS];
+                    if (cur == 0x01) {
+                        // Human — can't change own status
+                    } else if (cur == 0xFF) {
+                        // Computer -> Closed
+                        sp[SLOT_OFF_STATUS] = 0x00;
+                        sr_debug_log("NETSETUP: close slot %d", slot);
+                    } else {
+                        // Closed -> Computer
+                        sp[SLOT_OFF_STATUS] = 0xFF;
+                        sr_debug_log("NETSETUP: reopen slot %d", slot);
+                    }
+                } else if (_playerColumn == PCOL_FACTION) {
+                    // Cycle faction: random(-1) -> 1 -> ... -> 14 -> random
+                    // Direct byte write + name copy from MFactions.
+                    // NOTE: This does NOT call the game's full init (0x47C970).
+                    // The game may not fully recognize the faction at start.
+                    // See project_status.md for next steps.
+                    signed char fid = (signed char)sp[SLOT_OFF_FACTION];
+                    fid++;
+                    if (fid == 0) fid = 1;
+                    if (fid > MAX_FACTION_ID) fid = -1;
+                    sp[SLOT_OFF_FACTION] = (unsigned char)fid;
+                    if (fid >= 1 && fid <= MAX_FACTION_ID
+                        && MFactions && !IsBadReadPtr(&MFactions[fid], sizeof(MFaction))) {
+                        strncpy((char*)(sp + SLOT_OFF_NAME),
+                            MFactions[fid].name_leader, 23);
+                        sp[SLOT_OFF_NAME + 23] = '\0';
+                    } else {
+                        sp[SLOT_OFF_NAME] = '\0';
+                    }
+                    sr_debug_log("NETSETUP: cycle slot %d faction -> %d name=[%.24s]",
+                        slot, (int)fid, (const char*)(sp + SLOT_OFF_NAME));
+                } else if (_playerColumn == PCOL_DIFFICULTY) {
+                    // Cycle difficulty: 0-5
+                    int diff = sp[SLOT_OFF_DIFFICULTY];
+                    diff++;
+                    if (diff > 5) diff = 0;
+                    sp[SLOT_OFF_DIFFICULTY] = (unsigned char)diff;
+                    sr_debug_log("NETSETUP: cycle slot %d difficulty -> %d", slot, diff);
+                }
+                // Suppress OnTimer briefly so it doesn't re-announce the change
+                _suppressTimerUntil = GetTickCount() + 1500;
+                // Force visual redraw and announce just the changed column
+                if (NetWin) GraphicWin_redraw(NetWin);
+                announce_player_column();
                 break;
+            }
         }
-        return true;
-    }
-
-    // Ctrl+T: DIAGNOSTIC — write test values to suspected field offsets and redraw.
-    // Tests one offset at a time; cycles through candidates on each press.
-    if (ctrl && wParam == 'T' && NetWin) {
-        static int test_phase = 0;
-        unsigned char* base = (unsigned char*)NetWin;
-
-        // Candidate offsets for difficulty (currently=2, write 0 → should show "Bürger"/"Citizen")
-        // and map settings (currently=1, write 2 → should change display text)
-        struct TestCase {
-            int offset;
-            int old_expect;  // what we expect to find
-            int new_val;     // what we write
-            const char* name;
-        };
-        static TestCase tests[] = {
-            { 0xE68, 2, 0, "difficulty?" },
-            { 0xE6C, 0, 1, "time_controls?" },
-            { 0xE70, 1, 0, "game_type?" },
-            { 0xE4C, 1, 0, "field_E4C?" },
-            { 0xE50, 1, 0, "field_E50?" },
-            { 0xEB4, 1, 0, "map_a?" },
-            { 0xEB8, 1, 0, "map_b?" },
-            { 0xEBC, 1, 0, "map_c?" },
-            { 0xEC0, 1, 0, "map_d?" },
-            { 0xEE0, 2, 0, "field_EE0?" },
-        };
-        int ntests = sizeof(tests) / sizeof(tests[0]);
-
-        if (test_phase >= ntests) {
-            sr_output("All test phases done. Restart lobby to reset.", true);
-            test_phase = 0;
-            return true;
-        }
-
-        TestCase& t = tests[test_phase];
-        int* field = (int*)(base + t.offset);
-        int old_val = *field;
-        *field = t.new_val;
-        GraphicWin_redraw(NetWin);
-
-        char buf[256];
-        snprintf(buf, sizeof(buf), "Test %d: +0x%X (%s) was %d, wrote %d. Check display!",
-            test_phase, t.offset, t.name, old_val, t.new_val);
-        sr_output(buf, true);
-        sr_debug_log("NETSETUP: %s", buf);
-
-        test_phase++;
         return true;
     }
 
@@ -692,11 +808,11 @@ bool Update(UINT msg, WPARAM wParam) {
             case ZONE_SETTINGS:
                 item_name = loc(settings[_currentIndex].nameKey);
                 break;
-            case ZONE_PLAYERS:
-                item_name = _lastPlayerText[_currentIndex][0]
-                    ? _lastPlayerText[_currentIndex]
-                    : loc(SR_NETSETUP_PLAYER_EMPTY);
+            case ZONE_PLAYERS: {
+                int slot = _currentIndex + 1;
+                item_name = slot_status_str(slot);
                 break;
+            }
             case ZONE_CHECKBOXES:
                 item_name = loc(checkboxes[_currentIndex].nameKey);
                 break;
@@ -716,6 +832,9 @@ bool Update(UINT msg, WPARAM wParam) {
 
 void OnTimer() {
     if (!_active || !NetWin || _launching || _inDialog) return;
+    // Suppress briefly after player slot changes to avoid interrupting announce
+    if (_suppressTimerUntil && GetTickCount() < _suppressTimerUntil) return;
+    _suppressTimerUntil = 0;
 
     // The main canvas only renders ONCE when the screen opens. Periodic redraws
     // only update child windows (timer, network debug). To capture player data,
@@ -790,6 +909,12 @@ void OnTimer() {
             _lastPlayerText[p][255] = '\0';
         }
     }
+}
+
+void InstallHooks() {
+    // Popup hooks disabled — direct_click + write_call approach crashed.
+    // See project_status.md for analysis and next steps.
+    sr_debug_log("NETSETUP: InstallHooks (no hooks installed yet)");
 }
 
 } // namespace MultiplayerHandler

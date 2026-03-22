@@ -5,7 +5,9 @@
 #include "game_log.h"
 #include "message_handler.h"
 #include "monument_handler.h"
+#include "multiplayer_handler.h"
 #include "netsetup_settings_handler.h"
+#include "sr_misc_hooks.h"
 #include <mutex>
 
 static std::mutex FileLock;
@@ -1088,6 +1090,15 @@ bool patch_setup(Config* cf) {
     write_call(0x62794B, (int)mod_BasePop_start); // pop_ask
     write_call(0x627C90, (int)mod_BasePop_start); // pop_ask_number
 
+    // NETCONNECT: hypothesis 5 — let original do_create/do_join run normally
+    // but hook X_pop at their call sites to return 0 with pre-filled buffers.
+    // Preserves all original state (Popup lifecycle, editbox, prefs, connect, lobby).
+    // do_join is handled in mod_create_game (gui_video.cpp, hook at 0x4E3279).
+    write_call(0x4E3284, (int)sr_hook_do_create); // AlphaNet_setup -> do_create
+    write_call(0x4E2AB8, (int)sr_xpop_stub);      // X_pop in do_create (initial)
+    write_call(0x4E2B0F, (int)sr_xpop_stub);      // X_pop in do_create (retry)
+    write_call(0x4E2EB6, (int)sr_xpop_stub);      // X_pop in do_join
+
     // Startup menu modal replacement: intercept menu display (0x4ADB20)
     // at specific call sites so we can show an accessible modal instead.
     write_call(0x58E71D, (int)mod_startup_menu_runner); // TOPMENU
@@ -1816,6 +1827,7 @@ bool patch_setup(Config* cf) {
 
     sr_install_text_hooks();
     MonumentHandler::InstallHooks();
+    MultiplayerHandler::InstallHooks();
 
     if (!VirtualProtect(AC_IMAGE_BASE, AC_IMAGE_LEN, PAGE_EXECUTE_READ, &attrs)) {
         return false;

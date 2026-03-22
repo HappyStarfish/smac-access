@@ -462,6 +462,16 @@ diplo_status_changed=Diplomatic status: %s
 input_number=Number input. Default: %d. Type digits, Enter to confirm, Escape for default.
 input_number_empty=Empty
 input_number_done=Entered %d.
+input_text_empty=Empty
+netconnect_create_title=Create game. Enter game name and player name. Escape to cancel.
+netconnect_join_title=Join game. Enter your player name. Escape to cancel.
+netconnect_game_name=Game name
+netconnect_player_name=Player name
+netconnect_confirmed=Game: %s, Player: %s
+netconnect_join_confirmed=Player: %s
+netconnect_cancelled=Cancelled.
+netconnect_need_game=Game name required.
+netconnect_need_player=Player name required.
 
 # Cursor / Numpad
 cursor_to_unit=Cursor at unit.
@@ -750,6 +760,14 @@ netsetup_gt_random=New Game (Random Map)
 netsetup_gt_scenario=Scenario
 netsetup_gt_load_map=Load Map
 netsetup_start_no_players=Cannot start: not enough players.
+netsetup_col_status=Status
+netsetup_col_faction=Faction
+netsetup_col_difficulty=Difficulty
+netsetup_slot_human=Human
+netsetup_slot_computer=Computer
+netsetup_slot_closed=Closed
+netsetup_slot_fmt=Slot %d of %d: %s, %s, %s
+netsetup_faction_random=Random
 
 # Unit Action Menu (Shift+F10)
 act_menu_open=Unit actions, %d items. Up/Down, Enter, Escape.

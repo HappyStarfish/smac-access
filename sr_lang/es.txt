@@ -462,6 +462,16 @@ diplo_status_changed=Estado diplomático: %s
 input_number=Entrada numérica. Por defecto: %d. Escribe dígitos, Enter para confirmar, Escape para valor por defecto.
 input_number_empty=Vacío
 input_number_done=Introducido %d.
+input_text_empty=Vacío
+netconnect_create_title=Crear partida. Introduce el nombre de la partida y tu nombre. Escape para cancelar.
+netconnect_join_title=Unirse a partida. Introduce tu nombre. Escape para cancelar.
+netconnect_game_name=Nombre de la partida
+netconnect_player_name=Nombre del jugador
+netconnect_confirmed=Partida: %s, Jugador: %s
+netconnect_join_confirmed=Jugador: %s
+netconnect_cancelled=Cancelado.
+netconnect_need_game=Se requiere nombre de partida.
+netconnect_need_player=Se requiere nombre de jugador.
 
 # Cursor / Teclado numérico
 cursor_to_unit=Cursor en unidad.
@@ -750,6 +760,14 @@ netsetup_gt_random=Nueva partida (mapa aleatorio)
 netsetup_gt_scenario=Escenario
 netsetup_gt_load_map=Cargar mapa
 netsetup_start_no_players=No se puede iniciar: no hay suficientes jugadores.
+netsetup_col_status=Estado
+netsetup_col_faction=Facción
+netsetup_col_difficulty=Dificultad
+netsetup_slot_human=Humano
+netsetup_slot_computer=Computadora
+netsetup_slot_closed=Cerrado
+netsetup_slot_fmt=Ranura %d de %d: %s, %s, %s
+netsetup_faction_random=Aleatorio
 
 # Menú de acciones de unidad (Shift+F10)
 act_menu_open=Acciones de unidad, %d elementos. Up/Down, Enter, Escape.

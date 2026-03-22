@@ -1,5 +1,7 @@
 
 #include "gui.h"
+#include "screen_reader.h"
+#include "sr_misc_hooks.h"
 
 // PRACX-derived pointers defined in gui.cpp
 extern HWND* phWnd;
@@ -13,15 +15,21 @@ int __cdecl mod_Win_init_class(const char* lpWindowName)
 }
 
 /*
-Hook for AlphaNet_setup's call to create_game (0x4E2E50).
+Hook for AlphaNet_setup's call to AlphaNet_do_join (0x4E2E50).
+When screen reader is active, routes through sr_hook_do_join which
+replaces the entire function (avoids Popup object corruption).
 When sr_net_start_requested is set (by MultiplayerHandler Start button),
 override the return value to 1 (success) so AlphaNet_setup proceeds
 with game start instead of returning to the main menu.
 */
 int __thiscall mod_create_game(void* This) {
-    typedef int (__thiscall *FCreateGame)(void*);
-    FCreateGame orig_create_game = (FCreateGame)0x4E2E50;
-    int result = orig_create_game(This);
+    int result;
+    if (sr_is_available()) {
+        result = sr_hook_do_join(This);
+    } else {
+        typedef int (__thiscall *FDoJoin)(void*);
+        result = ((FDoJoin)0x4E2E50)(This);
+    }
     if (sr_net_start_requested) {
         sr_net_start_requested = false;
         sr_debug_log("NETSETUP: create_game hook override %d -> 1", result);

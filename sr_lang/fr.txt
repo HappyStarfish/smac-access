@@ -462,6 +462,16 @@ diplo_status_changed=Statut diplomatique : %s
 input_number=Saisie numérique. Par défaut : %d. Tapez les chiffres, Enter pour confirmer, Escape pour la valeur par défaut.
 input_number_empty=Vide
 input_number_done=Saisi %d.
+input_text_empty=Vide
+netconnect_create_title=Créer une partie. Entrez le nom de la partie et votre nom. Escape pour annuler.
+netconnect_join_title=Rejoindre une partie. Entrez votre nom. Escape pour annuler.
+netconnect_game_name=Nom de la partie
+netconnect_player_name=Nom du joueur
+netconnect_confirmed=Partie : %s, Joueur : %s
+netconnect_join_confirmed=Joueur : %s
+netconnect_cancelled=Annulé.
+netconnect_need_game=Nom de partie requis.
+netconnect_need_player=Nom de joueur requis.
 
 # Curseur / Pavé numérique
 cursor_to_unit=Curseur sur l'unité.
@@ -750,6 +760,14 @@ netsetup_gt_random=Nouvelle partie (carte aléatoire)
 netsetup_gt_scenario=Scénario
 netsetup_gt_load_map=Charger une carte
 netsetup_start_no_players=Impossible : pas assez de joueurs.
+netsetup_col_status=Statut
+netsetup_col_faction=Faction
+netsetup_col_difficulty=Difficulté
+netsetup_slot_human=Humain
+netsetup_slot_computer=Ordinateur
+netsetup_slot_closed=Fermé
+netsetup_slot_fmt=Emplacement %d sur %d : %s, %s, %s
+netsetup_faction_random=Aléatoire
 
 # Menu d'actions d'unité (Shift+F10)
 act_menu_open=Actions d'unité, %d éléments. Up/Down, Enter, Escape.

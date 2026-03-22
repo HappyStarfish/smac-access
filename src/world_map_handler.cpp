@@ -590,6 +590,16 @@ void OnTimer(DWORD now, bool on_world_map, GameWinState cur_win, int cur_popup,
     // Announce world map transition (spoken), but not during council
     if (on_world_map && !sr_prev_on_world_map && !CouncilHandler::IsActive()) {
         sr_debug_log("ANNOUNCE-SCREEN: World Map");
+        // Log player faction after game start for slot verification
+        {
+            int owner = MapWin->cOwner;
+            sr_debug_log("GAME-START: cOwner=%d adj=[%s] noun=[%s] leader=[%s] file=[%s]",
+                owner,
+                MFactions[owner].adj_name_faction,
+                MFactions[owner].noun_faction,
+                MFactions[owner].name_leader,
+                MFactions[owner].filename);
+        }
         sr_output(loc(SR_WORLD_MAP), true);
         sr_announced[0] = '\0';
         // Initialize exploration cursor to current unit position

@@ -450,6 +450,16 @@ static const char* sr_defaults[SR_COUNT] = {
     /* SR_INPUT_NUMBER       */ "Number input. Default: %d. Type digits, Enter to confirm, Escape for default.",
     /* SR_INPUT_NUMBER_EMPTY */ "Empty",
     /* SR_INPUT_NUMBER_DONE  */ "Entered %d.",
+    /* SR_INPUT_TEXT_EMPTY   */ "Empty",
+    /* SR_NETCONNECT_CREATE_TITLE */ "Create game. Enter game name and player name. Escape to cancel.",
+    /* SR_NETCONNECT_JOIN_TITLE   */ "Join game. Enter your player name. Escape to cancel.",
+    /* SR_NETCONNECT_GAME_NAME    */ "Game name",
+    /* SR_NETCONNECT_PLAYER_NAME  */ "Player name",
+    /* SR_NETCONNECT_CONFIRMED    */ "Game: %s, Player: %s",
+    /* SR_NETCONNECT_JOIN_CONFIRMED */ "Player: %s",
+    /* SR_NETCONNECT_CANCELLED    */ "Cancelled.",
+    /* SR_NETCONNECT_NEED_GAME   */ "Game name required.",
+    /* SR_NETCONNECT_NEED_PLAYER */ "Player name required.",
 
     // Design Workshop
     /* SR_DESIGN_PROTO_LIST    */ "Unit designs: %d prototypes.",
@@ -766,6 +776,14 @@ static const char* sr_defaults[SR_COUNT] = {
     /* SR_NETSETUP_GT_SCENARIO     */ "Scenario",
     /* SR_NETSETUP_GT_LOAD_MAP     */ "Load Map",
     /* SR_NETSETUP_START_NO_PLAYERS*/ "Cannot start: not enough players.",
+    /* SR_NETSETUP_COL_STATUS      */ "Status",
+    /* SR_NETSETUP_COL_FACTION     */ "Faction",
+    /* SR_NETSETUP_COL_DIFFICULTY  */ "Difficulty",
+    /* SR_NETSETUP_SLOT_HUMAN      */ "Human",
+    /* SR_NETSETUP_SLOT_COMPUTER   */ "Computer",
+    /* SR_NETSETUP_SLOT_CLOSED     */ "Closed",
+    /* SR_NETSETUP_SLOT_FMT        */ "Slot %d of %d: %s, %s, %s",
+    /* SR_NETSETUP_FACTION_RANDOM  */ "Random",
 
     // Unit Action Menu (Shift+F10)
     /* SR_ACT_MENU_OPEN       */ "Unit actions, %d items. Up/Down, Enter, Escape.",
@@ -1405,6 +1423,11 @@ static const char* sr_keys[SR_COUNT] = {
     "unit_skipped",
     "unit_damaged",
     "input_number", "input_number_empty", "input_number_done",
+    "input_text_empty",
+    "netconnect_create_title", "netconnect_join_title",
+    "netconnect_game_name", "netconnect_player_name",
+    "netconnect_confirmed", "netconnect_join_confirmed", "netconnect_cancelled",
+    "netconnect_need_game", "netconnect_need_player",
     // Design Workshop
     "design_proto_list", "design_proto_fmt", "design_category",
     "design_cat_chassis", "design_cat_weapon", "design_cat_armor",
@@ -1538,6 +1561,9 @@ static const char* sr_keys[SR_COUNT] = {
     "netsetup_cancelled", "netsetup_of", "netsetup_gametype_todo",
     "netsetup_gt_random", "netsetup_gt_scenario", "netsetup_gt_load_map",
     "netsetup_start_no_players",
+    "netsetup_col_status", "netsetup_col_faction", "netsetup_col_difficulty",
+    "netsetup_slot_human", "netsetup_slot_computer", "netsetup_slot_closed",
+    "netsetup_slot_fmt", "netsetup_faction_random",
     // Unit Action Menu (Shift+F10)
     "act_menu_open", "act_menu_item", "act_menu_cancel", "act_menu_empty",
     "act_skip", "act_hold", "act_explore", "act_goto_base", "act_patrol",

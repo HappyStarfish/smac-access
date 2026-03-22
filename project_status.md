@@ -93,7 +93,7 @@
 8. **Game diary (game_events.txt) unvollständig**: Aktuell loggt nur MessageHandler::OnMessage (Spieler-Popups) + SE-Änderungen + Eliminierungen + Rundenseparator. Viele Events fehlen (Forschung, Produktion, Kampf, Basengründung, Drohnenaufstände). Neuer Ansatz nötig — entweder tiefere Hooks in die Spielmechanik oder Auswertung der Spieltextausgabe. Manuelle game_log()-Aufrufe in Einzelfunktionen haben nicht funktioniert (falsche Filterung, unvollständig).
 10. **Escape in TOPMENU beendet Spiel**: Wenn man im Hauptmenü "Spiel laden" wählt und dort Escape drückt, beendet sich das Spiel statt zum Hauptmenü zurückzukehren. Ursache: der TOPMENU-Caller in terranx.exe interpretiert negative Return-Werte (Escape = -1) als "quit". Loop-Fix (Escape → Menü neu zeigen) hat nicht funktioniert. Mögliche Lösung: GetAsyncKeyState-Hook oder tieferes Verständnis der Caller-Funktion bei 0x58E6D0.
 11. **Pattern-C-Handler (Shared Control) müssen umgebaut werden**: Analyse ergab, dass Handler die eigenen State + simulierte Clicks/PostMessage mischen (Pattern C) immer brechen, weil SMACX GetAsyncKeyState-Polling nutzt statt WinProc-Messages. Zwei Handler noch betroffen:
-    - **multiplayer_handler.cpp**: simulate_click() für NetWin-Settings. Später auf Pattern A (direkter Speicherzugriff) oder AlphaIniPref-Writes umbauen.
+    - ~~**multiplayer_handler.cpp**: Checkboxen~~ — GELÖST (2026-03-19). simulate_click() durch direkte XOR-Schreibzugriffe auf Game-Globals (0x90E8EC/F0/F4) ersetzt. Bits entsprechen 1:1 den RULES_*-Flags. Checkbox-Status wird direkt aus Speicher gelesen statt lokal getrackt. Settings (Difficulty, Planet Size etc.) bereits via direkte Byte-Writes gelöst.
     - **netsetup_settings_handler.cpp**: WinProc-Injection für Popup-Navigation. Später auf Pattern A (Full Modal) umbauen.
     - ~~**council_handler.cpp**: Vote-Screen~~ — GELÖST (2026-03-07). Komplett auf Pattern A (Full Modal) umgebaut: Gouverneurswahl via 0x602600 Hook, Antragsabstimmung via 0x427230 Hook. Buy-Votes-Diplomatie via 0x602600 Hook mit accessible Modal (2026-03-13).
 12. **ENDOFTURN Tastenkürzel für FR/ES unbekannt**: Fix für "EINGABE"→"Strg+EINGABE" (DE) und "Enter"→"Ctrl+Enter" (EN) ist implementiert. Für Französisch und Spanisch fehlt der entsprechende Text aus deren SCRIPT.TXT — wir haben keine FR/ES-Sprachpakete. Fix ist einfach erweiterbar (strstr + memmove in gui.cpp mod_BasePop_start), sobald ein User den Text meldet.
@@ -189,6 +189,103 @@ Filters from triggers 1-3:
 - docs/game-api.md — Game API documentation
 
 ## Notes for Next Session
+
+### Multiplayer Lobby: Spieler-Slots (2026-03-22, IN ARBEIT)
+
+**Erledigt (Sitzung 2026-03-19):**
+- Checkboxen (18 Regeln) auf direkte XOR-Schreibzugriffe umgebaut → FUNKTIONIERT
+- Settings (8 Dropdowns) via direkte Byte-Writes → FUNKTIONIERT
+
+**Erledigt (Sitzung 2026-03-22):**
+- Slot-Datenstruktur vollständig reverse-engineered (Disassembly des Click-Handlers 0x47B760)
+- Player-Zone hat jetzt 3 Spalten: Status, Fraktion, Schwierigkeit
+- Navigation: Hoch/Runter=Slot, Links/Rechts=Spalte, Enter=Wert ändern
+- Ansagen: Slot-Wechsel=volle Info, Spalten-Wechsel/Änderung=nur Spaltenwert
+- Status-Toggle (Computer/Geschlossen) via direkte Byte-Writes → FUNKTIONIERT visuell
+- Schwierigkeit via direkte Byte-Writes → FUNKTIONIERT visuell
+- Fraktion via direkte Byte-Writes + Name-Kopie aus MFactions → FUNKTIONIERT visuell
+- Faction-Anzeige mit sr_game_str() (Windows-1252→UTF-8) → korrekte Umlaute
+- OnTimer-Suppress nach Änderungen (1.5s) → keine doppelten Ansagen
+- 8 neue Lokalisierungs-Strings (en/de/fr/es)
+
+**PROBLEM: Fraktionswahl wird beim Spielstart nicht korrekt übernommen**
+- Direkte Byte-Writes ändern nur das Faction-Byte (+0x03) und den Namen (+0x05)
+- Das Spiel braucht aber eine VOLLSTÄNDIGE Slot-Initialisierung (380 Bytes)
+- Die Init-Funktion 0x47C970 lädt Fraktionsdaten aus .txt-Dateien, setzt interne
+  Tabellen (NetWin+0x772C), und broadcasted übers Netzwerk
+- Ohne Init: Spiel ignoriert Fraktionswahl oder weist falsche Fraktion zu
+
+**Per-Slot Datenstruktur (BESTÄTIGT via Log-Dump):**
+```
+Array-Basis: 0x90DB98, Stride: 0x17C (380 Bytes), 1-basiert (Slots 1-7)
+Slot N Adresse = 0x90DB98 + N * 0x17C
+
++0x00 (byte):  Status (0x01=Mensch, 0xFF=Computer, 0x00=Geschlossen)
++0x02 (byte):  Schwierigkeit (0-5: Bürger..Transzendenz)
++0x03 (byte):  Fraktion (0xFF=Zufall, 1-14=spezifische Fraktion)
++0x05 (char[24]): Leader-Name
++0x178 (int):  Unbekanntes Feld (vom Toggle-Handler geschrieben)
+```
+MFactions[1-14] = spielbare Fraktionen (MFactions[0] = neutral, überspringen)
+
+**Gescheiterte Ansätze für korrekte Spiellogik:**
+
+1. **0x47C970(NetWin, slot) direkt aufrufen** (Init-Funktion)
+   - Gibt 1 zurück (= Erfolg), aber Name wird NICHT aktualisiert
+   - Überschreibt Difficulty auf Standardwert
+   - Validierung gegen NetWin+0x772C-Tabelle schlägt fehl
+   - Die Funktion erwartet arg=1 (Konstante), nicht slot-Index
+   - Ursache: komplexe interne Zustandsprüfungen die nur nach Popup-Ablauf passen
+
+2. **write_call auf 0x59D250 (Popup-Funktion) + direct_click auf Spots**
+   - Idee: Popup-Aufruf innerhalb der Spiel-Handler abfangen, eigenes Ergebnis zurückgeben
+   - CALL-Sites: 0x47C6B8 (Fraktion), 0x47D045 (Schwierigkeit)
+   - Hook installiert via write_call, gibt _popupOverride zurück
+   - CRASH: direct_click auf Status-Spot (type=5) crasht sofort
+   - Vermutung: write_call korrumpiert etwas, oder __thiscall/__fastcall-Konvertierung falsch
+   - Auch: 0x59D250 ist nicht die direkte Popup-Anzeige, sondern ein Wrapper für 0x5F8920
+
+3. **write_call + game_faction_handler(NetWin, slot) direkt aufrufen**
+   - Hook feuert korrekt ("popup override -> 0")
+   - CRASH nach dem Override-Return innerhalb des Faction-Handlers
+   - Vermutung: Handler hat 0x6500-Byte Stack-Frame mit SEH, der Aufruf-Kontext
+     (Register, Stack-Alignment) passt nicht wenn wir den Handler aus unserem Code aufrufen
+
+**Aktueller stabiler Stand (deployed):**
+- Direkte Byte-Writes für Status/Fraktion/Schwierigkeit
+- Navigation und Ansagen funktionieren korrekt
+- Fraktion-Änderung wird visuell angezeigt, aber NICHT korrekt beim Spielstart übernommen
+
+**Ergebnis des Byte-Write-Tests (2026-03-22):**
+- Slot 1 hatte faction=3 (Universität), name=Zakharov — unsere Writes OK
+- ABER GAME-START Log zeigt: adj="Gaianer", noun=Zufall, file=MORGAN
+- **Direkte Byte-Writes reichen NICHT.** Das Spiel initialisiert MFactions NICHT aus
+  den Slot-Bytes. Die Fraktionsdaten (MFactions[]) werden durch den Popup-Flow /
+  die Init-Funktion 0x47C970 befüllt, nicht aus dem Slot-Struct beim Spielstart.
+- Der Checkbox-Ansatz (reine Speicher-Writes) funktioniert hier also nicht.
+
+**Nächste Schritte (Priorität):**
+1. **Inline-Hook auf 0x59D250** — install_inline_hook (bewährt im Projekt, z.B.
+   Council-Hooks) statt write_call (das gecrasht hat). Hook prüft globale
+   _popupOverride-Variable, gibt Override zurück oder ruft Trampoline auf.
+   Vorteil: greift bei ALLEN Aufrufen von 0x59D250, nicht nur an bestimmten Call-Sites.
+2. **direct_click auf Faction/Difficulty-Spots OHNE write_call** — der Klick geht
+   durch die normale Spiellogik (SpotList → Click-Handler → Popup), aber der
+   Inline-Hook auf 0x59D250 fängt das Popup ab und gibt unseren Wert zurück.
+3. **Status-Toggle separat testen** — direct_click auf type=5 Spot OHNE Popup-Hooks.
+   Prüfen ob 0x47C970 bei NetworkMode=0 crasht oder stabil läuft.
+4. **Crash-Diagnose write_call**: Der write_call-Crash (Sitzung 2026-03-22) muss
+   NICHT am Popup-Hook selbst gelegen haben — direct_click auf STATUS-Spot (type=5,
+   KEIN Popup involviert) crashte ebenfalls. Möglicherweise hat write_call die Bytes
+   an 0x47C6B8 falsch gepatcht und den Click-Handler korrumpiert (0x47B760 liegt
+   nahe an den geänderten Adressen). Inline-Hook auf 0x59D250 ändert NICHTS an den
+   Click-Handlern und vermeidet dieses Risiko.
+5. **Faction-Popup-Index-Mapping klären**: Der Popup bei 0x47C530 baut eine gefilterte
+   Fraktionsliste (nur verfügbare Fraktionen). Popup-Index 0 ≠ Faction-ID 1.
+   Es gibt eine lokale Lookup-Tabelle [ebp-0x848] die Popup-Index → Faction-ID mappt.
+   Um den richtigen Override-Wert zu bestimmen, müssen wir entweder:
+   (a) Die gleiche Filterschleife (0x47C5F0-0x47C690) nachbauen, oder
+   (b) Die Lookup-Tabelle nach dem Popup-Aufruf abgreifen (der Hook kennt ecx=Popup-Objekt).
 
 ### Refactoring: screen_reader.cpp aufteilen (2026-03-13, TEILWEISE ERLEDIGT)
 
@@ -401,22 +498,13 @@ Four bugs fixed in this session:
 - gui.cpp: 4 changes (include, IsActive check, Ctrl+F10 hotkey, popup-input exclusion)
 - **Fix**: GameSettingsHandler added to popup-input exclusion list (prevented D/I key echo)
 
-### NEW: Multiplayer Lobby Settings Editor (Ctrl+Shift+F10) — PARTIALLY WORKING (2026-03-02)
-- Modal editor for all 8 dropdown settings + 18 checkboxes in NetWin lobby
-- Architecture: GameSettingsHandler pattern (RunModal + sr_run_modal_pump)
-- 2 categories: Settings (8 items), Rules (18 checkboxes)
-- Tab/Shift+Tab categories, Up/Down items, Left/Right values, Space toggle, S summary
-- **IAT hook on GetAsyncKeyState** (0x669330): fakes VK_LBUTTON pressed during popup apply phase
-- Difficulty: direct memory write (NetWin+0xE68, known offset)
-- Other settings: IAT hook + simulate_click opens popup, mouse move to target item, release selects
-- Checkboxes: simulate_click toggles (already working)
-- Values loaded: difficulty from memory, others from rendered text via lookup tables
-- New files: netsetup_settings_handler.h/.cpp
-- Changed: patch.h (GetAsyncKeyStateImport), patch.cpp (IAT hook), gui.cpp (include, modal_active, routing, hotkey), localization.h/.cpp (10 new strings), en.txt/de.txt
-- **Fixed (2026-03-02):** Ctrl+Shift+F10 hotkey was unreachable — MultiplayerHandler's else-if block on line 1369 swallowed the key before the Ctrl+Shift+F10 check on line 1714. Fix: moved Ctrl+Shift+F10 handling into MultiplayerHandler::Update() directly.
-- **Fixed (2026-03-02):** Lobby Left/Right on settings with unknown offsets now opens NetSetupSettingsHandler (via RunModalAt) instead of showing "not supported". Added RunModalAt(category, item) entry point.
-- **OPEN:** Settings editor opens and reads values correctly from rendered text, but applying changes (save via Enter) does not work yet — popup mechanism (IAT hook + simulate_click) needs further debugging. Deferred to later session.
-- **Test plan**: Open MP lobby → Ctrl+Shift+F10 → verify navigation + announcements → change difficulty → change other setting → toggle checkbox → Enter to save → check lobby display updated
+### Multiplayer Lobby Settings — WORKING (2026-03-19)
+- **Lobby-Navigation**: 4 Zonen (Settings, Players, Checkboxes, Buttons) via Tab/Shift+Tab, Up/Down navigiert, Enter/Space aktiviert
+- **Settings (8 Dropdowns)**: Direkte Byte-Writes auf 0x90E8E0-Block (Difficulty, Time, Planet Size, Ocean, Erosion, Natives, Cloud). Left/Right zum Ändern. Game Type Adresse unbekannt.
+- **Checkboxen (18 Regeln)**: Direkte XOR-Schreibzugriffe auf Game-Globals (0x90E8EC/F0/F4). Bits = RULES_*-Flags. Status aus Speicher gelesen. **GETESTET OK** — Änderungen wirken sich auf Spielstart aus (z.B. Blinde Forschung deaktivieren funktioniert).
+- **Ctrl+Shift+F10**: Separater Modal-Editor (NetSetupSettingsHandler) — Editor öffnet und liest korrekt, aber Speichern via Enter noch nicht funktional (IAT-Hook-Ansatz aufgegeben zugunsten direkter Speicherzugriffe in Haupthandler).
+- **Spieler-Liste**: OnTimer erkennt Beitritt/Austritt via Render-Text-Vergleich
+- **Buttons**: Cancel (GraphicWin_close) und Start (simulate_click mit Warmup)
 
 ### NEW: F-Key Status Screen Handlers (F2, F5-F8) — needs testing (2026-02-28)
 - **F2 (Research/Labs)**: Single-screen summary. S: research summary (tech, progress, turns, allocation). D: labs breakdown per base. Escape: close.
@@ -575,7 +663,20 @@ Four bugs fixed in this session:
 - 6 new loc strings (en+de), getter/setter in screen_reader.h/cpp, early-exit in ModWinProc.
 - **Test**: On world map, Ctrl+Shift+A → "Screen reader off" → arrows scroll normally → Ctrl+Shift+A → "Screen reader on". Ctrl+Shift+T → "Thinker AI disabled" → Ctrl+Shift+T → "Thinker AI enabled".
 
-### Last Session (2026-03-13)
+### Last Session (2026-03-22)
+
+- **Slot-Datenstruktur reverse-engineered**: Array at 0x90DB98, stride 0x17C, Felder: status(+0), difficulty(+2), faction(+3), name(+5). Bestätigt via Speicher-Dump im Log.
+- **Player-Zone mit 3 Spalten gebaut**: Status/Fraktion/Schwierigkeit, Links/Rechts navigiert Spalten, Hoch/Runter Slots, Enter ändert Wert. Kurze Ansagen (nur Spaltenwert) bei Änderung/Spaltenwechsel.
+- **Direkte Byte-Writes funktionieren für Anzeige**, aber Fraktion wird beim Spielstart nicht korrekt übernommen (Spiel nutzt alten Leader-Namen/Fraktionsdaten).
+- **Zwei Ansätze für korrekte Spiel-Init gescheitert** (beide Crashes):
+  1. game_faction_handler (0x47C530) direkt aufrufen + write_call Popup-Hook
+  2. direct_click auf Spot-Koordinaten + write_call Popup-Hook
+- **Stabiler Stand deployed**: Direkte Byte-Writes ohne Spiel-Init (Anzeige OK, Spielstart-Übernahme unvollständig)
+- Files changed: multiplayer_handler.cpp/h, patch.cpp, localization.h/cpp, all sr_lang/*.txt
+- **Byte-Write-Test**: Faction-Byte direkt geschrieben → Spiel ignoriert es komplett (GAME-START: adj="Gaianer", file=MORGAN trotz faction=3). Checkbox-Ansatz funktioniert hier NICHT.
+- **Next**: install_inline_hook auf 0x59D250 (bewährt, kein write_call), dann direct_click auf Faction/Difficulty-Spots. Status-Toggle separat testen. Siehe Slot-Sektion für vollständige Analyse + Crash-Diagnose.
+
+### Session (2026-03-13)
 
 - **Spanish + French localization added**: Created `sr_lang/es.txt` and `sr_lang/fr.txt` with complete translations of all ~1248 screen reader strings. Activate via `sr_language=es` or `sr_language=fr` in thinker.ini. No C++ changes needed — existing localization system loads any language file automatically.
 

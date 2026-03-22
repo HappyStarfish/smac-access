@@ -35,6 +35,7 @@ docs/menu-accessibility-checklist.md
 docs/modding-feasibility-other-games.md
 docs/council-vote-reversing.md
 docs/popup-menu-internals.md
+docs/multiplayer-internals.md
 
 # Build artifacts
 build_out.txt

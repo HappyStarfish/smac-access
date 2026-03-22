@@ -462,6 +462,16 @@ diplo_status_changed=Diplomatischer Status: %s
 input_number=Zahleneingabe. Vorgabe: %d. Ziffern eingeben, Enter bestätigt, Escape für Vorgabe.
 input_number_empty=Leer
 input_number_done=%d eingegeben.
+input_text_empty=Leer
+netconnect_create_title=Spiel erstellen. Spielname und Spielername eingeben. Escape zum Abbrechen.
+netconnect_join_title=Spiel beitreten. Spielername eingeben. Escape zum Abbrechen.
+netconnect_game_name=Spielname
+netconnect_player_name=Spielername
+netconnect_confirmed=Spiel: %s, Spieler: %s
+netconnect_join_confirmed=Spieler: %s
+netconnect_cancelled=Abgebrochen.
+netconnect_need_game=Spielname erforderlich.
+netconnect_need_player=Spielername erforderlich.
 
 # Cursor / Numpad
 cursor_to_unit=Cursor bei Einheit.
@@ -750,6 +760,14 @@ netsetup_gt_random=Neues Spiel (Zufallskarte)
 netsetup_gt_scenario=Szenario
 netsetup_gt_load_map=Karte laden
 netsetup_start_no_players=Start nicht möglich: nicht genug Spieler.
+netsetup_col_status=Status
+netsetup_col_faction=Fraktion
+netsetup_col_difficulty=Schwierigkeit
+netsetup_slot_human=Mensch
+netsetup_slot_computer=Computer
+netsetup_slot_closed=Geschlossen
+netsetup_slot_fmt=Slot %d von %d: %s, %s, %s
+netsetup_faction_random=Zufall
 
 # Einheiten-Aktionsmenü (Shift+F10)
 act_menu_open=Einheiten-Aktionen, %d Einträge. Hoch/Runter, Eingabe, Escape.

@@ -9,5 +9,6 @@ bool Update(UINT msg, WPARAM wParam);
 void OnOpen();
 void OnClose();
 void OnTimer();
+void InstallHooks();
 
 }
